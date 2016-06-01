@@ -1,15 +1,9 @@
-organization  := "de.frosner"
+name := "cluster-broccoli"
 
-version       := "0.1.0-SNAPSHOT"
+version := "1.0.0"
 
-name          := "cluster-broccoli"
+lazy val root = project.in(file(".")).enablePlugins(PlayScala)
 
-scalaVersion  := "2.11.7"
+libraryDependencies += ws
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test"
-
-libraryDependencies += "com.typesafe.akka" %% "akka-http-core" % "2.4.3"
-
-libraryDependencies += "com.typesafe.akka" %% "akka-http-experimental" % "2.4.3"
-
-fork := true
+libraryDependencies += "javax" % "javaee-api" % "7.0"

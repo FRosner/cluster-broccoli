@@ -1,0 +1,11 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Templates
+GET     /templates                          @de.frosner.broccoli.controllers.TemplateController.list
+GET     /templates/:id                      @de.frosner.broccoli.controllers.TemplateController.show(id: String)
+
+# Instances
+GET     /instances                          @de.frosner.broccoli.controllers.InstanceController.list
+GET     /instances/:id                      @de.frosner.broccoli.controllers.InstanceController.show(id: String)
