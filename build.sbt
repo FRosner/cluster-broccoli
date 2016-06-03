@@ -8,4 +8,7 @@ libraryDependencies += ws
 
 libraryDependencies += specs2 % Test
 
+resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
+
 routesGenerator := InjectedRoutesGenerator
+
