@@ -11,8 +11,6 @@ case class Instance(id: String, template: Template, parameterValues: Map[String,
 
 object Instance {
 
-  val instances = Seq(Instance("1", Template.templates.head, Map("name" -> "Frank")))
-
   implicit val instanceWrites = Json.writes[Instance]
 
   implicit val instanceReads = Json.reads[Instance]
