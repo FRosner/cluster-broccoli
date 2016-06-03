@@ -6,14 +6,10 @@ import javax.inject.Inject
 import de.frosner.broccoli.models.Template
 import Template.{templateReads, templateWrites}
 import de.frosner.broccoli.services.TemplateService
-import play.{Logger, Play, Application}
 
 import play.api.libs.json.Json
-import play.api.libs.ws.WSClient
 import play.api.mvc.{Action, Controller}
 
-import scala.io.Source
-import scala.util.Try
 
 class TemplateController @Inject() (configuration: play.api.Configuration, templateService: TemplateService) extends Controller {
 
