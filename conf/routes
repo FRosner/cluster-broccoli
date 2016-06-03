@@ -9,3 +9,6 @@ GET     /templates/:id                      @de.frosner.broccoli.controllers.Tem
 # Instances
 GET     /instances                          @de.frosner.broccoli.controllers.InstanceController.list
 GET     /instances/:id                      @de.frosner.broccoli.controllers.InstanceController.show(id: String)
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file                       @controllers.Assets.versioned(path="/public", file)
