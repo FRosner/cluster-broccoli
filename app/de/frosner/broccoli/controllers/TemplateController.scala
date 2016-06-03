@@ -15,7 +15,6 @@ import play.api.mvc.{Action, Controller}
 import scala.io.Source
 import scala.util.Try
 
-//class TemplateController @Inject() (ws: WSClient) extends Controller {
 class TemplateController @Inject() (configuration: play.api.Configuration, templateService: TemplateService) extends Controller {
 
   private val templates = templateService.templates
