@@ -12,6 +12,8 @@ import play.api.mvc.{Action, Controller}
 // class InstanceController @Inject() (ws: WSClient) extends Controller {
 class InstanceController extends Controller {
 
+  // TODO start implementation: https://www.playframework.com/documentation/2.5.x/ScalaWS
+
   def list = Action {
     Ok(Json.toJson(Instance.instances))
   }

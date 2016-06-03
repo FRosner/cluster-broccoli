@@ -49,6 +49,4 @@ class TemplateController @Inject() (configuration: play.api.Configuration) exten
     templates.find(_.id == id).map(template => Ok(Json.toJson(template))).getOrElse(NotFound)
   }
 
-  // TODO start implementation: https://www.playframework.com/documentation/2.5.x/ScalaWS
-
 }
