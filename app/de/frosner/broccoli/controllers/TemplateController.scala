@@ -15,10 +15,9 @@ import scala.io.Source
 import scala.util.Try
 
 //class TemplateController @Inject() (ws: WSClient) extends Controller {
-//class TemplateController @Inject() (configuration: play.api.Configuration) extends Controller {
-class TemplateController extends Controller {
+class TemplateController @Inject() (configuration: play.api.Configuration) extends Controller {
 
-  private val templatesDirectoryPath = Play.application().configuration().getString("broccoli.templatesDir", "templates")
+  private val templatesDirectoryPath = configuration.getString("broccoli.templatesDir").getOrElse("templates")
 
   private val templates = {
     val templatesDirectory = new File(templatesDirectoryPath)
