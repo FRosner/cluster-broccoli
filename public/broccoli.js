@@ -1,11 +1,11 @@
-angular.module('broccoli', [])
-    .controller('AppsCtrl', [function() {
+angular.module('broccoli', ['restangular'])
+    .controller('AppsCtrl', function(Restangular) {
         var vm = this;
         vm.apps = [
           {
             name: "jupyter",
             description: "super\nfast",
-            imageUrl: "https://en.wikipedia.org/wiki/Jupiter#/media/File:Jupiter_and_its_shrunken_Great_Red_Spot.jpg",
+            imageUrl: "assets/jupyter.svg",
             instances: [
               {
                 id: 1,
@@ -15,6 +15,14 @@ angular.module('broccoli', [])
             ]
           }
         ];
+        Restangular.all('templates').getList().then(function(templates) {
+          templates.forEach(function(template) {
+            Restangular.one('templates', template).get().then(function(template){
+              template.description = JSON.stringify(template.parameters);
+              vm.apps.push(template);
+            });
+          })
+        });
 
         var separateCharacters = function(line) {
             var result = [];
@@ -27,10 +35,4 @@ angular.module('broccoli', [])
         vm.findWords = function() {
 
         };
-    }]);
-
-/*.controller('AppsCtrl', function(Restangular) {
-      var vm = this;
-      vm.apps = ['abc'];
     });
-*/

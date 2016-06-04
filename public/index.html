@@ -35,19 +35,21 @@
     ================================================== -->
     <script data-require="jquery" data-semver="2.2.0" src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.2/angular.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/lodash/1.3.1/lodash.min.js"></script>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/restangular/1.3.1/restangular.min.js"></script>
     <script src="/assets/broccoli.js"></script>
 </head>
 
 <body ng-controller="AppsCtrl as appsCtrl">
     <div class="container">
         <div class="row" ng-repeat="app in appsCtrl.apps">
-            <h2>{{app.name}}</h2>
+            <h2>{{app.id}}</h2>
             <div class="col-md-12">
                 <div class="col-md-2">
-                  <img ng-src={{app.url}} class="img-rounded" data-holder-rendered="true" style="width: 100px; height: 100px;"/>
+                  <img ng-src={{app.imageUrl}} class="img-rounded" data-holder-rendered="true" style="width: 100px; height: 100px;"/>
                 </div>
                 <div class="col-md-2">
-                  {{app.description}}
+                  Parameters:<br>{{app.description}}
                 </div>
                 <div class="col-md-8"></div>
             </div>
