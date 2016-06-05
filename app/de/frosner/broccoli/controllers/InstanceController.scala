@@ -13,8 +13,13 @@ class InstanceController @Inject() (instanceService: InstanceService) extends Co
 
   implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  def list = Action.async {
-    instanceService.instances.map(instances => Ok(Json.toJson(instances)))
+  def list(templateId: Option[String]) = Action.async {
+    val maybeFilteredInstances = instanceService.instances.map(
+      instances => templateId.map(
+        id => instances.filter(_.template.id == id)
+      ).getOrElse(instances)
+    )
+    maybeFilteredInstances.map(instances => Ok(Json.toJson(instances)))
   }
 
   def show(id: String) = Action.async {

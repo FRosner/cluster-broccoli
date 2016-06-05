@@ -7,7 +7,7 @@ GET     /templates                          @de.frosner.broccoli.controllers.Tem
 GET     /templates/:id                      @de.frosner.broccoli.controllers.TemplateController.show(id: String)
 
 # Instances
-GET     /instances                          @de.frosner.broccoli.controllers.InstanceController.list
+GET     /instances                          @de.frosner.broccoli.controllers.InstanceController.list(templateId: Option[String])
 GET     /instances/:id                      @de.frosner.broccoli.controllers.InstanceController.show(id: String)
 
 # Map static resources from the /public folder to the /assets URL path
