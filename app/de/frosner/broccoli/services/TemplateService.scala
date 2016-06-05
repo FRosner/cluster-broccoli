@@ -2,6 +2,7 @@ package de.frosner.broccoli.services
 
 import java.io.File
 import javax.inject.Inject
+import javax.inject.Singleton
 
 import de.frosner.broccoli.models.Template
 import play.Logger
@@ -10,6 +11,7 @@ import play.api.Configuration
 import scala.io.Source
 import scala.util.Try
 
+@Singleton
 class TemplateService @Inject() (configuration: Configuration) {
 
   private val templatesDirectoryPath = configuration.getString("broccoli.templatesDir").getOrElse("templates")
