@@ -16,7 +16,7 @@ class TemplateService @Inject() (configuration: Configuration) {
 
   private val templatesDirectoryPath = configuration.getString("broccoli.templatesDir").getOrElse("templates")
 
-  val templates = {
+  val templates: Seq[Template] = {
     val templatesDirectory = new File(templatesDirectoryPath)
     Logger.info(s"Looking for templates in $templatesDirectoryPath")
     val templateDirectories = if (templatesDirectory.exists && templatesDirectory.isDirectory) {
@@ -38,6 +38,6 @@ class TemplateService @Inject() (configuration: Configuration) {
     templates
   }
 
-  def isTemplate(id: String) = templates.exists(_.id == id)
+  def template(id: String): Option[Template] = templates.find(_.id == id)
 
 }

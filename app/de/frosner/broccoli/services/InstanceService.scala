@@ -17,12 +17,16 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
   private val nomadBaseUrl = configuration.getString("broccoli.nomad.url").getOrElse("http://localhost:4646")
   private val nomadJobPrefix = configuration.getString("broccoli.nomad.jobPrefix").getOrElse("")
 
-  def instanceList: Future[Seq[String]] = {
+  def instances: Future[Seq[Instance]] = {
     val jobsRequest = ws.url(nomadBaseUrl + "/v1/jobs").withQueryString("prefix" -> nomadJobPrefix)
     val jobsResponse = jobsRequest.get().map(_.json.as[JsArray])
     val jobsWithTemplate = jobsResponse.map(jsArray => {
-      val names = jsArray \\ "Name"
-      names.map(_.as[JsString].value).filter(templateService.isTemplate)
+      val (ids, names) = ((jsArray \\ "ID").map(_.as[JsString].value), (jsArray \\ "Name").map(_.as[JsString].value))
+      ids.zip(names).flatMap{
+        case (id, name) => templateService.template(name).map(
+          template => Instance(id, template, Map("id" -> id))
+        )
+      }
     })
     jobsWithTemplate
   }
