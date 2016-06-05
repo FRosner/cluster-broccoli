@@ -38,4 +38,6 @@ class TemplateService @Inject() (configuration: Configuration) {
     templates
   }
 
+  def isTemplate(id: String) = templates.exists(_.id == id)
+
 }

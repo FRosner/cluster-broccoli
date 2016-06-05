@@ -11,14 +11,16 @@ import play.api.mvc.{Action, Controller}
 
 class InstanceController @Inject() (instanceService: InstanceService) extends Controller {
 
-  private val instances = instanceService.instances
+  implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  def list = Action {
-    Ok(Json.toJson(instances))
+  def list = Action.async {
+    instanceService.instanceList.map(instances => Ok(Json.toJson(instances)))
   }
 
   def show(id: String) = Action {
-    instances.find(_.id == id).map(template => Ok(Json.toJson(template))).getOrElse(NotFound)
+    // TODO
+//    instanceService.instanceList.find(_ == id).map(instance => Ok(Json.toJson(instance))).getOrElse(NotFound)
+    Ok(Json.toJson(List.empty[Instance]))
   }
 
 }
