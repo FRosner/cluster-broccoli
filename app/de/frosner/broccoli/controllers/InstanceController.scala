@@ -17,10 +17,8 @@ class InstanceController @Inject() (instanceService: InstanceService) extends Co
     instanceService.instances.map(instances => Ok(Json.toJson(instances)))
   }
 
-  def show(id: String) = Action {
-    // TODO
-//    instanceService.instanceList.find(_ == id).map(instance => Ok(Json.toJson(instance))).getOrElse(NotFound)
-    Ok(Json.toJson(List.empty[Instance]))
+  def show(id: String) = Action.async {
+    instanceService.instance(id).map(_.map(instance => Ok(Json.toJson(instance))).getOrElse(NotFound))
   }
 
 }

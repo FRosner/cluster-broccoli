@@ -31,4 +31,6 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
     jobsWithTemplate
   }
 
+  def instance(id: String): Future[Option[Instance]] = instances.map(_.find(_.id == id))
+
 }
