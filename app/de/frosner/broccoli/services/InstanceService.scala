@@ -9,7 +9,6 @@ import play.api.libs.ws.WSClient
 
 import scala.concurrent.Future
 
-@Singleton
 class InstanceService @Inject() (configuration: Configuration, ws: WSClient, templateService: TemplateService) {
 
   implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
