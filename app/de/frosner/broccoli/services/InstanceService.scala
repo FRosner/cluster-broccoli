@@ -9,6 +9,7 @@ import play.api.libs.ws.WSClient
 
 import scala.concurrent.Future
 
+@Singleton
 class InstanceService @Inject() (configuration: Configuration, ws: WSClient, templateService: TemplateService) {
 
   implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -16,7 +17,13 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
   private val nomadBaseUrl = configuration.getString("broccoli.nomad.url").getOrElse("http://localhost:4646")
   private val nomadJobPrefix = configuration.getString("broccoli.nomad.jobPrefix").getOrElse("")
 
-  def instances: Future[Seq[Instance]] = {
+  private var instances = Seq(Instance("zeppelin-frank", templateService.template("zeppelin").get, Map("id" -> "frank")))
+
+  def getInstances: Seq[Instance] = instances
+
+  def getInstance(id: String): Option[Instance] = instances.find(_.id == id)
+
+  def nomadInstances: Future[Seq[Instance]] = {
     val jobsRequest = ws.url(nomadBaseUrl + "/v1/jobs").withQueryString("prefix" -> nomadJobPrefix)
     val jobsResponse = jobsRequest.get().map(_.json.as[JsArray])
     val jobsWithTemplate = jobsResponse.map(jsArray => {
@@ -30,6 +37,6 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
     jobsWithTemplate
   }
 
-  def instance(id: String): Future[Option[Instance]] = instances.map(_.find(_.id == id))
+  def nomadInstance(id: String): Future[Option[Instance]] = nomadInstances.map(_.find(_.id == id))
 
 }

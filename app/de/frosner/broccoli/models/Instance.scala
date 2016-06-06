@@ -1,6 +1,6 @@
 package de.frosner.broccoli.models
 
-import play.api.libs.json.{Json, Reads, Writes}
+import play.api.libs.json.Json
 
 case class Instance(id: String, template: Template, parameterValues: Map[String, String]) {
 
