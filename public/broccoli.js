@@ -1,23 +1,12 @@
 angular.module('broccoli', ['restangular'])
     .controller('AppsCtrl', function(Restangular) {
         var vm = this;
-        vm.apps = [
-          {
-            name: "jupyter",
-            description: "super\nfast",
-            imageUrl: "assets/jupyter.svg",
-            instances: [
-              {
-                id: 1,
-                url: "localhost:9000/templates/zeppelin",
-                status: "running"
-              }
-            ]
-          }
-        ];
+        vm.apps = [];
         Restangular.all("templates").getList().then(function(templates) {
           templates.forEach(function(template) {
             Restangular.one("templates", template).get().then(function(template){
+              template.imageUrl = "assets/" + template.id + ".svg"
+              template.description = "Amazing notebook!"
               console.log(template);
               template.instances = [];
               Restangular.all("instances").getList({ "templateId" : template.id }).then(function(instances) {
