@@ -38,6 +38,24 @@ class InstanceController @Inject() (instanceService: InstanceService) extends Co
   def show(id: String) = Action {
     instanceService.getInstances.find(_.id == id).map(instance => Ok(Json.toJson(instance))).getOrElse(NotFound)
   }
+
+  // TODO don't send ID in parameters but generate one instead
+  def create = Action { request =>
+    val maybeValidatedInstanceCreation = request.body.asJson.map(_.validate[InstanceCreation])
+    maybeValidatedInstanceCreation.map { validatedInstanceCreation =>
+      validatedInstanceCreation.map { instanceCreation =>
+        val newId = instanceService.addInstance(instanceCreation)
+        newId.map { id =>
+          Ok(s"Created instance with ID ${id} created successfully.").withHeaders(
+            LOCATION -> s"/instances/$id" // TODO String constant
+          )
+        }.recover {
+          case error => Status(400)(error.getMessage)
+        }.get
+      }.recoverTotal{ case error =>
+        Status(400)("Invalid JSON format: " + error.toString)
+      }
+    }.getOrElse(Status(400)("Expected JSON data"))
   }
 
 }

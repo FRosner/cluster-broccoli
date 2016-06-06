@@ -2,12 +2,13 @@ package de.frosner.broccoli.services
 
 import javax.inject.{Singleton, Inject}
 
-import de.frosner.broccoli.models.Instance
+import de.frosner.broccoli.models.{InstanceCreation, Instance}
 import play.api.Configuration
 import play.api.libs.json.{JsString, JsArray}
 import play.api.libs.ws.WSClient
 
 import scala.concurrent.Future
+import scala.util.{Success, Failure, Try}
 
 @Singleton
 class InstanceService @Inject() (configuration: Configuration, ws: WSClient, templateService: TemplateService) {
@@ -17,11 +18,34 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
   private val nomadBaseUrl = configuration.getString("broccoli.nomad.url").getOrElse("http://localhost:4646")
   private val nomadJobPrefix = configuration.getString("broccoli.nomad.jobPrefix").getOrElse("")
 
-  private var instances = Seq(Instance("zeppelin-frank", templateService.template("zeppelin").get, Map("id" -> "frank")))
+  private var instances = Map(
+    "zeppelin-frank" -> Instance("zeppelin-frank", templateService.template("zeppelin").get, Map("id" -> "frank")),
+    "zeppelin-pauline" -> Instance("zeppelin-pauline", templateService.template("zeppelin").get, Map("id" -> "pauline")),
+    "zeppelin-basil" -> Instance("jupyter-basil", templateService.template("jupyter").get, Map("id" -> "basil"))
+  )
 
-  def getInstances: Seq[Instance] = instances
+  def getInstances: Iterable[Instance] = instances.values
 
-  def getInstance(id: String): Option[Instance] = instances.find(_.id == id)
+  def getInstance(id: String): Option[Instance] = instances.get(id)
+
+  def addInstance(instanceCreation: InstanceCreation): Try[String] = {
+    val maybeId = instanceCreation.parameters.get("id")
+    val templateId = instanceCreation.templateId
+    maybeId.map { id =>
+      if (instances.contains(id)) {
+        Failure(new IllegalArgumentException(s"There is already an instance having the ID $id"))
+      } else {
+        val potentialTemplate = templateService.template(templateId)
+        potentialTemplate.map { template =>
+          instances = instances.updated(id, Instance(id, template, instanceCreation.parameters))
+          Success(id)
+        }.getOrElse(Failure(new IllegalArgumentException(s"Template $templateId does not exist.")))
+      }
+    }.getOrElse(Failure(new IllegalArgumentException("No ID specified")))
+  }
+
+  // TODO when do I ask for the status of the instance? if asking, I need to ask Nomad
+  // I guess each instance should have a status object that is queried only if GET /instances/<id> is used
 
   def nomadInstances: Future[Seq[Instance]] = {
     val jobsRequest = ws.url(nomadBaseUrl + "/v1/jobs").withQueryString("prefix" -> nomadJobPrefix)
