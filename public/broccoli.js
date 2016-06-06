@@ -15,13 +15,22 @@ angular.module('broccoli', ['restangular'])
             ]
           }
         ];
-        Restangular.all('templates').getList().then(function(templates) {
+        Restangular.all("templates").getList().then(function(templates) {
           templates.forEach(function(template) {
-            Restangular.one('templates', template).get().then(function(template){
+            Restangular.one("templates", template).get().then(function(template){
+              console.log(template);
+              template.instances = [];
+              Restangular.all("instances").getList({ "templateId" : template.id }).then(function(instances) {
+                instances.forEach(function(instance) {
+                  console.log(instance);
+                  template.instances.push(instance);
+                  console.log(template);
+                });
+              });
               template.description = JSON.stringify(template.parameters);
               vm.apps.push(template);
             });
-          })
+          });
         });
 
         var separateCharacters = function(line) {
