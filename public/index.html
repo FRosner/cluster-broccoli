@@ -63,11 +63,13 @@
                 <table class="table table">
                   <tbody>
                       <tr ng-repeat="instance in app.instances">
-                          <th scope="row">{{instance.id}}</th>
-                          <td>{{instance.url}}</td>
-                          <td>{{instance.actualStatus}}</td>
-                          <td><button type="button" class="btn btn-success">Start</button></td>
-                          <td><button type="button" class="btn btn-danger">Stop</button></td>
+                        <th scope="row">{{instance.id}}</th>
+                        <td>{{instance.url}}</td>
+                        <td>{{instance.actualStatus}}</td>
+                        <td ng-if="instance.actualStatus.toLowerCase() === 'stopped'">
+                          <button type="button" class="btn btn-success">Start</button></td>
+                        <td ng-if="instance.actualStatus.toLowerCase() !== 'stopped'">
+                          <button type="button" class="btn btn-danger">Stop</button></td>
                       </tr>
                   </tbody>
                 </table>
