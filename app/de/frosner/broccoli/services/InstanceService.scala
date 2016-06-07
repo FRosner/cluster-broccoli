@@ -19,10 +19,29 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
   private val nomadBaseUrl = configuration.getString("broccoli.nomad.url").getOrElse("http://localhost:4646")
   private val nomadJobPrefix = configuration.getString("broccoli.nomad.jobPrefix").getOrElse("")
 
+  // TODO regularily ask nomad for updates on instance status instead of with every GET, do this with actors?
   private var instances = Map(
-    "zeppelin-frank" -> Instance("zeppelin-frank", templateService.template("zeppelin").get, Map("id" -> "frank"), InstanceStatus.Pending),
-    "zeppelin-pauline" -> Instance("zeppelin-pauline", templateService.template("zeppelin").get, Map("id" -> "pauline"), InstanceStatus.Running),
-    "zeppelin-basil" -> Instance("jupyter-basil", templateService.template("jupyter").get, Map("id" -> "basil"), InstanceStatus.Stopped)
+    "zeppelin-frank" -> Instance(
+      id = "zeppelin-frank",
+      template = templateService.template("zeppelin").get,
+      parameterValues = Map("id" -> "frank"),
+      actualStatus = InstanceStatus.Pending,
+      desiredStatus = InstanceStatus.Running
+    ),
+    "zeppelin-pauline" -> Instance(
+      id = "zeppelin-pauline",
+      template = templateService.template("zeppelin").get,
+      parameterValues = Map("id" -> "pauline"),
+      actualStatus = InstanceStatus.Running,
+      desiredStatus = InstanceStatus.Running
+    ),
+    "jupyter-basil" -> Instance(
+      id = "jupyter-basil",
+      template = templateService.template("jupyter").get,
+      parameterValues = Map("id" -> "basil"),
+      actualStatus = InstanceStatus.Stopped,
+      desiredStatus = InstanceStatus.Stopped
+    )
   )
 
   def getInstances: Iterable[Instance] = instances.values
@@ -39,7 +58,7 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
       } else {
         val potentialTemplate = templateService.template(templateId)
         potentialTemplate.map { template =>
-          instances = instances.updated(id, Instance(id, template, instanceCreation.parameters, InstanceStatus.Unknown))
+          instances = instances.updated(id, Instance(id, template, instanceCreation.parameters, InstanceStatus.Unknown, InstanceStatus.Unknown))
           Success(id)
         }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException(s"Template $templateId does not exist."))))
       }
@@ -56,7 +75,7 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
       val (ids, names) = ((jsArray \\ "ID").map(_.as[JsString].value), (jsArray \\ "Name").map(_.as[JsString].value))
       ids.zip(names).flatMap{
         case (id, name) => templateService.template(name).map(
-          template => Instance(id, template, Map("id" -> id), InstanceStatus.Unknown)
+          template => Instance(id, template, Map("id" -> id), InstanceStatus.Unknown, InstanceStatus.Unknown)
         )
       }
     })
