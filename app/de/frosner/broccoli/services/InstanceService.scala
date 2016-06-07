@@ -2,7 +2,7 @@ package de.frosner.broccoli.services
 
 import javax.inject.{Singleton, Inject}
 
-import de.frosner.broccoli.models.{InstanceCreation, Instance}
+import de.frosner.broccoli.models.{InstanceStatus, InstanceCreation, Instance}
 import play.api.Configuration
 import play.api.libs.json.{JsString, JsArray}
 import play.api.libs.ws.WSClient
@@ -19,9 +19,9 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
   private val nomadJobPrefix = configuration.getString("broccoli.nomad.jobPrefix").getOrElse("")
 
   private var instances = Map(
-    "zeppelin-frank" -> Instance("zeppelin-frank", templateService.template("zeppelin").get, Map("id" -> "frank")),
-    "zeppelin-pauline" -> Instance("zeppelin-pauline", templateService.template("zeppelin").get, Map("id" -> "pauline")),
-    "zeppelin-basil" -> Instance("jupyter-basil", templateService.template("jupyter").get, Map("id" -> "basil"))
+    "zeppelin-frank" -> Instance("zeppelin-frank", templateService.template("zeppelin").get, Map("id" -> "frank"), InstanceStatus.Pending),
+    "zeppelin-pauline" -> Instance("zeppelin-pauline", templateService.template("zeppelin").get, Map("id" -> "pauline"), InstanceStatus.Running),
+    "zeppelin-basil" -> Instance("jupyter-basil", templateService.template("jupyter").get, Map("id" -> "basil"), InstanceStatus.Stopped)
   )
 
   def getInstances: Iterable[Instance] = instances.values
@@ -37,7 +37,7 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
       } else {
         val potentialTemplate = templateService.template(templateId)
         potentialTemplate.map { template =>
-          instances = instances.updated(id, Instance(id, template, instanceCreation.parameters))
+          instances = instances.updated(id, Instance(id, template, instanceCreation.parameters, InstanceStatus.Unknown))
           Success(id)
         }.getOrElse(Failure(new IllegalArgumentException(s"Template $templateId does not exist.")))
       }
@@ -54,7 +54,7 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
       val (ids, names) = ((jsArray \\ "ID").map(_.as[JsString].value), (jsArray \\ "Name").map(_.as[JsString].value))
       ids.zip(names).flatMap{
         case (id, name) => templateService.template(name).map(
-          template => Instance(id, template, Map("id" -> id))
+          template => Instance(id, template, Map("id" -> id), InstanceStatus.Unknown)
         )
       }
     })
