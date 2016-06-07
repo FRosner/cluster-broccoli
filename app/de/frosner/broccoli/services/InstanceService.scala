@@ -3,7 +3,8 @@ package de.frosner.broccoli.services
 import javax.inject.{Singleton, Inject}
 
 import de.frosner.broccoli.models.{InstanceStatus, InstanceCreation, Instance}
-import play.api.Configuration
+import de.frosner.broccoli.util.Logging
+import play.api.{Logger, Configuration}
 import play.api.libs.json.{JsString, JsArray}
 import play.api.libs.ws.WSClient
 
@@ -11,7 +12,7 @@ import scala.concurrent.Future
 import scala.util.{Success, Failure, Try}
 
 @Singleton
-class InstanceService @Inject() (configuration: Configuration, ws: WSClient, templateService: TemplateService) {
+class InstanceService @Inject() (configuration: Configuration, ws: WSClient, templateService: TemplateService) extends Logging {
 
   implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -28,20 +29,21 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
 
   def getInstance(id: String): Option[Instance] = instances.get(id)
 
-  def addInstance(instanceCreation: InstanceCreation): Try[String] = {
+  def addInstance(instanceCreation: InstanceCreation): Try[String] = synchronized {
+    Logger.info(s"Request received to create new instance: $instanceCreation")
     val maybeId = instanceCreation.parameters.get("id")
     val templateId = instanceCreation.templateId
     maybeId.map { id =>
       if (instances.contains(id)) {
-        Failure(new IllegalArgumentException(s"There is already an instance having the ID $id"))
+        Failure(newExceptionWithWarning(new IllegalArgumentException(s"There is already an instance having the ID $id")))
       } else {
         val potentialTemplate = templateService.template(templateId)
         potentialTemplate.map { template =>
           instances = instances.updated(id, Instance(id, template, instanceCreation.parameters, InstanceStatus.Unknown))
           Success(id)
-        }.getOrElse(Failure(new IllegalArgumentException(s"Template $templateId does not exist.")))
+        }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException(s"Template $templateId does not exist."))))
       }
-    }.getOrElse(Failure(new IllegalArgumentException("No ID specified")))
+    }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException("No ID specified"))))
   }
 
   // TODO when do I ask for the status of the instance? if asking, I need to ask Nomad
