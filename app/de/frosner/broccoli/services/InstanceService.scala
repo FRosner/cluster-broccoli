@@ -20,6 +20,7 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
   private val nomadJobPrefix = configuration.getString("broccoli.nomad.jobPrefix").getOrElse("")
 
   // TODO regularily ask nomad for updates on instance status instead of with every GET, do this with actors?
+  @volatile
   private var instances = Map(
     "zeppelin-frank" -> Instance(
       id = "zeppelin-frank",
@@ -48,7 +49,7 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
 
   def getInstance(id: String): Option[Instance] = instances.get(id)
 
-  def addInstance(instanceCreation: InstanceCreation): Try[String] = synchronized {
+  def addInstance(instanceCreation: InstanceCreation): Try[String] = {
     Logger.info(s"Request received to create new instance: $instanceCreation")
     val maybeId = instanceCreation.parameters.get("id")
     val templateId = instanceCreation.templateId
