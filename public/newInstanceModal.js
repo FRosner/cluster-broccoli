@@ -5,22 +5,11 @@ angular.module('broccoli')
     vm.parameters = parameters;
     vm.paramsToValue = {};
 
-    vm.click = click;
     vm.ok = ok;
     vm.cancel = cancel;
 
-    activate();
-
-    function activate() {
-      console.log('modal');
-    }
-
-    function click() {
-      console.log(vm.paramsToValue);
-    }
-
     function ok() {
-      $uibModalInstance.close(paramsToValue);
+      $uibModalInstance.close(vm.paramsToValue);
     };
 
     function cancel() {

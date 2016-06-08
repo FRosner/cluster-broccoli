@@ -2,6 +2,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
     .controller('AppsCtrl', function(Restangular, $uibModal) {
         var vm = this;
         vm.apps = [];
+        vm.templates = []
 
         vm.openModal = openModal;
 
@@ -10,6 +11,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
         function activate() {
           Restangular.all("templates").getList().then(function(templates) {
             templates.forEach(function(template) {
+              vm.templates.push(template);
               Restangular.one("templates", template).get().then(function(template){
                 template.imageUrl = "/assets/" + template.id + ".svg"
                 template.instances = [];
@@ -43,9 +45,15 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
           });
 
           modalInstance.result.then(function (paramsToValue) {
-            // todo post paramsToValue
-          }, function () {
-            console.log('Modal dismissed at: ' + new Date());
+            Restangular.all("instances").post({
+              templateId: templateApp.id,
+              parameters: paramsToValue
+            }).then(function(newInstance) {
+              templateApp.instances.push(newInstance);
+            }, function(error) {
+              console.log("There was an error creating");
+              console.log(error);
+            });
           });
         };
     });

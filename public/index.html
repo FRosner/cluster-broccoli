@@ -62,7 +62,7 @@
             <div class="col-md-12">
                 <table class="table table">
                   <tbody>
-                      <tr ng-repeat="instance in app.instances">
+                      <tr ng-repeat="instance in app.instances | orderBy:'id'">
                         <th scope="row">{{instance.id}}</th>
                         <td>{{instance.url}}</td>
                         <td>{{instance.actualStatus}}</td>
