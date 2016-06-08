@@ -59,7 +59,7 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
       } else {
         val potentialTemplate = templateService.template(templateId)
         potentialTemplate.map { template =>
-          val newInstance = Instance(id, template, instanceCreation.parameters, InstanceStatus.Unknown)
+          val newInstance = Instance(id, template, instanceCreation.parameters, InstanceStatus.Stopped)
           instances = instances.updated(id, newInstance)
           Success(newInstance)
         }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException(s"Template $templateId does not exist."))))
