@@ -50,7 +50,7 @@ class InstanceController @Inject() (instanceService: InstanceService) extends Co
         val newInstance = instanceService.addInstance(instanceCreation)
         newInstance.map { instance =>
           Status(201)(Json.toJson(instance)).withHeaders(
-            LOCATION -> s"/instances/$instance" // TODO String constant
+            LOCATION -> s"/instances/${instance.id}" // TODO String constant
           )
         }.recover {
           case error => Status(400)(error.getMessage)
