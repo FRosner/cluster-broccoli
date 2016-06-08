@@ -22,28 +22,26 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
   private val nomadJobPrefix = configuration.getString("broccoli.nomad.jobPrefix").getOrElse("")
 
   // TODO regularily ask nomad for updates on instance status instead of with every GET, do this with actors?
+  // TODO https://www.playframework.com/documentation/2.5.x/ScalaAkka
   @volatile
   private var instances = Map(
     "zeppelin-frank" -> Instance(
       id = "zeppelin-frank",
       template = templateService.template("zeppelin").get,
       parameterValues = Map("id" -> "frank"),
-      actualStatus = InstanceStatus.Pending,
-      desiredStatus = InstanceStatus.Running
+      status = InstanceStatus.Started
     ),
     "zeppelin-pauline" -> Instance(
       id = "zeppelin-pauline",
       template = templateService.template("zeppelin").get,
       parameterValues = Map("id" -> "pauline"),
-      actualStatus = InstanceStatus.Running,
-      desiredStatus = InstanceStatus.Running
+      status = InstanceStatus.Starting
     ),
     "jupyter-basil" -> Instance(
       id = "jupyter-basil",
       template = templateService.template("jupyter").get,
       parameterValues = Map("id" -> "basil"),
-      actualStatus = InstanceStatus.Stopped,
-      desiredStatus = InstanceStatus.Stopped
+      status = InstanceStatus.Stopped
     )
   )
 
@@ -61,7 +59,7 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
       } else {
         val potentialTemplate = templateService.template(templateId)
         potentialTemplate.map { template =>
-          val newInstance = Instance(id, template, instanceCreation.parameters, InstanceStatus.Unknown, InstanceStatus.Unknown)
+          val newInstance = Instance(id, template, instanceCreation.parameters, InstanceStatus.Unknown)
           instances = instances.updated(id, newInstance)
           Success(newInstance)
         }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException(s"Template $templateId does not exist."))))
@@ -69,10 +67,10 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
     }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException("No ID specified"))))
   }
 
-  def setDesiredStatus(id: String, desired: InstanceStatus): Option[Instance] = {
+  def setStatus(id: String, status: InstanceStatus): Option[Instance] = {
     val maybeInstance = instances.get(id)
     maybeInstance.map { instance =>
-      instance.desiredStatus = desired
+      instance.status = status
       instance
     }
   }
@@ -86,7 +84,7 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
       val (ids, names) = ((jsArray \\ "ID").map(_.as[JsString].value), (jsArray \\ "Name").map(_.as[JsString].value))
       ids.zip(names).flatMap{
         case (id, name) => templateService.template(name).map(
-          template => Instance(id, template, Map("id" -> id), InstanceStatus.Unknown, InstanceStatus.Unknown)
+          template => Instance(id, template, Map("id" -> id), InstanceStatus.Unknown)
         )
       }
     })

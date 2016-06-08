@@ -3,8 +3,9 @@ package de.frosner.broccoli.models
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import play.api.libs.json.Json
 
+// TODO rename actualStatus to status
 @volatile
-case class Instance(id: String, template: Template, parameterValues: Map[String, String], actualStatus: InstanceStatus, var desiredStatus: InstanceStatus) {
+case class Instance(id: String, template: Template, parameterValues: Map[String, String], var status: InstanceStatus) {
 
   require(template.parameters == parameterValues.keySet, s"The given parameters (${parameterValues.keySet}) " +
     s"need to match the ones in the template (${template.parameters}).")

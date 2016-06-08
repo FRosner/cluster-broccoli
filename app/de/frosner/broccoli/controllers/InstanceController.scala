@@ -3,7 +3,8 @@ package de.frosner.broccoli.controllers
 import javax.inject.Inject
 
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
-import de.frosner.broccoli.models.{InstanceCreation, Instance}
+import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
+import de.frosner.broccoli.models.{InstanceStatus, InstanceCreation, Instance}
 import Instance.{instanceReads, instanceWrites}
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
 import de.frosner.broccoli.services.InstanceService
@@ -65,9 +66,13 @@ class InstanceController @Inject() (instanceService: InstanceService) extends Co
     // TODO check if validate fails
     val maybeValidatedExpectedInstanceStatus = request.body.asJson.map(_.validate[InstanceStatus])
     maybeValidatedExpectedInstanceStatus.map { validatedExpectedInstanceStatus =>
-      validatedExpectedInstanceStatus.map { expectedInstanceStatus =>
-        val changedInstance = instanceService.setDesiredStatus(id, expectedInstanceStatus)
-        changedInstance.map(i => Ok(Json.toJson(i))).getOrElse(NotFound)
+      validatedExpectedInstanceStatus.map { status =>
+        if (status == InstanceStatus.Starting || status == InstanceStatus.Stopping) {
+          val changedInstance = instanceService.setStatus(id, status)
+          changedInstance.map(i => Ok(Json.toJson(i))).getOrElse(NotFound)
+        } else {
+          Status(400)(s"Status can only be set to ${InstanceStatus.Starting} or ${InstanceStatus.Stopping}")
+        }
       }.recoverTotal { error =>
         Status(400)("Invalid JSON format: " + error.toString)
       }
