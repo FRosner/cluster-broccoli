@@ -2,10 +2,12 @@ package de.frosner.broccoli.controllers
 
 import javax.inject.Inject
 
+import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import de.frosner.broccoli.models.{InstanceCreation, Instance}
 import Instance.{instanceReads, instanceWrites}
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
 import de.frosner.broccoli.services.InstanceService
+import play.api.Logger
 
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Controller}
@@ -41,6 +43,7 @@ class InstanceController @Inject() (instanceService: InstanceService) extends Co
 
   // TODO don't send ID in parameters but generate one instead
   def create = Action { request =>
+    // TODO check if validate fails
     val maybeValidatedInstanceCreation = request.body.asJson.map(_.validate[InstanceCreation])
     maybeValidatedInstanceCreation.map { validatedInstanceCreation =>
       validatedInstanceCreation.map { instanceCreation =>
@@ -53,6 +56,19 @@ class InstanceController @Inject() (instanceService: InstanceService) extends Co
           case error => Status(400)(error.getMessage)
         }.get
       }.recoverTotal{ case error =>
+        Status(400)("Invalid JSON format: " + error.toString)
+      }
+    }.getOrElse(Status(400)("Expected JSON data"))
+  }
+
+  def update(id: String) = Action { request =>
+    // TODO check if validate fails
+    val maybeValidatedExpectedInstanceStatus = request.body.asJson.map(_.validate[InstanceStatus])
+    maybeValidatedExpectedInstanceStatus.map { validatedExpectedInstanceStatus =>
+      validatedExpectedInstanceStatus.map { expectedInstanceStatus =>
+        val changedInstance = instanceService.setDesiredStatus(id, expectedInstanceStatus)
+        changedInstance.map(i => Ok(Json.toJson(i))).getOrElse(NotFound)
+      }.recoverTotal { error =>
         Status(400)("Invalid JSON format: " + error.toString)
       }
     }.getOrElse(Status(400)("Expected JSON data"))

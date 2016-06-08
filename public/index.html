@@ -66,6 +66,7 @@
                         <th scope="row">{{instance.id}}</th>
                         <td>{{instance.url}}</td>
                         <td>{{instance.actualStatus}}</td>
+                        <td>{{instance.desiredStatus}}</td>
                         <td ng-if="instance.actualStatus.toLowerCase() === 'stopped'">
                           <button type="button" class="btn btn-success">Start</button></td>
                         <td ng-if="instance.actualStatus.toLowerCase() !== 'stopped'">

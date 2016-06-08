@@ -12,6 +12,7 @@ GET     /templates/:id                      @de.frosner.broccoli.controllers.Tem
 GET     /instances                          @de.frosner.broccoli.controllers.InstanceController.list(templateId: Option[String])
 GET     /instances/:id                      @de.frosner.broccoli.controllers.InstanceController.show(id: String)
 PUT     /instances                          @de.frosner.broccoli.controllers.InstanceController.create
+POST    /instances/:id                      @de.frosner.broccoli.controllers.InstanceController.update(id: String)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file                       @controllers.Assets.versioned(path="/public", file)

@@ -2,6 +2,8 @@ package de.frosner.broccoli.services
 
 import javax.inject.{Singleton, Inject}
 
+import de.frosner.broccoli.models.InstanceStatus
+import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import de.frosner.broccoli.models.{InstanceStatus, InstanceCreation, Instance}
 import de.frosner.broccoli.util.Logging
 import play.api.{Logger, Configuration}
@@ -66,8 +68,15 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
     }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException("No ID specified"))))
   }
 
-  // TODO when do I ask for the status of the instance? if asking, I need to ask Nomad
-  // I guess each instance should have a status object that is queried only if GET /instances/<id> is used
+  def setDesiredStatus(id: String, desired: InstanceStatus): Option[Instance] = {
+    val maybeInstance = instances.get(id)
+    maybeInstance.map { instance =>
+      instance.desiredStatus = desired
+      instance
+    }
+  }
+
+  // TODO ask nomad periodically for the current status and send a request according to the desired status
 
   def nomadInstances: Future[Seq[Instance]] = {
     val jobsRequest = ws.url(nomadBaseUrl + "/v1/jobs").withQueryString("prefix" -> nomadJobPrefix)
