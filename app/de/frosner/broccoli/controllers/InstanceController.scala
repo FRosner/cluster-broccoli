@@ -47,10 +47,10 @@ class InstanceController @Inject() (instanceService: InstanceService) extends Co
     val maybeValidatedInstanceCreation = request.body.asJson.map(_.validate[InstanceCreation])
     maybeValidatedInstanceCreation.map { validatedInstanceCreation =>
       validatedInstanceCreation.map { instanceCreation =>
-        val newId = instanceService.addInstance(instanceCreation)
-        newId.map { id =>
-          Ok(s"Created instance with ID ${id} created successfully.").withHeaders(
-            LOCATION -> s"/instances/$id" // TODO String constant
+        val newInstance = instanceService.addInstance(instanceCreation)
+        newInstance.map { instance =>
+          Ok(Json.toJson(instance)).withHeaders(
+            LOCATION -> s"/instances/$instance" // TODO String constant
           )
         }.recover {
           case error => Status(400)(error.getMessage)

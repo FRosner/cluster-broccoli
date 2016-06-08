@@ -51,7 +51,7 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
 
   def getInstance(id: String): Option[Instance] = instances.get(id)
 
-  def addInstance(instanceCreation: InstanceCreation): Try[String] = {
+  def addInstance(instanceCreation: InstanceCreation): Try[Instance] = {
     Logger.info(s"Request received to create new instance: $instanceCreation")
     val maybeId = instanceCreation.parameters.get("id")
     val templateId = instanceCreation.templateId
@@ -61,8 +61,9 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
       } else {
         val potentialTemplate = templateService.template(templateId)
         potentialTemplate.map { template =>
-          instances = instances.updated(id, Instance(id, template, instanceCreation.parameters, InstanceStatus.Unknown, InstanceStatus.Unknown))
-          Success(id)
+          val newInstance = Instance(id, template, instanceCreation.parameters, InstanceStatus.Unknown, InstanceStatus.Unknown)
+          instances = instances.updated(id, newInstance)
+          Success(newInstance)
         }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException(s"Template $templateId does not exist."))))
       }
     }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException("No ID specified"))))
