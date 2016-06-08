@@ -45,13 +45,13 @@
 
 <body ng-controller="AppsCtrl as appsCtrl">
     <div class="container">
-        <div class="row" ng-repeat="app in appsCtrl.apps track by $index">
+        <div class="row" ng-repeat="app in appsCtrl.apps">
             <h2>{{app.id}}</h2>
             <div class="col-md-12">
                 <div class="col-md-2">
                   <div ng-init="itemsrc = app.imageUrl" ng-mouseover="itemsrc='assets/plus.svg'" ng-mouseout="itemsrc = app.imageUrl" >
                     <img ng-src="{{itemsrc}}" class="img-rounded" data-holder-rendered="true"
-                      style="width: 100px; height: 100px;" ng-click="appsCtrl.openModal()"></img>
+                      style="width: 100px; height: 100px;" ng-click="appsCtrl.openModal(app)"></img>
                   </div>
                 </div>
                 <div class="col-md-2">

@@ -25,21 +25,25 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
           });
         }
 
-        function openModal() {
+        function openModal(templateApp) {
           var modalInstance = $uibModal.open({
             animation: true,
             templateUrl: '/assets/newInstanceModal.html',
             controller: 'NewInstanceCtrl',
+            controllerAs: 'instCtrl',
             size: undefined,
             resolve: {
-              nothing: function () {
-                return '';
+              templateId: function () {
+                return templateApp.id;
+              },
+              parameters: function () {
+                return templateApp.parameters;
               }
             }
           });
 
-          modalInstance.result.then(function (selectedItem) {
-            vm.selected = selectedItem;
+          modalInstance.result.then(function (paramsToValue) {
+            // todo post paramsToValue
           }, function () {
             console.log('Modal dismissed at: ' + new Date());
           });

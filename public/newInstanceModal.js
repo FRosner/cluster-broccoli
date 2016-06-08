@@ -1,10 +1,29 @@
-angular.module('broccoli').controller('NewInstanceCtrl', function ($scope, $uibModalInstance) {
+angular.module('broccoli')
+  .controller('NewInstanceCtrl', function ($scope, $uibModalInstance, templateId, parameters) {
+    var vm = this;
+    vm.templateId = templateId;
+    vm.parameters = parameters;
+    vm.paramsToValue = {};
 
-  $scope.ok = function () {
-    $uibModalInstance.close('closing information');
-  };
+    vm.click = click;
+    vm.ok = ok;
+    vm.cancel = cancel;
 
-  $scope.cancel = function () {
-    $uibModalInstance.dismiss('cancel');
-  };
+    activate();
+
+    function activate() {
+      console.log('modal');
+    }
+
+    function click() {
+      console.log(vm.paramsToValue);
+    }
+
+    function ok() {
+      $uibModalInstance.close(paramsToValue);
+    };
+
+    function cancel() {
+      $uibModalInstance.dismiss();
+    };
 });
