@@ -49,7 +49,7 @@ class InstanceController @Inject() (instanceService: InstanceService) extends Co
       validatedInstanceCreation.map { instanceCreation =>
         val newInstance = instanceService.addInstance(instanceCreation)
         newInstance.map { instance =>
-          Ok(Json.toJson(instance)).withHeaders(
+          Status(201)(Json.toJson(instance)).withHeaders(
             LOCATION -> s"/instances/$instance" // TODO String constant
           )
         }.recover {
