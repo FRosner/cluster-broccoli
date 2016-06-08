@@ -8,7 +8,7 @@ import play.api.libs.functional.syntax._ // Combinator syntax
 
 import scala.collection.mutable.ArrayBuffer
 
-case class Template(id: String, template: String) {
+case class Template(id: String, template: String, description: String) {
 
   val parameters: Set[String] = {
     val matcher = Template.TemplatePattern.matcher(template)
@@ -28,12 +28,14 @@ object Template {
   implicit val templateWrites: Writes[Template] = (
     (JsPath \ "id").write[String] and
       (JsPath \ "template").write[String] and
+      (JsPath \ "description").write[String] and
       (JsPath \ "parameters").write[Set[String]]
-    )((template: Template) => (template.id, template.template, template.parameters))
+    )((template: Template) => (template.id, template.template, template.description, template.parameters))
 
   implicit val templateReads: Reads[Template] = (
     (JsPath \ "id").read[String] and
-      (JsPath \ "template").read[String]
+      (JsPath \ "template").read[String] and
+      (JsPath \ "description").read[String]
     )(Template.apply _)
 
 }

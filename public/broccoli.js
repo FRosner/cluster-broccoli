@@ -20,7 +20,6 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
                     template.instances.push(instance);
                   });
                 });
-                template.description = JSON.stringify(template.parameters);
                 vm.apps.push(template);
               });
             });

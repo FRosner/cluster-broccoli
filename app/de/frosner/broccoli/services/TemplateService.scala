@@ -28,10 +28,16 @@ class TemplateService @Inject() (configuration: Configuration) {
     Logger.info(s"Found ${templateDirectories.size} template directories: ${templateDirectories.mkString(", ")}")
 
     val templates = templateDirectories.flatMap(templateDirectory => {
-      val templateFile = new File(templateDirectory, "template.nomad")
-      val tryFileContent = Try(Source.fromFile(templateFile).getLines.mkString("\n"))
-      val tryTemplate = tryFileContent.map(content => Template(templateDirectory.getName, content))
-      tryTemplate.failed.map(throwable => Logger.warn(s"Parsing $templateFile failed: $throwable"))
+      val tryTemplate = Try {
+        val templateFile = new File(templateDirectory, "template.nomad")
+        val templateFileContent = Source.fromFile(templateFile).getLines.mkString("\n")
+        val descriptionFileContent = Try {
+          Source.fromFile(new File(templateDirectory, "description.txt")).getLines.mkString("\n")
+        }
+        val templateId = templateDirectory.getName
+        Template(templateId, templateFileContent, descriptionFileContent.getOrElse(s"Template $templateId."))
+      }
+      tryTemplate.failed.map(throwable => Logger.warn(s"Parsing template failed: $throwable"))
       tryTemplate.toOption
     })
     Logger.info(s"Successfully parsed ${templates.size} templates: ${templates.map(_.id).mkString(", ")}")
