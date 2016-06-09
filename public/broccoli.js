@@ -1,5 +1,5 @@
 angular.module('broccoli', ['restangular', 'ui.bootstrap'])
-    .controller('AppsCtrl', function(Restangular, $uibModal) {
+    .controller('AppsCtrl', function(Restangular, $uibModal, $scope) {
         var vm = this;
         vm.apps = [];
         vm.templates = []
@@ -25,6 +25,18 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
             });
           });
         }
+
+        function submitStatus(instance, status) {
+          Restangular.all("instances")
+            .customPOST('"' + status + '"', instance.id, {}, {})
+            .then(function(updatedInstance) {
+              for (i in updatedInstance) {
+                instance[i] = updatedInstance[i];
+              };
+            });
+        }
+
+        $scope.submitStatus = submitStatus;
 
         function openModal(templateApp) {
           var modalInstance = $uibModal.open({
