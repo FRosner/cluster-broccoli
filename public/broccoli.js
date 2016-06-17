@@ -1,26 +1,33 @@
 angular.module('broccoli', ['restangular', 'ui.bootstrap'])
-    .controller('AppsCtrl', function(Restangular, $uibModal, $scope) {
+    .controller('AppsCtrl', function(Restangular, $uibModal, $scope, $timeout) {
         var vm = this;
-        vm.apps = [];
-        vm.templates = []
+        vm.templates = {};
 
         vm.openModal = openModal;
 
-        activate();
+        updateTemplates();
 
-        function activate() {
-          Restangular.all("templates").getList().then(function(templates) {
-            templates.forEach(function(template) {
-              vm.templates.push(template);
-              Restangular.one("templates", template).get().then(function(template){
+        function updateInstances(template) {
+          console.log("Updating instance of template " + template.id)
+          Restangular.all("instances").getList({ "templateId" : template.id }).then(function(instances) {
+            instances.forEach(function(instance) {
+              template.instances[instance.id] = instance;
+            });
+          });
+          $timeout(function(){
+            updateInstances(template);
+          }, 1000);
+        }
+
+        function updateTemplates() {
+          console.log("Updating templates")
+          Restangular.all("templates").getList().then(function(templateIds) {
+            templateIds.forEach(function(templateId) {
+              Restangular.one("templates", templateId).get().then(function(template){
                 template.imageUrl = "/assets/" + template.id + ".svg"
-                template.instances = [];
-                Restangular.all("instances").getList({ "templateId" : template.id }).then(function(instances) {
-                  instances.forEach(function(instance) {
-                    template.instances.push(instance);
-                  });
-                });
-                vm.apps.push(template);
+                template.instances = {};
+                vm.templates[template.id] = template;
+                updateInstances(template);
               });
             });
           });

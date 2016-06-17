@@ -45,23 +45,23 @@
 
 <body ng-controller="AppsCtrl as appsCtrl">
     <div class="container">
-        <div class="row" ng-repeat="app in appsCtrl.apps">
-            <h2>{{app.id}}</h2>
+        <div class="row" ng-repeat="template in appsCtrl.templates">
+            <h2>{{template.id}}</h2>
             <div class="col-md-12">
                 <div class="col-md-2">
-                  <div ng-init="itemsrc = app.imageUrl" ng-mouseover="itemsrc='assets/plus.svg'" ng-mouseout="itemsrc = app.imageUrl" >
+                  <div ng-init="itemsrc = template.imageUrl" ng-mouseover="itemsrc='assets/plus.svg'" ng-mouseout="itemsrc = template.imageUrl" >
                     <img ng-src="{{itemsrc}}" class="img-rounded" data-holder-rendered="true"
-                      style="width: 100px; height: 100px;" ng-click="appsCtrl.openModal(app)"></img>
+                      style="width: 100px; height: 100px;" ng-click="appsCtrl.openModal(template)"></img>
                   </div>
                 </div>
                 <div class="col-md-10">
-                  {{app.description}}
+                  {{template.description}}
                 </div>
             </div>
             <div class="col-md-12">
                 <table class="table table">
                   <tbody>
-                      <tr ng-repeat="instance in app.instances | orderBy:'id'">
+                      <tr ng-repeat="instance in template.instances">
                         <th scope="row">{{instance.id}}</th>
                         <td>{{instance.url}}</td>
                         <td>{{instance.status}}</td>

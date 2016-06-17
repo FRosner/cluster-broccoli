@@ -28,7 +28,7 @@ class InstanceService @Inject()(configuration: Configuration,
 
   private val cancellable: Cancellable = system.scheduler.schedule(
     initialDelay = Duration.Zero,
-    interval = Duration.create(5, TimeUnit.SECONDS),
+    interval = Duration.create(1, TimeUnit.SECONDS),
     receiver = nomadActor,
     message = GetStatuses
   )(
