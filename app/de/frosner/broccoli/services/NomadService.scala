@@ -10,6 +10,8 @@ import play.api.libs.json.{JsArray, JsString}
 import play.api.libs.ws.WSClient
 import play.api.{Configuration, Logger}
 
+import scala.util.{Failure, Success}
+
 class NomadService @Inject()(configuration: Configuration, ws: WSClient) extends Actor {
 
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -28,14 +30,17 @@ class NomadService @Inject()(configuration: Configuration, ws: WSClient) extends
         val (ids, statuses) = ((jsArray \\ "ID").map(_.as[JsString].value), (jsArray \\ "Status").map(_.as[JsString].value))
         (ids, statuses)
       })
-      jobsWithTemplate.onSuccess{ case (ids, statuses) =>
-        Logger.info(s"Received a status update of jobs: ${ids.mkString(", ")}")
-        val idsAndStatuses = ids.zip(statuses.map{
-          case "running" => InstanceStatus.Running
-          case default => Logger.warn(s"Unmatched status received: $default")
-            InstanceStatus.Unknown
-        })
-        sendingService ! NomadStatuses(idsAndStatuses.toMap)
+      jobsWithTemplate.onComplete{
+        case Success((ids, statuses)) => {
+          Logger.info(s"Received a status update of jobs: ${ids.mkString(", ")}")
+          val idsAndStatuses = ids.zip(statuses.map {
+            case "running" => InstanceStatus.Running
+            case default => Logger.warn(s"Unmatched status received: $default")
+              InstanceStatus.Unknown
+          })
+          sendingService ! NomadStatuses(idsAndStatuses.toMap)
+        }
+        case Failure(throwable) => Logger.error(throwable.toString)
       }
   }
 }
