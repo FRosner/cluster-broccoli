@@ -1,28 +1,42 @@
 package de.frosner.broccoli.services
 
-import javax.inject.{Singleton, Inject}
+import java.util.concurrent.TimeUnit
+import javax.inject.{Named, Singleton, Inject}
 
+import akka.actor.{ActorRef, Cancellable, ActorSystem}
 import de.frosner.broccoli.models.InstanceStatus
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import de.frosner.broccoli.models.{InstanceStatus, InstanceCreation, Instance}
+import de.frosner.broccoli.nomad.NomadActor
+import de.frosner.broccoli.nomad.NomadActor.ListJobs
 import de.frosner.broccoli.util.Logging
 import play.api.{Logger, Configuration}
 import play.api.libs.json.{JsString, JsArray}
 import play.api.libs.ws.WSClient
 
 import scala.concurrent.Future
+import scala.concurrent.duration.Duration
 import scala.util.{Success, Failure, Try}
 
 @Singleton
-class InstanceService @Inject() (configuration: Configuration, ws: WSClient, templateService: TemplateService) extends Logging {
+class InstanceService @Inject() (configuration: Configuration,
+                                 templateService: TemplateService,
+                                 system: ActorSystem,
+                                 @Named("nomad-actor") nomadActor: ActorRef,
+                                 ws: WSClient) extends Logging {
+
+  private val cancellable: Cancellable = system.scheduler.schedule(
+    initialDelay = Duration.Zero,
+    interval = Duration.create(5, TimeUnit.SECONDS),
+    receiver = nomadActor,
+    message = ListJobs
+  )(
+    system.dispatcher,
+    null
+  )
 
   implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  private val nomadBaseUrl = configuration.getString("broccoli.nomad.url").getOrElse("http://localhost:4646")
-  private val nomadJobPrefix = configuration.getString("broccoli.nomad.jobPrefix").getOrElse("")
-
-  // TODO regularily ask nomad for updates on instance status instead of with every GET, do this with actors?
-  // TODO https://www.playframework.com/documentation/2.5.x/ScalaAkka
   @volatile
   private var instances = Map(
     "zeppelin-frank" -> Instance(
@@ -77,20 +91,20 @@ class InstanceService @Inject() (configuration: Configuration, ws: WSClient, tem
 
   // TODO ask nomad periodically for the current status and send a request according to the desired status
 
-  def nomadInstances: Future[Seq[Instance]] = {
-    val jobsRequest = ws.url(nomadBaseUrl + "/v1/jobs").withQueryString("prefix" -> nomadJobPrefix)
-    val jobsResponse = jobsRequest.get().map(_.json.as[JsArray])
-    val jobsWithTemplate = jobsResponse.map(jsArray => {
-      val (ids, names) = ((jsArray \\ "ID").map(_.as[JsString].value), (jsArray \\ "Name").map(_.as[JsString].value))
-      ids.zip(names).flatMap{
-        case (id, name) => templateService.template(name).map(
-          template => Instance(id, template, Map("id" -> id), InstanceStatus.Unknown)
-        )
-      }
-    })
-    jobsWithTemplate
-  }
+//  def nomadInstances: Future[Seq[Instance]] = {
+//    val jobsRequest = ws.url(nomadBaseUrl + "/v1/jobs").withQueryString("prefix" -> nomadJobPrefix)
+//    val jobsResponse = jobsRequest.get().map(_.json.as[JsArray])
+//    val jobsWithTemplate = jobsResponse.map(jsArray => {
+//      val (ids, names) = ((jsArray \\ "ID").map(_.as[JsString].value), (jsArray \\ "Name").map(_.as[JsString].value))
+//      ids.zip(names).flatMap{
+//        case (id, name) => templateService.template(name).map(
+//          template => Instance(id, template, Map("id" -> id), InstanceStatus.Unknown)
+//        )
+//      }
+//    })
+//    jobsWithTemplate
+//  }
 
-  def nomadInstance(id: String): Future[Option[Instance]] = nomadInstances.map(_.find(_.id == id))
+//  def nomadInstance(id: String): Future[Option[Instance]] = nomadInstances.map(_.find(_.id == id))
 
 }
