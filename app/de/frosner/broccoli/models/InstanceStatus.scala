@@ -6,10 +6,8 @@ object InstanceStatus extends Enumeration {
 
   type InstanceStatus = Value
 
-  val Starting = Value("starting")
-  val Started = Value("started")
+  val Running = Value("running")
   val Stopped = Value("stopped")
-  val Stopping = Value("stopping")
   val Unknown = Value("unknown")
 
   implicit val instanceStatusWrites: Writes[InstanceStatus] = Writes(value => JsString(value.toString))

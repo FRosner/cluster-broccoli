@@ -80,13 +80,9 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
     val maybeValidatedExpectedInstanceStatus = request.body.asJson.map(_.validate[InstanceStatus])
     maybeValidatedExpectedInstanceStatus.map { validatedExpectedInstanceStatus =>
       validatedExpectedInstanceStatus.map { status =>
-        if (status == InstanceStatus.Starting || status == InstanceStatus.Stopping) {
-          val eventuallyChangedInstance = instanceService.ask(SetStatus(id, status)).mapTo[Option[Instance]]
-          eventuallyChangedInstance.map { changedInstance =>
-            changedInstance.map(i => Ok(Json.toJson(i))).getOrElse(NotFound)
-          }
-        } else {
-          Future(Status(400)(s"Status can only be set to ${InstanceStatus.Starting} or ${InstanceStatus.Stopping}"))
+        val eventuallyChangedInstance = instanceService.ask(SetStatus(id, status)).mapTo[Option[Instance]]
+        eventuallyChangedInstance.map { changedInstance =>
+          changedInstance.map(i => Ok(Json.toJson(i))).getOrElse(NotFound)
         }
       }.recoverTotal { error =>
         Future(Status(400)("Invalid JSON format: " + error.toString))

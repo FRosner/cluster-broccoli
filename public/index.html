@@ -66,16 +66,10 @@
                         <td>{{instance.url}}</td>
                         <td>{{instance.status}}</td>
                         <td ng-if="instance.status.toLowerCase() === 'stopped'">
-                          <button type="button" class="btn btn-success" ng-click="submitStatus(instance, 'starting')">Start</button>
+                          <button type="button" class="btn btn-success" ng-click="submitStatus(instance, 'running')">Start</button>
                         </td>
-                        <td ng-if="instance.status.toLowerCase() === 'stopping'">
-                          <button type="button" class="btn btn-disabled" disabled="true">Stopping</button>
-                        </td>
-                        <td ng-if="instance.status.toLowerCase() === 'started'">
-                          <button type="button" class="btn btn-danger" ng-click="submitStatus(instance, 'stopping')">Stop</button>
-                        </td>
-                        <td ng-if="instance.status.toLowerCase() === 'starting'">
-                          <button type="button" class="btn btn-disabled" disabled="true">Starting</button>
+                        <td ng-if="instance.status.toLowerCase() === 'running'">
+                          <button type="button" class="btn btn-danger" ng-click="submitStatus(instance, 'stopped')">Stop</button>
                         </td>
                       </tr>
                   </tbody>

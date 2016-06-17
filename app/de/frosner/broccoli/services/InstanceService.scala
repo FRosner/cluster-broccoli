@@ -7,7 +7,7 @@ import akka.actor._
 import de.frosner.broccoli.models.InstanceStatus
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import de.frosner.broccoli.models.{InstanceStatus, InstanceCreation, Instance}
-import NomadService.ListJobs
+import de.frosner.broccoli.services.NomadService.GetStatuses
 import de.frosner.broccoli.util.Logging
 import play.api.{Logger, Configuration}
 import play.api.libs.json.{JsString, JsArray}
@@ -30,10 +30,10 @@ class InstanceService @Inject()(configuration: Configuration,
     initialDelay = Duration.Zero,
     interval = Duration.create(5, TimeUnit.SECONDS),
     receiver = nomadActor,
-    message = ListJobs
+    message = GetStatuses
   )(
     system.dispatcher,
-    null
+    self
   )
 
   implicit val executionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -43,19 +43,19 @@ class InstanceService @Inject()(configuration: Configuration,
     "zeppelin-frank" -> Instance(
       id = "zeppelin-frank",
       template = templateService.template("zeppelin").get,
-      parameterValues = Map("id" -> "frank"),
-      status = InstanceStatus.Started
+      parameterValues = Map("id" -> "jupyter-frank"),
+      status = InstanceStatus.Running
     ),
     "zeppelin-pauline" -> Instance(
       id = "zeppelin-pauline",
       template = templateService.template("zeppelin").get,
-      parameterValues = Map("id" -> "pauline"),
-      status = InstanceStatus.Starting
+      parameterValues = Map("id" -> "jupyter-pauline"),
+      status = InstanceStatus.Running
     ),
     "jupyter-basil" -> Instance(
       id = "jupyter-basil",
       template = templateService.template("jupyter").get,
-      parameterValues = Map("id" -> "basil"),
+      parameterValues = Map("id" -> "jupyter-basil"),
       status = InstanceStatus.Stopped
     )
   )
@@ -63,8 +63,21 @@ class InstanceService @Inject()(configuration: Configuration,
   def receive = {
     case GetInstances => sender ! instances.values
     case GetInstance(id) => sender ! instances.get(id)
-    case NewInstance(instanceCreation) => sender ! addInstance(instanceCreation)
-    case SetStatus(id, status) => sender ! setStatus(id, status)
+    case NewInstance(instanceCreation) => sender() ! addInstance(instanceCreation)
+    case SetStatus(id, status) => sender() ! setStatus(id, status)
+    case NomadStatuses(statuses) => updateStatusesBasedOnNomad(statuses)
+  }
+
+  private[this] def updateStatusesBasedOnNomad(statuses: Map[String, InstanceStatus]) = {
+    Logger.info(s"Received statuses: $statuses")
+    instances.foreach { case (id, instance) =>
+      statuses.get(id) match {
+        case Some(nomadStatus) => Logger.info(s"${instance.id}.status changed from ${instance.status} to $nomadStatus")
+          instance.status = nomadStatus
+        case None => Logger.info(s"${instance.id}.status changed from ${instance.status} to ${InstanceStatus.Stopped}")
+          instance.status = InstanceStatus.Stopped
+      }
+    }
   }
 
   private[this] def addInstance(instanceCreation: InstanceCreation): Try[Instance] = {
@@ -86,6 +99,7 @@ class InstanceService @Inject()(configuration: Configuration,
   }
 
   private[this] def setStatus(id: String, status: InstanceStatus): Option[Instance] = {
+    // TODO tell the nomad actor to change the status
     val maybeInstance = instances.get(id)
     maybeInstance.map { instance =>
       instance.status = status
@@ -118,5 +132,6 @@ object InstanceService {
   case class GetInstance(id: String)
   case class NewInstance(instanceCreation: InstanceCreation)
   case class SetStatus(id: String, status: InstanceStatus)
+  case class NomadStatuses(statuses: Map[String, InstanceStatus])
 }
 
