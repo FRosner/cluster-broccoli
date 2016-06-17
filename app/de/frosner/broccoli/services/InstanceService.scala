@@ -3,12 +3,11 @@ package de.frosner.broccoli.services
 import java.util.concurrent.TimeUnit
 import javax.inject.{Named, Singleton, Inject}
 
-import akka.actor.{ActorRef, Cancellable, ActorSystem}
+import akka.actor._
 import de.frosner.broccoli.models.InstanceStatus
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import de.frosner.broccoli.models.{InstanceStatus, InstanceCreation, Instance}
-import de.frosner.broccoli.nomad.NomadActor
-import de.frosner.broccoli.nomad.NomadActor.ListJobs
+import NomadService.ListJobs
 import de.frosner.broccoli.util.Logging
 import play.api.{Logger, Configuration}
 import play.api.libs.json.{JsString, JsArray}
@@ -18,12 +17,14 @@ import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.util.{Success, Failure, Try}
 
+import InstanceService._
+
 @Singleton
-class InstanceService @Inject() (configuration: Configuration,
-                                 templateService: TemplateService,
-                                 system: ActorSystem,
-                                 @Named("nomad-actor") nomadActor: ActorRef,
-                                 ws: WSClient) extends Logging {
+class InstanceService @Inject()(configuration: Configuration,
+                                templateService: TemplateService,
+                                system: ActorSystem,
+                                @Named("nomad-actor") nomadActor: ActorRef,
+                                ws: WSClient) extends Actor with Logging {
 
   private val cancellable: Cancellable = system.scheduler.schedule(
     initialDelay = Duration.Zero,
@@ -35,7 +36,7 @@ class InstanceService @Inject() (configuration: Configuration,
     null
   )
 
-  implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+  implicit val executionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   @volatile
   private var instances = Map(
@@ -59,11 +60,14 @@ class InstanceService @Inject() (configuration: Configuration,
     )
   )
 
-  def getInstances: Iterable[Instance] = instances.values
+  def receive = {
+    case GetInstances => sender ! instances.values
+    case GetInstance(id) => sender ! instances.get(id)
+    case NewInstance(instanceCreation) => sender ! addInstance(instanceCreation)
+    case SetStatus(id, status) => sender ! setStatus(id, status)
+  }
 
-  def getInstance(id: String): Option[Instance] = instances.get(id)
-
-  def addInstance(instanceCreation: InstanceCreation): Try[Instance] = {
+  private[this] def addInstance(instanceCreation: InstanceCreation): Try[Instance] = {
     Logger.info(s"Request received to create new instance: $instanceCreation")
     val maybeId = instanceCreation.parameters.get("id")
     val templateId = instanceCreation.templateId
@@ -81,7 +85,7 @@ class InstanceService @Inject() (configuration: Configuration,
     }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException("No ID specified"))))
   }
 
-  def setStatus(id: String, status: InstanceStatus): Option[Instance] = {
+  private[this] def setStatus(id: String, status: InstanceStatus): Option[Instance] = {
     val maybeInstance = instances.get(id)
     maybeInstance.map { instance =>
       instance.status = status
@@ -108,3 +112,11 @@ class InstanceService @Inject() (configuration: Configuration,
 //  def nomadInstance(id: String): Future[Option[Instance]] = nomadInstances.map(_.find(_.id == id))
 
 }
+
+object InstanceService {
+  case object GetInstances
+  case class GetInstance(id: String)
+  case class NewInstance(instanceCreation: InstanceCreation)
+  case class SetStatus(id: String, status: InstanceStatus)
+}
+

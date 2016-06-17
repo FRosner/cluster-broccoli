@@ -1,16 +1,14 @@
-package de.frosner.broccoli.nomad
+package de.frosner.broccoli.services
 
 import javax.inject.Inject
 
 import akka.actor._
-import de.frosner.broccoli.models.{InstanceStatus, Instance}
-import play.api.{Configuration, Logger}
-import play.api.libs.json.{JsString, JsArray}
+import de.frosner.broccoli.services.NomadService._
+import play.api.libs.json.{JsArray, JsString}
 import play.api.libs.ws.WSClient
+import play.api.{Configuration, Logger}
 
-import NomadActor._
-
-class NomadActor @Inject() (configuration: Configuration, ws: WSClient) extends Actor {
+class NomadService @Inject()(configuration: Configuration, ws: WSClient) extends Actor {
 
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -32,9 +30,7 @@ class NomadActor @Inject() (configuration: Configuration, ws: WSClient) extends 
   }
 }
 
-object NomadActor {
-  def props(nomadBaseUrl: String, ws: WSClient) = Props(classOf[NomadActor], nomadBaseUrl, ws)
-
+object NomadService {
   case object ListJobs
 }
 
