@@ -1,22 +1,21 @@
 package de.frosner.broccoli.services
 
 import java.util.concurrent.TimeUnit
-import javax.inject.{Named, Singleton, Inject}
+import javax.inject.{Inject, Named, Singleton}
 
 import akka.actor._
 import de.frosner.broccoli.models.InstanceStatus
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
-import de.frosner.broccoli.models.{InstanceStatus, InstanceCreation, Instance}
-import de.frosner.broccoli.services.NomadService.GetStatuses
+import de.frosner.broccoli.models.{Instance, InstanceCreation, InstanceStatus}
+import de.frosner.broccoli.services.NomadService.{DeleteJob, GetStatuses, StartJob}
 import de.frosner.broccoli.util.Logging
-import play.api.{Logger, Configuration}
-import play.api.libs.json.{JsString, JsArray}
+import play.api.{Configuration, Logger}
+import play.api.libs.json.{JsArray, JsString, Json}
 import play.api.libs.ws.WSClient
 
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
-import scala.util.{Success, Failure, Try}
-
+import scala.util.{Failure, Success, Try}
 import InstanceService._
 
 @Singleton
@@ -43,13 +42,13 @@ class InstanceService @Inject()(configuration: Configuration,
     "zeppelin-frank" -> Instance(
       id = "zeppelin-frank",
       template = templateService.template("zeppelin").get,
-      parameterValues = Map("id" -> "jupyter-frank"),
+      parameterValues = Map("id" -> "zeppelin-frank"),
       status = InstanceStatus.Running
     ),
     "zeppelin-pauline" -> Instance(
       id = "zeppelin-pauline",
       template = templateService.template("zeppelin").get,
-      parameterValues = Map("id" -> "jupyter-pauline"),
+      parameterValues = Map("id" -> "zeppelin-pauline"),
       status = InstanceStatus.Running
     ),
     "jupyter-basil" -> Instance(
@@ -76,12 +75,12 @@ class InstanceService @Inject()(configuration: Configuration,
   }
 
   private[this] def updateStatusesBasedOnNomad(statuses: Map[String, InstanceStatus]) = {
-    Logger.info(s"Received statuses: $statuses")
+    Logger.debug(s"Received statuses: $statuses")
     instances.foreach { case (id, instance) =>
       statuses.get(id) match {
-        case Some(nomadStatus) => Logger.info(s"${instance.id}.status changed from ${instance.status} to $nomadStatus")
+        case Some(nomadStatus) => Logger.debug(s"${instance.id}.status changed from ${instance.status} to $nomadStatus")
           instance.status = nomadStatus
-        case None => Logger.info(s"${instance.id}.status changed from ${instance.status} to ${InstanceStatus.Stopped}")
+        case None => Logger.debug(s"${instance.id}.status changed from ${instance.status} to ${InstanceStatus.Stopped}")
           instance.status = InstanceStatus.Stopped
       }
     }
@@ -107,13 +106,25 @@ class InstanceService @Inject()(configuration: Configuration,
 
   private[this] def setStatus(id: String, status: InstanceStatus): Option[Instance] = {
     // TODO tell the nomad actor to change the status
-    val maybeInstance = instances.get(id)
-    maybeInstance.map { instance =>
-      instance.status = status
-      instance
-    }
+      val maybeInstance = instances.get(id)
+      maybeInstance.flatMap { instance =>
+        status match {
+          case InstanceStatus.Running =>
+            nomadActor.tell(StartJob(instance.templateJson), self)
+            Some(instance)
+          case InstanceStatus.Stopped =>
+            nomadActor.tell(DeleteJob(instance.id), self)
+            Some(instance)
+          case other =>
+            Logger.warn(s"Unsupported status change received: $other")
+            None
+        }
+      }
+//        maybeInstance.map { instance =>
+//          instance.status = status
+//          instance
+//        }
   }
-
 
 }
 

@@ -1,0 +1,69 @@
+{
+    "Job": {
+        "Region": "global",
+        "ID": "${id}",
+        "Name": "jupyter",
+        "Type": "service",
+        "Priority": 50,
+        "AllAtOnce": false,
+        "Datacenters": [
+            "dc1"
+        ],
+        "Constraints": null,
+        "TaskGroups": [
+            {
+                "Name": "http-group",
+                "Count": 1,
+                "Constraints": null,
+                "Tasks": [
+                    {
+                        "Name": "http-task",
+                        "Driver": "raw_exec",
+                        "User": "",
+                        "Config": {
+                            "args": [
+                                "-m",
+                                "SimpleHTTPServer"
+                            ],
+                            "command": "/usr/bin/python"
+                        },
+                        "Constraints": null,
+                        "Env": null,
+                        "Services": null,
+                        "Resources": {
+                            "CPU": 500,
+                            "MemoryMB": 128,
+                            "DiskMB": 300,
+                            "IOPS": 0,
+                            "Networks": null
+                        },
+                        "Meta": null,
+                        "KillTimeout": 5000000000,
+                        "LogConfig": {
+                            "MaxFiles": 10,
+                            "MaxFileSizeMB": 10
+                        },
+                        "Artifacts": null
+                    }
+                ],
+                "RestartPolicy": {
+                    "Interval": 60000000000,
+                    "Attempts": 2,
+                    "Delay": 15000000000,
+                    "Mode": "delay"
+                },
+                "Meta": null
+            }
+        ],
+        "Update": {
+            "Stagger": 0,
+            "MaxParallel": 0
+        },
+        "Periodic": null,
+        "Meta": null,
+        "Status": "",
+        "StatusDescription": "",
+        "CreateIndex": 0,
+        "ModifyIndex": 0
+    }
+}

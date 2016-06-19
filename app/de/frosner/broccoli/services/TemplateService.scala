@@ -29,7 +29,7 @@ class TemplateService @Inject() (configuration: Configuration) {
 
     val templates = templateDirectories.flatMap(templateDirectory => {
       val tryTemplate = Try {
-        val templateFile = new File(templateDirectory, "template.nomad")
+        val templateFile = new File(templateDirectory, "template.json")
         val templateFileContent = Source.fromFile(templateFile).getLines.mkString("\n")
         val descriptionFileContent = Try {
           Source.fromFile(new File(templateDirectory, "description.txt")).getLines.mkString("\n")
