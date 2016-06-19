@@ -27,15 +27,6 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
   implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
   implicit val timeout: Timeout = Duration.create(5, TimeUnit.SECONDS)
 
-//  def listNomad(templateId: Option[String]) = Action.async {
-//    val maybeFilteredInstances = instanceService.nomadInstances.map(
-//      instances => templateId.map(
-//        id => instances.filter(_.template.id == id)
-//      ).getOrElse(instances)
-//    )
-//    maybeFilteredInstances.map(instances => Ok(Json.toJson(instances)))
-//  }
-
   def list(maybeTemplateId: Option[String]) = Action.async {
     val eventuallyInstances = instanceService.ask(GetInstances).mapTo[Iterable[Instance]]
     val eventuallyFilteredInstances = maybeTemplateId.map(
@@ -43,10 +34,6 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
     ).getOrElse(eventuallyInstances)
     eventuallyFilteredInstances.map(filteredInstances => Ok(Json.toJson(filteredInstances)))
   }
-
-//  def showNomad(id: String) = Action.async {
-//    instanceService.nomadInstance(id).map(_.map(instance => Ok(Json.toJson(instance))).getOrElse(NotFound))
-//  }
 
   def show(id: String) = Action.async {
     val eventuallyMaybeInstance = instanceService.ask(GetInstance(id)).mapTo[Option[Instance]]
