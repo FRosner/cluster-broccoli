@@ -3,8 +3,8 @@ package de.frosner.broccoli.services
 import javax.inject.Inject
 
 import akka.actor._
-import de.frosner.broccoli.models.{InstanceStatus, Instance}
-import de.frosner.broccoli.services.InstanceService.NomadStatuses
+import de.frosner.broccoli.models.{Instance, InstanceStatus}
+import de.frosner.broccoli.services.InstanceService.{NomadNotReachable, NomadStatuses}
 import de.frosner.broccoli.services.NomadService._
 import play.api.libs.json.{JsArray, JsString}
 import play.api.libs.ws.WSClient
@@ -40,7 +40,10 @@ class NomadService @Inject()(configuration: Configuration, ws: WSClient) extends
           })
           sendingService ! NomadStatuses(idsAndStatuses.toMap)
         }
-        case Failure(throwable) => Logger.error(throwable.toString)
+        case Failure(throwable) => {
+          Logger.error(throwable.toString)
+          sendingService ! NomadNotReachable
+        }
       }
   }
 }

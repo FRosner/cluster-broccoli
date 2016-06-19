@@ -66,6 +66,13 @@ class InstanceService @Inject()(configuration: Configuration,
     case NewInstance(instanceCreation) => sender() ! addInstance(instanceCreation)
     case SetStatus(id, status) => sender() ! setStatus(id, status)
     case NomadStatuses(statuses) => updateStatusesBasedOnNomad(statuses)
+    case NomadNotReachable => setAllStatusesToUnknown()
+  }
+
+  private[this] def setAllStatusesToUnknown() = {
+    instances.foreach {
+      case (id, instance) => instance.status = InstanceStatus.Unknown
+    }
   }
 
   private[this] def updateStatusesBasedOnNomad(statuses: Map[String, InstanceStatus]) = {
@@ -133,5 +140,6 @@ object InstanceService {
   case class NewInstance(instanceCreation: InstanceCreation)
   case class SetStatus(id: String, status: InstanceStatus)
   case class NomadStatuses(statuses: Map[String, InstanceStatus])
+  case object NomadNotReachable
 }
 

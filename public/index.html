@@ -71,6 +71,9 @@
                         <td ng-if="instance.status.toLowerCase() === 'running'">
                           <button type="button" class="btn btn-danger" ng-click="submitStatus(instance, 'stopped')">Stop</button>
                         </td>
+                        <td ng-if="instance.status.toLowerCase() === 'unknown'">
+                          <button type="button" class="btn btn-disabled" disabled="true">Start</button>
+                        </td>
                       </tr>
                   </tbody>
                 </table>
