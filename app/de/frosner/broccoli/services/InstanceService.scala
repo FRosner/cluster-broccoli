@@ -114,23 +114,6 @@ class InstanceService @Inject()(configuration: Configuration,
     }
   }
 
-  // TODO ask nomad periodically for the current status and send a request according to the desired status
-
-//  def nomadInstances: Future[Seq[Instance]] = {
-//    val jobsRequest = ws.url(nomadBaseUrl + "/v1/jobs").withQueryString("prefix" -> nomadJobPrefix)
-//    val jobsResponse = jobsRequest.get().map(_.json.as[JsArray])
-//    val jobsWithTemplate = jobsResponse.map(jsArray => {
-//      val (ids, names) = ((jsArray \\ "ID").map(_.as[JsString].value), (jsArray \\ "Name").map(_.as[JsString].value))
-//      ids.zip(names).flatMap{
-//        case (id, name) => templateService.template(name).map(
-//          template => Instance(id, template, Map("id" -> id), InstanceStatus.Unknown)
-//        )
-//      }
-//    })
-//    jobsWithTemplate
-//  }
-
-//  def nomadInstance(id: String): Future[Option[Instance]] = nomadInstances.map(_.find(_.id == id))
 
 }
 
