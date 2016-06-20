@@ -68,7 +68,7 @@
                           <button ng-if="instance.status.toLowerCase() === 'stopped'" type="button" class="btn btn-success" ng-click="submitStatus(instance, 'running')">Start</button>
                           <button ng-if="instance.status.toLowerCase() === 'running'" type="button" class="btn btn-danger" ng-click="submitStatus(instance, 'stopped')">Stop</button>
                           <button ng-if="instance.status.toLowerCase() === 'pending'" type="button" class="btn btn-disabled" disabled="true">Pending</button>
-                          <button ng-if="instance.status.toLowerCase() === 'unknown'" type="button" class="btn btn-disabled" disabled="true">Start</button>
+                          <button ng-if="instance.status.toLowerCase() === 'unknown'" type="button" class="btn btn-disabled" disabled="true">Unknown</button>
                         </td>
                       </tr>
                   </tbody>
