@@ -7,6 +7,7 @@ object InstanceStatus extends Enumeration {
   type InstanceStatus = Value
 
   val Running = Value("running")
+  val Pending = Value("pending")
   val Stopped = Value("stopped")
   val Unknown = Value("unknown")
 

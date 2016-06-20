@@ -40,6 +40,7 @@ class NomadService @Inject()(configuration: Configuration, ws: WSClient) extends
         Logger.debug(s"Received a status update of jobs: ${ids.mkString(", ")}")
         val idsAndStatuses = ids.zip(statuses.map {
           case "running" => InstanceStatus.Running
+          case "pending" => InstanceStatus.Pending
           case default => Logger.warn(s"Unmatched status received: $default")
             InstanceStatus.Unknown
         })

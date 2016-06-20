@@ -61,6 +61,7 @@
             <div class="col-md-12">
                 <table class="table table">
                   <tbody>
+                  <!-- TODO show if back-end is not reachable (unknown) -->
                       <tr ng-repeat="instance in template.instances">
                         <th scope="row">{{instance.id}}</th>
                         <td>{{instance.url}}</td>
@@ -70,6 +71,9 @@
                         </td>
                         <td ng-if="instance.status.toLowerCase() === 'running'">
                           <button type="button" class="btn btn-danger" ng-click="submitStatus(instance, 'stopped')">Stop</button>
+                        </td>
+                        <td ng-if="instance.status.toLowerCase() === 'pending'">
+                          <button type="button" class="btn btn-disabled" disabled="true">Pending</button>
                         </td>
                         <td ng-if="instance.status.toLowerCase() === 'unknown'">
                           <button type="button" class="btn btn-disabled" disabled="true">Start</button>
