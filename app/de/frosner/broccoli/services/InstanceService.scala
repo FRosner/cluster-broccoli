@@ -108,6 +108,7 @@ class InstanceService @Inject()(configuration: Configuration,
     // TODO tell the nomad actor to change the status
       val maybeInstance = instances.get(id)
       maybeInstance.flatMap { instance =>
+        instance.status = InstanceStatus.Pending
         status match {
           case InstanceStatus.Running =>
             nomadActor.tell(StartJob(instance.templateJson), self)
