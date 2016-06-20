@@ -49,10 +49,8 @@
             <h2>{{template.id}}</h2>
             <div class="col-md-12">
                 <div class="col-md-2">
-                  <div ng-init="itemsrc = template.imageUrl" ng-mouseover="itemsrc='assets/plus.svg'" ng-mouseout="itemsrc = template.imageUrl" >
-                    <img ng-src="{{itemsrc}}" class="img-rounded" data-holder-rendered="true"
-                      style="width: 100px; height: 100px;" ng-click="appsCtrl.openModal(template)"></img>
-                  </div>
+                  <img ng-init="itemsrc = template.imageUrl" ng-mouseover="itemsrc='assets/plus.svg'" ng-mouseout="itemsrc = template.imageUrl" ng-src="{{itemsrc}}" class="img-rounded" data-holder-rendered="true"
+                    style="width: 100px; height: 100px;" ng-click="appsCtrl.openModal(template)"></img>
                 </div>
                 <div class="col-md-10">
                   {{template.description}}
