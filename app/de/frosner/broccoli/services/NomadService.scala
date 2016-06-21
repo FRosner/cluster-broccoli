@@ -3,6 +3,7 @@ package de.frosner.broccoli.services
 import javax.inject.Inject
 
 import akka.actor._
+import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.{Instance, InstanceStatus}
 import de.frosner.broccoli.services.InstanceService.{NomadNotReachable, NomadStatuses}
 import de.frosner.broccoli.services.NomadService._
@@ -16,8 +17,8 @@ class NomadService @Inject()(configuration: Configuration, ws: WSClient) extends
 
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  private val nomadBaseUrl = configuration.getString("broccoli.nomad.url").getOrElse("http://localhost:4646")
-  private val nomadJobPrefix = configuration.getString("broccoli.nomad.jobPrefix").getOrElse("")
+  private val nomadBaseUrl = configuration.getString(conf.NOMAD_URL_KEY).getOrElse(conf.NOMAD_URL_DEFAULT)
+  private val nomadJobPrefix = configuration.getString(conf.NOMAD_JOB_PREFIX_KEY).getOrElse(conf.NOMAD_JOB_PREFIX_DEFAULT)
 
   def receive = {
     case GetStatuses => executeGetStatuses()
