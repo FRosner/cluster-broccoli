@@ -29,7 +29,7 @@ class NomadService @Inject()(configuration: Configuration, ws: WSClient) extends
     val sendingService = sender()
     val queryUrl = nomadBaseUrl + "/v1/jobs"
     val jobsRequest = ws.url(queryUrl).withQueryString("prefix" -> nomadJobPrefix)
-    Logger.info(s"Requesting job status update (${jobsRequest.uri})")
+    Logger.debug(s"Requesting job status update (${jobsRequest.uri})")
     val jobsResponse = jobsRequest.get().map(_.json.as[JsArray])
     val jobsWithTemplate = jobsResponse.map(jsArray => {
       val (ids, statuses) = ((jsArray \\ "ID").map(_.as[JsString].value), (jsArray \\ "Status").map(_.as[JsString].value))
