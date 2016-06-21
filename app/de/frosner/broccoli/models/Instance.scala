@@ -3,7 +3,6 @@ package de.frosner.broccoli.models
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import play.api.libs.json.{JsValue, Json}
 
-// TODO rename actualStatus to status
 @volatile
 case class Instance(id: String, template: Template, parameterValues: Map[String, String], var status: InstanceStatus) {
 
