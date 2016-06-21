@@ -11,7 +11,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, Controller}
 
 
-class TemplateController @Inject() (configuration: play.api.Configuration, templateService: TemplateService) extends Controller {
+class TemplateController @Inject() (templateService: TemplateService) extends Controller {
 
   private val templates = templateService.templates
 

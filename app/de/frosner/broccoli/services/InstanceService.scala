@@ -18,8 +18,7 @@ import scala.util.{Failure, Success, Try}
 import InstanceService._
 
 @Singleton
-class InstanceService @Inject()(configuration: Configuration,
-                                templateService: TemplateService,
+class InstanceService @Inject()(templateService: TemplateService,
                                 system: ActorSystem,
                                 @Named("nomad-actor") nomadActor: ActorRef,
                                 ws: WSClient) extends Actor with Logging {
