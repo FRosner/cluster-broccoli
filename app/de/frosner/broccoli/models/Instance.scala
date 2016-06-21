@@ -17,7 +17,7 @@ case class Instance(id: String,
   // TODO avoid JSON injection (escape the shit out of it)
   val templateJson: JsValue = {
     val replacedTemplate = parameterValues.foldLeft(template.template){
-      case (intermediateTemplate, (parameter, value)) => intermediateTemplate.replaceAll("\\$\\{" + parameter + "\\}", value)
+      case (intermediateTemplate, (parameter, value)) => intermediateTemplate.replaceAll("\\{\\{" + parameter + "\\}\\}", value)
     }
     Json.parse(replacedTemplate)
   }

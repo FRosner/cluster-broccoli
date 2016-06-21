@@ -1,8 +1,8 @@
 {
     "Job": {
         "Region": "global",
-        "ID": "${id}",
-        "Name": "${id}",
+        "ID": "{{id}}",
+        "Name": "{{id}}",
         "Type": "service",
         "Priority": 50,
         "AllAtOnce": false,
@@ -12,35 +12,40 @@
         "Constraints": null,
         "TaskGroups": [
             {
-                "Name": "http-group",
+                "Name": "zeppelin",
                 "Count": 1,
                 "Constraints": null,
                 "Tasks": [
                     {
-                        "Name": "http-task",
+                        "Name": "zeppelin",
                         "Driver": "raw_exec",
                         "User": "",
                         "Config": {
                             "args": [
-                                "-m",
-                                "SimpleHTTPServer"
+                                "-p",
+                                "8080:8080",
+                                "-v",
+                                "${NOMAD_TASK_DIR}/notebooks:/usr/local/zeppelin/notebooks",
+                                "frosner/zeppelin"
                             ],
-                            "command": "/usr/bin/python"
+                            "command": "nomad-docker-wrapper"
                         },
                         "Constraints": null,
-                        "Env": null,
+                        "Env": {
+                            "NOMAD_DOCKER_CONTAINER_NAME": "{{id}}"
+                        },
                         "Services": [
                             {
                                 "Id": "",
-                                "Name": "${id}-web-ui",
+                                "Name": "{{id}}-ui",
                                 "Tags": null,
                                 "PortLabel": "ui",
                                 "Checks": null
                             }
                         ],
                         "Resources": {
-                            "CPU": 500,
-                            "MemoryMB": 128,
+                            "CPU": 2000,
+                            "MemoryMB": 1024,
                             "DiskMB": 300,
                             "IOPS": 0,
                             "Networks": [
@@ -50,7 +55,7 @@
                                     "ReservedPorts": [
                                         {
                                             "Label": "ui",
-                                            "Value": 8000
+                                            "Value": 8080
                                         }
                                     ],
                                     "DynamicPorts": null,
@@ -65,7 +70,13 @@
                             "MaxFiles": 10,
                             "MaxFileSizeMB": 10
                         },
-                        "Artifacts": null
+                        "Artifacts": [
+                            {
+                                "GetterSource": "https://raw.githubusercontent.com/FRosner/nomad-docker-wrapper/1.0.0/nomad-docker-wrapper",
+                                "GetterOptions": {},
+                                "RelativeDest": "local/"
+                            }
+                        ]
                     }
                 ],
                 "RestartPolicy": {

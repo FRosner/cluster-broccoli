@@ -1,8 +1,8 @@
 {
     "Job": {
         "Region": "global",
-        "ID": "${id}",
-        "Name": "${id}",
+        "ID": "{{id}}",
+        "Name": "{{id}}",
         "Type": "service",
         "Priority": 50,
         "AllAtOnce": false,
@@ -32,7 +32,7 @@
                         "Services": [
                             {
                                 "Id": "",
-                                "Name": "${id}-web-ui",
+                                "Name": "{{id}}-web-ui",
                                 "Tags": null,
                                 "PortLabel": "ui",
                                 "Checks": null
