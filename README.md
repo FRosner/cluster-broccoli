@@ -12,21 +12,21 @@ Cluster Broccoli is meant to be setup by your IT. Some technical knowledge is re
 
 ## Installation
 
-### Build from Source
+### Requirements
 
-1. Download or clone the source code
-2. Navigate into the project directory
-3. `activator dist`
-
-## Requirements
-
-### Minimal Setup
+#### Minimal Setup
 
 - Nomad (REST API v1)
 - Java (for running the Play application)
 
-### Recommended Setup
+#### Recommended Setup
 
 - Nomad (REST API v1)
 - Consul (REST API v1)
 - Cluster Broccoli Nomad Job + Docker Image (for running the Play application)
+
+### Building from Source
+
+1. Download or clone the source code
+2. Navigate into the project directory
+3. `activator dist`
