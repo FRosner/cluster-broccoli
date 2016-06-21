@@ -28,3 +28,13 @@ Cluster Broccoli is meant to be setup by your IT. Some technical knowledge is re
 1. Download or clone the source code
 2. Navigate into the project directory
 3. `activator dist`
+
+## Configuration
+
+In order to configure Cluster Broccoli, you can add key value pairs to your [application.conf](https://www.playframework.com/documentation/2.4.x/Configuration).
+The following configuration properties are supported.
+
+| Property | Description | Default |
+| -------- | ----------- | ------- |
+| `broccoli.nomad.url` | Address of your nomad server | `http://localhost:4646` |
+| `broccoli.consul.url` | Address of your consul server | `http://localhost:8500` |
