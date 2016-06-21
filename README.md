@@ -6,8 +6,6 @@ Cluster Broccoli is a RESTful web service + UI to manage [Nomad](https://www.nom
 
 If you want to give your end users the possibility to create new instances of live demos of your product, while allowing them to customize it (e.g. using an embedded database or an external one, number of cores, ...) - Cluster Broccoli is for you.
 
-## Target Audience
-
 Cluster Broccoli is meant to be setup by your IT. Some technical knowledge is required to setup the infrastructure and define the templates. End users can be internal (QA, data scientists) or external (customers, potential customers).
 
 ## Installation
