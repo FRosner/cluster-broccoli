@@ -32,7 +32,7 @@
                         "Services": [
                             {
                                 "Id": "",
-                                "Name": "${id}",
+                                "Name": "${id}-web-ui",
                                 "Tags": null,
                                 "PortLabel": "ui",
                                 "Checks": null

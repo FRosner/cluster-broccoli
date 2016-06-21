@@ -4,7 +4,11 @@ import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import play.api.libs.json.{JsValue, Json}
 
 @volatile
-case class Instance(id: String, template: Template, parameterValues: Map[String, String], var status: InstanceStatus) {
+case class Instance(id: String,
+                    template: Template,
+                    parameterValues: Map[String, String],
+                    var status: InstanceStatus,
+                    var services: Map[String, Service]) {
 
   require(template.parameters == parameterValues.keySet, s"The given parameters (${parameterValues.keySet}) " +
     s"need to match the ones in the template (${template.parameters}).")

@@ -4,9 +4,8 @@ import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Named, Singleton}
 
 import akka.actor._
-import de.frosner.broccoli.models.InstanceStatus
+import de.frosner.broccoli.models._
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
-import de.frosner.broccoli.models.{Instance, InstanceCreation, InstanceStatus}
 import de.frosner.broccoli.services.NomadService.{DeleteJob, GetStatuses, StartJob}
 import de.frosner.broccoli.util.Logging
 import play.api.{Configuration, Logger}
@@ -43,19 +42,43 @@ class InstanceService @Inject()(configuration: Configuration,
       id = "zeppelin-frank",
       template = templateService.template("zeppelin").get,
       parameterValues = Map("id" -> "zeppelin-frank"),
-      status = InstanceStatus.Running
+      status = InstanceStatus.Running,
+      services = Map(
+        "zeppelin-frank" -> Service(
+          name = "zeppelin-frank-web-ui",
+          protocol = "http",
+          address = "localhost",
+          port = 8000
+        )
+      )
     ),
     "zeppelin-pauline" -> Instance(
       id = "zeppelin-pauline",
       template = templateService.template("zeppelin").get,
       parameterValues = Map("id" -> "zeppelin-pauline"),
-      status = InstanceStatus.Running
+      status = InstanceStatus.Running,
+      services = Map(
+        "zeppelin-pauline" -> Service(
+          name = "zeppelin-pauline-web-ui",
+          protocol = "http",
+          address = "localhost",
+          port = 8000
+        )
+      )
     ),
     "jupyter-basil" -> Instance(
       id = "jupyter-basil",
       template = templateService.template("jupyter").get,
       parameterValues = Map("id" -> "jupyter-basil"),
-      status = InstanceStatus.Stopped
+      status = InstanceStatus.Stopped,
+      services = Map(
+        "jupyter-basil" -> Service(
+          name = "jupyter-basil-web-ui",
+          protocol = "http",
+          address = "localhost",
+          port = 8000
+        )
+      )
     )
   )
 
@@ -96,7 +119,7 @@ class InstanceService @Inject()(configuration: Configuration,
       } else {
         val potentialTemplate = templateService.template(templateId)
         potentialTemplate.map { template =>
-          val newInstance = Instance(id, template, instanceCreation.parameters, InstanceStatus.Stopped)
+          val newInstance = Instance(id, template, instanceCreation.parameters, InstanceStatus.Stopped, Map.empty)
           instances = instances.updated(id, newInstance)
           Success(newInstance)
         }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException(s"Template $templateId does not exist."))))
