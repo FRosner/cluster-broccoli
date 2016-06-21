@@ -4,7 +4,7 @@
 
 Cluster Broccoli is a RESTful web service + UI to manage [Nomad](https://www.nomadproject.io) jobs through a self service application. Jobs are defined based on templates, allowing for a selectable amount of customization.
 
-If you want to give your end users the possibility to create new instances of live demos of your product, while allowing them to customize whether it should use an embedded database or an external one, Cluster Broccoli is for you.
+If you want to give your end users the possibility to create new instances of live demos of your product, while allowing them to customize it (e.g. using an embedded database or an external one, number of cores, ...) - Cluster Broccoli is for you.
 
 ## Target Audience
 
