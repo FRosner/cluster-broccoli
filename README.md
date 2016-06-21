@@ -10,6 +10,14 @@ If you want to give your end users the possibility to create new instances of li
 
 Cluster Broccoli is meant to be setup by your IT. Some technical knowledge is required to setup the infrastructure and define the templates. End users can be internal (QA, data scientists) or external (customers, potential customers).
 
+## Installation
+
+### Build from Source
+
+1. Download or clone the source code
+2. Navigate into the project directory
+3. `activator dist`
+
 ## Requirements
 
 ### Minimal Setup
