@@ -20,6 +20,12 @@
                 padding-top: 0;
             }
         }
+
+        [ng-click],
+        [data-ng-click],
+        [x-ng-click] {
+          cursor: pointer;
+        }
     </style>
     <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
@@ -46,15 +52,22 @@
 <body ng-controller="AppsCtrl as appsCtrl">
     <div class="container">
         <div class="row" ng-repeat="template in appsCtrl.templates">
-            <h2>{{template.id}}</h2>
             <div class="col-md-12" style="margin-top: 10px;">
-                <div class="col-md-2">
-                  <img ng-init="itemsrc = template.imageUrl" ng-mouseover="itemsrc='assets/plus.svg'" ng-mouseout="itemsrc = template.imageUrl" ng-src="{{itemsrc}}" class="img-responsive" data-holder-rendered="true"
-                    style="width: 100px; height: 100px;" ng-click="appsCtrl.openModal(template)"></img>
-                </div>
-                <div class="col-md-10">
-                  {{template.description}}
-                </div>
+              <h2>
+                {{template.id}}
+                <img ng-init="itemsrc='assets/plus.svg'"
+                     ng-mouseover="itemsrc='assets/plus.svg'"
+                     ng-mouseout="itemsrc='assets/plus.svg'"
+                     ng-src="{{itemsrc}}"
+                     ng-click="appsCtrl.openModal(template)"
+                     class="img-responsive"
+                     data-holder-rendered="true"
+                     style="margin-left: 10px; height: 20px; display: inline-block;">
+                </img>
+              </h2>
+              <p>
+                {{template.description}}
+              </p>
             </div>
             <div class="col-md-12" style="margin-top: 20px;">
                 <table class="table table">
