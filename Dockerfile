@@ -12,5 +12,6 @@ RUN activator dist
 RUN unzip target/universal/cluster-broccoli-*.zip
 RUN mv cluster-broccoli-* dist
 
+EXPOSE 9000
 
 ENTRYPOINT ["dist/bin/cluster-broccoli"]
