@@ -12,29 +12,28 @@
         "Constraints": null,
         "TaskGroups": [
             {
-                "Name": "jupyter",
+                "Name": "http-group",
                 "Count": 1,
                 "Constraints": null,
                 "Tasks": [
                     {
-                        "Name": "jupyter",
+                        "Name": "http-task",
                         "Driver": "raw_exec",
                         "User": "",
                         "Config": {
-                            "command": "jupyter-docker-wrapper"
+                            "args": [
+                                "-m",
+                                "SimpleHTTPServer"
+                            ],
+                            "command": "/usr/bin/python"
                         },
                         "Constraints": null,
-                        "Env": {
-                            "JUPYTER_CONTAINER_NAME": "{{id}}",
-                            "JUPYTER_NOTEBOOK_MOUNT": "${NOMAD_TASK_DIR}/notebooks"
-                        },
+                        "Env": null,
                         "Services": [
                             {
                                 "Id": "",
-                                "Name": "{{id}}-ui",
-                                "Tags": [
-                                    "protocol:http"
-                                ],
+                                "Name": "{{id}}-web-ui",
+                                "Tags": ["protocol:http"],
                                 "PortLabel": "ui",
                                 "Checks": [
                                     {
@@ -53,20 +52,20 @@
                         ],
                         "Resources": {
                             "CPU": 500,
-                            "MemoryMB": 512,
+                            "MemoryMB": 128,
                             "DiskMB": 300,
                             "IOPS": 0,
                             "Networks": [
                                 {
                                     "Public": false,
                                     "CIDR": "",
-                                    "ReservedPorts": null,
-                                    "DynamicPorts": [
+                                    "ReservedPorts": [
                                         {
                                             "Label": "ui",
-                                            "Value": 0
+                                            "Value": 8000
                                         }
                                     ],
+                                    "DynamicPorts": null,
                                     "IP": "",
                                     "MBits": 10
                                 }
@@ -78,13 +77,7 @@
                             "MaxFiles": 10,
                             "MaxFileSizeMB": 10
                         },
-                        "Artifacts": [
-                            {
-                                "GetterSource": "https://raw.githubusercontent.com/FRosner/docker-jupyter/master/jupyter-docker-wrapper",
-                                "GetterOptions": {},
-                                "RelativeDest": "local/"
-                            }
-                        ]
+                        "Artifacts": null
                     }
                 ],
                 "RestartPolicy": {
