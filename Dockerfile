@@ -5,7 +5,6 @@ RUN unzip typesafe-activator-1.3.10.zip && mv activator-dist-1.3.10 activator &&
 
 ENV PATH /activator/bin:$PATH
 
-
 COPY ./ /cluster-broccoli
 WORKDIR /cluster-broccoli
 RUN activator dist
