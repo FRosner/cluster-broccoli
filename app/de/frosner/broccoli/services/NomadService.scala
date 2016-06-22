@@ -65,7 +65,10 @@ class NomadService @Inject()(configuration: Configuration,
     Logger.info(s"Requesting job status update (${jobRequest.uri})")
     val jobResponse = jobRequest.get().map(_.json.as[JsObject])
     val eventuallyJobServiceIds = jobResponse.map{ jsObject =>
-      (jsObject \\ "Services").map(_ \\ "Name").flatMap(_.map(_.as[JsString].value))
+      val services = (jsObject \\ "Services").flatMap(_.as[JsArray].value.map(_.as[JsObject]))
+      services.flatMap {
+        serviceJsObject => serviceJsObject.value.get("Name").map(_.as[JsString].value)
+      }
     }
     eventuallyJobServiceIds.onComplete {
       case Success(jobServiceIds) =>
