@@ -25,7 +25,11 @@ Cluster Broccoli is meant to be setup by your IT. Some technical knowledge is re
 
 ### Using the Docker Image
 
-`docker run -p 9000:9000 frosner/cluster-broccoli -Dbroccoli.nomad.url=<your-nomad-url> -Dbroccoli.consul.url=<your-consul-url>`
+```
+docker run -p 9000:9000 frosner/cluster-broccoli \
+  -Dbroccoli.nomad.url=<your-nomad-url> \
+  -Dbroccoli.consul.url=<your-consul-url>
+```
 
 ### Building from Source
 
