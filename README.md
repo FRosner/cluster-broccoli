@@ -23,6 +23,10 @@ Cluster Broccoli is meant to be setup by your IT. Some technical knowledge is re
 - Consul (REST API v1)
 - Cluster Broccoli Nomad Job + Docker Image (for running the Play application)
 
+### Using the Docker Image
+
+`docker run -p 9000:9000 frosner/cluster-broccoli -Dbroccoli.nomad.url=<your-nomad-url> -Dbroccoli.consul.url=<your-consul-url>`
+
 ### Building from Source
 
 1. Download or clone the source code
@@ -31,7 +35,7 @@ Cluster Broccoli is meant to be setup by your IT. Some technical knowledge is re
 
 ## Configuration
 
-In order to configure Cluster Broccoli, you can add key value pairs to your [application.conf](https://www.playframework.com/documentation/2.4.x/Configuration).
+In order to configure Cluster Broccoli, you can add key value pairs to your [configuration](https://www.playframework.com/documentation/2.4.x/Configuration).
 The following configuration properties are supported.
 
 | Property | Description | Default |
