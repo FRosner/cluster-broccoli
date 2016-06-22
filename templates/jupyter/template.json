@@ -35,7 +35,19 @@
                                 "Name": "{{id}}-web-ui",
                                 "Tags": ["protocol:http"],
                                 "PortLabel": "ui",
-                                "Checks": null
+                                "Checks": [
+                                    {
+                                        "Id": "",
+                                        "Name": "service: \"{{id}}-ui\" check",
+                                        "Type": "http",
+                                        "Command": "",
+                                        "Args": null,
+                                        "Path": "/",
+                                        "Protocol": "",
+                                        "Interval": 10000000000,
+                                        "Timeout": 2000000000
+                                    }
+                                ]
                             }
                         ],
                         "Resources": {
