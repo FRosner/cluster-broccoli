@@ -1,38 +1,57 @@
 job "{{id}}" {
   datacenters = ["dc1"]
 
+  type = "service"
+
+  constraint {
+    attribute = "${attr.kernel.name}"
+    value = "linux"
+    distinct_hosts = true
+  }
+
+  update {
+    stagger = "10s"
+    max_parallel = 1
+  }
+
   task "zeppelin" {
     driver = "raw_exec"
 
     artifact {
-      source = "https://raw.githubusercontent.com/FRosner/nomad-docker-wrapper/1.0.0/nomad-docker-wrapper"
+      source = "https://raw.githubusercontent.com/FRosner/docker-zeppelin/master/zeppelin-docker-wrapper"
     }
 
     env {
-      NOMAD_DOCKER_CONTAINER_NAME = "{{id}}"
+      ZEPPELIN_CONTAINER_NAME = "{{id}}"
+      ZEPPELIN_NOTEBOOK_MOUNT = "${NOMAD_TASK_DIR}/notebooks"
     }
 
     config {
-      command = "nomad-docker-wrapper"
-      args = ["-p", "8080:8080",
-              "-v", "${NOMAD_TASK_DIR}/notebooks:/usr/local/zeppelin/notebooks",
-              "frosner/zeppelin"]
-    }
-
-    service {
-      port = "ui"
-      name = "id-ui" # FIXME needs to be changed to ${id} after JSON conversion
+      command = "zeppelin-docker-wrapper"
     }
 
     resources {
-      cpu = 2000
-      memory = 1024
+      cpu = 500
+      memory = 512
       network {
         mbits = 10
-        port "ui" {
-          static = 8080
-        }
+        port "ui" {}
       }
     }
+
+    service {
+      name = "id-ui" // FIXME replace id with {{id}} after json conversion
+      tags = []
+      port = "ui"
+      check {
+        type = "http"
+        path = "/"
+        interval = "10s"
+        timeout = "2s"
+      }
+    }
+
+    kill_timeout = "20s"
   }
 }
+

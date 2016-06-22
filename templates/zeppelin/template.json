@@ -9,7 +9,13 @@
         "Datacenters": [
             "dc1"
         ],
-        "Constraints": null,
+        "Constraints": [
+            {
+                "LTarget": "${attr.kernel.name}",
+                "RTarget": "linux",
+                "Operand": "distinct_hosts"
+            }
+        ],
         "TaskGroups": [
             {
                 "Name": "zeppelin",
@@ -21,18 +27,12 @@
                         "Driver": "raw_exec",
                         "User": "",
                         "Config": {
-                            "args": [
-                                "-p",
-                                "8080:8080",
-                                "-v",
-                                "${NOMAD_TASK_DIR}/notebooks:/usr/local/zeppelin/notebooks",
-                                "frosner/zeppelin"
-                            ],
-                            "command": "nomad-docker-wrapper"
+                            "command": "zeppelin-docker-wrapper"
                         },
                         "Constraints": null,
                         "Env": {
-                            "NOMAD_DOCKER_CONTAINER_NAME": "{{id}}"
+                            "ZEPPELIN_CONTAINER_NAME": "{{id}}",
+                            "ZEPPELIN_NOTEBOOK_MOUNT": "${NOMAD_TASK_DIR}/notebooks"
                         },
                         "Services": [
                             {
@@ -40,39 +40,51 @@
                                 "Name": "{{id}}-ui",
                                 "Tags": null,
                                 "PortLabel": "ui",
-                                "Checks": null
+                                "Checks": [
+                                    {
+                                        "Id": "",
+                                        "Name": "service: \"{{id}}-ui\" check",
+                                        "Type": "http",
+                                        "Command": "",
+                                        "Args": null,
+                                        "Path": "/",
+                                        "Protocol": "",
+                                        "Interval": 10000000000,
+                                        "Timeout": 2000000000
+                                    }
+                                ]
                             }
                         ],
                         "Resources": {
-                            "CPU": 2000,
-                            "MemoryMB": 1024,
+                            "CPU": 500,
+                            "MemoryMB": 512,
                             "DiskMB": 300,
                             "IOPS": 0,
                             "Networks": [
                                 {
                                     "Public": false,
                                     "CIDR": "",
-                                    "ReservedPorts": [
+                                    "ReservedPorts": null,
+                                    "DynamicPorts": [
                                         {
                                             "Label": "ui",
-                                            "Value": 8080
+                                            "Value": 0
                                         }
                                     ],
-                                    "DynamicPorts": null,
                                     "IP": "",
                                     "MBits": 10
                                 }
                             ]
                         },
                         "Meta": null,
-                        "KillTimeout": 5000000000,
+                        "KillTimeout": 20000000000,
                         "LogConfig": {
                             "MaxFiles": 10,
                             "MaxFileSizeMB": 10
                         },
                         "Artifacts": [
                             {
-                                "GetterSource": "https://raw.githubusercontent.com/FRosner/nomad-docker-wrapper/1.0.0/nomad-docker-wrapper",
+                                "GetterSource": "https://raw.githubusercontent.com/FRosner/docker-zeppelin/master/zeppelin-docker-wrapper",
                                 "GetterOptions": {},
                                 "RelativeDest": "local/"
                             }
@@ -89,8 +101,8 @@
             }
         ],
         "Update": {
-            "Stagger": 0,
-            "MaxParallel": 0
+            "Stagger": 10000000000,
+            "MaxParallel": 1
         },
         "Periodic": null,
         "Meta": null,
