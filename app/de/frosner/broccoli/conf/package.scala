@@ -11,4 +11,7 @@ package object conf {
   val CONSUL_URL_KEY = "broccoli.consul.url"
   val CONSUL_URL_DEFAULT = "http://localhost:8500"
 
+  val TEMPLATES_DIR_KEY = "broccoli.templatesDir"
+  val TEMPLATES_DIR_DEFAULT = "templates"
+
 }

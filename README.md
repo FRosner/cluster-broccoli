@@ -46,3 +46,4 @@ The following configuration properties are supported.
 | -------- | ----------- | ------- |
 | `broccoli.nomad.url` | Address of your nomad server | `http://localhost:4646` |
 | `broccoli.consul.url` | Address of your consul server | `http://localhost:8500` |
+| `broccoli.templatesDir` | Directory where your templates are located | `templates` |
