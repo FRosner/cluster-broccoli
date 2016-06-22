@@ -46,6 +46,7 @@ class NomadService @Inject()(configuration: Configuration,
         val idsAndStatuses = ids.zip(statuses.map {
           case "running" => InstanceStatus.Running
           case "pending" => InstanceStatus.Pending
+          case "dead" => InstanceStatus.Stopped
           case default => Logger.warn(s"Unmatched status received: $default")
             InstanceStatus.Unknown
         })
