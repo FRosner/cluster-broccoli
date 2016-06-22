@@ -4,3 +4,15 @@ RUN curl -O https://downloads.typesafe.com/typesafe-activator/1.3.10/typesafe-ac
 RUN unzip typesafe-activator-1.3.10.zip && mv activator-dist-1.3.10 activator && rm -f typesafe-activator-1.3.10.zip
 
 ENV PATH /activator/bin:$PATH
+
+
+COPY ./ /cluster-broccoli
+WORKDIR /cluster-broccoli
+RUN activator dist
+
+RUN unzip target/universal/cluster-broccoli-*.zip
+RUN mv cluster-broccoli-* dist
+
+VOLUME application.conf
+
+ENTRYPOINT ["dist/bin/cluster-broccoli"]
