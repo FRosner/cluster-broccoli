@@ -12,6 +12,5 @@ RUN activator dist
 RUN unzip target/universal/cluster-broccoli-*.zip
 RUN mv cluster-broccoli-* dist
 
-VOLUME application.conf
 
 ENTRYPOINT ["dist/bin/cluster-broccoli"]
