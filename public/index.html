@@ -78,8 +78,8 @@
                         <td class="col-md-6">
                           <span ng-repeat="service in instance.services"><a href="{{service.protocol}}://{{service.address}}:{{service.port}}">{{service.name}}</a></span>
                         </td>
-                        <td class="col-md-2">{{instance.status}}</td>
-                        <td class="col-md-4">
+                        <td class="col-md-4">{{instance.status}}</td>
+                        <td class="col-md-2">
                           <button type="button"
                                   ng-if="['stopped'].indexOf(instance.status.toLowerCase()) >= 0"
                                   class="btn btn-success"
@@ -88,20 +88,8 @@
                           </button>
                           <button type="button"
                                   ng-if="['stopped'].indexOf(instance.status.toLowerCase()) == -1"
-                                  class="btn btn-disabled"
-                                  disabled="true">
-                            Start
-                          </button>
-                          <button type="button"
-                                  ng-if="['stopped'].indexOf(instance.status.toLowerCase()) == -1"
                                   class="btn btn-danger"
                                   ng-click="submitStatus(instance, 'stopped')">
-                            Stop
-                          </button>
-                          <button type="button"
-                                  ng-if="['stopped'].indexOf(instance.status.toLowerCase()) >= 0"
-                                  class="btn btn-disabled"
-                                  disabled="true">
                             Stop
                           </button>
                         </td>
