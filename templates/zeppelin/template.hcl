@@ -1,19 +1,6 @@
 job "{{id}}" {
   datacenters = ["dc1"]
 
-  type = "service"
-
-  constraint {
-    attribute = "${attr.kernel.name}"
-    value = "linux"
-    distinct_hosts = true
-  }
-
-  update {
-    stagger = "10s"
-    max_parallel = 1
-  }
-
   task "zeppelin" {
     driver = "raw_exec"
 
@@ -41,7 +28,7 @@ job "{{id}}" {
 
     service {
       name = "id-ui" // FIXME replace id with {{id}} after json conversion
-      tags = []
+      tags = ["protocol:http"]
       port = "ui"
       check {
         type = "http"
@@ -51,7 +38,6 @@ job "{{id}}" {
       }
     }
 
-    kill_timeout = "20s"
   }
 }
 
