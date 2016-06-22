@@ -75,15 +75,35 @@
                   <!-- TODO show if back-end is not reachable (unknown) -->
                       <tr ng-repeat="instance in template.instances">
                         <td class="col-md-2" scope="row">{{instance.id}}</td>
-                        <td class="col-md-7">
+                        <td class="col-md-6">
                           <span ng-repeat="service in instance.services"><a href="{{service.protocol}}://{{service.address}}:{{service.port}}">{{service.name}}</a></span>
                         </td>
                         <td class="col-md-2">{{instance.status}}</td>
-                        <td>
-                          <button ng-if="instance.status.toLowerCase() === 'stopped'" type="button" class="btn btn-success" ng-click="submitStatus(instance, 'running')">Start</button>
-                          <button ng-if="instance.status.toLowerCase() === 'running'" type="button" class="btn btn-danger" ng-click="submitStatus(instance, 'stopped')">Stop</button>
-                          <button ng-if="instance.status.toLowerCase() === 'pending'" type="button" class="btn btn-disabled" disabled="true">Pending</button>
-                          <button ng-if="instance.status.toLowerCase() === 'unknown'" type="button" class="btn btn-disabled" disabled="true">Unknown</button>
+                        <td class="col-md-4">
+                          <button type="button"
+                                  ng-if="['stopped'].indexOf(instance.status.toLowerCase()) >= 0"
+                                  class="btn btn-success"
+                                  ng-click="submitStatus(instance, 'running')">
+                            Start
+                          </button>
+                          <button type="button"
+                                  ng-if="['stopped'].indexOf(instance.status.toLowerCase()) == -1"
+                                  class="btn btn-disabled"
+                                  disabled="true">
+                            Start
+                          </button>
+                          <button type="button"
+                                  ng-if="['stopped'].indexOf(instance.status.toLowerCase()) == -1"
+                                  class="btn btn-danger"
+                                  ng-click="submitStatus(instance, 'stopped')">
+                            Stop
+                          </button>
+                          <button type="button"
+                                  ng-if="['stopped'].indexOf(instance.status.toLowerCase()) >= 0"
+                                  class="btn btn-disabled"
+                                  disabled="true">
+                            Stop
+                          </button>
                         </td>
                       </tr>
                   </tbody>
