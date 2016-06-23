@@ -8,6 +8,18 @@ If you want to give your end users the possibility to create new instances of li
 
 Cluster Broccoli is meant to be setup by your IT. Some technical knowledge is required to setup the infrastructure and define the templates. End users can be internal (QA, data scientists) or external (customers, potential customers).
 
+## Usage
+
+### Web UI
+
+Cluster Broccoli comes with a minimalistic web user interface. It allows you to create, destroy, start and stop your instances based on a set of predefined templates. Please consult the documenation for a [detailed description of the Web UI](https://github.com/FRosner/cluster-broccoli/wiki/Web-UI).
+
+![image](https://cloud.githubusercontent.com/assets/3427394/16301767/8494c2ca-3947-11e6-8f39-e319f7cab169.png)
+
+### REST API
+
+Cluster Broccoli is RESTful. You can control it using curl, writing your own command line wrapper or connect from your microservices. Please consult the documentation for a [detailed description of the REST API](https://github.com/FRosner/cluster-broccoli/wiki/REST-API-v1).
+
 ## Installation
 
 ### Requirements
