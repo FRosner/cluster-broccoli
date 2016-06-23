@@ -139,10 +139,6 @@ class InstanceService @Inject()(templateService: TemplateService,
             None
         }
       }
-//        maybeInstance.map { instance =>
-//          instance.status = status
-//          instance
-//        }
   }
 
   private[this] def deleteInstance(id: String): Boolean = {
