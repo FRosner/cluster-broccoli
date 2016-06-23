@@ -65,6 +65,7 @@ class InstanceService @Inject()(templateService: TemplateService,
     case GetInstance(id) => sender ! instances.get(id)
     case NewInstance(instanceCreation) => sender() ! addInstance(instanceCreation)
     case SetStatus(id, status) => sender() ! setStatus(id, status)
+    case DeleteInstance(id) => sender ! deleteInstance(id)
     case NomadStatuses(statuses) => updateStatusesBasedOnNomad(statuses)
     case ConsulServices(id, services) => updateServicesBasedOnNomad(id, services)
     case NomadNotReachable => setAllStatusesToUnknown()
@@ -144,6 +145,16 @@ class InstanceService @Inject()(templateService: TemplateService,
 //        }
   }
 
+  private[this] def deleteInstance(id: String): Boolean = {
+    setStatus(id, InstanceStatus.Stopped)
+    if (instances.contains(id)) {
+      instances = instances - id
+      true
+    } else {
+      false
+    }
+  }
+
 }
 
 object InstanceService {
@@ -151,6 +162,7 @@ object InstanceService {
   case class GetInstance(id: String)
   case class NewInstance(instanceCreation: InstanceCreation)
   case class SetStatus(id: String, status: InstanceStatus)
+  case class DeleteInstance(id: String)
   case class NomadStatuses(statuses: Map[String, InstanceStatus])
   case class ConsulServices(jobId: String, jobServices: Iterable[Service])
   case object NomadNotReachable

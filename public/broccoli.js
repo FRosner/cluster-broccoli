@@ -12,6 +12,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
         function updateInstances(template) {
           console.log("Updating instance of template " + template.id)
           Restangular.all("instances").getList({ "templateId" : template.id }).then(function(instances) {
+            template.instances = {};
             instances.forEach(function(instance) {
               template.instances[instance.id] = instance;
             });

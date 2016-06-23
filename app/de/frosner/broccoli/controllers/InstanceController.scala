@@ -1,20 +1,19 @@
 package de.frosner.broccoli.controllers
 
 import java.util.concurrent.TimeUnit
-import javax.inject.{Named, Inject}
+import javax.inject.{Inject, Named}
 
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
-import de.frosner.broccoli.models.{InstanceStatus, InstanceCreation, Instance}
+import de.frosner.broccoli.models.{Instance, InstanceCreation, InstanceStatus}
 import Instance.{instanceReads, instanceWrites}
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
 import de.frosner.broccoli.services.InstanceService
-import de.frosner.broccoli.services.InstanceService.{SetStatus, NewInstance, GetInstance, GetInstances}
+import de.frosner.broccoli.services.InstanceService._
 import play.api.Logger
-
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Controller}
 
@@ -75,6 +74,17 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
         Future(Status(400)("Invalid JSON format: " + error.toString))
       }
     }.getOrElse(Future(Status(400)("Expected JSON data")))
+  }
+
+  // TODO check what should get returned
+  def delete(id: String) = Action.async {
+    val eventuallyDeletedInstance = instanceService.ask(DeleteInstance(id)).mapTo[Boolean]
+    eventuallyDeletedInstance.map { deleted =>
+      if (deleted)
+        Ok
+      else
+        NotFound
+    }
   }
 
 }

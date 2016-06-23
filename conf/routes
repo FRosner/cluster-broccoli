@@ -11,6 +11,7 @@ GET     /api/v1/instances                          @de.frosner.broccoli.controll
 GET     /api/v1/instances/:id                      @de.frosner.broccoli.controllers.InstanceController.show(id: String)
 POST    /api/v1/instances                          @de.frosner.broccoli.controllers.InstanceController.create
 POST    /api/v1/instances/:id                      @de.frosner.broccoli.controllers.InstanceController.update(id: String)
+DELETE  /api/v1/instances/:id                      @de.frosner.broccoli.controllers.InstanceController.delete(id: String)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file                       @controllers.Assets.versioned(path="/public", file)
