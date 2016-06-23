@@ -36,29 +36,7 @@ class InstanceService @Inject()(templateService: TemplateService,
   implicit val executionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   @volatile
-  private var instances = Map(
-    "zeppelin-frank" -> Instance(
-      id = "zeppelin-frank",
-      template = templateService.template("zeppelin").get,
-      parameterValues = Map("id" -> "zeppelin-frank"),
-      status = InstanceStatus.Running,
-      services = Map.empty
-    ),
-    "zeppelin-pauline" -> Instance(
-      id = "zeppelin-pauline",
-      template = templateService.template("zeppelin").get,
-      parameterValues = Map("id" -> "zeppelin-pauline"),
-      status = InstanceStatus.Running,
-      services = Map.empty
-    ),
-    "jupyter-basil" -> Instance(
-      id = "jupyter-basil",
-      template = templateService.template("jupyter").get,
-      parameterValues = Map("id" -> "jupyter-basil"),
-      status = InstanceStatus.Stopped,
-      services = Map.empty
-    )
-  )
+  private var instances: Map[String, Instance] = Map.empty
 
   def receive = {
     case GetInstances => sender ! instances.values
