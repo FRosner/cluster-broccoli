@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://web.resource.org/cc/" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:svg="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:ns1="http://sozi.baierouge.fr" id="svg4252" viewBox="0 0 128 128" version="1.1" inkscape:version="0.91 r13725">
+  <defs id="defs4254">
+    <linearGradient id="linearGradient3402" y2="390.78" gradientUnits="userSpaceOnUse" x2="311.27" gradientTransform="matrix(4.7173 0 0 4.4512 -1427.9 -1668.4)" y1="377.95" x1="302.74">
+      <stop id="stop4556-6" style="stop-color:#ffffff" offset="0"/>
+      <stop id="stop4558-2" style="stop-color:#ffffff;stop-opacity:0" offset="1"/>
+    </linearGradient>
+    <linearGradient id="linearGradient3409" y2="387.44" gradientUnits="userSpaceOnUse" x2="332.02" y1="369.98" x1="314.57">
+      <stop id="stop4570-4" style="stop-color:#e12b1c" offset="0"/>
+      <stop id="stop4572-0" style="stop-color:#980b00" offset="1"/>
+    </linearGradient>
+  </defs>
+  <path id="path4531-9" style="fill:#b4281c" d="m339.54 378.06a13.967 13.967 0 1 1 -27.933 0 13.967 13.967 0 1 1 27.933 0z" transform="matrix(4.5823 0 0 4.5823 -1427.9 -1668.4)"/>
+  <path id="path4533-6" style="stroke:#ffffff;stroke-width:.32492;fill:url(#linearGradient3409)" d="m339.54 378.06a13.967 13.967 0 1 1 -27.933 0 13.967 13.967 0 1 1 27.933 0z" transform="matrix(4.1839 0 0 4.1839 -1298.1 -1517.7)"/>
+  <path id="path4537-8" style="fill:url(#linearGradient3402)" d="m63.961 5.5974c-32.256 0-58.425 26.169-58.425 58.425 0 15.498 6.3245 29.347 16.181 39.809 5.1208-42.295 40.818-75.179 84.487-75.179 1.1775 0 2.2708 0.23926 3.4368 0.28639-10.685-13.897-26.806-23.341-45.679-23.341z"/>
+  <path id="rect4574-4" style="fill:#ffffff" d="m26.622 72.599c-0.00006 0.76161 0.6704 1.2888 1.432 1.2888l71.885-0.000017c0.76159 0 1.4319-0.52725 1.432-1.2888v-17.184c0.00004-0.76163-0.67035-1.432-1.432-1.432l-71.885 0.000017c-0.76161-0.000053-1.432 0.67035-1.432 1.432v17.184l-0.00005 0.000017z"/>
+  <metadata>
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+        <cc:license rdf:resource="http://creativecommons.org/licenses/publicdomain/"/>
+        <dc:publisher>
+          <cc:Agent rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>Delete icon</dc:title>
+        <dc:date>2010-10-09T13:46:55</dc:date>
+        <dc:description>Red round glosy Delete icon</dc:description>
+        <dc:source>https://openclipart.org/detail/89257/delete-icon-by-kuba</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>kuba</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>button</rdf:li>
+            <rdf:li>delete</rdf:li>
+            <rdf:li>denied</rdf:li>
+            <rdf:li>glosy</rdf:li>
+            <rdf:li>icon</rdf:li>
+            <rdf:li>no</rdf:li>
+            <rdf:li>no access</rdf:li>
+            <rdf:li>red</rdf:li>
+            <rdf:li>round</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

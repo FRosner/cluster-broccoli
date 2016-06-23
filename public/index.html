@@ -56,8 +56,6 @@
               <h2>
                 {{template.id}}
                 <img ng-init="itemsrc='assets/plus.svg'"
-                     ng-mouseover="itemsrc='assets/plus.svg'"
-                     ng-mouseout="itemsrc='assets/plus.svg'"
                      ng-src="{{itemsrc}}"
                      ng-click="appsCtrl.openModal(template)"
                      class="img-responsive"
@@ -74,12 +72,20 @@
                   <tbody>
                   <!-- TODO show if back-end is not reachable (unknown) -->
                       <tr ng-repeat="instance in template.instances">
-                        <td class="col-md-2" scope="row">{{instance.id}}</td>
-                        <td class="col-md-6">
+                        <td class="col-md-2" scope="row">
+                          {{instance.id}}
+                          <img ng-init="itemsrc='assets/minus.svg'"
+                               ng-src="{{itemsrc}}"
+                               ng-click="appsCtrl.deleteInstance(template, instance)"
+                               class="img-responsive"
+                               data-holder-rendered="true"
+                               style="margin-left: 10px; height: 1em; display: inline-block;">
+                        </td>
+                        <td class="col-md-8">
                           <span ng-repeat="service in instance.services"><a href="{{service.protocol}}://{{service.address}}:{{service.port}}">{{service.name}}</a></span>
                         </td>
-                        <td class="col-md-4">{{instance.status}}</td>
-                        <td class="col-md-2">
+                        <td class="col-md-1">{{instance.status}}</td>
+                        <td class="col-md-1">
                           <button type="button"
                                   ng-if="['stopped'].indexOf(instance.status.toLowerCase()) >= 0"
                                   class="btn btn-success"
