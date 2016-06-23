@@ -3,6 +3,8 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
         var vm = this;
         vm.templates = {};
 
+        Restangular.setBaseUrl("/api/v1");
+
         vm.openModal = openModal;
 
         updateTemplates();
