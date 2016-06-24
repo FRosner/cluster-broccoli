@@ -19,13 +19,11 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
 
     function updateTemplates() {
       console.log("Updating templates")
-      Restangular.all("templates").getList().then(function(templateIds) {
-        templateIds.forEach(function(templateId) {
-          Restangular.one("templates", templateId).get().then(function(template){
-            template.instances = {};
-            vm.templates[template.id] = template;
-            updateInstances(template);
-          });
+      Restangular.all("templates").getList().then(function(templates) {
+        templates.forEach(function(template) {
+          template.instances = {};
+          vm.templates[template.id] = template;
+          updateInstances(template);
         });
       });
     }

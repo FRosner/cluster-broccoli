@@ -15,7 +15,7 @@ class TemplateController @Inject() (templateService: TemplateService) extends Co
   private val templates = templateService.templates
 
   def list = Action {
-    Ok(Json.toJson(templateService.templates.map(_.id)))
+    Ok(Json.toJson(templateService.templates))
   }
 
   def show(id: String) = Action {
