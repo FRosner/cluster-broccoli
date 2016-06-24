@@ -47,7 +47,7 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
         eventuallyNewInstance.map { newInstance =>
           newInstance.map { instance =>
             Status(201)(Json.toJson(instance)).withHeaders(
-              LOCATION -> s"/instances/${instance.id}" // TODO String constant
+              LOCATION -> s"/api/v1/instances/${instance.id}" // TODO String constant
             )
           }.recover {
             case error => Status(400)(error.getMessage)
