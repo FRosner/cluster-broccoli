@@ -1,6 +1,5 @@
 package de.frosner.broccoli.controllers
 
-import java.io.File
 import javax.inject.Inject
 
 import de.frosner.broccoli.models.Template
