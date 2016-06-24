@@ -39,7 +39,6 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
     eventuallyMaybeInstance.map(_.find(_.id == id).map(instance => Ok(Json.toJson(instance))).getOrElse(NotFound))
   }
 
-  // TODO don't send ID in parameters but generate one instead
   def create = Action.async { request =>
     // TODO check if validate fails
     val maybeValidatedInstanceCreation = request.body.asJson.map(_.validate[InstanceCreation])
