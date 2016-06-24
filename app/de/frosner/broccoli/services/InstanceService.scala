@@ -101,7 +101,6 @@ class InstanceService @Inject()(templateService: TemplateService,
   }
 
   private[this] def setStatus(id: String, status: InstanceStatus): Option[Instance] = {
-    // TODO tell the nomad actor to change the status
       val maybeInstance = instances.get(id)
       maybeInstance.flatMap { instance =>
         instance.status = InstanceStatus.Pending
