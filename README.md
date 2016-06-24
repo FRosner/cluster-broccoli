@@ -26,13 +26,13 @@ Cluster Broccoli provides a RESTful HTTP API. You can control it using curl, wri
 
 #### Minimal Setup
 
-- Nomad (REST API v1)
+- Nomad (HTTP API v1)
 - Java (for running the Play application)
 
 #### Recommended Setup
 
-- Nomad (REST API v1)
-- Consul (REST API v1)
+- Nomad (HTTP API v1)
+- Consul (HTTP API v1)
 - Cluster Broccoli Nomad Job + Docker Image (for running the Play application)
 
 ### Using the Docker Image
