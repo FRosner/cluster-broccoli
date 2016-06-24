@@ -13,7 +13,6 @@ case class Instance(id: String,
   require(template.parameters == parameterValues.keySet, s"The given parameters (${parameterValues.keySet}) " +
     s"need to match the ones in the template (${template.parameters}).")
 
-  // TODO avoid JSON injection (escape the shit out of it)
   val templateJson: JsValue = {
     val replacedTemplate = parameterValues.foldLeft(template.template){
       case (intermediateTemplate, (parameter, value)) => intermediateTemplate.replaceAll("\\{\\{" + parameter + "\\}\\}", value)
