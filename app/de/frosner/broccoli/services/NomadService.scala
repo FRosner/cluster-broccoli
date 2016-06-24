@@ -87,7 +87,6 @@ class NomadService @Inject()(configuration: Configuration,
     request.post(job)
   }
 
-  // TODO encourage to use prefix and ACLs or separate nomad cluster to avoid deletion of jobs that don't belong to the service
   private[this] def executeDeleteJob(id: String) = {
     val queryUrl = nomadBaseUrl + s"/v1/job/$id"
     val request = ws.url(queryUrl)
