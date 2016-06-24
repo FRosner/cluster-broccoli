@@ -3,7 +3,7 @@ package de.frosner.broccoli.controllers
 import javax.inject.Inject
 
 import de.frosner.broccoli.models.Template
-import Template.{templateReads, templateWrites}
+import Template.templateWrites
 import de.frosner.broccoli.services.TemplateService
 
 import play.api.libs.json.Json

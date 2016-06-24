@@ -3,8 +3,7 @@ package de.frosner.broccoli.models
 import java.util.regex.Pattern
 
 import play.api.libs.json._
-import play.api.libs.json.Reads._ // Custom validation helpers
-import play.api.libs.functional.syntax._ // Combinator syntax
+import play.api.libs.functional.syntax._
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -27,15 +26,8 @@ object Template {
 
   implicit val templateWrites: Writes[Template] = (
     (JsPath \ "id").write[String] and
-      (JsPath \ "template").write[String] and
       (JsPath \ "description").write[String] and
       (JsPath \ "parameters").write[Set[String]]
-    )((template: Template) => (template.id, template.template, template.description, template.parameters))
-
-  implicit val templateReads: Reads[Template] = (
-    (JsPath \ "id").read[String] and
-      (JsPath \ "template").read[String] and
-      (JsPath \ "description").read[String]
-    )(Template.apply _)
+    )((template: Template) => (template.id, template.description, template.parameters))
 
 }

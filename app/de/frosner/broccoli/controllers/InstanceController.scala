@@ -9,7 +9,7 @@ import akka.util.Timeout
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import de.frosner.broccoli.models.{Instance, InstanceCreation, InstanceStatus}
-import Instance.{instanceReads, instanceWrites}
+import Instance.instanceWrites
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
 import de.frosner.broccoli.services.InstanceService
 import de.frosner.broccoli.services.InstanceService._
