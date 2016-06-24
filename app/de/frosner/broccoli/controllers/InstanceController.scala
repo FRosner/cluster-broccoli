@@ -40,7 +40,6 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
   }
 
   def create = Action.async { request =>
-    // TODO check if validate fails
     val maybeValidatedInstanceCreation = request.body.asJson.map(_.validate[InstanceCreation])
     maybeValidatedInstanceCreation.map { validatedInstanceCreation =>
       validatedInstanceCreation.map { instanceCreation =>
@@ -61,7 +60,6 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
   }
 
   def update(id: String) = Action.async { request =>
-    // TODO check if validate fails
     val maybeValidatedExpectedInstanceStatus = request.body.asJson.map(_.validate[InstanceStatus])
     maybeValidatedExpectedInstanceStatus.map { validatedExpectedInstanceStatus =>
       validatedExpectedInstanceStatus.map { status =>
