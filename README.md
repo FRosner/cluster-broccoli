@@ -16,9 +16,9 @@ Cluster Broccoli comes with a minimalistic web user interface. It allows you to 
 
 ![image](https://cloud.githubusercontent.com/assets/3427394/16301767/8494c2ca-3947-11e6-8f39-e319f7cab169.png)
 
-### REST API
+### HTTP API
 
-Cluster Broccoli is RESTful. You can control it using curl, writing your own command line wrapper or connect from your microservices. Please consult the documentation for a [detailed description of the REST API](https://github.com/FRosner/cluster-broccoli/wiki/REST-API-v1).
+Cluster Broccoli provides a RESTful HTTP API. You can control it using curl, writing your own command line wrapper or connect from your microservices. Please consult the documentation for a [detailed description of the HTTP API](https://github.com/FRosner/cluster-broccoli/wiki/HTTP-API-v1).
 
 ## Installation
 
