@@ -73,7 +73,6 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
     }.getOrElse(Future(Status(400)("Expected JSON data")))
   }
 
-  // TODO check what should get returned
   def delete(id: String) = Action.async {
     val eventuallyDeletedInstance = instanceService.ask(DeleteInstance(id)).mapTo[Boolean]
     eventuallyDeletedInstance.map { deleted =>
