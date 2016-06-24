@@ -22,7 +22,6 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
       Restangular.all("templates").getList().then(function(templateIds) {
         templateIds.forEach(function(templateId) {
           Restangular.one("templates", templateId).get().then(function(template){
-            // TODO include template images later
             template.instances = {};
             vm.templates[template.id] = template;
             updateInstances(template);
