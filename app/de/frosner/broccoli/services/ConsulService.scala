@@ -15,7 +15,6 @@ import play.api.{Configuration, Logger}
 import scala.util.{Failure, Success, Try}
 
 
-// TODO allow asking for services
 class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extends Actor {
 
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
