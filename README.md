@@ -1,5 +1,7 @@
 # Cluster Broccoli
 
+[![Build Status](https://travis-ci.org/FRosner/cluster-broccoli.svg?branch=master)](https://travis-ci.org/FRosner/cluster-broccoli)
+
 ## Description
 
 Cluster Broccoli is a RESTful web service + UI to manage [Nomad](https://www.nomadproject.io) jobs through a self service application. Jobs are defined based on templates, allowing for a selectable amount of customization.
