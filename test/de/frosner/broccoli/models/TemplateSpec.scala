@@ -14,6 +14,10 @@ class TemplateSpec extends Specification {
       Template("test", "Hallo {{name}}, how is {{object}}", "desc").parameters === Set("name", "object")
     }
 
+    "extract a single parameter with multiple occurances from a template correctly" in {
+      Template("test", "Hallo {{name}}. I like {{name}}.", "desc").parameters === Set("name")
+    }
+
   }
 
 }
