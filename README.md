@@ -1,6 +1,7 @@
 # Cluster Broccoli
 
 [![Build Status](https://travis-ci.org/FRosner/cluster-broccoli.svg?branch=master)](https://travis-ci.org/FRosner/cluster-broccoli)
+[![codecov](https://codecov.io/gh/FRosner/cluster-broccoli/branch/master/graph/badge.svg)](https://codecov.io/gh/FRosner/cluster-broccoli)
 
 ## Description
 
