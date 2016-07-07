@@ -11,7 +11,7 @@ import play.api.mvc.BodyParsers
 
 class TemplateControllerSpec extends PlaySpecification {
 
-  "/templates" should {
+  "list templates" should {
 
     "list all available templates" in { implicit ee: ExecutionEnv =>
       val templateService = mock(classOf[TemplateService])
@@ -22,7 +22,7 @@ class TemplateControllerSpec extends PlaySpecification {
       )
       when(templateService.templates).thenReturn(Seq(template))
       val controller = new TemplateController(templateService)
-      
+
       val result = controller.list.apply(FakeRequest())
       status(result) must be equalTo 200
       contentAsJson(result) must be equalTo JsArray(Seq(
@@ -32,6 +32,38 @@ class TemplateControllerSpec extends PlaySpecification {
           "description" -> JsString(template.description)
         ))
       ))
+    }
+
+  }
+
+  "show template" should {
+
+    "return the template if it exists" in { implicit ee: ExecutionEnv =>
+      val templateService = mock(classOf[TemplateService])
+      val template = Template(
+        id = "id",
+        template = "template {{name}}",
+        description = "description"
+      )
+      when(templateService.template("id")).thenReturn(Some(template))
+      val controller = new TemplateController(templateService)
+
+      val result = controller.show("id").apply(FakeRequest())
+      status(result) must be equalTo 200
+      contentAsJson(result) must be equalTo JsObject(Map(
+        "id" -> JsString(template.id),
+        "parameters" -> JsArray(Seq(JsString("name"))),
+        "description" -> JsString(template.description)
+      ))
+    }
+
+    "return 404 if the template does not exist" in {
+      val templateService = mock(classOf[TemplateService])
+      when(templateService.template("id")).thenReturn(None)
+      val controller = new TemplateController(templateService)
+
+      val result = controller.show("id").apply(FakeRequest())
+      status(result) must be equalTo 404
     }
 
   }
