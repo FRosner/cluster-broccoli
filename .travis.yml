@@ -3,6 +3,20 @@ jdk:
   - oraclejdk8
 script:
   - sbt test
+  - curl https://releases.hashicorp.com/nomad/0.4.0/nomad_0.4.0_linux_amd64.zip > nomad.zip
+  - unzip nomad.zip
+  - ./nomad agent -dev > nomad.log &
+  - curl https://releases.hashicorp.com/consul/0.6.4/consul_0.6.4_linux_amd64.zip > consul.zip
+  - unzip consul.zip
+  - ./consul agent -dev -node travis -bind 127.0.0.1 > consul.log &
+  - tail nomad.log
+  - tail consul.log
+  - sbt dist
+  - unzip target/universal/cluster-broccoli*.zip
+  - mv cluster-broccoli-* cluster-broccoli-dist
+  - cluster-broccoli-dist/bin/cluster-broccoli > cluster-broccoli.log &
+  - sleep 10
+  - curl localhost:9000
 cache:
   directories:
     - $HOME/.m2
