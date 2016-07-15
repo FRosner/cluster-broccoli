@@ -16,7 +16,10 @@ script:
   - mv cluster-broccoli-* cluster-broccoli-dist
   - cluster-broccoli-dist/bin/cluster-broccoli > cluster-broccoli.log &
   - sleep 10
-  - curl localhost:9000
+  # TODO put nomad, consul and broccoli in one docker image that gets built
+  # TODO The image gets started before each test case (before)
+  # TODO The image gets stopped after each test case (after)
+  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -c http-api-tests/ui
 cache:
   directories:
     - $HOME/.m2
