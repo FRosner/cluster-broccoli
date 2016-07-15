@@ -10,9 +10,7 @@ script:
   - unzip target/universal/cluster-broccoli*.zip
   - mv cluster-broccoli-* docker/test/cluster-broccoli-dist
   - docker build -t frosner/cluster-broccoli-test docker/test/
-  - docker run -d --name cluster-broccoli --net host frosner/cluster-broccoli-test cluster-broccoli # TODO move to before
   - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -c http-api-tests/ui
-  - docker stop cluster-broccoli
 cache:
   directories:
     - $HOME/.m2
