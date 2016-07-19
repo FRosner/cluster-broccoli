@@ -1,3 +1,3 @@
 #!/bin/bash
-docker run -d --name cluster-broccoli --net host frosner/cluster-broccoli-test cluster-broccoli
+docker run -d --net host frosner/cluster-broccoli-test cluster-broccoli > cluster-broccoli.did
 sleep 10
