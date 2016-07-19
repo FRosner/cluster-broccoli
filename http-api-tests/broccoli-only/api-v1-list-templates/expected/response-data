@@ -1,0 +1,23 @@
+[
+  {
+    "id": "http-server",
+    "description": "A simple Python HTTP request handler. This class serves files from the current directory and below, directly mapping the directory structure to HTTP requests.",
+    "parameters": [
+      "id"
+    ]
+  },
+  {
+    "id": "jupyter",
+    "description": "Open source, interactive data science and scientific computing across over 40 programming languages.",
+    "parameters": [
+      "id"
+    ]
+  },
+  {
+    "id": "zeppelin",
+    "description": "A web-based notebook that enables interactive data analytics.\nYou can make beautiful data-driven, interactive and collaborative documents with SQL, Scala and more.",
+    "parameters": [
+      "id"
+    ]
+  }
+]
