@@ -32,13 +32,32 @@
                         "Services": [
                             {
                                 "Id": "",
-                                "Name": "{{id}}-web-ui",
+                                "Name": "{{id}}-web-ui-1",
                                 "Tags": ["protocol:http"],
                                 "PortLabel": "ui",
                                 "Checks": [
                                     {
                                         "Id": "",
-                                        "Name": "service: \"{{id}}-ui\" check",
+                                        "Name": "service: \"{{id}}-ui-1\" check",
+                                        "Type": "http",
+                                        "Command": "",
+                                        "Args": null,
+                                        "Path": "/",
+                                        "Protocol": "",
+                                        "Interval": 10000000000,
+                                        "Timeout": 2000000000
+                                    }
+                                ]
+                            },
+                            {
+                                "Id": "",
+                                "Name": "{{id}}-web-ui-2",
+                                "Tags": ["protocol:http"],
+                                "PortLabel": "ui",
+                                "Checks": [
+                                    {
+                                        "Id": "",
+                                        "Name": "service: \"{{id}}-ui-2\" check",
                                         "Type": "http",
                                         "Command": "",
                                         "Args": null,
