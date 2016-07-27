@@ -21,6 +21,10 @@
             }
         }
 
+        .service-link {
+          margin-right: 10px;
+        }
+
         [ng-click],
         [data-ng-click],
         [x-ng-click] {
@@ -81,7 +85,7 @@
                                style="margin-left: 10px; height: 1em; display: inline-block;">
                         </td>
                         <td class="col-md-8">
-                          <span ng-repeat="service in instance.services"><a href="{{service.protocol}}://{{service.address}}:{{service.port}}">{{service.name}}</a></span>
+                          <span ng-repeat="service in instance.services" class="service-link"><a href="{{service.protocol}}://{{service.address}}:{{service.port}}">{{service.name}}</a></span>
                         </td>
                         <td class="col-md-1">{{instance.status}}</td>
                         <td class="col-md-1">
