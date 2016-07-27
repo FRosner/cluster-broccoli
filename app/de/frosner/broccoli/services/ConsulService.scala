@@ -12,6 +12,7 @@ import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.{Configuration, Logger}
 
+import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 
@@ -24,36 +25,39 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
   def receive = {
     case ServiceStatusRequest(jobId, serviceNames) =>
       val sendingService = sender()
-      serviceNames.foreach { name =>
+      val serviceResponses: Iterable[Future[Seq[Service]]] = serviceNames.map { name =>
         val queryUrl = consulBaseUrl + s"/v1/catalog/service/$name"
         val request = ws.url(queryUrl)
         Logger.info(s"Requesting service information (${request.uri})")
-        request.get().onComplete {
-          case Success(response) =>
-            val responseJsonArray = response.json.as[JsArray]
-            val responseServices = responseJsonArray.value.map { serviceJson =>
-              val fields = serviceJson.as[JsObject].value
-              // TODO proper JSON parsing with exception handling
-              val serviceName = fields("ServiceName").as[JsString].value
-              val serviceProtocol = ConsulService.extractProtocolFromTags(fields("ServiceTags")) match {
-                case Some(protocol) => protocol
-                case None => Logger.warn("Service did not specify a single protocol tag (e.g. protocol:https). Assuming https.")
-                  "https"
-              }
-              val serviceAddress = fields("ServiceAddress").as[JsString].value
-              val servicePort = fields("ServicePort").as[JsNumber].value.toInt
-              Service(
-                name = serviceName,
-                protocol = serviceProtocol,
-                address = serviceAddress,
-                port = servicePort
-              )
+        request.get().map { response =>
+          val responseJsonArray = response.json.as[JsArray]
+          responseJsonArray.value.map { serviceJson =>
+            val fields = serviceJson.as[JsObject].value
+            // TODO proper JSON parsing with exception handling
+            val serviceName = fields("ServiceName").as[JsString].value
+            val serviceProtocol = ConsulService.extractProtocolFromTags(fields("ServiceTags")) match {
+              case Some(protocol) => protocol
+              case None => Logger.warn("Service did not specify a single protocol tag (e.g. protocol:https). Assuming https.")
+                "https"
             }
-            sendingService ! ConsulServices(jobId, responseServices)
-          case Failure(throwable) =>
-            Logger.error(throwable.toString)
-            sendingService ! ConsulNotReachable
+            val serviceAddress = fields("ServiceAddress").as[JsString].value
+            val servicePort = fields("ServicePort").as[JsNumber].value.toInt
+            Service(
+              name = serviceName,
+              protocol = serviceProtocol,
+              address = serviceAddress,
+              port = servicePort
+            )
+          }
         }
+
+      }
+      val serviceResponse = Future.sequence(serviceResponses)
+      serviceResponse.onComplete {
+        case Success(services: Iterable[Seq[Service]]) => sendingService ! ConsulServices(jobId, services.flatten)
+        case Failure(throwable) =>
+          Logger.error(throwable.toString)
+          sendingService ! ConsulNotReachable
       }
   }
 
