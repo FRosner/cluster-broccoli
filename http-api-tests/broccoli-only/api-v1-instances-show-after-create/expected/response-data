@@ -3,6 +3,6 @@
   "parameterValues": {
     "id": "test-http"
   },
-  "status": "stopped",
+  "status": "unknown",
   "services": {}
 }
