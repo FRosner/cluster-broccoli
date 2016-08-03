@@ -1,0 +1,5 @@
+#!/bin/bash
+curl -H 'Content-Type: application/json' \
+  -X POST -d '{ "templateId": "http-server", "parameters": { "id": "test-http" } }' \
+  'http://localhost:9000/api/v1/instances'
+sleep 1

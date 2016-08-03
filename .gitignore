@@ -4,3 +4,5 @@
 .sbtserver
 logs
 *.lock
+*run-*
+docker/test/cluster-broccoli-dist/

@@ -1,0 +1,8 @@
+{
+  "id": "test-http",
+  "parameterValues": {
+    "id": "test-http"
+  },
+  "status": "unknown",
+  "services": {}
+}

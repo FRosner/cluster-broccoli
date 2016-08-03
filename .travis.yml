@@ -1,8 +1,17 @@
 language: scala
+sudo: required
+services:
+  - docker
 jdk:
   - oraclejdk8
 script:
   - sbt test
+  - sbt dist
+  - unzip target/universal/cluster-broccoli*.zip
+  - mv cluster-broccoli-* docker/test/cluster-broccoli-dist
+  - cp -R templates docker/test/
+  - docker build -t frosner/cluster-broccoli-test docker/test/
+  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-only
 cache:
   directories:
     - $HOME/.m2
