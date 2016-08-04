@@ -9,11 +9,12 @@ case class Instance(id: String,
                     template: Template,
                     parameterValues: Map[String, String],
                     var status: InstanceStatus,
-                    var services: Map[String, Service]) {
+                    var services: Map[String, Service]) extends Serializable {
 
   require(template.parameters == parameterValues.keySet, s"The given parameters (${parameterValues.keySet}) " +
     s"need to match the ones in the template (${template.parameters}).")
 
+  @transient
   val templateJson: JsValue = {
     val replacedTemplate = parameterValues.foldLeft(template.template){
       case (intermediateTemplate, (parameter, value)) => intermediateTemplate.replaceAll("\\{\\{" + parameter + "\\}\\}", value)
