@@ -42,11 +42,11 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
         tryConsulDomain.foreach(domain => Logger.info(s"Advertising Consul entities through DNS using '$domain' as the domain."))
         tryConsulDomain.toOption
       }
-      case default =>
-        if (default != conf.CONSUL_LOOKUP_METHOD_IP)
-          Logger.warn(s"Configuration property ${conf.CONSUL_LOOKUP_METHOD_KEY} = $default is invalid.")
+      case conf.CONSUL_LOOKUP_METHOD_IP =>
         Logger.info("Advertising Consul entities through IP addresses.")
         None
+      case default =>
+        throw new IllegalArgumentException(s"Configuration property ${conf.CONSUL_LOOKUP_METHOD_KEY} = $default is invalid.")
     }
   }
 
