@@ -4,17 +4,17 @@ import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-@volatile
 case class Instance(id: String,
                     template: Template,
                     parameterValues: Map[String, String],
                     var status: InstanceStatus,
-                    var services: Map[String, Service]) {
+                    var services: Map[String, Service]) extends Serializable {
 
   require(template.parameters == parameterValues.keySet, s"The given parameters (${parameterValues.keySet}) " +
     s"need to match the ones in the template (${template.parameters}).")
 
-  val templateJson: JsValue = {
+  @transient
+  lazy val templateJson: JsValue = {
     val replacedTemplate = parameterValues.foldLeft(template.template){
       case (intermediateTemplate, (parameter, value)) => intermediateTemplate.replaceAll("\\{\\{" + parameter + "\\}\\}", value)
     }

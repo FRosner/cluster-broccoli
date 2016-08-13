@@ -42,7 +42,7 @@ class TemplateService @Inject() (configuration: Configuration) {
       tryTemplate.toOption
     })
     Logger.info(s"Successfully parsed ${templates.size} templates: ${templates.map(_.id).mkString(", ")}")
-    templates
+    templates.sortBy(_.id)
   }
 
   def template(id: String): Option[Template] = templates.find(_.id == id)

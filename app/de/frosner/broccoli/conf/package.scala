@@ -14,4 +14,7 @@ package object conf {
   val TEMPLATES_DIR_KEY = "broccoli.templatesDir"
   val TEMPLATES_DIR_DEFAULT = "templates"
 
+  val INSTANCES_FILE_KEY = "broccoli.instancesFile"
+  val INSTANCES_FILE_DEFAULT = "instances"
+
 }

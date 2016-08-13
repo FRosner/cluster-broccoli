@@ -6,7 +6,7 @@ import javax.inject.{Inject, Named}
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
-import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
+import de.frosner.broccoli.models.InstanceStatusJson._
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import de.frosner.broccoli.models.{Instance, InstanceCreation, InstanceStatus}
 import Instance.instanceWrites
