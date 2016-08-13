@@ -4,7 +4,6 @@ import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-@volatile
 case class Instance(id: String,
                     template: Template,
                     parameterValues: Map[String, String],
@@ -15,7 +14,7 @@ case class Instance(id: String,
     s"need to match the ones in the template (${template.parameters}).")
 
   @transient
-  val templateJson: JsValue = {
+  lazy val templateJson: JsValue = {
     val replacedTemplate = parameterValues.foldLeft(template.template){
       case (intermediateTemplate, (parameter, value)) => intermediateTemplate.replaceAll("\\{\\{" + parameter + "\\}\\}", value)
     }

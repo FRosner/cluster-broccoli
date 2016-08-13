@@ -10,7 +10,7 @@ import scala.collection.mutable.ArrayBuffer
 case class Template(id: String, template: String, description: String) extends Serializable {
 
   @transient
-  val parameters: Set[String] = {
+  lazy val parameters: Set[String] = {
     val matcher = Template.TemplatePattern.matcher(template)
     var variables = ArrayBuffer[String]()
     while (matcher.find()) {

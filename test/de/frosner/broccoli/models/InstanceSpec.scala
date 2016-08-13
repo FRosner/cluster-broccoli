@@ -2,6 +2,7 @@ package de.frosner.broccoli.models
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 
+import de.frosner.broccoli.services.InstanceService
 import org.specs2.mutable.Specification
 import org.specs2.mutable._
 import play.api.libs.json.JsString
@@ -40,15 +41,13 @@ class InstanceSpec extends Specification {
   "Instance serialization" should {
 
     "work correctly" in {
-      val original = Instance("1", Template("1", "\"{{name}}\"", "desc"), Map("name" -> "Heinz"), InstanceStatus.Unknown, Map.empty)
-      val bos = new ByteArrayOutputStream()
-      val oos = new ObjectOutputStream(bos)
-      oos.writeObject(original)
-      oos.close()
+      val original = Map(
+        "1" -> Instance("1", Template("1", "\"{{name}}\"", "desc"), Map("name" -> "Heinz"), InstanceStatus.Unknown, Map.empty)
+      )
 
-      val ois = new ObjectInputStream(new ByteArrayInputStream(bos.toByteArray))
-      val deserialized = ois.readObject()
-      ois.close()
+      val bos = new ByteArrayOutputStream()
+      InstanceService.persistInstances(original, bos)
+      val deserialized = InstanceService.loadInstances(new ByteArrayInputStream(bos.toByteArray)).get
 
       original === deserialized
     }

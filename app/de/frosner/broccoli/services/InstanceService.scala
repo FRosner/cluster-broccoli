@@ -1,5 +1,6 @@
 package de.frosner.broccoli.services
 
+import java.io.{ObjectOutputStream, _}
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Named, Singleton}
 
@@ -8,20 +9,25 @@ import de.frosner.broccoli.models._
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import de.frosner.broccoli.services.NomadService.{DeleteJob, GetServices, GetStatuses, StartJob}
 import de.frosner.broccoli.util.Logging
-import play.api.{Configuration, Logger}
+import play.api.{Configuration, Play}
 import play.api.libs.json.{JsArray, JsString, Json}
 import play.api.libs.ws.WSClient
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 import InstanceService._
+import de.frosner.broccoli.conf
+import play.Logger
+import play.api.inject.ApplicationLifecycle
 
 @Singleton
 class InstanceService @Inject()(templateService: TemplateService,
                                 system: ActorSystem,
                                 @Named("nomad-actor") nomadActor: ActorRef,
-                                ws: WSClient) extends Actor with Logging {
+                                ws: WSClient,
+                                configuration: Configuration,
+                                lifecycle: ApplicationLifecycle) extends Actor with Logging {
 
   private val cancellable: Cancellable = system.scheduler.schedule(
     initialDelay = Duration.Zero,
@@ -33,10 +39,39 @@ class InstanceService @Inject()(templateService: TemplateService,
     self
   )
 
+  private val instancesFilePath = configuration.getString(conf.INSTANCES_FILE_KEY).getOrElse(conf.INSTANCES_FILE_DEFAULT)
+  private val instancesFile = new File(instancesFilePath)
+  private val instancesFileLockPath = instancesFilePath + ".lock"
+
   implicit val executionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   @volatile
-  private var instances: Map[String, Instance] = Map.empty
+  private var instances: Map[String, Instance] = {
+    Logger.info(s"Locking $instancesFilePath ($instancesFileLockPath)")
+    val lock = new File(instancesFileLockPath)
+    if (lock.createNewFile()) {
+      sys.addShutdownHook{
+        Logger.info(s"Releasing lock on $instancesFilePath ($instancesFileLockPath)")
+        lock.delete()
+      }
+      Logger.info(s"Looking for instances in $instancesFilePath.")
+      if (instancesFile.canRead && instancesFile.isFile) {
+        InstanceService.loadInstances(new FileInputStream(instancesFile)).recoverWith {
+          case throwable =>
+            Logger.error(s"Error parsing instances in $instancesFilePath.")
+            Failure(throwable)
+        }.getOrElse(Map.empty[String, Instance])
+      } else {
+        Logger.info(s"Instances file ${instancesFilePath} not found. Initializing with an empty instance collection.")
+        InstanceService.persistInstances(Map.empty[String, Instance], new FileOutputStream(instancesFile))
+      }
+    } else {
+      val error = s"Cannot lock $instancesFilePath. Is there another Broccoli instance running?"
+      Logger.error(error)
+      Await.ready(Play.current.stop(), Duration(10, TimeUnit.SECONDS))
+      throw new IllegalStateException(error)
+    }
+  }
 
   def receive = {
     case GetInstances => sender ! instances.values
@@ -54,6 +89,7 @@ class InstanceService @Inject()(templateService: TemplateService,
     instances.foreach {
       case (id, instance) => instance.status = InstanceStatus.Unknown
     }
+    InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
   }
 
   private[this] def setAllServicesToUnknown() = {
@@ -72,6 +108,7 @@ class InstanceService @Inject()(templateService: TemplateService,
           instance.services = Map.empty
       }
     }
+    InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
   }
 
   private[this] def updateServicesBasedOnNomad(jobId: String, services: Iterable[Service]) = {
@@ -80,6 +117,7 @@ class InstanceService @Inject()(templateService: TemplateService,
       case Some(instance) => instance.services = services.map(service => (service.name, service)).toMap
       case None => Logger.error(s"Received services associated to non-existing job $jobId")
     }
+    InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
   }
 
   private[this] def addInstance(instanceCreation: InstanceCreation): Try[Instance] = {
@@ -94,6 +132,7 @@ class InstanceService @Inject()(templateService: TemplateService,
         potentialTemplate.map { template =>
           val newInstance = Instance(id, template, instanceCreation.parameters, InstanceStatus.Stopped, Map.empty)
           instances = instances.updated(id, newInstance)
+          InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
           Success(newInstance)
         }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException(s"Template $templateId does not exist."))))
       }
@@ -122,6 +161,7 @@ class InstanceService @Inject()(templateService: TemplateService,
     setStatus(id, InstanceStatus.Stopped)
     if (instances.contains(id)) {
       instances = instances - id
+      InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
       true
     } else {
       false
@@ -131,14 +171,37 @@ class InstanceService @Inject()(templateService: TemplateService,
 }
 
 object InstanceService {
-  case object GetInstances
-  case class GetInstance(id: String)
-  case class NewInstance(instanceCreation: InstanceCreation)
-  case class SetStatus(id: String, status: InstanceStatus)
-  case class DeleteInstance(id: String)
-  case class NomadStatuses(statuses: Map[String, InstanceStatus])
-  case class ConsulServices(jobId: String, jobServices: Iterable[Service])
-  case object NomadNotReachable
-  case object ConsulNotReachable
-}
 
+  case object GetInstances
+
+  case class GetInstance(id: String)
+
+  case class NewInstance(instanceCreation: InstanceCreation)
+
+  case class SetStatus(id: String, status: InstanceStatus)
+
+  case class DeleteInstance(id: String)
+
+  case class NomadStatuses(statuses: Map[String, InstanceStatus])
+
+  case class ConsulServices(jobId: String, jobServices: Iterable[Service])
+
+  case object NomadNotReachable
+
+  case object ConsulNotReachable
+
+  def persistInstances(instances: Map[String, Instance], output: OutputStream): Map[String, Instance] = {
+    val oos = new ObjectOutputStream(output)
+    oos.writeObject(instances)
+    oos.close()
+    instances
+  }
+
+  def loadInstances(input: InputStream): Try[Map[String, Instance]] = {
+    val ois = new ObjectInputStream(input)
+    val instances = Try(ois.readObject().asInstanceOf[Map[String, Instance]])
+    ois.close()
+    instances
+  }
+
+}
