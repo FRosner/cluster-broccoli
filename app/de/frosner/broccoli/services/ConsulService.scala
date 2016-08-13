@@ -36,7 +36,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
         }
         val tryConsulDomain = Try(Await.result(eventuallyConsulDomain, Duration(5, TimeUnit.SECONDS))).recoverWith{
           case throwable =>
-            Logger.warn(s"Cannot reach Consul to read the configuration from $requestUrl. Falling back to IP based lookup.")
+            Logger.warn(s"Cannot reach Consul to read the configuration from $requestUrl, falling back to IP based lookup: $throwable")
             Failure(throwable)
         }
         tryConsulDomain.foreach(domain => Logger.info(s"Advertising Consul entities through DNS using '$domain' as the domain."))
