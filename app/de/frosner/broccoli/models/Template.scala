@@ -23,7 +23,7 @@ case class Template(id: String, template: String, description: String) extends S
 
 object Template {
 
-  val TemplatePattern = Pattern.compile("\\{\\{([A-Za-z][A-Za-z0-9\\_]*)\\}\\}")
+  val TemplatePattern = Pattern.compile("\\{\\{([A-Za-z][A-Za-z0-9\\-\\_\\_]*)\\}\\}")
 
   implicit val templateWrites: Writes[Template] = (
     (JsPath \ "id").write[String] and

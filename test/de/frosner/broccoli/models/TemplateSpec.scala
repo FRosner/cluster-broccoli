@@ -20,6 +20,14 @@ class TemplateSpec extends Specification {
       Template("test", "Hallo {{name}}. I like {{name}}.", "desc").parameters === Set("name")
     }
 
+    "support dashes in the parameter names" in {
+      Template("test", "Hallo {{person-name}}", "desc").parameters === Set("person-name")
+    }
+
+    "support underscores in the parameter names" in {
+      Template("test", "Hallo {{person_name}}", "desc").parameters === Set("person_name")
+    }
+
   }
 
   "Template serialization" should {
