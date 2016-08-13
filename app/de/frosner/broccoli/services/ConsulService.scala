@@ -21,6 +21,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   private val consulBaseUrl = configuration.getString(conf.CONSUL_URL_KEY).getOrElse(conf.CONSUL_URL_DEFAULT)
+  private val consulDomain: Option[String] = configuration.getString(conf.CONSUL_SERVICE_DOMAIN_KEY)
 
   def receive = {
     case ServiceStatusRequest(jobId, serviceNames) =>
@@ -40,7 +41,11 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
               case None => Logger.warn("Service did not specify a single protocol tag (e.g. protocol-https). Assuming https.")
                 "https"
             }
-            val serviceAddress = fields("ServiceAddress").as[JsString].value
+            val serviceAddress = consulDomain.map { domain =>
+              fields("ServiceName").as[JsString].value + "." + domain
+            }.getOrElse {
+              fields("ServiceAddress").as[JsString].value
+            }
             val servicePort = fields("ServicePort").as[JsNumber].value.toInt
             Service(
               name = serviceName,
