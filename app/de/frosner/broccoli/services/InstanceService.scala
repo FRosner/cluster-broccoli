@@ -89,7 +89,6 @@ class InstanceService @Inject()(templateService: TemplateService,
     instances.foreach {
       case (id, instance) => instance.status = InstanceStatus.Unknown
     }
-    InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
   }
 
   private[this] def setAllServicesToUnknown() = {
@@ -108,7 +107,6 @@ class InstanceService @Inject()(templateService: TemplateService,
           instance.services = Map.empty
       }
     }
-    InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
   }
 
   private[this] def updateServicesBasedOnNomad(jobId: String, services: Iterable[Service]) = {
@@ -117,7 +115,6 @@ class InstanceService @Inject()(templateService: TemplateService,
       case Some(instance) => instance.services = services.map(service => (service.name, service)).toMap
       case None => Logger.error(s"Received services associated to non-existing job $jobId")
     }
-    InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
   }
 
   private[this] def addInstance(instanceCreation: InstanceCreation): Try[Instance] = {
