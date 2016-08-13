@@ -38,7 +38,9 @@
                             {
                                 "Id": "",
                                 "Name": "{{id}}-ui",
-                                "Tags": null,
+                                "Tags": [
+                                    "protocol-http"
+                                ],
                                 "PortLabel": "ui",
                                 "Checks": [
                                     {

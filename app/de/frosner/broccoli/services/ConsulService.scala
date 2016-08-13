@@ -37,7 +37,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
             val serviceName = fields("ServiceName").as[JsString].value
             val serviceProtocol = ConsulService.extractProtocolFromTags(fields("ServiceTags")) match {
               case Some(protocol) => protocol
-              case None => Logger.warn("Service did not specify a single protocol tag (e.g. protocol:https). Assuming https.")
+              case None => Logger.warn("Service did not specify a single protocol tag (e.g. protocol-https). Assuming https.")
                 "https"
             }
             val serviceAddress = fields("ServiceAddress").as[JsString].value
@@ -68,8 +68,8 @@ object ConsulService {
 
   def extractProtocolFromTags(tagsJs: JsValue): Option[String] = {
     val tags = tagsJs.as[JsArray].value.map(_.as[JsString].value)
-    val protocolTags = tags.filter(_.startsWith("protocol:"))
-    val protocols = protocolTags.map(_.split(':')(1))
+    val protocolTags = tags.filter(_.startsWith("protocol-"))
+    val protocols = protocolTags.map(_.split('-')(1))
     protocols.size match {
       case 1 => Some(protocols.head)
       case others => None
