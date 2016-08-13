@@ -32,7 +32,8 @@
                         "Constraints": null,
                         "Env": {
                             "ZEPPELIN_CONTAINER_NAME": "{{id}}",
-                            "ZEPPELIN_NOTEBOOK_MOUNT": "${NOMAD_TASK_DIR}/notebooks"
+                            "ZEPPELIN_NOTEBOOK_MOUNT": "${NOMAD_TASK_DIR}/notebooks",
+                            "ZEPPELIN_SPARK_MASTER" : "local[*]"
                         },
                         "Services": [
                             {
@@ -84,7 +85,7 @@
                         },
                         "Artifacts": [
                             {
-                                "GetterSource": "https://raw.githubusercontent.com/FRosner/docker-zeppelin/master/zeppelin-docker-wrapper",
+                                "GetterSource": "https://raw.githubusercontent.com/FRosner/docker-zeppelin/1.0.0/zeppelin-docker-wrapper",
                                 "GetterOptions": {},
                                 "RelativeDest": "local/"
                             }
