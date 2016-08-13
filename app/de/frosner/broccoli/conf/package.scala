@@ -17,6 +17,6 @@ package object conf {
   val INSTANCES_FILE_KEY = "broccoli.instancesFile"
   val INSTANCES_FILE_DEFAULT = "instances"
 
-  val CONSUL_SERVICE_DOMAIN_KEY = "broccoli.consul.service.domain"
+  val CONSUL_DOMAIN_KEY = "broccoli.consul.domain"
 
 }

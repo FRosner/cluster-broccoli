@@ -63,6 +63,6 @@ The following configuration properties are supported.
 | -------- | ----------- | ------- |
 | `broccoli.nomad.url` | Address of your nomad server | `http://localhost:4646` |
 | `broccoli.consul.url` | Address of your consul server | `http://localhost:8500` |
-| `broccoli.consul.service.domain` | Consul domain (e.g. `service.consul`) for service DNS lookup. If no domain is specified, IP addresses will be used (not recommended). | - |
+| `broccoli.consul.domain` | Consul domain (e.g. `consul`) for service DNS lookup. If no domain is specified, IP addresses will be used (not recommended). | - |
 | `broccoli.templatesDir` | Directory where your templates are located | `templates` |
 | `broccoli.instancesFile` | Directory where your instances are located | `instances` |
