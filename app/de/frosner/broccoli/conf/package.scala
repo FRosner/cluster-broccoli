@@ -17,4 +17,8 @@ package object conf {
   val INSTANCES_FILE_KEY = "broccoli.instancesFile"
   val INSTANCES_FILE_DEFAULT = "instances"
 
+  val CONSUL_LOOKUP_METHOD_KEY = "broccoli.consul.lookup"
+  val CONSUL_LOOKUP_METHOD_IP = "ip"
+  val CONSUL_LOOKUP_METHOD_DNS = "dns"
+
 }

@@ -1,5 +1,6 @@
 package de.frosner.broccoli.services
 
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 import akka.actor._
@@ -12,7 +13,8 @@ import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.{Configuration, Logger}
 
-import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 
 
@@ -21,6 +23,32 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   private val consulBaseUrl = configuration.getString(conf.CONSUL_URL_KEY).getOrElse(conf.CONSUL_URL_DEFAULT)
+  private val consulDomain: Option[String] = {
+    val lookupMethod = configuration.getString(conf.CONSUL_LOOKUP_METHOD_KEY).getOrElse(conf.CONSUL_LOOKUP_METHOD_IP)
+    lookupMethod match {
+      case conf.CONSUL_LOOKUP_METHOD_DNS => {
+        val requestUrl = consulBaseUrl + "/v1/agent/self"
+        Logger.info(s"Requesting Consul domain from $requestUrl")
+        val request = ws.url(requestUrl)
+        val response = request.get().map(_.json.as[JsObject])
+        val eventuallyConsulDomain = response.map{ jsObject =>
+          (jsObject \ "Config" \ "Domain").get.as[JsString].value.stripSuffix(".")
+        }
+        val tryConsulDomain = Try(Await.result(eventuallyConsulDomain, Duration(5, TimeUnit.SECONDS))).recoverWith{
+          case throwable =>
+            Logger.warn(s"Cannot reach Consul to read the configuration from $requestUrl, falling back to IP based lookup: $throwable")
+            Failure(throwable)
+        }
+        tryConsulDomain.foreach(domain => Logger.info(s"Advertising Consul entities through DNS using '$domain' as the domain."))
+        tryConsulDomain.toOption
+      }
+      case conf.CONSUL_LOOKUP_METHOD_IP =>
+        Logger.info("Advertising Consul entities through IP addresses.")
+        None
+      case default =>
+        throw new IllegalArgumentException(s"Configuration property ${conf.CONSUL_LOOKUP_METHOD_KEY} = $default is invalid.")
+    }
+  }
 
   def receive = {
     case ServiceStatusRequest(jobId, serviceNames) =>
@@ -28,7 +56,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
       val serviceResponses: Iterable[Future[Seq[Service]]] = serviceNames.map { name =>
         val queryUrl = consulBaseUrl + s"/v1/catalog/service/$name"
         val request = ws.url(queryUrl)
-        Logger.info(s"Requesting service information (${request.uri})")
+        Logger.debug(s"Requesting service information (${request.uri})")
         request.get().map { response =>
           val responseJsonArray = response.json.as[JsArray]
           responseJsonArray.value.map { serviceJson =>
@@ -40,7 +68,11 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
               case None => Logger.warn("Service did not specify a single protocol tag (e.g. protocol-https). Assuming https.")
                 "https"
             }
-            val serviceAddress = fields("ServiceAddress").as[JsString].value
+            val serviceAddress = consulDomain.map { domain =>
+              fields("ServiceName").as[JsString].value + ".service." + domain
+            }.getOrElse {
+              fields("ServiceAddress").as[JsString].value
+            }
             val servicePort = fields("ServicePort").as[JsNumber].value.toInt
             Service(
               name = serviceName,
