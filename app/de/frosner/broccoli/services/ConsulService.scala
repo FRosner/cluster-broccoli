@@ -56,7 +56,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
       val serviceResponses: Iterable[Future[Seq[Service]]] = serviceNames.map { name =>
         val queryUrl = consulBaseUrl + s"/v1/catalog/service/$name"
         val request = ws.url(queryUrl)
-        Logger.info(s"Requesting service information (${request.uri})")
+        Logger.debug(s"Requesting service information (${request.uri})")
         request.get().map { response =>
           val responseJsonArray = response.json.as[JsArray]
           responseJsonArray.value.map { serviceJson =>

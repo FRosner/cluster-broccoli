@@ -63,7 +63,7 @@ class NomadService @Inject()(configuration: Configuration,
     val sendingService = sender()
     val queryUrl = nomadBaseUrl + s"/v1/job/$id"
     val jobRequest = ws.url(queryUrl)
-    Logger.info(s"Requesting job status update (${jobRequest.uri})")
+    Logger.debug(s"Requesting job status update (${jobRequest.uri})")
     val jobResponse = jobRequest.get().map(_.json.as[JsObject])
     val eventuallyJobServiceIds = jobResponse.map{ jsObject =>
       val services = (jsObject \\ "Services").flatMap(_.as[JsArray].value.map(_.as[JsObject]))
