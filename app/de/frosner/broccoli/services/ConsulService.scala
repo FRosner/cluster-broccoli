@@ -5,7 +5,7 @@ import javax.inject.Inject
 
 import akka.actor._
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.{Instance, InstanceStatus, Service}
+import de.frosner.broccoli.models.{Instance, InstanceStatus, Service, ServiceStatus}
 import de.frosner.broccoli.services.ConsulService.ServiceStatusRequest
 import de.frosner.broccoli.services.InstanceService.{ConsulNotReachable, ConsulServices, NomadNotReachable, NomadStatuses}
 import de.frosner.broccoli.services.NomadService._
@@ -78,7 +78,8 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
               name = serviceName,
               protocol = serviceProtocol,
               address = serviceAddress,
-              port = servicePort
+              port = servicePort,
+              status = ServiceStatus.Unknown
             )
           }
         }
