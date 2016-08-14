@@ -61,7 +61,7 @@
                                         "Type": "http",
                                         "Command": "",
                                         "Args": null,
-                                        "Path": "/",
+                                        "Path": "/doesnotexist",
                                         "Protocol": "",
                                         "Interval": 10000000000,
                                         "Timeout": 2000000000
