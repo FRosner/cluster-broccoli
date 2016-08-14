@@ -82,17 +82,12 @@ class InstanceService @Inject()(templateService: TemplateService,
     case NomadStatuses(statuses) => updateStatusesBasedOnNomad(statuses)
     case ConsulServices(id, services) => updateServicesBasedOnNomad(id, services)
     case NomadNotReachable => setAllStatusesToUnknown()
-    case ConsulNotReachable => setAllServicesToUnknown()
   }
 
   private[this] def setAllStatusesToUnknown() = {
     instances.foreach {
       case (id, instance) => instance.status = InstanceStatus.Unknown
     }
-  }
-
-  private[this] def setAllServicesToUnknown() = {
-    // TODO
   }
 
   private[this] def updateStatusesBasedOnNomad(statuses: Map[String, InstanceStatus]) = {
@@ -184,8 +179,6 @@ object InstanceService {
   case class ConsulServices(jobId: String, jobServices: Iterable[Service])
 
   case object NomadNotReachable
-
-  case object ConsulNotReachable
 
   def persistInstances(instances: Map[String, Instance], output: OutputStream): Map[String, Instance] = {
     val oos = new ObjectOutputStream(output)

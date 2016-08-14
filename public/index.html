@@ -25,7 +25,7 @@
           margin-right: 10px;
         }
 
-        .service-status-unknown:link, .service-status-unknown:visited, .service-status-unknown:hover, .service-status-unknown:active {
+        .service-status-unknown {
           color: #6e808e;
         }
 
@@ -98,7 +98,8 @@
                         </td>
                         <td class="col-md-8">
                           <span ng-repeat="service in instance.services" class="service-link">
-                            <a ng-class="(service.status=='passing') ? 'service-status-passing' : (service.status=='failing') ? 'service-status-failing' : 'service-status-unknown'" target="_blank" href="{{service.protocol}}://{{service.address}}:{{service.port}}">{{service.name}}</a>
+                            <a ng-if="service.status != 'unknown'" ng-class="(service.status=='passing') ? 'service-status-passing' : 'service-status-failing'" target="_blank" href="{{service.protocol}}://{{service.address}}:{{service.port}}">{{service.name}}</a>
+                            <span ng-if="service.status == 'unknown'" class="service-status-unknown">{{service.name}}</span>
                           </span>
                         </td>
                         <td class="col-md-1">{{instance.status}}</td>

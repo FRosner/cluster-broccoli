@@ -7,7 +7,7 @@ import akka.actor._
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.{Instance, InstanceStatus, Service, ServiceStatus}
 import de.frosner.broccoli.services.ConsulService.ServiceStatusRequest
-import de.frosner.broccoli.services.InstanceService.{ConsulNotReachable, ConsulServices, NomadNotReachable, NomadStatuses}
+import de.frosner.broccoli.services.InstanceService.{ConsulServices, NomadNotReachable, NomadStatuses}
 import de.frosner.broccoli.services.NomadService._
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
@@ -91,14 +91,22 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
             )
           }
         }
-
       }
       val serviceResponse = Future.sequence(serviceResponses)
       serviceResponse.onComplete {
         case Success(services: Iterable[Seq[Service]]) => sendingService ! ConsulServices(jobId, services.flatten)
         case Failure(throwable) =>
           Logger.error(throwable.toString)
-          sendingService ! ConsulNotReachable
+          val unknownServices = serviceNames.map(
+            name => Service(
+              name = name,
+              protocol = "",
+              address = "",
+              port = 80,
+              status = ServiceStatus.Unknown
+            )
+          )
+          sendingService ! ConsulServices(jobId, unknownServices)
       }
   }
 
