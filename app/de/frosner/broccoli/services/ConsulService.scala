@@ -54,11 +54,15 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
     case ServiceStatusRequest(jobId, serviceNames) =>
       val sendingService = sender()
       val serviceResponses: Iterable[Future[Seq[Service]]] = serviceNames.map { name =>
-        val queryUrl = consulBaseUrl + s"/v1/catalog/service/$name"
-        val request = ws.url(queryUrl)
-        Logger.debug(s"Requesting service information (${request.uri})")
-        request.get().map { response =>
-          val responseJsonArray = response.json.as[JsArray]
+        val catalogQueryUrl = consulBaseUrl + s"/v1/catalog/service/$name"
+        val catalogRequest = ws.url(catalogQueryUrl)
+        Logger.debug(s"Requesting service information (${catalogRequest.uri})")
+        val healthQueryUrl = consulBaseUrl + s"/v1/health/service/$name?passing"
+        val healthRequest = ws.url(healthQueryUrl)
+        Logger.debug(s"Requesting service health (${healthRequest.uri})")
+        val requests = Future.sequence(List(catalogRequest.get(), healthRequest.get()))
+        requests.map { case List(catalogResponse, healthResponse) =>
+          val responseJsonArray = catalogResponse.json.as[JsArray]
           responseJsonArray.value.map { serviceJson =>
             val fields = serviceJson.as[JsObject].value
             // TODO proper JSON parsing with exception handling
@@ -74,12 +78,16 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
               fields("ServiceAddress").as[JsString].value
             }
             val servicePort = fields("ServicePort").as[JsNumber].value.toInt
+            val serviceStatus = {
+              val healthyServiceInstances = healthResponse.json.as[JsArray]
+              if (healthyServiceInstances.value.isEmpty) ServiceStatus.Failing else ServiceStatus.Passing
+            }
             Service(
               name = serviceName,
               protocol = serviceProtocol,
               address = serviceAddress,
               port = servicePort,
-              status = ServiceStatus.Unknown
+              status = serviceStatus
             )
           }
         }

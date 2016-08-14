@@ -25,6 +25,18 @@
           margin-right: 10px;
         }
 
+        .service-status-unknown:link, .service-status-unknown:visited, .service-status-unknown:hover, .service-status-unknown:active {
+          color: #6e808e;
+        }
+
+        .service-status-passing:link, .service-status-passing:visited, .service-status-passing:hover, .service-status-passing:active {
+          color: #098552;
+        }
+
+        .service-status-failing:link, .service-status-failing:visited, .service-status-failing:hover, .service-status-failing:active {
+          color: #b94a48;
+        }
+
         [ng-click],
         [data-ng-click],
         [x-ng-click] {
@@ -85,7 +97,9 @@
                                style="margin-left: 10px; height: 1em; display: inline-block;">
                         </td>
                         <td class="col-md-8">
-                          <span ng-repeat="service in instance.services" class="service-link"><a target="_blank" href="{{service.protocol}}://{{service.address}}:{{service.port}}">{{service.name}}</a></span>
+                          <span ng-repeat="service in instance.services" class="service-link">
+                            <a ng-class="(service.status=='passing') ? 'service-status-passing' : (service.status=='failing') ? 'service-status-failing' : 'service-status-unknown'" target="_blank" href="{{service.protocol}}://{{service.address}}:{{service.port}}">{{service.name}}</a>
+                          </span>
                         </td>
                         <td class="col-md-1">{{instance.status}}</td>
                         <td class="col-md-1">
