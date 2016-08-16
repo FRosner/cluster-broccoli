@@ -27,12 +27,15 @@
                         "Driver": "raw_exec",
                         "User": "",
                         "Config": {
-                            "command": "zeppelin-docker-wrapper"
+                            "command": "nomad-docker-wrapper",
+                            "args": ["-p", "${NOMAD_PORT_ui}:8080",
+                                     "-e", "ZEPPELIN_SPARK_MASTER=local[*]",
+                                     "-v", "${NOMAD_TASK_DIR}/notebooks:/usr/local/zeppelin/notebooks",
+                                     "frosner/zeppelin:1.0.0"]
                         },
                         "Constraints": null,
                         "Env": {
-                            "ZEPPELIN_CONTAINER_NAME": "{{id}}",
-                            "ZEPPELIN_NOTEBOOK_MOUNT": "${NOMAD_TASK_DIR}/notebooks"
+                            "NOMAD_DOCKER_CONTAINER_NAME": "{{id}}"
                         },
                         "Services": [
                             {
@@ -86,7 +89,7 @@
                         },
                         "Artifacts": [
                             {
-                                "GetterSource": "https://raw.githubusercontent.com/FRosner/docker-zeppelin/master/zeppelin-docker-wrapper",
+                                "GetterSource": "https://raw.githubusercontent.com/FRosner/nomad-docker-wrapper/1.2.0/nomad-docker-wrapper",
                                 "GetterOptions": {},
                                 "RelativeDest": "local/"
                             }

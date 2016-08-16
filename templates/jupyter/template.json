@@ -21,12 +21,14 @@
                         "Driver": "raw_exec",
                         "User": "",
                         "Config": {
-                            "command": "jupyter-docker-wrapper"
+                            "command": "nomad-docker-wrapper",
+                            "args": ["-p", "${NOMAD_PORT_ui}:8888",
+                              "-v", "${NOMAD_TASK_DIR}/notebooks:/notebooks",
+                              "jupyter/datascience-notebook"]
                         },
                         "Constraints": null,
                         "Env": {
-                            "JUPYTER_CONTAINER_NAME": "{{id}}",
-                            "JUPYTER_NOTEBOOK_MOUNT": "${NOMAD_TASK_DIR}/notebooks"
+                            "NOMAD_DOCKER_CONTAINER_NAME": "{{id}}"
                         },
                         "Services": [
                             {
@@ -80,7 +82,7 @@
                         },
                         "Artifacts": [
                             {
-                                "GetterSource": "https://raw.githubusercontent.com/FRosner/docker-jupyter/master/jupyter-docker-wrapper",
+                                "GetterSource": "https://raw.githubusercontent.com/FRosner/nomad-docker-wrapper/1.2.0/nomad-docker-wrapper",
                                 "GetterOptions": {},
                                 "RelativeDest": "local/"
                             }
