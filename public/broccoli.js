@@ -68,7 +68,6 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
           templateId: templateApp.id,
           parameters: paramsToValue
         }).then(function(newInstance) {
-          templateApp.instances.push(newInstance);
         }, function(error) {
           console.log("There was an error creating");
           console.log(error);
