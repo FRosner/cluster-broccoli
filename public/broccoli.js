@@ -46,7 +46,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
 
     $scope.submitStatus = submitStatus;
 
-    function openModal(templateApp) {
+    function createInstance(template) {
       var modalInstance = $uibModal.open({
         animation: true,
         templateUrl: '/assets/newInstanceModal.html',
@@ -55,17 +55,17 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
         size: undefined,
         resolve: {
           templateId: function () {
-            return templateApp.id;
+            return template.id;
           },
           parameters: function () {
-            return templateApp.parameters;
+            return template.parameters;
           }
         }
       });
 
       modalInstance.result.then(function (paramsToValue) {
         Restangular.all("instances").post({
-          templateId: templateApp.id,
+          templateId: template.id,
           parameters: paramsToValue
         }).then(function(newInstance) {
         }, function(error) {
@@ -74,7 +74,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
         });
       });
     };
-    vm.openModal = openModal;
+    vm.createInstance = createInstance;
 
     updateTemplates();
   });
