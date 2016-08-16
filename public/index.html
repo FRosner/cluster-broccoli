@@ -65,15 +65,15 @@
     <script src="/assets/newInstanceModal.js"></script>
 </head>
 
-<body ng-controller="AppsCtrl as appsCtrl">
+<body ng-controller="MainController as main">
     <div class="container">
-        <div class="row" ng-repeat="template in appsCtrl.templates">
+        <div class="row" ng-repeat="template in main.templates">
             <div class="col-md-12" style="margin-top: 10px;">
               <h2>
                 {{template.id}}
                 <img ng-init="itemsrc='assets/plus.svg'"
                      ng-src="{{itemsrc}}"
-                     ng-click="appsCtrl.openModal(template)"
+                     ng-click="main.openModal(template)"
                      class="img-responsive"
                      data-holder-rendered="true"
                      style="margin-left: 10px; height: 20px; display: inline-block;">
@@ -91,7 +91,7 @@
                           {{instance.id}}
                           <img ng-init="itemsrc='assets/minus.svg'"
                                ng-src="{{itemsrc}}"
-                               ng-click="appsCtrl.deleteInstance(template, instance)"
+                               ng-click="main.deleteInstance(template, instance)"
                                class="img-responsive"
                                data-holder-rendered="true"
                                style="margin-left: 10px; height: 1em; display: inline-block;">

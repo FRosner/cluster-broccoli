@@ -1,5 +1,5 @@
 angular.module('broccoli', ['restangular', 'ui.bootstrap'])
-  .controller('AppsCtrl', function(Restangular, $uibModal, $scope, $timeout) {
+  .controller('MainController', function(Restangular, $uibModal, $scope, $timeout) {
     var vm = this;
     vm.templates = {};
 
