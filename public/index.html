@@ -128,7 +128,7 @@
                           </button>
                           <button type="button"
                                   class="btn btn-xs"
-                                  ng-if="instance.status=='running'"
+                                  ng-if="instance.status!='stopped'"
                                   ng-disabled="instance.status=='pending'"
                                   ng-click="submitStatus(instance, 'stopped')">
                             <span class="glyphicon glyphicon-stop" aria-hidden="true"></span>
