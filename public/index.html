@@ -105,7 +105,7 @@
                         <td class="col-md-1">
                           <h4 style="margin:0px;">
                             <span class="label"
-                                ng-class="['stopped'].indexOf(instance.status.toLowerCase())>=0 ? 'label-danger' : ['running'].indexOf(instance.status.toLowerCase())>=0 ? 'label-success' : 'label-warning'">
+                                ng-class="instance.status=='stopped' ? 'label-danger' : instance.status=='running' ? 'label-success' : 'label-warning'">
                               {{instance.status}}
                             </span>
                           </h4>
@@ -113,15 +113,15 @@
                         <td class="col-md-1">
                           <button type="button"
                                   class="btn btn-xs"
-                                  ng-disabled="['pending'].indexOf(instance.status.toLowerCase()) >= 0"
-                                  ng-if="['stopped'].indexOf(instance.status.toLowerCase()) >= 0"
+                                  ng-disabled="instance.status=='pending'"
+                                  ng-if="instance.status=='stopped'"
                                   ng-click="submitStatus(instance, 'running')">
                             <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
                           </button>
                           <button type="button"
                                   class="btn btn-xs"
-                                  ng-if="['stopped'].indexOf(instance.status.toLowerCase()) == -1"
-                                  ng-disabled="['pending'].indexOf(instance.status.toLowerCase()) >= 0"
+                                  ng-if="instance.status=='running'"
+                                  ng-disabled="instance.status=='pending'"
                                   ng-click="submitStatus(instance, 'stopped')">
                             <span class="glyphicon glyphicon-stop" aria-hidden="true"></span>
                           </button>
