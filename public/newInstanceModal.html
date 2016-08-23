@@ -9,7 +9,8 @@
                     <div class="input-group">
                         <span class="input-group-addon" id="basic-addon1">{{param}}</span>
                         <input type="text" class="form-control" placeholder="{{param}}"
-                          aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param]">
+                          aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param]"
+                          focus-field="$index == 0">
                     </div>
                 </div>
             </div>
