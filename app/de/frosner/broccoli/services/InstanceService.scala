@@ -77,7 +77,7 @@ class InstanceService @Inject()(templateService: TemplateService,
     case GetInstances => sender ! instances.values
     case GetInstance(id) => sender ! instances.get(id)
     case NewInstance(instanceCreation) => sender() ! addInstance(instanceCreation)
-    case SetStatus(id, status) => sender() ! setStatus(id, status)
+    case UpdateInstance(id, updaters) => sender() ! updateInstance(id, updaters)
     case DeleteInstance(id) => sender ! deleteInstance(id)
     case NomadStatuses(statuses) => updateStatusesBasedOnNomad(statuses)
     case ConsulServices(id, services) => updateServicesBasedOnNomad(id, services)
@@ -114,7 +114,7 @@ class InstanceService @Inject()(templateService: TemplateService,
 
   private[this] def addInstance(instanceCreation: InstanceCreation): Try[Instance] = {
     Logger.info(s"Request received to create new instance: $instanceCreation")
-    val maybeId = instanceCreation.parameters.get("id")
+    val maybeId = instanceCreation.parameters.get("id") // FIXME requires ID to be defined inside the parameter values
     val templateId = instanceCreation.templateId
     maybeId.map { id =>
       if (instances.contains(id)) {
@@ -131,26 +131,32 @@ class InstanceService @Inject()(templateService: TemplateService,
     }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException("No ID specified"))))
   }
 
-  private[this] def setStatus(id: String, status: InstanceStatus): Option[Instance] = {
-      val maybeInstance = instances.get(id)
-      maybeInstance.flatMap { instance =>
-        instance.status = InstanceStatus.Pending
-        status match {
+  private[this] def updateInstance(id: String, updaters: Iterable[InstanceUpdater]): Option[Option[Instance]] = {
+    val maybeInstance = instances.get(id)
+    maybeInstance.map { instance =>
+      val updates = updaters.map {
+        case StatusUpdater(newStatus) => newStatus match {
           case InstanceStatus.Running =>
             nomadActor.tell(StartJob(instance.templateJson), self)
-            Some(instance)
+            Success(instance)
           case InstanceStatus.Stopped =>
             nomadActor.tell(DeleteJob(instance.id), self)
-            Some(instance)
+            Success(instance)
           case other =>
-            Logger.warn(s"Unsupported status change received: $other")
-            None
+            Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
         }
+        case ParameterValuesUpdater(newParameterValues) => instance.updateParameterValues(newParameterValues)
       }
+      updates.foreach {
+        case Failure(throwable) => Logger.warn(s"Error updating instance: $throwable")
+        case Success(changedInstance) => Logger.debug(s"Successfully applied an update to $changedInstance")
+      }
+      updates.flatMap(_.toOption).headOption
+    }
   }
 
   private[this] def deleteInstance(id: String): Boolean = {
-    setStatus(id, InstanceStatus.Stopped)
+    updateInstance(id, List(StatusUpdater(InstanceStatus.Stopped)))
     if (instances.contains(id)) {
       instances = instances - id
       InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
@@ -170,7 +176,13 @@ object InstanceService {
 
   case class NewInstance(instanceCreation: InstanceCreation)
 
-  case class SetStatus(id: String, status: InstanceStatus)
+  sealed trait InstanceUpdater
+
+  case class StatusUpdater(newStatus: InstanceStatus) extends InstanceUpdater
+
+  case class ParameterValuesUpdater(newParameterValues: Map[String, String]) extends InstanceUpdater
+
+  case class UpdateInstance(id: String, updaters: Iterable[InstanceUpdater])
 
   case class DeleteInstance(id: String)
 

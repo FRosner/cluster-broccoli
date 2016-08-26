@@ -70,7 +70,7 @@
                             }
                         ],
                         "Resources": {
-                            "CPU": 500,
+                            "CPU": {{cpu}},
                             "MemoryMB": 128,
                             "DiskMB": 300,
                             "IOPS": 0,

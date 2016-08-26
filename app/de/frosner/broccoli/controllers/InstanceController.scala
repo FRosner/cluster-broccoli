@@ -14,7 +14,7 @@ import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
 import de.frosner.broccoli.services.InstanceService
 import de.frosner.broccoli.services.InstanceService._
 import play.api.Logger
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.mvc.{Action, Controller}
 
 import scala.concurrent.Future
@@ -60,15 +60,30 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
   }
 
   def update(id: String) = Action.async { request =>
-    val maybeValidatedExpectedInstanceStatus = request.body.asJson.map(_.validate[InstanceStatus])
-    maybeValidatedExpectedInstanceStatus.map { validatedExpectedInstanceStatus =>
-      validatedExpectedInstanceStatus.map { status =>
-        val eventuallyChangedInstance = instanceService.ask(SetStatus(id, status)).mapTo[Option[Instance]]
-        eventuallyChangedInstance.map { changedInstance =>
-          changedInstance.map(i => Ok(Json.toJson(i))).getOrElse(NotFound)
+    val maybeJsObject = request.body.asJson.map(_.as[JsObject])
+    maybeJsObject.map { jsObject =>
+      val updaters = jsObject.fields.flatMap { case (key, value) =>
+        key match {
+          case "status" =>
+            val maybeValidatedNewStatus = value.validate[InstanceStatus]
+            maybeValidatedNewStatus.map(status => Some(StatusUpdater(status))).getOrElse(None)
+          case "parameterValues" =>
+            val parameterValues = value.as[JsObject].value
+            Some(ParameterValuesUpdater(parameterValues.map{ case (k, v) => (k, v.as[JsString].value) }.toMap))
+          case other => None
         }
-      }.recoverTotal { error =>
-        Future(Status(400)("Invalid JSON format: " + error.toString))
+      }
+      if (updaters.isEmpty) {
+        Future(Status(400)("Invalid request to update an instance. Please refer to the API documentation."))
+      } else {
+        val eventuallyMaybeExistingAndChangedInstance = instanceService.ask(UpdateInstance(id, updaters)).mapTo[Option[Option[Instance]]]
+        eventuallyMaybeExistingAndChangedInstance.map { maybeExistingAndChangedInstance =>
+          maybeExistingAndChangedInstance.map { maybeChangedInstance =>
+            maybeChangedInstance.map {
+              changedInstance => Ok(Json.toJson(changedInstance))
+            }.getOrElse(Status(400)("Invalid request to update an instance. Please refer to the API documentation or the logs."))
+          }.getOrElse(NotFound)
+        }
       }
     }.getOrElse(Future(Status(400)("Expected JSON data")))
   }

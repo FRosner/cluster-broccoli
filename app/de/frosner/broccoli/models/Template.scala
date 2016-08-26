@@ -16,7 +16,10 @@ case class Template(id: String, template: String, description: String) extends S
     while (matcher.find()) {
       variables += matcher.group(1)
     }
-    variables.toSet
+    val uniqueVariables = variables.toSet
+    require(uniqueVariables.contains("id"),
+      s"There needs to be an 'id' field in the template for Broccoli to work. Parameters defined: ${uniqueVariables}")
+    uniqueVariables
   }
 
 }
