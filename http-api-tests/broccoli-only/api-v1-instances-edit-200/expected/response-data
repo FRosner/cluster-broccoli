@@ -2,7 +2,7 @@
   "id": "test-http",
   "parameterValues": {
     "id": "test-http",
-    "cpu": "250"
+    "cpu": "50"
   },
   "status": "unknown",
   "services": {}
