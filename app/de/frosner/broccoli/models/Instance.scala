@@ -26,8 +26,7 @@ case class Instance(id: String,
     }
   }
 
-  @transient
-  lazy val templateJson: JsValue = {
+  def templateJson: JsValue = {
     val replacedTemplate = parameterValues.foldLeft(template.template){
       case (intermediateTemplate, (parameter, value)) => intermediateTemplate.replaceAll("\\{\\{" + parameter + "\\}\\}", value)
     }
