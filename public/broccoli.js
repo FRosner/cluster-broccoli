@@ -30,7 +30,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
 
     function submitStatus(instance, status) {
       Restangular.all("instances")
-        .customPOST('"' + status + '"', instance.id, {}, {})
+        .customPOST({ "status": status }, instance.id, {}, {})
         .then(function(updatedInstance) {
           for (i in updatedInstance) {
             instance[i] = updatedInstance[i];
@@ -54,20 +54,21 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
         controllerAs: 'instCtrl',
         size: undefined,
         resolve: {
-          templateId: function () {
-            return template.id;
+          template: function () {
+            return template;
           },
-          parameters: function () {
-            return template.parameters;
+          instance: function () {
+            return null;
           }
         }
       });
 
-      modalInstance.result.then(function (paramsToValue) {
+      modalInstance.result.then(function (paramsToValueAndInstance) {
+        var paramsToValue = paramsToValueAndInstance.paramsToValue;
         Restangular.all("instances").post({
           templateId: template.id,
           parameters: paramsToValue
-        }).then(function(newInstance) {
+        }).then(function(result) {
         }, function(error) {
           console.log("There was an error creating");
           console.log(error);
@@ -75,6 +76,37 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
       });
     };
     vm.createInstance = createInstance;
+
+    function editInstance(template, instance) {
+      var modalInstance = $uibModal.open({
+        animation: true,
+        templateUrl: '/assets/newInstanceModal.html',
+        controller: 'NewInstanceCtrl',
+        controllerAs: 'instCtrl',
+        size: undefined,
+        resolve: {
+          template: function () {
+            return template;
+          },
+          instance: function () {
+            return instance;
+          }
+        }
+      });
+
+      modalInstance.result.then(function (paramsToValueAndInstance) {
+        var paramsToValue = paramsToValueAndInstance.paramsToValue;
+        var newInstance = paramsToValueAndInstance.instance;
+        Restangular.all("instances")
+          .customPOST({ "parameterValues": newInstance.parameterValues}, newInstance.id, {}, {})
+          .then(function(result) {
+        }, function(error) {
+          console.log("There was an error creating");
+          console.log(error);
+        });
+      });
+    };
+    vm.editInstance = editInstance;
 
     updateTemplates();
   });
