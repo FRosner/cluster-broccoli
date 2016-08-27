@@ -1,0 +1,9 @@
+{
+  "id": "test-http",
+  "parameterValues": {
+    "id": "test-http",
+    "cpu": "50"
+  },
+  "status": "unknown",
+  "services": {}
+}
