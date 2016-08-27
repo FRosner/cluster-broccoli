@@ -9,23 +9,31 @@ class TemplateSpec extends Specification {
   "A template" should {
 
     "extract a single parameter from a template correctly" in {
-      Template("test", "Hallo {{name}}", "desc").parameters === Set("name")
+      Template("test", "Hallo {{id}}", "desc").parameters === Set("id")
     }
 
     "extract multiple parameters from a template correclty" in {
-      Template("test", "Hallo {{name}}, how is {{object}}", "desc").parameters === Set("name", "object")
+      Template("test", "Hallo {{id}}, how is {{object}}", "desc").parameters === Set("id", "object")
     }
 
     "extract a single parameter with multiple occurances from a template correctly" in {
-      Template("test", "Hallo {{name}}. I like {{name}}.", "desc").parameters === Set("name")
+      Template("test", "Hallo {{id}}. I like {{id}}.", "desc").parameters === Set("id")
     }
 
     "support dashes in the parameter names" in {
-      Template("test", "Hallo {{person-name}}", "desc").parameters === Set("person-name")
+      Template("test", "Hallo {{id}} {{person-name}}", "desc").parameters === Set("id", "person-name")
     }
 
     "support underscores in the parameter names" in {
-      Template("test", "Hallo {{person_name}}", "desc").parameters === Set("person_name")
+      Template("test", "Hallo {{id}} {{person_name}}", "desc").parameters === Set("id", "person_name")
+    }
+
+    "require an 'id' parameter (no parameter)" in {
+      Template("test", "Hallo", "desc").parameters must throwA[IllegalArgumentException]
+    }
+
+    "require an 'id' parameter (wrong parameter)" in {
+      Template("test", "Hallo {{bla}}", "desc").parameters must throwA[IllegalArgumentException]
     }
 
   }

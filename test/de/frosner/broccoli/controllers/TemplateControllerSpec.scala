@@ -17,7 +17,7 @@ class TemplateControllerSpec extends PlaySpecification {
       val templateService = mock(classOf[TemplateService])
       val template = Template(
         id = "id",
-        template = "template {{name}}",
+        template = "template {{id}}",
         description = "description"
       )
       when(templateService.templates).thenReturn(Seq(template))
@@ -28,7 +28,7 @@ class TemplateControllerSpec extends PlaySpecification {
       contentAsJson(result) must be equalTo JsArray(Seq(
         JsObject(Map(
           "id" -> JsString(template.id),
-          "parameters" -> JsArray(Seq(JsString("name"))),
+          "parameters" -> JsArray(Seq(JsString("id"))),
           "description" -> JsString(template.description)
         ))
       ))
@@ -42,7 +42,7 @@ class TemplateControllerSpec extends PlaySpecification {
       val templateService = mock(classOf[TemplateService])
       val template = Template(
         id = "id",
-        template = "template {{name}}",
+        template = "template {{id}}",
         description = "description"
       )
       when(templateService.template("id")).thenReturn(Some(template))
@@ -52,7 +52,7 @@ class TemplateControllerSpec extends PlaySpecification {
       status(result) must be equalTo 200
       contentAsJson(result) must be equalTo JsObject(Map(
         "id" -> JsString(template.id),
-        "parameters" -> JsArray(Seq(JsString("name"))),
+        "parameters" -> JsArray(Seq(JsString("id"))),
         "description" -> JsString(template.description)
       ))
     }
