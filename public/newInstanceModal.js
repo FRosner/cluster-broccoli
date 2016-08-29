@@ -5,9 +5,11 @@ angular.module('broccoli')
     vm.parameters = template.parameters;
 
     if (instance == null) {
+      vm.panelTitle = "New " + template.id + " (" +  template.version.substring(0, 8) + ")";
       vm.okText = "Create instance";
       vm.paramsToValue = {};
     } else {
+      vm.panelTitle = "Edit " + instance.id + " (" + template.id + ", " + instance.template.version.substring(0, 8) + ")";
       vm.okText = "Edit instance";
       vm.paramsToValue = instance.parameterValues;
     }
