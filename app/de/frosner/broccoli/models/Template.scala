@@ -2,6 +2,7 @@ package de.frosner.broccoli.models
 
 import java.util.regex.Pattern
 
+import org.apache.commons.codec.digest.DigestUtils
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -22,6 +23,9 @@ case class Template(id: String, template: String, description: String) extends S
     uniqueVariables
   }
 
+  @transient
+  lazy val templateVersion: String = DigestUtils.md5Hex(template)
+
 }
 
 object Template {
@@ -31,7 +35,8 @@ object Template {
   implicit val templateWrites: Writes[Template] = (
     (JsPath \ "id").write[String] and
       (JsPath \ "description").write[String] and
-      (JsPath \ "parameters").write[Set[String]]
-    )((template: Template) => (template.id, template.description, template.parameters))
+      (JsPath \ "parameters").write[Set[String]] and
+      (JsPath \ "version").write[String]
+    )((template: Template) => (template.id, template.description, template.parameters, template.templateVersion))
 
 }
