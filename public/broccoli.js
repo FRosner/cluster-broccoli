@@ -81,12 +81,15 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
           },
           instance: function () {
             return null;
+          },
+          templates: function () {
+            return null;
           }
         }
       });
 
-      modalInstance.result.then(function (paramsToValueAndInstance) {
-        var paramsToValue = paramsToValueAndInstance.paramsToValue;
+      modalInstance.result.then(function (result) {
+        var paramsToValue = result.paramsToValue;
         Restangular.all("instances").post({
           templateId: template.id,
           parameters: paramsToValue
@@ -113,15 +116,22 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
           },
           instance: function () {
             return instance;
+          },
+          templates: function () {
+            return vm.templates;
           }
         }
       });
 
-      modalInstance.result.then(function (paramsToValueAndInstance) {
-        var paramsToValue = paramsToValueAndInstance.paramsToValue;
-        var newInstance = paramsToValueAndInstance.instance;
+      modalInstance.result.then(function (result) {
+        var paramsToValue = result.paramsToValue;
+        var newInstance = result.instance;
+        var postData = { "parameterValues": newInstance.parameterValues };
+        if (result.selectedTemplate != null && result.selectedTemplate != "unchanged") {
+          postData['selectedTemplate'] = result.selectedTemplate;
+        }
         Restangular.all("instances")
-          .customPOST({ "parameterValues": newInstance.parameterValues}, newInstance.id, {}, {})
+          .customPOST(postData, newInstance.id, {}, {})
           .then(function(result) {
             $rootScope.restangularError = null;
           }, function(error) {

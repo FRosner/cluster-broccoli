@@ -1,15 +1,20 @@
 angular.module('broccoli')
-  .controller('NewInstanceCtrl', function ($scope, $rootScope, $uibModalInstance, template, instance) {
+  .controller('NewInstanceCtrl', function ($scope, $rootScope, $uibModalInstance, template, instance, templates) {
     var vm = this;
     vm.templateId = template.id;
     var realTemplate = null;
+    vm.instance = instance;
+    vm.dropdown = {};
+    vm.dropdown.templates = templates;
+    vm.dropdown.selectedTemplate = "unchanged";
+    
     if (instance == null) {
       vm.panelTitle = "New " + template.id + " (" +  template.version.substring(0, 8) + ")";
       vm.okText = "Create instance";
       vm.paramsToValue = {};
       realTemplate = template;
     } else {
-      vm.panelTitle = "Edit " + instance.id + " (" + template.id + ", " + instance.template.version.substring(0, 8) + ")";
+      vm.panelTitle = "Edit " + instance.id + " (" + instance.template.id + ", " + instance.template.version.substring(0, 8) + ")";
       vm.okText = "Edit instance";
       vm.paramsToValue = instance.parameterValues;
       realTemplate = instance.template;
@@ -36,7 +41,8 @@ angular.module('broccoli')
       });
       $uibModalInstance.close({
         "paramsToValue": vm.paramsToValue,
-        "instance": instance
+        "instance": instance,
+        "selectedTemplate": vm.dropdown.selectedTemplate
       });
     };
 
