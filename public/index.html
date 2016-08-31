@@ -43,6 +43,11 @@
           color: #b94a48;
         }
 
+        .job-status-label {
+          width: 70px;
+          display: inline-block;
+        }
+
         [ng-click],
         [data-ng-click],
         [x-ng-click] {
@@ -112,7 +117,7 @@
                         </td>
                         <td class="col-md-1">
                           <h4 style="margin:0px;">
-                            <span class="label"
+                            <span class="label job-status-label"
                                 ng-class="instance.status=='stopped' ? 'label-danger' : instance.status=='running' ? 'label-success' : 'label-warning'">
                               {{instance.status}}
                             </span>
