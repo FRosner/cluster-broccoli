@@ -121,7 +121,6 @@
                         <td class="col-md-1">
                           <button type="button"
                                   class="btn btn-xs"
-                                  ng-disabled="instance.status=='pending'"
                                   ng-if="instance.status=='stopped'"
                                   ng-click="submitStatus(instance, 'running')">
                             <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
@@ -129,7 +128,6 @@
                           <button type="button"
                                   class="btn btn-xs"
                                   ng-if="instance.status!='stopped'"
-                                  ng-disabled="instance.status=='pending'"
                                   ng-click="submitStatus(instance, 'stopped')">
                             <span class="glyphicon glyphicon-stop" aria-hidden="true"></span>
                           </button>
