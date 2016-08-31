@@ -43,6 +43,12 @@
           color: #b94a48;
         }
 
+        .job-status-label {
+          width: 75px;
+          display: inline-block;
+          font-size: 100%;
+        }
+
         [ng-click],
         [data-ng-click],
         [x-ng-click] {
@@ -110,19 +116,24 @@
                             <span ng-if="service.status == 'unknown'" class="service-status-unknown">{{service.name}}</span>
                           </span>
                         </td>
-                        <td class="col-md-1">{{instance.status}}</td>
+                        <td class="col-md-1">
+                          <span class="label job-status-label"
+                              ng-class="instance.status=='stopped' ? 'label-default' : instance.status=='running' ? 'label-success' : 'label-warning'">
+                            {{instance.status}}
+                          </span>
+                        </td>
                         <td class="col-md-1">
                           <button type="button"
-                                  ng-if="['stopped'].indexOf(instance.status.toLowerCase()) >= 0"
-                                  class="btn btn-success"
+                                  class="btn btn-xs"
+                                  ng-if="instance.status=='stopped'"
                                   ng-click="submitStatus(instance, 'running')">
-                            Start
+                            <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
                           </button>
                           <button type="button"
-                                  ng-if="['stopped'].indexOf(instance.status.toLowerCase()) == -1"
-                                  class="btn btn-danger"
+                                  class="btn btn-xs"
+                                  ng-if="instance.status!='stopped'"
                                   ng-click="submitStatus(instance, 'stopped')">
-                            Stop
+                            <span class="glyphicon glyphicon-stop" aria-hidden="true"></span>
                           </button>
                         </td>
                       </tr>
@@ -135,3 +146,4 @@
 </body>
 
 </html>
+
