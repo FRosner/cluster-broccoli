@@ -70,7 +70,9 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
           case "parameterValues" =>
             val parameterValues = value.as[JsObject].value
             Some(ParameterValuesUpdater(parameterValues.map{ case (k, v) => (k, v.as[JsString].value) }.toMap))
-          case other => None
+          case other =>
+            Logger.warn(s"Received unrecognized instance update field: $other")
+            None
         }
       }
       if (updaters.isEmpty) {
