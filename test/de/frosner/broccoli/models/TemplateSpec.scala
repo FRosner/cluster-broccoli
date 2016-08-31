@@ -36,6 +36,14 @@ class TemplateSpec extends Specification {
       Template("test", "Hallo {{bla}}", "desc").parameters must throwA[IllegalArgumentException]
     }
 
+    "create the template version correctly in" in {
+      Template("test", "template JSON", "desc").templateVersion === "d81c4d34fb18636e62ee1b9b6a783bd5"
+    }
+
+    "result in different template versions if the template differs" in {
+      Template("test", "template JSON", "desc").templateVersion !== Template("test", "template JSONs", "desc").templateVersion
+    }
+
   }
 
   "Template serialization" should {

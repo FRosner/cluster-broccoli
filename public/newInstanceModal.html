@@ -2,7 +2,7 @@
     <form name="questionForm" ng-submit="instCtrl.ok()">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">New {{instCtrl.templateId}} instance</h3>
+                <h3 class="panel-title">{{instCtrl.panelTitle}}</h3>
             </div>
             <div class="panel-body">
                 <div ng-repeat="param in instCtrl.parameters">

@@ -5,5 +5,9 @@
     "cpu": "50"
   },
   "status": "unknown",
-  "services": {}
+  "services": {},
+  "template": {
+    "version": "f88dbbdc8249b8e5075598e165aec527",
+    "id": "http-server"
+  }
 }

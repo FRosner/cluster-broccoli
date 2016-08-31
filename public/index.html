@@ -82,14 +82,15 @@
         <div class="row" ng-repeat="template in main.templates">
             <div class="col-md-12" style="margin-top: 10px;">
               <h2>
-                {{template.id}}
                 <img ng-init="itemsrc='assets/plus.svg'"
                      ng-src="{{itemsrc}}"
                      ng-click="main.createInstance(template)"
                      class="img-responsive"
                      data-holder-rendered="true"
-                     style="margin-left: 10px; height: 20px; display: inline-block;">
+                     style="margin-right: 10px; height: 20px; display: inline-block;">
                 </img>
+                {{template.id}}
+                <small>({{template.version | limitTo : 8 : 0}})</small>
               </h2>
               <p>
                 {{template.description}}

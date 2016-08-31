@@ -41,7 +41,16 @@ object Instance {
     (JsPath \ "id").write[String] and
       (JsPath \ "parameterValues").write[Map[String, String]] and
       (JsPath \ "status").write[InstanceStatus] and
-      (JsPath \ "services").write[Map[String, Service]]
-    )((instance: Instance) => (instance.id, instance.parameterValues, instance.status, instance.services))
+      (JsPath \ "services").write[Map[String, Service]] and
+      (JsPath \ "template" \ "version").write[String] and
+      (JsPath \ "template" \ "id").write[String]
+    )((instance: Instance) => (
+      instance.id,
+      instance.parameterValues,
+      instance.status,
+      instance.services,
+      instance.template.templateVersion,
+      instance.template.id
+    ))
 
 }
