@@ -19,7 +19,7 @@ Cluster Broccoli is meant to be setup by your IT. Some technical knowledge is re
 
 Cluster Broccoli comes with a minimalistic web user interface. It allows you to create, destroy, start and stop your instances based on a set of predefined templates. Please consult the documenation for a [detailed description of the Web UI](https://github.com/FRosner/cluster-broccoli/wiki/Web-UI).
 
-![image](https://cloud.githubusercontent.com/assets/3427394/16338304/0aa8fd52-3a1c-11e6-85d0-d31e254dcbb4.png)
+![image](https://cloud.githubusercontent.com/assets/3427394/18160100/012f83e0-702c-11e6-883a-561aa8e5a3ee.png)
 
 ### HTTP API
 
