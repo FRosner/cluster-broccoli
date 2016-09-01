@@ -1,23 +1,21 @@
 <div class="container-fixed">
-    <form name="questionForm" ng-submit="instCtrl.ok()">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">{{instCtrl.panelTitle}}</h3>
-            </div>
-            <div class="panel-body">
-                <div ng-repeat="param in instCtrl.parameters">
-                    <div class="input-group">
-                        <span class="input-group-addon" id="basic-addon1">{{param}}</span>
-                        <input type="text" class="form-control" placeholder="{{param}}"
-                          aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param]"
-                          focus-field="$index == 0">
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-warning" type="button" ng-click="instCtrl.cancel()">Cancel</button>
-                <button class="btn btn-primary" type="submit" ng-click="instCtrl.ok()">{{instCtrl.okText}}</button>
-            </div>
+  <form name="questionForm" ng-submit="instCtrl.ok()">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">{{instCtrl.panelTitle}}</h3>
+      </div>
+      <div class="panel-body">
+        <div ng-repeat="param in instCtrl.parameters" class="input-group instance-input-group">
+          <span class="input-group-addon" id="basic-addon1">{{param}}</span>
+          <input type="text" class="form-control" placeholder="{{param}}"
+            aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param]"
+            focus-field="$index == 0">
         </div>
-    </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-warning" type="button" ng-click="instCtrl.cancel()">Cancel</button>
+        <button class="btn btn-primary" type="submit" ng-click="instCtrl.ok()">{{instCtrl.okText}}</button>
+      </div>
+    </div>
+  </form>
 </div>
