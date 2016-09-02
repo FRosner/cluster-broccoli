@@ -84,8 +84,16 @@
 
 <body ng-controller="MainController as main">
     <div class="container">
-        <div class="row" ng-repeat="template in main.templates">
-            <div class="col-md-12" style="margin-top: 10px;">
+      <nav class="navbar navbar-default">
+        <div class="container-fluid">
+        </div>
+        <div class="navbar-header">
+          <span class="navbar-brand">Cluster Broccoli</span>
+        </div>
+      </nav>
+        <div class="alert alert-danger" role="alert" ng-if="!broccoliReachable">Cluster Broccoli server is not reachable!</div>
+        <div class="row" ng-repeat="template in main.templates" ng-if="broccoliReachable">
+            <div class="col-md-12" style="margin-top: 0px;">
               <h2>
                 <img ng-init="itemsrc='assets/plus.svg'"
                      ng-src="{{itemsrc}}"

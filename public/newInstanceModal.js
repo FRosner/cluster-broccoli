@@ -1,5 +1,5 @@
 angular.module('broccoli')
-  .controller('NewInstanceCtrl', function ($scope, $uibModalInstance, template, instance) {
+  .controller('NewInstanceCtrl', function ($scope, $rootScope, $uibModalInstance, template, instance) {
     var vm = this;
     vm.templateId = template.id;
 
