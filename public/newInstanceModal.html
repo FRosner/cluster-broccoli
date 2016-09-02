@@ -14,7 +14,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-warning" type="button" ng-click="instCtrl.cancel()">Cancel</button>
-        <button class="btn btn-primary" type="submit" ng-click="instCtrl.ok()">{{instCtrl.okText}}</button>
+        <button class="btn btn-primary" type="submit" ng-click="instCtrl.ok()" ng-disabled="!broccoliReachable">{{instCtrl.okText}}</button>
       </div>
     </div>
   </form>
