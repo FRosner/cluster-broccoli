@@ -2,11 +2,21 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
   .controller('MainController', function(Restangular, $uibModal, $scope, $timeout) {
     var vm = this;
     vm.templates = {};
+    $scope.broccoliReachable = true;
 
     Restangular.setBaseUrl("/api/v1");
 
+    Restangular.setErrorInterceptor(function(response, deferred, responseHandler) {
+      if (response.status == -1) {
+        $scope.broccoliReachable = false;
+        return false;
+      }
+      return true;
+    });
+
     function updateInstances(template) {
       Restangular.all("instances").getList({ "templateId" : template.id }).then(function(instances) {
+        $scope.broccoliReachable = true;
         template.instances = {};
         instances.forEach(function(instance) {
           template.instances[instance.id] = instance;
