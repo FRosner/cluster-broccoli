@@ -6,6 +6,11 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
 
     Restangular.setBaseUrl("/api/v1");
 
+    vm.about = {}
+    Restangular.one("about").get().then(function(about) {
+      vm.about = about;
+    });
+
     Restangular.setErrorInterceptor(function(response, deferred, responseHandler) {
       if (response.status == -1) {
         $rootScope.broccoliReachable = false;
