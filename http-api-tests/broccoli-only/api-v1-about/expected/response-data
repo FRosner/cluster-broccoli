@@ -1,0 +1,12 @@
+{
+  "project": {
+    "name": "Cluster Broccoli",
+    "version": "0.4.0-SNAPSHOT"
+  },
+  "scala": {
+    "version": "2.10.6"
+  },
+  "sbt": {
+    "version": "0.13.11"
+  }
+}
