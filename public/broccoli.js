@@ -3,6 +3,10 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
     var vm = this;
     vm.templates = {};
     $rootScope.broccoliReachable = true;
+    $rootScope.dismissRestangularError = function() {
+      console.log("dismiss");
+      $rootScope.restangularError = null;
+    };
 
     Restangular.setBaseUrl("/api/v1");
 
@@ -14,9 +18,10 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
     Restangular.setErrorInterceptor(function(response, deferred, responseHandler) {
       if (response.status == -1) {
         $rootScope.broccoliReachable = false;
-        return false;
+      } else {
+        $rootScope.restangularError = response.statusText + " (" + response.status + "): " + response.data;
       }
-      return true;
+      return false;
     });
 
     function updateInstances(template) {
