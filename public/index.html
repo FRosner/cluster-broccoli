@@ -143,13 +143,24 @@
                         <td class="col-md-1">
                           <button type="button"
                                   class="btn btn-xs"
-                                  ng-if="instance.status=='stopped'"
+                                  ng-if="instance.status == 'stopped' || instance.status == 'unknown'"
+                                  ng-disabled="instance.status == 'unknown'"
+                                  title="Start instance"
                                   ng-click="submitStatus(instance, 'running')">
                             <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
                           </button>
                           <button type="button"
                                   class="btn btn-xs"
-                                  ng-if="instance.status!='stopped'"
+                                  ng-if="instance.status != 'stopped' && instance.status != 'unknown'"
+                                  ng-disabled="instance.status == 'unknown'"
+                                  title="Resubmit instance"
+                                  ng-click="submitStatus(instance, 'running')">
+                            <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+                          </button>
+                          <button type="button"
+                                  class="btn btn-xs"
+                                  ng-disabled="instance.status == 'stopped' || instance.status == 'unknown'"
+                                  title="Stop instance"
                                   ng-click="submitStatus(instance, 'stopped')">
                             <span class="glyphicon glyphicon-stop" aria-hidden="true"></span>
                           </button>
