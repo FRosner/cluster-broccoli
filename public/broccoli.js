@@ -3,6 +3,10 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
     var vm = this;
     vm.templates = {};
     $rootScope.broccoliReachable = true;
+    $rootScope.dismissRestangularError = function() {
+      console.log("dismiss");
+      $rootScope.restangularError = null;
+    };
 
     Restangular.setBaseUrl("/api/v1");
 
@@ -14,9 +18,10 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
     Restangular.setErrorInterceptor(function(response, deferred, responseHandler) {
       if (response.status == -1) {
         $rootScope.broccoliReachable = false;
-        return false;
+      } else {
+        $rootScope.restangularError = response.statusText + " (" + response.status + "): " + response.data;
       }
-      return true;
+      return false;
     });
 
     function updateInstances(template) {
@@ -47,6 +52,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
       Restangular.all("instances")
         .customPOST({ "status": status }, instance.id, {}, {})
         .then(function(updatedInstance) {
+          $rootScope.restangularError = null;
           for (i in updatedInstance) {
             instance[i] = updatedInstance[i];
           };
@@ -54,6 +60,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
     }
 
     function deleteInstance(template, instance) {
+      $rootScope.restangularError = null;
       delete template.instances[instance.id];
       instance.remove();
     }
@@ -84,6 +91,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
           templateId: template.id,
           parameters: paramsToValue
         }).then(function(result) {
+          $rootScope.restangularError = null;
         }, function(error) {
           console.log("There was an error creating");
           console.log(error);
@@ -115,10 +123,11 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
         Restangular.all("instances")
           .customPOST({ "parameterValues": newInstance.parameterValues}, newInstance.id, {}, {})
           .then(function(result) {
-        }, function(error) {
-          console.log("There was an error creating");
-          console.log(error);
-        });
+            $rootScope.restangularError = null;
+          }, function(error) {
+            console.log("There was an error creating");
+            console.log(error);
+          });
       });
     };
     vm.editInstance = editInstance;

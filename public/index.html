@@ -91,6 +91,10 @@
           <span class="navbar-brand"><span style="margin-right: 10px;">{{main.about.project.name}}</span><small>{{main.about.project.version}}</small></span>
         </div>
       </nav>
+      <div class="alert alert-danger alert-dismissible" role="alert" ng-if="restangularError">
+        <button type="button" class="close" ng-click="dismissRestangularError()" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        {{restangularError}}
+      </div>
         <div class="alert alert-danger" role="alert" ng-if="!broccoliReachable">Cluster Broccoli server is not reachable!</div>
         <div class="row" ng-repeat="template in main.templates" ng-if="broccoliReachable">
             <div class="col-md-12" style="margin-top: 0px;">
