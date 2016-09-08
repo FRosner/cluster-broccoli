@@ -3,6 +3,7 @@ package de.frosner.broccoli.models
 import java.util.regex.Pattern
 
 import org.apache.commons.codec.digest.DigestUtils
+import play.Logger
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -12,10 +13,23 @@ case class Template(id: String, template: String, description: String) extends S
 
   @transient
   lazy val parameters: Set[String] = {
-    val matcher = Template.TemplatePattern.matcher(template)
+    val parameterMatcher = Template.ParameterPattern.matcher(template)
     var variables = ArrayBuffer[String]()
-    while (matcher.find()) {
-      variables += matcher.group(1)
+    def isAdvancedSyntax(parameter: String): Boolean = parameter.contains(":")
+    while (parameterMatcher.find()) {
+      val parameter = parameterMatcher.group(1)
+      if (isAdvancedSyntax(parameter)) {
+        val maybeParameter = ParameterParser(parameter)
+        if (maybeParameter.isEmpty) {
+          Logger.warn(s"Ignoring parameter '$parameter' with invalid syntax.")
+        } else {
+          variables += maybeParameter.get.name
+        }
+      } else if (parameter.matches(s"(${Template.NameSyntax})")) {
+        variables += parameter
+      } else {
+        Logger.warn(s"Ignoring parameter '$parameter' because the name is invalid.")
+      }
     }
     val uniqueVariables = variables.toSet
     require(uniqueVariables.contains("id"),
@@ -30,7 +44,9 @@ case class Template(id: String, template: String, description: String) extends S
 
 object Template {
 
-  val TemplatePattern = Pattern.compile("\\{\\{([A-Za-z][A-Za-z0-9\\-\\_\\_]*)\\}\\}")
+  val NameSyntax = "[A-Za-z][A-Za-z0-9\\-\\_\\_]*"
+  val ParameterPattern = Pattern.compile("\\{\\{(.+?)\\}\\}")
+  val ParameterNamePattern = Pattern.compile(s"name:($NameSyntax)")
 
   implicit val templateWrites: Writes[Template] = (
     (JsPath \ "id").write[String] and
