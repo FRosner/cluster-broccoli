@@ -7,12 +7,12 @@ angular.module('broccoli')
       vm.panelTitle = "New " + template.id + " (" +  template.version.substring(0, 8) + ")";
       vm.okText = "Create instance";
       vm.paramsToValue = {};
-      vm.parameters = template.parameters;
+      vm.parameterNames = template.parameterNames;
     } else {
       vm.panelTitle = "Edit " + instance.id + " (" + template.id + ", " + instance.template.version.substring(0, 8) + ")";
       vm.okText = "Edit instance";
       vm.paramsToValue = instance.parameterValues;
-      vm.parameters = Object.keys(instance.parameterValues);
+      vm.parameterNames = Object.keys(instance.parameterValues);
     }
     vm.ok = ok;
     vm.cancel = cancel;

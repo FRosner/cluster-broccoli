@@ -26,8 +26,23 @@ class InstanceSpec extends Specification {
       instance.templateJson === JsString("Frank")
     }
 
+    "parse the template correctly when it contains a single parameter multiple times" in {
+      val instance = Instance("1", Template("1", "\"{{id}}     {{id}} foo {{id}} {{id}} bar\"", "desc"), Map("id" -> "Frank"), InstanceStatus.Unknown, Map.empty)
+      instance.templateJson === JsString("Frank     Frank foo Frank Frank bar")
+    }
+
     "parse the template correctly when it contains multiple parameters" in {
-      val instance = Instance("1", Template("1", "\"{{id}} {{age}}\"", "desc"), Map("id" -> "Frank", "age" -> "5"), InstanceStatus.Unknown, Map.empty)
+      val instance = Instance("1", Template("1", "\"{{id}} {{age}} {{height}}\"", "desc"), Map("id" -> "Frank", "age" -> "500000000", "height" -> "50"), InstanceStatus.Unknown, Map.empty)
+      instance.templateJson === JsString("Frank 500000000 50")
+    }
+
+    "parse the template correctly when it contains a single parameter with advanced syntax" in {
+      val instance = Instance("1", Template("1", "\"{{name:id}}\"", "desc"), Map("id" -> "Frank"), InstanceStatus.Unknown, Map.empty)
+      instance.templateJson === JsString("Frank")
+    }
+
+    "parse the template correctly when it contains multiple parameters with advanced syntax" in {
+      val instance = Instance("1", Template("1", "\"{{name:id}} {{name:age}}\"", "desc"), Map("id" -> "Frank", "age" -> "5"), InstanceStatus.Unknown, Map.empty)
       instance.templateJson === JsString("Frank 5")
     }
 

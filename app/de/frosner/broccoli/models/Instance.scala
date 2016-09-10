@@ -12,12 +12,12 @@ case class Instance(id: String,
                     var status: InstanceStatus,
                     var services: Map[String, Service]) extends Serializable {
 
-  require(template.parameters == parameterValues.keySet, s"The given parameters (${parameterValues.keySet}) " +
+  require(template.parameterNames == parameterValues.keySet, s"The given parameters (${parameterValues.keySet}) " +
     s"need to match the ones in the template (${template.parameters}).")
 
   def updateParameterValues(newParameterValues: Map[String, String]): Try[Instance] = {
     Try{
-      require(template.parameters == newParameterValues.keySet, s"The given parameters (${parameterValues.keySet}) " +
+      require(template.parameterNames == newParameterValues.keySet, s"The given parameters (${parameterValues.keySet}) " +
         s"need to match the ones in the template (${template.parameters}).")
       require(newParameterValues("id") == parameterValues("id"), s"The parameter value 'id' must not be changed.")
 
@@ -27,8 +27,14 @@ case class Instance(id: String,
   }
 
   def templateJson: JsValue = {
-    val replacedTemplate = parameterValues.foldLeft(template.template){
-      case (intermediateTemplate, (parameter, value)) => intermediateTemplate.replaceAll("\\{\\{" + parameter + "\\}\\}", value)
+    val (replacedTemplate, finalOffset) = template.parameters.foldLeft((template.template, 0)){
+      case ((intermediateTemplate, offset), parameter) =>
+        val parameterValue = parameterValues(parameter.name)
+        val newIntermediateTemplate = intermediateTemplate.substring(0, parameter.start + offset) +
+          parameterValue +
+          intermediateTemplate.substring(parameter.end + offset)
+        val newOffset = offset + parameterValue.length - (parameter.end - parameter.start)
+        (newIntermediateTemplate, newOffset)
     }
     Json.parse(replacedTemplate)
   }

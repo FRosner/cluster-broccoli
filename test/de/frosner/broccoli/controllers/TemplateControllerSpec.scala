@@ -28,7 +28,7 @@ class TemplateControllerSpec extends PlaySpecification {
       contentAsJson(result) must be equalTo JsArray(Seq(
         JsObject(Map(
           "id" -> JsString(template.id),
-          "parameters" -> JsArray(Seq(JsString("id"))),
+          "parameterNames" -> JsArray(Seq(JsString("id"))),
           "description" -> JsString(template.description),
           "version" -> JsString(template.templateVersion)
         ))
@@ -53,7 +53,7 @@ class TemplateControllerSpec extends PlaySpecification {
       status(result) must be equalTo 200
       contentAsJson(result) must be equalTo JsObject(Map(
         "id" -> JsString(template.id),
-        "parameters" -> JsArray(Seq(JsString("id"))),
+        "parameterNames" -> JsArray(Seq(JsString("id"))),
         "description" -> JsString(template.description),
         "version" -> JsString(template.templateVersion)
       ))
