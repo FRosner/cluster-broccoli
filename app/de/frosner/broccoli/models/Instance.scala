@@ -12,13 +12,21 @@ case class Instance(id: String,
                     var status: InstanceStatus,
                     var services: Map[String, Service]) extends Serializable {
 
-  require(template.parameters == parameterValues.keySet, s"The given parameters (${parameterValues.keySet}) " +
-    s"need to match the ones in the template (${template.parameters}).")
+  def requireParameterValueConsistency() = {
+    val realParametersWithValues = parameterValues.keySet ++ template.parameterInfos.flatMap {
+      case (key, ParameterInfo(name, Some(default))) => Some(key)
+      case (key, ParameterInfo(name, None)) => None
+    }
+    require(template.parameters == realParametersWithValues,
+      s"The given parameters values (${parameterValues.keySet}) " +
+        s"need to match the ones in the template (${template.parameters}).")
+  }
+
+  requireParameterValueConsistency()
 
   def updateParameterValues(newParameterValues: Map[String, String]): Try[Instance] = {
     Try{
-      require(template.parameters == newParameterValues.keySet, s"The given parameters (${parameterValues.keySet}) " +
-        s"need to match the ones in the template (${template.parameters}).")
+      requireParameterValueConsistency()
       require(newParameterValues("id") == parameterValues("id"), s"The parameter value 'id' must not be changed.")
 
       this.parameterValues = newParameterValues
@@ -27,10 +35,16 @@ case class Instance(id: String,
   }
 
   def templateJson: JsValue = {
-    val replacedTemplate = parameterValues.foldLeft(template.template){
+    val templateWithValues = parameterValues.foldLeft(template.template){
       case (intermediateTemplate, (parameter, value)) => intermediateTemplate.replaceAll("\\{\\{" + parameter + "\\}\\}", value)
     }
-    Json.parse(replacedTemplate)
+    val parameterDefaults = template.parameterInfos.flatMap {
+      case (parameterId, parameterInfo) => parameterInfo.default.map(default => (parameterId, default))
+    }
+    val templateWithDefaults = parameterDefaults.foldLeft(templateWithValues){
+      case (intermediateTemplate, (parameter, value)) => intermediateTemplate.replaceAll("\\{\\{" + parameter + "\\}\\}", value)
+    }
+    Json.parse(templateWithDefaults)
   }
 
 }
@@ -42,15 +56,13 @@ object Instance {
       (JsPath \ "parameterValues").write[Map[String, String]] and
       (JsPath \ "status").write[InstanceStatus] and
       (JsPath \ "services").write[Map[String, Service]] and
-      (JsPath \ "template" \ "version").write[String] and
-      (JsPath \ "template" \ "id").write[String]
+      (JsPath \ "template").write[Template]
     )((instance: Instance) => (
       instance.id,
       instance.parameterValues,
       instance.status,
       instance.services,
-      instance.template.templateVersion,
-      instance.template.id
+      instance.template
     ))
 
 }

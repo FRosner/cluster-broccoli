@@ -6,9 +6,9 @@
       </div>
       <div class="panel-body">
         <div ng-repeat="param in instCtrl.parameters" class="input-group instance-input-group">
-          <span class="input-group-addon" id="basic-addon1">{{param}}</span>
-          <input type="text" class="form-control" placeholder="{{param}}"
-            aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param]"
+          <span class="input-group-addon" id="basic-addon1">{{param.name}}</span>
+          <input type="text" class="form-control" placeholder="{{param.default}}"
+            aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param.id]"
             focus-field="$index == 0">
         </div>
       </div>

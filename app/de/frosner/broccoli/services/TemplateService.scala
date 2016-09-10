@@ -5,12 +5,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.Template
+import de.frosner.broccoli.models.{ParameterInfo, Template}
 import play.Logger
 import play.api.Configuration
 import play.api.libs.json.JsObject
 import play.libs.Json
 
+import scala.collection.JavaConversions
 import scala.io.Source
 import scala.util.Try
 import scala.util.parsing.json.JSON
@@ -43,9 +44,20 @@ class TemplateService @Inject() (configuration: Configuration) {
           metaInformation.get("description").asText
         else
           s"$templateId template"
-        Template(templateId, templateFileContent, description)
+        val parameterInfos: Map[String, ParameterInfo] = if (metaInformation.has("parameters")) {
+          val fields = JavaConversions.asScalaIterator(metaInformation.get("parameters").fields()).toIterable
+          fields.map { entry =>
+            val name = entry.getKey
+            val entryValue = entry.getValue
+            val default = if (entryValue.has("default")) Some(entryValue.get("default").asText) else None
+            (name, ParameterInfo(name, default))
+          }.toMap
+        } else {
+          Map.empty
+        }
+        Template(templateId, templateFileContent, description, parameterInfos)
       }
-      tryTemplate.failed.map(throwable => Logger.warn(s"Parsing template failed: $throwable"))
+      tryTemplate.failed.map(throwable => Logger.warn(s"Parsing template '$templateDirectory' failed: $throwable"))
       tryTemplate.toOption
     })
     Logger.info(s"Successfully parsed ${templates.size} templates: ${templates.map(_.id).mkString(", ")}")
