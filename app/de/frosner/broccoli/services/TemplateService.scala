@@ -8,9 +8,12 @@ import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.Template
 import play.Logger
 import play.api.Configuration
+import play.api.libs.json.JsObject
+import play.libs.Json
 
 import scala.io.Source
 import scala.util.Try
+import scala.util.parsing.json.JSON
 
 @Singleton
 class TemplateService @Inject() (configuration: Configuration) {
@@ -32,11 +35,15 @@ class TemplateService @Inject() (configuration: Configuration) {
       val tryTemplate = Try {
         val templateFile = new File(templateDirectory, "template.json")
         val templateFileContent = Source.fromFile(templateFile).getLines.mkString("\n")
-        val descriptionFileContent = Try {
-          Source.fromFile(new File(templateDirectory, "description.txt")).getLines.mkString("\n")
-        }
         val templateId = templateDirectory.getName
-        Template(templateId, templateFileContent, descriptionFileContent.getOrElse(s"Template $templateId."))
+        val metaFile = new File(templateDirectory, "meta.json")
+        val metaFileContent = Source.fromFile(metaFile).getLines.mkString("\n")
+        val metaInformation = Json.parse(metaFileContent)
+        val description = if (metaInformation.has("description"))
+          metaInformation.get("description").asText
+        else
+          s"$templateId template"
+        Template(templateId, templateFileContent, description)
       }
       tryTemplate.failed.map(throwable => Logger.warn(s"Parsing template failed: $throwable"))
       tryTemplate.toOption
