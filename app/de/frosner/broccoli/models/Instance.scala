@@ -12,7 +12,7 @@ case class Instance(id: String,
                     var status: InstanceStatus,
                     var services: Map[String, Service]) extends Serializable {
 
-  def requireParameterValueConsistency() = {
+  def requireParameterValueConsistency(parameterValues: Map[String, String], template: Template) = {
     val realParametersWithValues = parameterValues.keySet ++ template.parameterInfos.flatMap {
       case (key, ParameterInfo(name, Some(default))) => Some(key)
       case (key, ParameterInfo(name, None)) => None
@@ -22,11 +22,11 @@ case class Instance(id: String,
         s"need to match the ones in the template (${template.parameters}).")
   }
 
-  requireParameterValueConsistency()
+  requireParameterValueConsistency(parameterValues, template)
 
   def updateParameterValues(newParameterValues: Map[String, String]): Try[Instance] = {
     Try{
-      requireParameterValueConsistency()
+      requireParameterValueConsistency(newParameterValues, template)
       require(newParameterValues("id") == parameterValues("id"), s"The parameter value 'id' must not be changed.")
 
       this.parameterValues = newParameterValues
