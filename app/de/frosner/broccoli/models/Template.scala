@@ -8,7 +8,9 @@ import play.api.libs.functional.syntax._
 
 import scala.collection.mutable.ArrayBuffer
 
-case class Template(id: String, template: String, description: String) extends Serializable {
+import ParameterInfo.parameterInfoWrites
+
+case class Template(id: String, template: String, description: String, parameterInfos: Map[String, ParameterInfo]) extends Serializable {
 
   @transient
   lazy val parameters: Set[String] = {
@@ -36,7 +38,8 @@ object Template {
     (JsPath \ "id").write[String] and
       (JsPath \ "description").write[String] and
       (JsPath \ "parameters").write[Set[String]] and
+      (JsPath \ "parameterInfos").write[Map[String, ParameterInfo]] and
       (JsPath \ "version").write[String]
-    )((template: Template) => (template.id, template.description, template.parameters, template.templateVersion))
+    )((template: Template) => (template.id, template.description, template.parameters, template.parameterInfos, template.templateVersion))
 
 }

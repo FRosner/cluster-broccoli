@@ -1,11 +1,11 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.models.Template
+import de.frosner.broccoli.models.{ParameterInfo, Template}
 import de.frosner.broccoli.services.TemplateService
 import org.specs2.mutable.Specification
 import play.api.test.{FakeRequest, PlaySpecification}
 import org.mockito.Mockito._
-import play.api.libs.json.{JsArray, JsObject, JsString}
+import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
 import org.specs2.concurrent.ExecutionEnv
 import play.api.mvc.BodyParsers
 
@@ -18,7 +18,10 @@ class TemplateControllerSpec extends PlaySpecification {
       val template = Template(
         id = "id",
         template = "template {{id}}",
-        description = "description"
+        description = "description",
+        parameterInfos = Map(
+          "id" -> ParameterInfo(name = "id", default = Some("myid"))
+        )
       )
       when(templateService.templates).thenReturn(Seq(template))
       val controller = new TemplateController(templateService)
@@ -29,6 +32,12 @@ class TemplateControllerSpec extends PlaySpecification {
         JsObject(Map(
           "id" -> JsString(template.id),
           "parameters" -> JsArray(Seq(JsString("id"))),
+          "parameterInfos" -> JsObject(Map(
+            "id" -> JsObject(Map(
+              "name" -> JsString("id"),
+              "default" -> JsString("myid")
+            ))
+          )),
           "description" -> JsString(template.description),
           "version" -> JsString(template.templateVersion)
         ))
@@ -44,7 +53,8 @@ class TemplateControllerSpec extends PlaySpecification {
       val template = Template(
         id = "id",
         template = "template {{id}}",
-        description = "description"
+        description = "description",
+        parameterInfos = Map.empty
       )
       when(templateService.template("id")).thenReturn(Some(template))
       val controller = new TemplateController(templateService)
@@ -54,6 +64,7 @@ class TemplateControllerSpec extends PlaySpecification {
       contentAsJson(result) must be equalTo JsObject(Map(
         "id" -> JsString(template.id),
         "parameters" -> JsArray(Seq(JsString("id"))),
+        "parameterInfos" -> JsObject(Map.empty[String, JsValue]),
         "description" -> JsString(template.description),
         "version" -> JsString(template.templateVersion)
       ))

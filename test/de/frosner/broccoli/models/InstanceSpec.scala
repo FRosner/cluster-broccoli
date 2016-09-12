@@ -12,23 +12,70 @@ class InstanceSpec extends Specification {
   "An instance" should {
 
     "be possible to construct if the parameters to be filled match the ones in the template" in {
-      val instance1 = Instance("1", Template("1", "\"{{id}}\"", "desc"), Map("id" -> "Heinz"), InstanceStatus.Unknown, Map.empty)
-      val instance2 = Instance("1", Template("1", "\"{{id}}\"", "desc"), Map("id" -> "Heinz"), InstanceStatus.Unknown, Map.empty)
+      val instance1 = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Heinz"), InstanceStatus.Unknown, Map.empty)
+      val instance2 = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Heinz"), InstanceStatus.Unknown, Map.empty)
       instance1 === instance2
     }
 
     "check that the parameters to be filled are the same ones as in the template" in {
-      Instance("1", Template("1", "\"{{id}}\"", "desc"), Map.empty, InstanceStatus.Unknown, Map.empty) must throwA[IllegalArgumentException]
+      Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map.empty, InstanceStatus.Unknown, Map.empty) must throwA[IllegalArgumentException]
     }
 
     "parse the template correctly when it contains a single parameter" in {
-      val instance = Instance("1", Template("1", "\"{{id}}\"", "desc"), Map("id" -> "Frank"), InstanceStatus.Unknown, Map.empty)
+      val instance = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Frank"), InstanceStatus.Unknown, Map.empty)
       instance.templateJson === JsString("Frank")
     }
 
     "parse the template correctly when it contains multiple parameters" in {
-      val instance = Instance("1", Template("1", "\"{{id}} {{age}}\"", "desc"), Map("id" -> "Frank", "age" -> "5"), InstanceStatus.Unknown, Map.empty)
+      val instance = Instance("1", Template("1", "\"{{id}} {{age}}\"", "desc", Map.empty), Map("id" -> "Frank", "age" -> "5"), InstanceStatus.Unknown, Map.empty)
       instance.templateJson === JsString("Frank 5")
+    }
+
+    "parse the template correctly when it contains a defined default parameter" in {
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = "\"{{id}} {{age}}\"",
+          description = "desc",
+          parameterInfos = Map("age" -> ParameterInfo("age", Some("50")))
+        ),
+        parameterValues = Map("id" -> "Frank"),
+        status = InstanceStatus.Unknown,
+        services = Map.empty
+      )
+      instance.templateJson === JsString("Frank 50")
+    }
+
+    "parse the template correctly when it contains an undefined default parameter" in {
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = "\"{{id}} {{age}}\"",
+          description = "desc",
+          parameterInfos = Map("age" -> ParameterInfo("age", None))
+        ),
+        parameterValues = Map("id" -> "Frank", "age" -> "50"),
+        status = InstanceStatus.Unknown,
+        services = Map.empty
+      )
+      instance.templateJson === JsString("Frank 50")
+    }
+
+    "throw an exception if the template contains no default and no value" in {
+      Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = "\"{{id}} {{age}}\"",
+          description = "desc",
+          parameterInfos = Map("age" -> ParameterInfo("age", None))
+        ),
+        parameterValues = Map("id" -> "Frank"),
+        status = InstanceStatus.Unknown,
+        services = Map.empty
+      ) must throwA[IllegalArgumentException]
     }
 
   }
@@ -37,7 +84,7 @@ class InstanceSpec extends Specification {
 
     "work correctly" in {
       val original = Map(
-        "1" -> Instance("1", Template("1", "\"{{id}}\"", "desc"), Map("id" -> "Heinz"), InstanceStatus.Unknown, Map.empty)
+        "1" -> Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Heinz"), InstanceStatus.Unknown, Map.empty)
       )
 
       val bos = new ByteArrayOutputStream()

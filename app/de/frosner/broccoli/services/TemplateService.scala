@@ -5,12 +5,16 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.Template
+import de.frosner.broccoli.models.{ParameterInfo, Template}
 import play.Logger
 import play.api.Configuration
+import play.api.libs.json.JsObject
+import play.libs.Json
 
+import scala.collection.JavaConversions
 import scala.io.Source
 import scala.util.Try
+import scala.util.parsing.json.JSON
 
 @Singleton
 class TemplateService @Inject() (configuration: Configuration) {
@@ -32,13 +36,28 @@ class TemplateService @Inject() (configuration: Configuration) {
       val tryTemplate = Try {
         val templateFile = new File(templateDirectory, "template.json")
         val templateFileContent = Source.fromFile(templateFile).getLines.mkString("\n")
-        val descriptionFileContent = Try {
-          Source.fromFile(new File(templateDirectory, "description.txt")).getLines.mkString("\n")
-        }
         val templateId = templateDirectory.getName
-        Template(templateId, templateFileContent, descriptionFileContent.getOrElse(s"Template $templateId."))
+        val metaFile = new File(templateDirectory, "meta.json")
+        val metaFileContent = Source.fromFile(metaFile).getLines.mkString("\n")
+        val metaInformation = Json.parse(metaFileContent)
+        val description = if (metaInformation.has("description"))
+          metaInformation.get("description").asText
+        else
+          s"$templateId template"
+        val parameterInfos: Map[String, ParameterInfo] = if (metaInformation.has("parameters")) {
+          val fields = JavaConversions.asScalaIterator(metaInformation.get("parameters").fields()).toIterable
+          fields.map { entry =>
+            val name = entry.getKey
+            val entryValue = entry.getValue
+            val default = if (entryValue.has("default")) Some(entryValue.get("default").asText) else None
+            (name, ParameterInfo(name, default))
+          }.toMap
+        } else {
+          Map.empty
+        }
+        Template(templateId, templateFileContent, description, parameterInfos)
       }
-      tryTemplate.failed.map(throwable => Logger.warn(s"Parsing template failed: $throwable"))
+      tryTemplate.failed.map(throwable => Logger.warn(s"Parsing template '$templateDirectory' failed: $throwable"))
       tryTemplate.toOption
     })
     Logger.info(s"Successfully parsed ${templates.size} templates: ${templates.map(_.id).mkString(", ")}")
