@@ -1,8 +1,9 @@
 {
   "id": "zeppelin",
-  "description": "A web-based notebook that enables interactive data analytics.\nYou can make beautiful data-driven, interactive and collaborative documents with SQL, Scala and more.",
+  "description": "A web-based notebook that enables interactive data analytics. You can make beautiful data-driven, interactive and collaborative documents with SQL, Scala and more.",
   "parameters": [
     "id"
   ],
+  "parameterInfos": {},
   "version": "6f983b4ea4e12344e73f450fa9201243"
 }
