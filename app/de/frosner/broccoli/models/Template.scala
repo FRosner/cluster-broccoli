@@ -26,7 +26,7 @@ case class Template(id: String, template: String, description: String, parameter
   }
 
   @transient
-  lazy val templateVersion: String = DigestUtils.md5Hex(template)
+  lazy val templateVersion: String = DigestUtils.md5Hex(template + "_" + parameterInfos.toString)
 
 }
 
