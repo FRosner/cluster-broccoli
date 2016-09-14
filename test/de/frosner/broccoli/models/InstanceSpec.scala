@@ -80,6 +80,64 @@ class InstanceSpec extends Specification {
 
   }
 
+  "Updating the parameters of an instance" should {
+
+    "work correctly" in {
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = "\"{{id}} {{age}}\"",
+          description = "desc",
+          parameterInfos = Map.empty
+        ),
+        parameterValues = Map("id" -> "1", "age" -> "50"),
+        status = InstanceStatus.Unknown,
+        services = Map.empty
+      )
+      val newParameterValues = Map("id" -> "1", "age" -> "30")
+      val newInstance = instance.updateParameterValues(newParameterValues)
+      newInstance.get.parameterValues === newParameterValues
+    }
+
+    "not allow changing of the ID" in {
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = "\"{{id}} {{age}}\"",
+          description = "desc",
+          parameterInfos = Map.empty
+        ),
+        parameterValues = Map("id" -> "1", "age" -> "50"),
+        status = InstanceStatus.Unknown,
+        services = Map.empty
+      )
+      val newParameterValues = Map("id" -> "2", "age" -> "40")
+      val newInstance = instance.updateParameterValues(newParameterValues)
+      newInstance.isFailure === true
+    }
+
+    "require parameter and value consistency" in {
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = "\"{{id}} {{age}}\"",
+          description = "desc",
+          parameterInfos = Map.empty
+        ),
+        parameterValues = Map("id" -> "1", "age" -> "50"),
+        status = InstanceStatus.Unknown,
+        services = Map.empty
+      )
+      val newParameterValues = Map("id" -> "1")
+      val newInstance = instance.updateParameterValues(newParameterValues)
+      newInstance.isFailure === true
+    }
+
+  }
+
   "Instance serialization" should {
 
     "work correctly" in {
