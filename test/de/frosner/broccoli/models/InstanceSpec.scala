@@ -138,6 +138,114 @@ class InstanceSpec extends Specification {
 
   }
 
+  "Updating the template of an instance" should {
+
+    "work correctly when the parameters don't change" in {
+      val originalTemplate = Template(
+        id = "1",
+        template = "\"{{id}} {{age}}\"",
+        description = "desc",
+        parameterInfos = Map.empty
+      )
+      val newTemplate = Template(
+        id = "5",
+        template = "\"{{id}} {{age}}\"",
+        description = "desc",
+        parameterInfos = Map.empty
+      )
+      val originalParameterValues = Map("id" -> "1", "age" -> "50")
+      val newParameterValues = originalParameterValues
+      val instance = Instance(
+        id = "1",
+        template = originalTemplate,
+        parameterValues = originalParameterValues,
+        status = InstanceStatus.Unknown,
+        services = Map.empty
+      )
+      val newInstance = instance.updateTemplate(newTemplate, newParameterValues)
+      (newInstance.get.template === newTemplate) and (newInstance.get.parameterValues === newParameterValues)
+    }
+
+    "work correctly when the parameters change" in {
+      val originalTemplate = Template(
+        id = "1",
+        template = "\"{{id}} {{age}}\"",
+        description = "desc",
+        parameterInfos = Map.empty
+      )
+      val newTemplate = Template(
+        id = "5",
+        template = "\"{{id}} {{age}} {{height}}\"",
+        description = "desc",
+        parameterInfos = Map.empty
+      )
+      val originalParameterValues = Map("id" -> "1", "age" -> "50")
+      val newParameterValues = originalParameterValues.updated("height", "170")
+      val instance = Instance(
+        id = "1",
+        template = originalTemplate,
+        parameterValues = originalParameterValues,
+        status = InstanceStatus.Unknown,
+        services = Map.empty
+      )
+      val newInstance = instance.updateTemplate(newTemplate, newParameterValues)
+      (newInstance.get.template === newTemplate) and (newInstance.get.parameterValues === newParameterValues)
+    }
+
+    "require parameter and value consistency" in {
+      val originalTemplate = Template(
+        id = "1",
+        template = "\"{{id}} {{age}}\"",
+        description = "desc",
+        parameterInfos = Map.empty
+      )
+      val newTemplate = Template(
+        id = "5",
+        template = "\"{{id}} {{age}} {{height}}\"",
+        description = "desc",
+        parameterInfos = Map.empty
+      )
+      val originalParameterValues = Map("id" -> "1", "age" -> "50")
+      val newParameterValues = originalParameterValues
+      val instance = Instance(
+        id = "1",
+        template = originalTemplate,
+        parameterValues = originalParameterValues,
+        status = InstanceStatus.Unknown,
+        services = Map.empty
+      )
+      val newInstance = instance.updateTemplate(newTemplate, newParameterValues)
+      (newInstance.isFailure === true) and (instance.template === originalTemplate)
+    }
+
+    "not allow changing of the ID" in {
+      val originalTemplate = Template(
+        id = "1",
+        template = "\"{{id}} {{age}}\"",
+        description = "desc",
+        parameterInfos = Map.empty
+      )
+      val newTemplate = Template(
+        id = "5",
+        template = "\"{{id}} {{age}} {{height}}\"",
+        description = "desc",
+        parameterInfos = Map.empty
+      )
+      val originalParameterValues = Map("id" -> "2", "age" -> "50")
+      val newParameterValues = originalParameterValues
+      val instance = Instance(
+        id = "1",
+        template = originalTemplate,
+        parameterValues = originalParameterValues,
+        status = InstanceStatus.Unknown,
+        services = Map.empty
+      )
+      val newInstance = instance.updateTemplate(newTemplate, newParameterValues)
+      newInstance.isFailure === true
+    }
+
+  }
+
   "Instance serialization" should {
 
     "work correctly" in {
