@@ -165,10 +165,10 @@ class InstanceService @Inject()(templateService: TemplateService,
       val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
         updateInstance.statusUpdater.map {
           // Update the instance status
-          case InstanceStatus.Running =>
+          case StatusUpdater(InstanceStatus.Running) =>
             nomadActor.tell(StartJob(instance.templateJson), self)
             Success(instance)
-          case InstanceStatus.Stopped =>
+          case StatusUpdater(InstanceStatus.Stopped) =>
             nomadActor.tell(DeleteJob(instance.id), self)
             Success(instance)
           case other =>
