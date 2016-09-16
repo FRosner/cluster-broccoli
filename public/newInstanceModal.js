@@ -7,7 +7,7 @@ angular.module('broccoli')
     vm.dropdown = {};
     vm.dropdown.templates = templates;
     vm.dropdown.selectedTemplate = "unchanged";
-    
+
     if (instance == null) {
       vm.panelTitle = "New " + template.id + " (" +  template.version.substring(0, 8) + ")";
       vm.okText = "Create instance";
@@ -19,17 +19,30 @@ angular.module('broccoli')
       vm.paramsToValue = instance.parameterValues;
       realTemplate = instance.template;
     }
-    vm.parameters = {};
-    realTemplate.parameters.map(function(parameter) {
-      var currentParameter = {
-        "id": parameter,
-        "name": parameter
-      };
-      if (template.parameterInfos[parameter] && template.parameterInfos[parameter].default) {
-        currentParameter.default = template.parameterInfos[parameter].default;
+
+    $scope.$watch('instCtrl.dropdown.selectedTemplate', function(newTemplateId, oldTemplateId) {
+      if (newTemplateId == "unchanged") {
+        updateParameterForm(realTemplate)
+      } else {
+        var newTemplate = templates[newTemplateId];
+        updateParameterForm(newTemplate);
       }
-      vm.parameters[parameter] = currentParameter;
     });
+
+
+    function updateParameterForm(currentTemplate) {
+      vm.parameters = {};
+      currentTemplate.parameters.map(function(parameter) {
+        var currentParameter = {
+          "id": parameter,
+          "name": parameter
+        };
+        if (currentTemplate.parameterInfos[parameter] && currentTemplate.parameterInfos[parameter].default) {
+          currentParameter.default = currentTemplate.parameterInfos[parameter].default;
+        }
+        vm.parameters[parameter] = currentParameter;
+      });
+    }
     vm.ok = ok;
     vm.cancel = cancel;
 

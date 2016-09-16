@@ -126,10 +126,16 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
       modalInstance.result.then(function (result) {
         var paramsToValue = result.paramsToValue;
         var newInstance = result.instance;
-        var postData = { "parameterValues": newInstance.parameterValues };
+        var parameterValuesForSelectedTemplate = {};
+        var postData = {};
         if (result.selectedTemplate != null && result.selectedTemplate != "unchanged") {
           postData['selectedTemplate'] = result.selectedTemplate;
+          vm.templates[result.selectedTemplate].parameters.forEach(function(parameter) {
+            parameterValuesForSelectedTemplate[parameter] = newInstance.parameterValues[parameter];
+          });
+          newInstance.parameterValues = parameterValuesForSelectedTemplate;
         }
+        postData.parameterValues = newInstance.parameterValues;
         Restangular.all("instances")
           .customPOST(postData, newInstance.id, {}, {})
           .then(function(result) {
