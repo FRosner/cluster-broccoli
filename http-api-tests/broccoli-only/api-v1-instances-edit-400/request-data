@@ -1,7 +1,0 @@
-{
-  "parameterValues": {
-    "id": "test-http",
-    "cpu": "50",
-    "nonExisting": "50"
-  }
-}

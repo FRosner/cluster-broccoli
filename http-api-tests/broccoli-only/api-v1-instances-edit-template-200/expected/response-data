@@ -1,0 +1,17 @@
+{
+  "id": "test",
+  "parameterValues": {
+    "id": "test"
+  },
+  "status": "unknown",
+  "services": {},
+  "template": {
+    "id": "zeppelin",
+    "description": "A web-based notebook that enables interactive data analytics. You can make beautiful data-driven, interactive and collaborative documents with SQL, Scala and more.",
+    "parameters": [
+      "id"
+    ],
+    "parameterInfos": {},
+    "version": "e44710383d8a57db531000d2b62492ff"
+  }
+}
