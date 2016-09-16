@@ -62,26 +62,42 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
   def update(id: String) = Action.async { request =>
     val maybeJsObject = request.body.asJson.map(_.as[JsObject])
     maybeJsObject.map { jsObject =>
-      val updaters = jsObject.fields.flatMap { case (key, value) =>
-        key match {
-          case "status" =>
-            val maybeValidatedNewStatus = value.validate[InstanceStatus]
-            maybeValidatedNewStatus.map(status => Some(StatusUpdater(status))).getOrElse(None)
-          case "parameterValues" =>
-            val parameterValues = value.as[JsObject].value
-            Some(ParameterValuesUpdater(parameterValues.map{ case (k, v) => (k, v.as[JsString].value) }.toMap))
-          case other => None
-        }
+      // extract updates
+      val fields = jsObject.value
+      val maybeStatusUpdater = fields.get("status").flatMap { value =>
+        val maybeValidatedNewStatus = value.validate[InstanceStatus]
+        maybeValidatedNewStatus.map(status => Some(StatusUpdater(status))).getOrElse(None)
       }
-      if (updaters.isEmpty) {
+      val maybeParameterValuesUpdater = fields.get("parameterValues").map { value =>
+        val parameterValues = value.as[JsObject].value
+        ParameterValuesUpdater(parameterValues.map{ case (k, v) => (k, v.as[JsString].value) }.toMap)
+      }
+      val maybeTemplateSelector = fields.get("selectedTemplate").map { value =>
+        TemplateSelector(value.as[JsString].value)
+      }
+
+      // warn for unrecognized updates
+      fields.foreach { case (key, _) =>
+        if (!Set("status", "parameterValues", "selectedTemplate").contains(key))
+          Logger.warn(s"Received unrecognized instance update field: $key")
+      }
+      if (maybeStatusUpdater.isEmpty && maybeParameterValuesUpdater.isEmpty && maybeTemplateSelector.isEmpty) {
         Future(Status(400)("Invalid request to update an instance. Please refer to the API documentation."))
       } else {
-        val eventuallyMaybeExistingAndChangedInstance = instanceService.ask(UpdateInstance(id, updaters)).mapTo[Option[Option[Instance]]]
+        val update = UpdateInstance(
+          id = id,
+          statusUpdater = maybeStatusUpdater,
+          parameterValuesUpdater = maybeParameterValuesUpdater,
+          templateSelector = maybeTemplateSelector
+        )
+        val eventuallyMaybeExistingAndChangedInstance = instanceService.ask(update).mapTo[Option[Try[Instance]]]
         eventuallyMaybeExistingAndChangedInstance.map { maybeExistingAndChangedInstance =>
           maybeExistingAndChangedInstance.map { maybeChangedInstance =>
-            maybeChangedInstance.map {
-              changedInstance => Ok(Json.toJson(changedInstance))
-            }.getOrElse(Status(400)("Invalid request to update an instance. Please refer to the API documentation or the logs."))
+            if (maybeChangedInstance.isSuccess) {
+              Ok(Json.toJson(maybeChangedInstance.get))
+            } else {
+              Status(400)(s"Invalid request to update an instance: ${maybeChangedInstance.failed.get}")
+            }
           }.getOrElse(NotFound)
         }
       }

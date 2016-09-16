@@ -5,6 +5,19 @@
         <h3 class="panel-title">{{instCtrl.panelTitle}}</h3>
       </div>
       <div class="panel-body">
+        <div ng-if="instCtrl.instance != null" style="margin-bottom: 1em">
+          <div class="input-group" ng-if="instCtrl.dropdown.templates != null">
+            <span class="input-group-addon" id="basic-addon1">Template</span>
+            <select ng-model="instCtrl.dropdown.selectedTemplate" class="form-control" aria-describedby="basic-addon1">
+              <option value="unchanged" selected="selected">
+                unchanged
+              </option>
+              <option ng-repeat="template in instCtrl.dropdown.templates" value="{{template.id}}">
+                {{template.id}}, {{template.version.substring(0,8)}}
+              </option>
+            </select>
+          </div>
+        </div>
         <div ng-repeat="param in instCtrl.parameters" class="input-group instance-input-group">
           <span class="input-group-addon" id="basic-addon1">{{param.name}}</span>
           <input type="text" class="form-control" placeholder="{{param.default}}"

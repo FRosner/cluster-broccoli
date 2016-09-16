@@ -77,7 +77,7 @@ class InstanceService @Inject()(templateService: TemplateService,
     case GetInstances => sender ! instances.values
     case GetInstance(id) => sender ! instances.get(id)
     case NewInstance(instanceCreation) => sender() ! addInstance(instanceCreation)
-    case UpdateInstance(id, updaters) => sender() ! updateInstance(id, updaters)
+    case updateInstanceInfo: UpdateInstance => sender() ! updateInstance(updateInstanceInfo)
     case DeleteInstance(id) => sender ! deleteInstance(id)
     case NomadStatuses(statuses) => updateStatusesBasedOnNomad(statuses)
     case ConsulServices(id, services) => updateServicesBasedOnNomad(id, services)
@@ -131,32 +131,70 @@ class InstanceService @Inject()(templateService: TemplateService,
     }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException("No ID specified"))))
   }
 
-  private[this] def updateInstance(id: String, updaters: Iterable[InstanceUpdater]): Option[Option[Instance]] = {
-    val maybeInstance = instances.get(id)
+  private[this] def updateInstance(updateInstance: UpdateInstance): Option[Try[Instance]] = {
+    val maybeInstance = instances.get(updateInstance.id)
     maybeInstance.map { instance =>
-      val updates = updaters.map {
-        case StatusUpdater(newStatus) => newStatus match {
-          case InstanceStatus.Running =>
+      val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (updateInstance.templateSelector.isDefined) {
+        val newTemplateId = updateInstance.templateSelector.get.newTemplateId
+        val newTemplate = templateService.template(newTemplateId)
+        newTemplate.map { template =>
+          // Requested template exists, update the template
+          if (updateInstance.parameterValuesUpdater.isDefined) {
+            // New parameter values are specified
+            val newParameterValues = updateInstance.parameterValuesUpdater.get.newParameterValues
+            instance.updateTemplate(template, newParameterValues)
+          } else {
+            // Just use the old parameter values
+            instance.updateTemplate(template, instance.parameterValues)
+          }
+        }.getOrElse {
+          // New template does not exist
+          Failure(TemplateNotFoundException(newTemplateId))
+        }
+      } else {
+        // No template update required
+        if (updateInstance.parameterValuesUpdater.isDefined) {
+          // Just update the parameter values
+          val newParameterValues = updateInstance.parameterValuesUpdater.get.newParameterValues
+          instance.updateParameterValues(newParameterValues)
+        } else {
+          // Neither template update nor parameter value update required
+          Success(instance)
+        }
+      }
+      val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
+        updateInstance.statusUpdater.map {
+          // Update the instance status
+          case StatusUpdater(InstanceStatus.Running) =>
             nomadActor.tell(StartJob(instance.templateJson), self)
             Success(instance)
-          case InstanceStatus.Stopped =>
+          case StatusUpdater(InstanceStatus.Stopped) =>
             nomadActor.tell(DeleteJob(instance.id), self)
             Success(instance)
           case other =>
             Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
+        }.getOrElse {
+          // Don't update the instance status
+          Success(instance)
         }
-        case ParameterValuesUpdater(newParameterValues) => instance.updateParameterValues(newParameterValues)
-      }
-      updates.foreach {
-        case Failure(throwable) => Logger.warn(s"Error updating instance: $throwable")
+      }.flatten
+
+      updatedInstance match {
+        case Failure(throwable) => Logger.error(s"Error updating instance: $throwable")
         case Success(changedInstance) => Logger.debug(s"Successfully applied an update to $changedInstance")
       }
-      updates.flatMap(_.toOption).headOption
+
+      updatedInstance
     }
   }
 
   private[this] def deleteInstance(id: String): Boolean = {
-    updateInstance(id, List(StatusUpdater(InstanceStatus.Stopped)))
+    updateInstance(UpdateInstance(
+      id = id,
+      statusUpdater = Some(StatusUpdater(InstanceStatus.Stopped)),
+      parameterValuesUpdater = None,
+      templateSelector = None
+    ))
     if (instances.contains(id)) {
       instances = instances - id
       InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
@@ -176,13 +214,16 @@ object InstanceService {
 
   case class NewInstance(instanceCreation: InstanceCreation)
 
-  sealed trait InstanceUpdater
+  case class StatusUpdater(newStatus: InstanceStatus)
 
-  case class StatusUpdater(newStatus: InstanceStatus) extends InstanceUpdater
+  case class ParameterValuesUpdater(newParameterValues: Map[String, String])
 
-  case class ParameterValuesUpdater(newParameterValues: Map[String, String]) extends InstanceUpdater
+  case class TemplateSelector(newTemplateId: String)
 
-  case class UpdateInstance(id: String, updaters: Iterable[InstanceUpdater])
+  case class UpdateInstance(id: String,
+                            statusUpdater: Option[StatusUpdater],
+                            parameterValuesUpdater: Option[ParameterValuesUpdater],
+                            templateSelector: Option[TemplateSelector])
 
   case class DeleteInstance(id: String)
 

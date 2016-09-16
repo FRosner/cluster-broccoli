@@ -12,7 +12,7 @@
         "default": "100"
       }
     },
-    "version": "f88dbbdc8249b8e5075598e165aec527"
+    "version": "dd44c11eb388522e2b879e56d86cd758"
   },
   {
     "id": "jupyter",
@@ -21,7 +21,7 @@
       "id"
     ],
     "parameterInfos": {},
-    "version": "2c64126e09b72abd1a46f6db5b296221"
+    "version": "ec9fcb74126d78d82c17d55e5cde7f92"
   },
   {
     "id": "zeppelin",
@@ -30,6 +30,6 @@
       "id"
     ],
     "parameterInfos": {},
-    "version": "6f983b4ea4e12344e73f450fa9201243"
+    "version": "e44710383d8a57db531000d2b62492ff"
   }
 ]

@@ -6,3 +6,6 @@ logs
 *.lock
 *run-*
 docker/test/cluster-broccoli-dist/
+docker/test/templates
+cluster-broccoli.did
+instances

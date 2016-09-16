@@ -7,7 +7,7 @@ import play.api.libs.functional.syntax._
 import scala.util.Try
 
 case class Instance(id: String,
-                    template: Template,
+                    var template: Template,
                     var parameterValues: Map[String, String],
                     var status: InstanceStatus,
                     var services: Map[String, Service]) extends Serializable {
@@ -32,6 +32,17 @@ case class Instance(id: String,
       this.parameterValues = newParameterValues
       this
     }
+  }
+
+  def updateTemplate(newTemplate: Template, newParameterValues: Map[String, String]): Try[Instance] = {
+    Try {
+      val originalTemplate = this.template
+      this.template = newTemplate
+      val tryUpdate = updateParameterValues(newParameterValues)
+      if (tryUpdate.isFailure)
+        this.template = originalTemplate
+      tryUpdate
+    }.flatten
   }
 
   def templateJson: JsValue = {
