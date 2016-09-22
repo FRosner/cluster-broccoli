@@ -58,11 +58,14 @@ class InstanceService @Inject()(templateService: TemplateService,
       }
       Logger.info(s"Looking for instances in $instancesFilePath.")
       if (instancesFile.canRead && instancesFile.isFile) {
-        InstanceService.loadInstances(new FileInputStream(instancesFile)).recoverWith {
-          case throwable =>
-            Logger.error(s"Error parsing instances in $instancesFilePath.")
-            Failure(throwable)
-        }.getOrElse(Map.empty[String, Instance])
+        val maybeInstances = InstanceService.loadInstances(new FileInputStream(instancesFile))
+        if (maybeInstances.isFailure) {
+          val throwable = maybeInstances.failed.get
+          Logger.error(s"Error parsing instances in $instancesFilePath: $throwable")
+          throw new IllegalStateException(throwable)
+        } else {
+          maybeInstances.get
+        }
       } else {
         Logger.info(s"Instances file $instancesFilePath not found. Initializing with an empty instance collection.")
         InstanceService.persistInstances(Map.empty[String, Instance], new FileOutputStream(instancesFile))
