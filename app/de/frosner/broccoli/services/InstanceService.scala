@@ -64,7 +64,7 @@ class InstanceService @Inject()(templateService: TemplateService,
             Failure(throwable)
         }.getOrElse(Map.empty[String, Instance])
       } else {
-        Logger.info(s"Instances file ${instancesFilePath} not found. Initializing with an empty instance collection.")
+        Logger.info(s"Instances file $instancesFilePath not found. Initializing with an empty instance collection.")
         InstanceService.persistInstances(Map.empty[String, Instance], new FileOutputStream(instancesFile))
       }
     } else {
