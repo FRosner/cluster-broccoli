@@ -21,6 +21,8 @@ import de.frosner.broccoli.conf
 import play.Logger
 import play.api.inject.ApplicationLifecycle
 
+import scala.io.Source
+
 @Singleton
 class InstanceService @Inject()(templateService: TemplateService,
                                 system: ActorSystem,
@@ -234,16 +236,17 @@ object InstanceService {
   case object NomadNotReachable
 
   def persistInstances(instances: Map[String, Instance], output: OutputStream): Map[String, Instance] = {
-    val oos = new ObjectOutputStream(output)
-    oos.writeObject(instances)
-    oos.close()
+    import Instance.instancePersistenceWrites
+    val printStream = new PrintStream(output)
+    printStream.append(Json.toJson(instances).toString())
+    printStream.close()
     instances
   }
 
   def loadInstances(input: InputStream): Try[Map[String, Instance]] = {
-    val ois = new ObjectInputStream(input)
-    val instances = Try(ois.readObject().asInstanceOf[Map[String, Instance]])
-    ois.close()
+    val source = Source.fromInputStream(input)
+    val instances = Try(Json.parse(input).as[Map[String, Instance]])
+    source.close()
     instances
   }
 

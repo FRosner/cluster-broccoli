@@ -62,6 +62,22 @@ case class Instance(id: String,
 
 object Instance {
 
-  implicit val instanceWrites: Writes[Instance] = Json.writes[Instance]
+  implicit val instanceApiWrites: Writes[Instance] = {
+    import InstanceStatusJson.instanceStatusWrites
+    import Template.templateApiWrites
+    Json.writes[Instance]
+  }
+
+  implicit val instancePersistenceWrites: Writes[Instance] = {
+    import InstanceStatusJson.instanceStatusWrites
+    import Template.templatePersistenceWrites
+    Json.writes[Instance]
+  }
+
+  implicit val instancePersistenceReads: Reads[Instance] = {
+    import Template.templatePersistenceReads
+    import InstanceStatusJson.instanceStatusReads
+    Json.reads[Instance]
+  }
 
 }

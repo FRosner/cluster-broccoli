@@ -2,8 +2,7 @@ package de.frosner.broccoli.controllers
 
 import javax.inject.Inject
 
-import de.frosner.broccoli.models.Template
-import Template.templateWrites
+import de.frosner.broccoli.models.Template.templateApiWrites
 import de.frosner.broccoli.services.TemplateService
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Controller}

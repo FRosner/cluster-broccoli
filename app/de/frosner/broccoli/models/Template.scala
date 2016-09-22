@@ -26,7 +26,7 @@ case class Template(id: String, template: String, description: String, parameter
   }
 
   @transient
-  lazy val templateVersion: String = DigestUtils.md5Hex(template + "_" + parameterInfos.toString)
+  lazy val version: String = DigestUtils.md5Hex(template + "_" + parameterInfos.toString)
 
 }
 
@@ -34,12 +34,16 @@ object Template {
 
   val TemplatePattern = Pattern.compile("\\{\\{([A-Za-z][A-Za-z0-9\\-\\_\\_]*)\\}\\}")
 
-  implicit val templateWrites: Writes[Template] = (
+  implicit val templateApiWrites: Writes[Template] = (
     (JsPath \ "id").write[String] and
       (JsPath \ "description").write[String] and
       (JsPath \ "parameters").write[Set[String]] and
       (JsPath \ "parameterInfos").write[Map[String, ParameterInfo]] and
       (JsPath \ "version").write[String]
-    )((template: Template) => (template.id, template.description, template.parameters, template.parameterInfos, template.templateVersion))
+    )((template: Template) => (template.id, template.description, template.parameters, template.parameterInfos, template.version))
+
+  implicit val templatePersistenceReads: Reads[Template] = Json.reads[Template]
+
+  implicit val templatePersistenceWrites: Writes[Template] = Json.writes[Template]
 
 }
