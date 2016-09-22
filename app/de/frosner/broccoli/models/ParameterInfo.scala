@@ -9,4 +9,6 @@ object ParameterInfo {
 
   implicit val parameterInfoWrites = Json.writes[ParameterInfo]
 
+  implicit val parameterInfoReads = Json.reads[ParameterInfo]
+
 }

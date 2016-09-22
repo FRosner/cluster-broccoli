@@ -39,7 +39,7 @@ class TemplateControllerSpec extends PlaySpecification {
             ))
           )),
           "description" -> JsString(template.description),
-          "version" -> JsString(template.templateVersion)
+          "version" -> JsString(template.version)
         ))
       ))
     }
@@ -66,7 +66,7 @@ class TemplateControllerSpec extends PlaySpecification {
         "parameters" -> JsArray(Seq(JsString("id"))),
         "parameterInfos" -> JsObject(Map.empty[String, JsValue]),
         "description" -> JsString(template.description),
-        "version" -> JsString(template.templateVersion)
+        "version" -> JsString(template.version)
       ))
     }
 

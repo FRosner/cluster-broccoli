@@ -3,6 +3,9 @@ package de.frosner.broccoli.models
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 
 import org.specs2.mutable.Specification
+import play.api.libs.json.Json
+
+import Template.{templatePersistenceReads, templateApiWrites}
 
 class TemplateSpec extends Specification {
 
@@ -37,11 +40,11 @@ class TemplateSpec extends Specification {
     }
 
     "create the template version correctly in" in {
-      Template("test", "template JSON", "desc", Map.empty).templateVersion === "5b2b0c11319b0bf48c8bd17a4b298f8f"
+      Template("test", "template JSON", "desc", Map.empty).version === "5b2b0c11319b0bf48c8bd17a4b298f8f"
     }
 
     "result in different template versions if the template JSON differs" in {
-      Template("test", "template JSON", "desc", Map.empty).templateVersion !== Template("test", "template JSONs", "desc", Map.empty).templateVersion
+      Template("test", "template JSON", "desc", Map.empty).version !== Template("test", "template JSONs", "desc", Map.empty).version
     }
 
     "result in different template versions if the template parameter info differs" in {
@@ -50,7 +53,7 @@ class TemplateSpec extends Specification {
         template = "template JSON {{id}}",
         description = "desc",
         parameterInfos = Map.empty
-      ).templateVersion !== Template(
+      ).version !== Template(
         id = "test",
         template = "template JSON {{id}}",
         description = "desc",
@@ -59,7 +62,7 @@ class TemplateSpec extends Specification {
             "id",
             None
           )
-        )).templateVersion
+        )).version
     }
 
   }
@@ -78,6 +81,20 @@ class TemplateSpec extends Specification {
       ois.close()
 
       originalTemplate === deserializedTemplate
+    }
+
+  }
+
+  "Template back-end JSON serialization" should {
+
+    "work" in {
+      val template = Template(
+        id = "t",
+        template = "{{id}}",
+        description = "d",
+        parameterInfos = Map.empty
+      )
+      Json.fromJson(Json.toJson(template)(Template.templatePersistenceWrites))(Template.templatePersistenceReads).get === template
     }
 
   }

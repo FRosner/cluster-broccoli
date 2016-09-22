@@ -21,6 +21,8 @@ import de.frosner.broccoli.conf
 import play.Logger
 import play.api.inject.ApplicationLifecycle
 
+import scala.io.Source
+
 @Singleton
 class InstanceService @Inject()(templateService: TemplateService,
                                 system: ActorSystem,
@@ -56,13 +58,16 @@ class InstanceService @Inject()(templateService: TemplateService,
       }
       Logger.info(s"Looking for instances in $instancesFilePath.")
       if (instancesFile.canRead && instancesFile.isFile) {
-        InstanceService.loadInstances(new FileInputStream(instancesFile)).recoverWith {
-          case throwable =>
-            Logger.error(s"Error parsing instances in $instancesFilePath.")
-            Failure(throwable)
-        }.getOrElse(Map.empty[String, Instance])
+        val maybeInstances = InstanceService.loadInstances(new FileInputStream(instancesFile))
+        if (maybeInstances.isFailure) {
+          val throwable = maybeInstances.failed.get
+          Logger.error(s"Error parsing instances in $instancesFilePath: $throwable")
+          throw new IllegalStateException(throwable)
+        } else {
+          maybeInstances.get
+        }
       } else {
-        Logger.info(s"Instances file ${instancesFilePath} not found. Initializing with an empty instance collection.")
+        Logger.info(s"Instances file $instancesFilePath not found. Initializing with an empty instance collection.")
         InstanceService.persistInstances(Map.empty[String, Instance], new FileOutputStream(instancesFile))
       }
     } else {
@@ -234,16 +239,17 @@ object InstanceService {
   case object NomadNotReachable
 
   def persistInstances(instances: Map[String, Instance], output: OutputStream): Map[String, Instance] = {
-    val oos = new ObjectOutputStream(output)
-    oos.writeObject(instances)
-    oos.close()
+    import Instance.instancePersistenceWrites
+    val printStream = new PrintStream(output)
+    printStream.append(Json.toJson(instances).toString())
+    printStream.close()
     instances
   }
 
   def loadInstances(input: InputStream): Try[Map[String, Instance]] = {
-    val ois = new ObjectInputStream(input)
-    val instances = Try(ois.readObject().asInstanceOf[Map[String, Instance]])
-    ois.close()
+    val source = Source.fromInputStream(input)
+    val instances = Try(Json.parse(input).as[Map[String, Instance]])
+    source.close()
     instances
   }
 
