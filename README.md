@@ -43,7 +43,7 @@ Cluster Broccoli provides a RESTful HTTP API. You can control it using curl, wri
 ### Using the Docker Image
 
 ```
-docker run -p 9000:9000 frosner/cluster-broccoli \
+docker run -p 9000:9000 frosner/cluster-broccoli-dev \
   -Dbroccoli.nomad.url=<your-nomad-url> \
   -Dbroccoli.consul.url=<your-consul-url>
 ```
