@@ -40,13 +40,19 @@ Cluster Broccoli provides a RESTful HTTP API. You can control it using curl, wri
 - Consul (HTTP API v1)
 - Cluster Broccoli Nomad Job + Docker Image (for running the Play application)
 
-### Using the Docker Image
+### Using the Production Docker Image
+
+If you only need an image to run the Broccoli distribution, go with the JRE based [production-ready image](https://hub.docker.com/r/frosner/cluster-broccoli/).
 
 ```
-docker run -p 9000:9000 frosner/cluster-broccoli-dev \
+docker run -p 9000:9000 frosner/cluster-broccoli \
   -Dbroccoli.nomad.url=<your-nomad-url> \
   -Dbroccoli.consul.url=<your-consul-url>
 ```
+
+### Using the Development Docker Image
+
+If you only intend to develop Broccoli and want to quickly get started with the source code, you can use the [development image](https://hub.docker.com/r/frosner/cluster-broccoli/). It comes with the required tools for building and running Broccoli in development mode.
 
 ### Building from Source
 
