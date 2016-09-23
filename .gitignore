@@ -7,5 +7,7 @@ logs
 *run-*
 docker/test/cluster-broccoli-dist/
 docker/test/templates
+docker/prod/cluster-broccoli-dist/
+docker/prod/templates
 cluster-broccoli.did
 instances
