@@ -189,6 +189,7 @@ class InstanceService @Inject()(templateService: TemplateService,
         case Success(changedInstance) => Logger.debug(s"Successfully applied an update to $changedInstance")
       }
 
+      InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
       updatedInstance
     }
   }
