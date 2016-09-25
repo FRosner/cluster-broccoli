@@ -1,6 +1,6 @@
 name := "Cluster Broccoli"
 
-version := "0.4.0-SNAPSHOT"
+version := "0.4.0"
 
 lazy val root = project.in(file(".")).enablePlugins(PlayScala, BuildInfoPlugin).
   settings(
@@ -15,4 +15,3 @@ libraryDependencies += specs2 % Test
 resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
 
 routesGenerator := InjectedRoutesGenerator
-
