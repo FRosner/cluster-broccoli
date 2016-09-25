@@ -127,10 +127,12 @@ class InstanceService @Inject()(templateService: TemplateService,
       } else {
         val potentialTemplate = templateService.template(templateId)
         potentialTemplate.map { template =>
-          val newInstance = Instance(id, template, instanceCreation.parameters, InstanceStatus.Stopped, Map.empty)
-          instances = instances.updated(id, newInstance)
-          InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
-          Success(newInstance)
+          val maybeNewInstance = Try(Instance(id, template, instanceCreation.parameters, InstanceStatus.Stopped, Map.empty))
+          maybeNewInstance.map { newInstance =>
+            instances = instances.updated(id, newInstance)
+            InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
+            newInstance
+          }
         }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException(s"Template $templateId does not exist."))))
       }
     }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException("No ID specified"))))
