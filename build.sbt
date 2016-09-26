@@ -1,6 +1,6 @@
 name := "Cluster Broccoli"
 
-version := "0.4.1"
+version := "0.5.0-SNAPSHOT"
 
 lazy val root = project.in(file(".")).enablePlugins(PlayScala, BuildInfoPlugin).
   settings(
