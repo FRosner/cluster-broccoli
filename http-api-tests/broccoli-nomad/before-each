@@ -1,0 +1,4 @@
+#!/bin/bash
+docker run -d --net host frosner/cluster-broccoli-test cluster-broccoli > cluster-broccoli.did
+docker run -d --net host frosner/cluster-broccoli-test nomad > nomad.did
+sleep 10
