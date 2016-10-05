@@ -12,6 +12,8 @@ libraryDependencies += ws
 
 libraryDependencies += specs2 % Test
 
+libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % "2.3.13"
+
 resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
 
 routesGenerator := InjectedRoutesGenerator
