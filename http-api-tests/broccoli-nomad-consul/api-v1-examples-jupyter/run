@@ -4,4 +4,13 @@ service_address=$(curl -s localhost:9000/api/v1/instances/test | jq -r .\"servic
 service_port=$(curl -s localhost:9000/api/v1/instances/test | jq -r .\"services\".\"test-ui\".\"port\")
 service_socket=$service_address:$service_port
 
+n=0
+until [ $n -ge 10 ]
+do
+  echo "      - Waiting for docker container to come up ..."
+  curl -s $service_socket > /dev/null && break
+  n=$[$n+1]
+  sleep 60
+done
+
 curl -s $service_socket > /dev/null
