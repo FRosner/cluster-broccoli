@@ -7,7 +7,7 @@ service_socket=$service_address:$service_port
 n=0
 until [ $n -ge 10 ]
 do
-  echo "      - Waiting for docker container to come up ..."
+  echo "      - Waiting for service $service_socket to come up ..."
   curl -s $service_socket > /dev/null && break
   n=$[$n+1]
   sleep 60
