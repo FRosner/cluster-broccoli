@@ -8,6 +8,8 @@ n=0
 until [ $n -ge 10 ]
 do
   echo "      - Waiting for service $service_socket to come up ..."
+  docker ps
+  docker logs $(docker ps | grep test | cut -d' ' -f1)
   curl -s $service_socket > /dev/null && break
   n=$[$n+1]
   sleep 60
