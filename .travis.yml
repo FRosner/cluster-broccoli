@@ -18,3 +18,5 @@ cache:
 deploy:
   provider: script
   script: travis/deploy
+  on:
+    all_branches: true
