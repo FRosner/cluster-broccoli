@@ -23,7 +23,6 @@
                         "Config": {
                             "command": "nomad-docker-wrapper",
                             "args": ["-p", "${NOMAD_PORT_ui}:8888",
-                              "-v", "${NOMAD_TASK_DIR}/notebooks:/notebooks",
                               "jupyter/datascience-notebook"]
                         },
                         "Constraints": null,

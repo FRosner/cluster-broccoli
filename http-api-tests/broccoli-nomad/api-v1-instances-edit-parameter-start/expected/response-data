@@ -1,0 +1,122 @@
+{
+  "Region": "global",
+  "ID": "test-http",
+  "ParentID": "",
+  "Name": "test-http",
+  "Type": "service",
+  "Priority": 50,
+  "AllAtOnce": false,
+  "Datacenters": [
+    "dc1"
+  ],
+  "Constraints": null,
+  "TaskGroups": [
+    {
+      "Name": "http-group",
+      "Count": 1,
+      "Constraints": null,
+      "RestartPolicy": {
+        "Attempts": 2,
+        "Interval": 60000000000,
+        "Delay": 15000000000,
+        "Mode": "delay"
+      },
+      "Tasks": [
+        {
+          "Name": "http-task",
+          "Driver": "raw_exec",
+          "User": "",
+          "Config": {
+            "args": [
+              "-m",
+              "SimpleHTTPServer"
+            ],
+            "command": "/usr/bin/python"
+          },
+          "Env": null,
+          "Services": [
+            {
+              "Name": "test-http-web-ui-1",
+              "Tags": [
+                "protocol-http"
+              ],
+              "PortLabel": "ui",
+              "Checks": [
+                {
+                  "Name": "service: \"test-http-ui-1\" check",
+                  "Type": "http",
+                  "Command": "",
+                  "Args": null,
+                  "Path": "/",
+                  "Protocol": "",
+                  "Interval": 10000000000,
+                  "Timeout": 2000000000
+                }
+              ]
+            },
+            {
+              "Name": "test-http-web-ui-2",
+              "Tags": [
+                "protocol-http"
+              ],
+              "PortLabel": "ui",
+              "Checks": [
+                {
+                  "Name": "service: \"test-http-ui-2\" check",
+                  "Type": "http",
+                  "Command": "",
+                  "Args": null,
+                  "Path": "/doesnotexist",
+                  "Protocol": "",
+                  "Interval": 10000000000,
+                  "Timeout": 2000000000
+                }
+              ]
+            }
+          ],
+          "Constraints": null,
+          "Resources": {
+            "CPU": 50,
+            "MemoryMB": 128,
+            "DiskMB": 300,
+            "IOPS": 0,
+            "Networks": [
+              {
+                "Device": "",
+                "CIDR": "",
+                "IP": "",
+                "MBits": 10,
+                "ReservedPorts": [
+                  {
+                    "Label": "ui",
+                    "Value": 8000
+                  }
+                ],
+                "DynamicPorts": null
+              }
+            ]
+          },
+          "Meta": null,
+          "KillTimeout": 5000000000,
+          "LogConfig": {
+            "MaxFiles": 10,
+            "MaxFileSizeMB": 10
+          },
+          "Artifacts": null
+        }
+      ],
+      "Meta": null
+    }
+  ],
+  "Update": {
+    "Stagger": 0,
+    "MaxParallel": 0
+  },
+  "Periodic": null,
+  "Meta": null,
+  "Status": "running",
+  "StatusDescription": "",
+  "CreateIndex": 6,
+  "ModifyIndex": 8,
+  "JobModifyIndex": 6
+}

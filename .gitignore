@@ -10,4 +10,6 @@ docker/test/templates
 docker/prod/cluster-broccoli-dist/
 docker/prod/templates
 cluster-broccoli.did
+nomad.did
+consul.did
 instances

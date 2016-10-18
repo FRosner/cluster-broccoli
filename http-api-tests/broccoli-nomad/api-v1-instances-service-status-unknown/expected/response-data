@@ -1,0 +1,38 @@
+{
+  "id": "test-http",
+  "template": {
+    "id": "http-server",
+    "description": "A simple Python HTTP request handler. This class serves files from the current directory and below, directly mapping the directory structure to HTTP requests.",
+    "parameters": [
+      "id",
+      "cpu"
+    ],
+    "parameterInfos": {
+      "cpu": {
+        "name": "cpu",
+        "default": "100"
+      }
+    },
+    "version": "dd44c11eb388522e2b879e56d86cd758"
+  },
+  "parameterValues": {
+    "id": "test-http"
+  },
+  "status": "running",
+  "services": {
+    "test-http-web-ui-1": {
+      "name": "test-http-web-ui-1",
+      "protocol": "",
+      "address": "",
+      "port": 80,
+      "status": "unknown"
+    },
+    "test-http-web-ui-2": {
+      "name": "test-http-web-ui-2",
+      "protocol": "",
+      "address": "",
+      "port": 80,
+      "status": "unknown"
+    }
+  }
+}

@@ -30,7 +30,6 @@
                             "command": "nomad-docker-wrapper",
                             "args": ["-p", "${NOMAD_PORT_ui}:8080",
                                      "-e", "ZEPPELIN_SPARK_MASTER=local[*]",
-                                     "-v", "${NOMAD_TASK_DIR}/notebooks:/usr/local/zeppelin/notebooks",
                                      "frosner/zeppelin:1.0.0"]
                         },
                         "Constraints": null,
