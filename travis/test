@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -e
+set -o pipefail
+
+echo "Selected TEST_PHASE is $TEST_PHASE"
+
+unit_tests() {
+  echo "Starting unit tests"
+  sbt test
+}
+
+system_tests() {
+  echo "Preparing system tests"
+  sbt dist
+  unzip target/universal/cluster-broccoli*.zip
+  cp -R cluster-broccoli-* docker/test/cluster-broccoli-dist
+  cp -R templates docker/test/
+  docker build -t frosner/cluster-broccoli-test docker/test/
+  if [ "${TEST_PHASE}" = "system-broccoli-only" ]; then
+    echo "Starting broccoli-only tests"
+    bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-only
+  elif [ "${TEST_PHASE}" = "system-broccoli-nomad" ]; then
+    echo "Starting broccoli-nomad tests"
+    bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad
+  elif [ "${TEST_PHASE}" = "system-broccoli-nomad-consul" ]; then
+    echo "Starting broccoli-nomad-consul tests"
+    bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad-consul
+  else
+    echo "Test phase '$TEST_PHASE' not recognized"
+    exit 1
+  fi
+}
+
+if [ "${TEST_PHASE}" = "unit" ]; then
+  unit_tests
+elif [[ "$TEST_PHASE" == system* ]]; then
+  system_tests
+else
+  echo '$TEST_PHASE not set correctly'
+  exit 1
+fi

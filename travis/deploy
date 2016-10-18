@@ -1,0 +1,25 @@
+#!/bin/bash
+# https://docs.travis-ci.com/user/deployment/script/
+
+set -e
+set -o pipefail
+
+echo "Building Broccoli distribution"
+sbt dist
+unzip target/universal/cluster-broccoli*.zip
+cp -R cluster-broccoli-* docker/prod/cluster-broccoli-dist
+cp -R templates docker/prod/
+
+echo "Logging into docker registry"
+docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+
+echo "Building docker image"
+export COMMIT=${TRAVIS_COMMIT::8}
+export REPO=frosner/cluster-broccoli
+export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
+docker build -t $REPO:$COMMIT docker/prod/
+
+echo "Pushing docker image"
+docker tag $REPO:$COMMIT $REPO:$TAG
+docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+docker push $REPO
