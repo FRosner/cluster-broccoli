@@ -5,6 +5,7 @@ services:
 jdk:
   - oraclejdk8
 script:
+  - uname -r
   - sbt test
   - sbt dist
   - unzip target/universal/cluster-broccoli*.zip
