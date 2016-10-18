@@ -1,6 +1,6 @@
 package de.frosner.broccoli.services
 
-import java.io.File
+import java.io.{File, FileNotFoundException}
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,7 +13,7 @@ import play.libs.Json
 
 import scala.collection.JavaConversions
 import scala.io.Source
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 import scala.util.parsing.json.JSON
 
 @Singleton
@@ -38,26 +38,47 @@ class TemplateService @Inject() (configuration: Configuration) {
         val templateFileContent = Source.fromFile(templateFile).getLines.mkString("\n")
         val templateId = templateDirectory.getName
         val metaFile = new File(templateDirectory, "meta.json")
-        val metaFileContent = Source.fromFile(metaFile).getLines.mkString("\n")
-        val metaInformation = Json.parse(metaFileContent)
-        val description = if (metaInformation.has("description"))
-          metaInformation.get("description").asText
-        else
-          s"$templateId template"
-        val parameterInfos: Map[String, ParameterInfo] = if (metaInformation.has("parameters")) {
-          val fields = JavaConversions.asScalaIterator(metaInformation.get("parameters").fields()).toIterable
-          fields.map { entry =>
-            val name = entry.getKey
-            val entryValue = entry.getValue
-            val default = if (entryValue.has("default")) Some(entryValue.get("default").asText) else None
-            (name, ParameterInfo(name, default))
-          }.toMap
-        } else {
-          Map.empty
-        }
+        val metaFileContent = Try(Source.fromFile(metaFile).getLines.mkString("\n"))
+        val metaInformation = metaFileContent.map(content => Json.parse(content))
+        val defaultDescription = s"$templateId template"
+        val description = metaInformation.flatMap { information =>
+          if (information.has("description"))
+            Success(information.get("description").asText)
+          else
+            Failure(new IllegalArgumentException(s"No 'description' field specified in $metaFile. Using default template description."))
+        }.recover {
+          case fileNotFound: FileNotFoundException =>
+            Logger.warn(s"No $metaFile file specified. Using default template description. $fileNotFound")
+            defaultDescription
+          case throwable =>
+            Logger.warn(throwable.toString)
+            defaultDescription
+        }.get
+        val defaultParameterInfos = Map.empty[String, ParameterInfo]
+        val parameterInfos: Map[String, ParameterInfo] = metaInformation.flatMap { information =>
+          if (information.has("parameters")) {
+            val fields = JavaConversions.asScalaIterator(information.get("parameters").fields()).toIterable
+            val parameterInfoMap = fields.map { entry =>
+              val name = entry.getKey
+              val entryValue = entry.getValue
+              val default = if (entryValue.has("default")) Some(entryValue.get("default").asText) else None
+              (name, ParameterInfo(name, default))
+            }.toMap
+            Success(parameterInfoMap)
+          } else {
+            Failure(new IllegalArgumentException(s"No 'parameters' field in $metaFile. Not parsing any additional parameter information."))
+          }
+        }.recover {
+          case fileNotFound: FileNotFoundException =>
+            Logger.warn(s"No 'meta.json' file specified. Not parsing any additional parameter information. $fileNotFound")
+            defaultParameterInfos
+          case throwable =>
+            Logger.warn(throwable.toString)
+            defaultParameterInfos
+        }.get
         Template(templateId, templateFileContent, description, parameterInfos)
       }
-      tryTemplate.failed.map(throwable => Logger.warn(s"Parsing template '$templateDirectory' failed: $throwable"))
+      tryTemplate.failed.map(throwable => Logger.error(s"Parsing template '$templateDirectory' failed: $throwable"))
       tryTemplate.toOption
     })
     Logger.info(s"Successfully parsed ${templates.size} templates: ${templates.map(_.id).mkString(", ")}")
