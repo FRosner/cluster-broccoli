@@ -8,10 +8,6 @@ n=0
 until [ $n -ge 10 ]
 do
   echo "      - Waiting for service $service_socket to come up ..."
-  curl "localhost:4646/v1/client/fs/cat/$(curl localhost:4646/v1/allocations | jq -r .'[0]'.ID)?path=alloc/logs/jupyter.stderr.0"
-  curl "localhost:4646/v1/client/fs/cat/$(curl localhost:4646/v1/allocations | jq -r .'[0]'.ID)?path=alloc/logs/jupyter.stdout.0"
-  docker ps
-  docker logs $(docker ps | grep jupyter | cut -d' ' -f1)
   curl -s $service_socket > /dev/null && break
   n=$[$n+1]
   sleep 60
