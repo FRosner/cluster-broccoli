@@ -73,7 +73,7 @@ class InstanceService @Inject()(templateService: TemplateService,
     } else {
       val error = s"Cannot lock $instancesFilePath. Is there another Broccoli instance running?"
       Logger.error(error)
-      Await.ready(Play.current.stop(), Duration(10, TimeUnit.SECONDS))
+      System.exit(1)
       throw new IllegalStateException(error)
     }
   }
