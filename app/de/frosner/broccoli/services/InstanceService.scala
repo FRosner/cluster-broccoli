@@ -31,9 +31,22 @@ class InstanceService @Inject()(templateService: TemplateService,
                                 configuration: Configuration,
                                 lifecycle: ApplicationLifecycle) extends Actor with Logging {
 
+  private val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
+  private val pollingFrequencySecondsTry = pollingFrequencySecondsString match {
+    case Some(string) => Try(string.toInt).flatMap {
+      int => if (int >= 1) Success(int) else Failure(new Exception())
+    }
+    case None => Success(conf.POLLING_FREQUENCY_DEFAULT)
+  }
+  if (pollingFrequencySecondsTry.isFailure) {
+    Logger.error(s"Invalid ${conf.POLLING_FREQUENCY_KEY} specified: '${pollingFrequencySecondsString.get}'. Needs to be a positive integer.")
+    System.exit(1)
+  }
+  private val pollingFrequencySeconds = pollingFrequencySecondsTry.get
+  Logger.info(s"Nomad/Consul polling frequency set to $pollingFrequencySeconds seconds")
   private val cancellable: Cancellable = system.scheduler.schedule(
     initialDelay = Duration.Zero,
-    interval = Duration.create(1, TimeUnit.SECONDS),
+    interval = Duration.create(pollingFrequencySeconds, TimeUnit.SECONDS),
     receiver = nomadActor,
     message = GetStatuses
   )(
