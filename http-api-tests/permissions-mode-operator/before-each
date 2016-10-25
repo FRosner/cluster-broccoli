@@ -1,0 +1,4 @@
+#!/bin/bash
+docker run -d --net host --entrypoint cluster-broccoli \
+  frosner/cluster-broccoli-test -Dbroccoli.permissions.mode=operator > cluster-broccoli.did
+sleep 10

@@ -14,9 +14,7 @@ script:
   - cp -R templates docker/test/
   - cp -R templates docker/prod/
   - docker build -t frosner/cluster-broccoli-test docker/test/
-  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-only
-  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad
-  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad-consul
+  - for suite in http-api-tests/*; do; bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d $suite; done
 
 cache:
   directories:
