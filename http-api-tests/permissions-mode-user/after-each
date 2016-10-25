@@ -1,4 +1,2 @@
 #!/bin/bash
-
-docker logs $(cat cluster-broccoli.did)
 docker stop $(cat cluster-broccoli.did)
