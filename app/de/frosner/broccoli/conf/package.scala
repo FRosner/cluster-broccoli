@@ -24,4 +24,10 @@ package object conf {
   val POLLING_FREQUENCY_KEY = "broccoli.polling.frequency"
   val POLLING_FREQUENCY_DEFAULT = 1
 
+  val PERMISSIONS_MODE_KEY = "broccoli.permissions.mode"
+  val PERMISSIONS_MODE_ADMINISTRATOR = "administrator"
+  val PERMISSIONS_MODE_OPERATOR = "operator"
+  val PERMISSIONS_MODE_USER = "user"
+  val PERMISSIONS_MODE_DEFAULT = PERMISSIONS_MODE_ADMINISTRATOR
+
 }

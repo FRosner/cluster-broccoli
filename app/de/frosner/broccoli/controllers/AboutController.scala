@@ -3,11 +3,12 @@ package de.frosner.broccoli.controllers
 import javax.inject.Inject
 
 import de.frosner.broccoli.build.BuildInfo
-import de.frosner.broccoli.services.BuildInfoService
+import de.frosner.broccoli.services.{BuildInfoService, PermissionsService}
 import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.mvc.{Action, AnyContent, Controller}
 
-class AboutController @Inject()(buildInfoService: BuildInfoService) extends Controller {
+class AboutController @Inject()(buildInfoService: BuildInfoService,
+                                permissionsService: PermissionsService) extends Controller {
 
   def about: Action[AnyContent] = Action {
     Ok(JsObject(Map(
@@ -20,6 +21,9 @@ class AboutController @Inject()(buildInfoService: BuildInfoService) extends Cont
       )),
       "sbt" -> JsObject(Map(
         "version" -> JsString(buildInfoService.sbtVersion)
+      )),
+      "permissions" -> JsObject(Map(
+        "mode" -> JsString(permissionsService.permissionsMode)
       ))
     )))
   }
