@@ -1,7 +1,7 @@
 #!/bin/bash
 
 n=0
-until [ $n -ge 10 ]
+until [ $n -ge 15 ]
 do
   service_address=$(curl -s localhost:9000/api/v1/instances/test | jq -r .\"services\".\"test-ui\".\"address\")
   service_port=$(curl -s localhost:9000/api/v1/instances/test | jq -r .\"services\".\"test-ui\".\"port\")
