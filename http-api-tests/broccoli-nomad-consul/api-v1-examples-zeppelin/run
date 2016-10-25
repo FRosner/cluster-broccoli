@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "curl -s localhost:9000/api/v1/instances/test | jq ."
+curl -s localhost:9000/api/v1/instances/test | jq .
 service_address=$(curl -s localhost:9000/api/v1/instances/test | jq -r .\"services\".\"test-ui\".\"address\")
 service_port=$(curl -s localhost:9000/api/v1/instances/test | jq -r .\"services\".\"test-ui\".\"port\")
 service_socket=$service_address:$service_port
