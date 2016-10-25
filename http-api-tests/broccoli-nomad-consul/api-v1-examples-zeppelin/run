@@ -2,13 +2,13 @@
 
 echo "curl -s localhost:9000/api/v1/instances/test | jq ."
 curl -s localhost:9000/api/v1/instances/test | jq .
-service_address=$(curl -s localhost:9000/api/v1/instances/test | jq -r .\"services\".\"test-ui\".\"address\")
-service_port=$(curl -s localhost:9000/api/v1/instances/test | jq -r .\"services\".\"test-ui\".\"port\")
-service_socket=$service_address:$service_port
 
 n=0
 until [ $n -ge 10 ]
 do
+  service_address=$(curl -s localhost:9000/api/v1/instances/test | jq -r .\"services\".\"test-ui\".\"address\")
+  service_port=$(curl -s localhost:9000/api/v1/instances/test | jq -r .\"services\".\"test-ui\".\"port\")
+  service_socket=$service_address:$service_port
   echo "      - Waiting for service $service_socket to come up ..."
   curl -s $service_socket > /dev/null && break
   n=$[$n+1]
