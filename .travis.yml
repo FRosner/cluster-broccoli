@@ -14,7 +14,11 @@ script:
   - cp -R templates docker/test/
   - cp -R templates docker/prod/
   - docker build -t frosner/cluster-broccoli-test docker/test/
-  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -g ".*about.*" -v -d http-api-tests/permissions-mode-user
+  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-only
+  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad
+  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad-consul
+  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/permissions-mode-operator
+  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/permissions-mode-user
 
 cache:
   directories:
