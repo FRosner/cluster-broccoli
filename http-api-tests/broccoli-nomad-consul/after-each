@@ -4,6 +4,8 @@ echo "Printing nomad logs"
 docker logs $(cat nomad.did)
 echo "Printing consul logs"
 docker logs $(cat consul.did)
+echo "Printing broccoli logs"
+docker logs $(cat cluster-broccoli.did)
 docker stop $(cat cluster-broccoli.did)
 docker stop $(cat nomad.did)
 docker stop $(cat consul.did)
