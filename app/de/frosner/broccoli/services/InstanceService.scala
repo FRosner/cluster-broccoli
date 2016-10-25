@@ -109,13 +109,12 @@ class InstanceService @Inject()(templateService: TemplateService,
   }
 
   private[this] def updateStatusesBasedOnNomad(statuses: Map[String, InstanceStatus]) = {
-    Logger.debug(s"Received statuses: $statuses")
     instances.foreach { case (id, instance) =>
       statuses.get(id) match {
-        case Some(nomadStatus) => Logger.debug(s"${instance.id}.status changed from ${instance.status} to $nomadStatus")
+        case Some(nomadStatus) =>
           instance.status = nomadStatus
           nomadActor ! GetServices(id)
-        case None => Logger.debug(s"${instance.id}.status changed from ${instance.status} to ${InstanceStatus.Stopped}")
+        case None =>
           instance.status = InstanceStatus.Stopped
           instance.services = Map.empty
       }
@@ -123,7 +122,6 @@ class InstanceService @Inject()(templateService: TemplateService,
   }
 
   private[this] def updateServicesBasedOnNomad(jobId: String, services: Iterable[Service]) = {
-    Logger.debug(s"Received that job $jobId has the following services: ${services.map(_.name)}")
     instances.get(jobId) match {
       case Some(instance) => instance.services = services.map(service => (service.name, service)).toMap
       case None => Logger.error(s"Received services associated to non-existing job $jobId")
