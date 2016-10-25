@@ -21,4 +21,7 @@ package object conf {
   val CONSUL_LOOKUP_METHOD_IP = "ip"
   val CONSUL_LOOKUP_METHOD_DNS = "dns"
 
+  val POLLING_FREQUENCY_KEY = "broccoli.polling.frequency"
+  val POLLING_FREQUENCY_DEFAULT = 1
+
 }

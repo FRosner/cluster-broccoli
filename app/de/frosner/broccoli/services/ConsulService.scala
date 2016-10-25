@@ -56,13 +56,15 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
       val serviceResponses: Iterable[Future[Seq[Service]]] = serviceNames.map { name =>
         val catalogQueryUrl = consulBaseUrl + s"/v1/catalog/service/$name"
         val catalogRequest = ws.url(catalogQueryUrl)
-        Logger.debug(s"Requesting service information (${catalogRequest.uri})")
         val healthQueryUrl = consulBaseUrl + s"/v1/health/service/$name?passing"
         val healthRequest = ws.url(healthQueryUrl)
-        Logger.debug(s"Requesting service health (${healthRequest.uri})")
         val requests = Future.sequence(List(catalogRequest.get(), healthRequest.get()))
         requests.map { case List(catalogResponse, healthResponse) =>
-          val responseJsonArray = catalogResponse.json.as[JsArray]
+          val catalogResponseJson = catalogResponse.json
+          val healthResponseJson = healthResponse.json
+          Logger.debug(s"${catalogRequest.uri} => $catalogResponseJson")
+          Logger.debug(s"${healthRequest.uri} => $healthResponseJson")
+          val responseJsonArray = catalogResponseJson.as[JsArray]
           responseJsonArray.value.map { serviceJson =>
             val fields = serviceJson.as[JsObject].value
             // TODO proper JSON parsing with exception handling
@@ -79,7 +81,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
             }
             val servicePort = fields("ServicePort").as[JsNumber].value.toInt
             val serviceStatus = {
-              val healthyServiceInstances = healthResponse.json.as[JsArray]
+              val healthyServiceInstances = healthResponseJson.as[JsArray]
               if (healthyServiceInstances.value.isEmpty) ServiceStatus.Failing else ServiceStatus.Passing
             }
             Service(

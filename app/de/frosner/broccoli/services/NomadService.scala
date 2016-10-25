@@ -34,7 +34,6 @@ class NomadService @Inject()(configuration: Configuration,
     val sendingService = sender()
     val queryUrl = nomadBaseUrl + "/v1/jobs"
     val jobsRequest = ws.url(queryUrl).withQueryString("prefix" -> nomadJobPrefix)
-    Logger.debug(s"Requesting job status update (${jobsRequest.uri})")
     val jobsResponse = jobsRequest.get().map(_.json.as[JsArray])
     val jobsWithTemplate = jobsResponse.map(jsArray => {
       val (ids, statuses) = ((jsArray \\ "ID").map(_.as[JsString].value), (jsArray \\ "Status").map(_.as[JsString].value))
@@ -42,7 +41,7 @@ class NomadService @Inject()(configuration: Configuration,
     })
     jobsWithTemplate.onComplete{
       case Success((ids, statuses)) => {
-        Logger.debug(s"Received a status update of jobs: ${ids.mkString(", ")}")
+        Logger.debug(s"${jobsRequest.uri} => ${ids.zip(statuses).mkString(", ")}")
         val idsAndStatuses = ids.zip(statuses.map {
           case "running" => InstanceStatus.Running
           case "pending" => InstanceStatus.Pending
@@ -63,7 +62,6 @@ class NomadService @Inject()(configuration: Configuration,
     val sendingService = sender()
     val queryUrl = nomadBaseUrl + s"/v1/job/$id"
     val jobRequest = ws.url(queryUrl)
-    Logger.debug(s"Requesting job status update (${jobRequest.uri})")
     val jobResponse = jobRequest.get().map(_.json.as[JsObject])
     val eventuallyJobServiceIds = jobResponse.map{ jsObject =>
       val services = (jsObject \\ "Services").flatMap(_.as[JsArray].value.map(_.as[JsObject]))
@@ -73,6 +71,7 @@ class NomadService @Inject()(configuration: Configuration,
     }
     eventuallyJobServiceIds.onComplete {
       case Success(jobServiceIds) =>
+        Logger.debug(s"${jobRequest.uri} => ${jobServiceIds.mkString(", ")}")
         consulActor.tell(ServiceStatusRequest(id, jobServiceIds), sendingService)
       case Failure(throwable) =>
         Logger.error(throwable.toString)

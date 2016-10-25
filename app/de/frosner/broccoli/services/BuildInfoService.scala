@@ -12,7 +12,7 @@ import scala.io.Source
 import scala.util.Try
 
 @Singleton
-class AboutService {
+class BuildInfoService {
 
   val projectName = de.frosner.broccoli.build.BuildInfo.name
   val projectVersion = de.frosner.broccoli.build.BuildInfo.version
