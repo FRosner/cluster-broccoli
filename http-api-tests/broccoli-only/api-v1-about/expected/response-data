@@ -8,5 +8,8 @@
   },
   "sbt": {
     "version": "0.13.11"
+  },
+  "permissions": {
+    "mode": "administrator"
   }
 }
