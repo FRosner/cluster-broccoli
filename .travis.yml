@@ -4,32 +4,19 @@ services:
   - docker
 jdk:
   - oraclejdk8
+env:
+  - TEST_PHASE=unit
+  - TEST_PHASE=system-broccoli-only
+  - TEST_PHASE=system-broccoli-nomad
+  - TEST_PHASE=system-broccoli-nomad-consul
 script:
-  - uname -r
-  - sbt test
-  - sbt dist
-  - unzip target/universal/cluster-broccoli*.zip
-  - cp -R cluster-broccoli-* docker/test/cluster-broccoli-dist
-  - cp -R cluster-broccoli-* docker/prod/cluster-broccoli-dist
-  - cp -R templates docker/test/
-  - cp -R templates docker/prod/
-  - docker build -t frosner/cluster-broccoli-test docker/test/
-  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-only
-  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad
-  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad-consul
-
+  - travis/test
 cache:
   directories:
     - $HOME/.m2
     - $HOME/.ivy2
-
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
-  - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
-  - export COMMIT=${TRAVIS_COMMIT::8}
-  - export REPO=frosner/cluster-broccoli
-  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
-  - docker build -t $REPO:$COMMIT docker/prod/
-  - docker tag $REPO:$COMMIT $REPO:$TAG
-  - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-  - docker push $REPO
+deploy:
+  provider: script
+  script: travis/deploy
+  on:
+    all_branches: true
