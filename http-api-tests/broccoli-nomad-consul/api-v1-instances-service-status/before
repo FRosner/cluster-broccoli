@@ -6,4 +6,4 @@ sleep 1
 curl -H 'Content-Type: application/json' \
     -X POST -d '{ "status": "running" }' \
     'http://localhost:9000/api/v1/instances/test'
-sleep 10
+sleep 15
