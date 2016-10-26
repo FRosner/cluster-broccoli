@@ -16,7 +16,7 @@ curl -H 'Content-Type: application/json' \
 sleep 5
 
 docker stop $(cat cluster-broccoli.did)
-docker run -d --net -v $instances_mount host frosner/cluster-broccoli-test \
+docker run -d --net host -v $instances_mount frosner/cluster-broccoli-test \
   /cluster-broccoli-dist/bin/cluster-broccoli \
   -Dbroccoli.instancesFile=/instances/instances \
   -Dbroccoli.templatesDir=/templates \
