@@ -1,8 +1,4 @@
 #!/bin/bash
 
-echo "Printing nomad logs"
-docker logs $(cat nomad.did)
-echo "Printing broccoli logs"
-docker logs $(cat cluster-broccoli.did)
 docker stop $(cat cluster-broccoli.did)
 docker stop $(cat nomad.did)

@@ -73,4 +73,5 @@ The following configuration properties are supported.
 | `broccoli.consul.lookup` | Lookup method used for consul. Options: `ip` or `dns` (recommended).| `ip` |
 | `broccoli.templatesDir` | Directory where your templates are located | `templates` |
 | `broccoli.instancesFile` | Directory where your instances are located | `instances` |
+| `broccoli.permissions.mode` | Determines the actions that can be performed with the Broccoli instance. `administrator` (full functionality), `operator` (starting, stopping instances) or `user` (inspecting instance state) | `administrator` |
 | `http.port` | Port to bind the HTTP interface to | `9000` |

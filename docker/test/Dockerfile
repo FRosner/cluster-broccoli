@@ -28,9 +28,9 @@ RUN echo "#!/bin/bash" > /usr/bin/consul && \
   chmod 777 /usr/bin/consul
 
 # put cluster broccoli
-COPY cluster-broccoli-dist /cluster-broccoli-dist
+ADD cluster-broccoli-dist /cluster-broccoli-dist
 
-COPY templates /templates
+ADD templates /templates
 RUN echo "#!/bin/bash" > /usr/bin/cluster-broccoli && \
-  echo "exec /cluster-broccoli-dist/bin/cluster-broccoli -Dbroccoli.templatesDir=/templates" >> /usr/bin/cluster-broccoli && \
+  echo "exec /cluster-broccoli-dist/bin/cluster-broccoli -Dbroccoli.templatesDir=/templates $*" >> /usr/bin/cluster-broccoli && \
   chmod 777 /usr/bin/cluster-broccoli

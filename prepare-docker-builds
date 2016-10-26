@@ -1,0 +1,10 @@
+#!/bin/bash
+
+rm -rf cluster-broccoli-*
+sbt clean && sbt dist
+unzip target/universal/cluster-broccoli*.zip
+cp -R cluster-broccoli-* docker/test/cluster-broccoli-dist
+cp -R cluster-broccoli-* docker/prod/cluster-broccoli-dist
+cp -R templates docker/test/
+cp -R templates docker/prod/
+rm -rf cluster-broccoli-*
