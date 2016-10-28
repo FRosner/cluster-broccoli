@@ -9,10 +9,7 @@ class ParameterInfoSpec extends Specification {
   "Service status JSON serialization" should {
 
     "work" in {
-      val info = ParameterInfo(
-        name = "i",
-        default = Some("d")
-      )
+      val info = ParameterInfo(name = "i", default = Some("d"), secret = Some(false))
       Json.fromJson(Json.toJson(info)).get === info
     }
 

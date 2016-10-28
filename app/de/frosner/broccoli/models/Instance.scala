@@ -14,8 +14,8 @@ case class Instance(id: String,
 
   def requireParameterValueConsistency(parameterValues: Map[String, String], template: Template) = {
     val realParametersWithValues = parameterValues.keySet ++ template.parameterInfos.flatMap {
-      case (key, ParameterInfo(name, Some(default))) => Some(key)
-      case (key, ParameterInfo(name, None)) => None
+      case (key, ParameterInfo(name, Some(default), _)) => Some(key)
+      case (key, ParameterInfo(name, None, _)) => None
     }
     require(template.parameters == realParametersWithValues,
       s"The given parameters values (${parameterValues.keySet}) " +
