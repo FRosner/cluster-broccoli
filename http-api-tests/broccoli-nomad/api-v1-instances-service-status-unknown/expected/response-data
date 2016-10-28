@@ -5,15 +5,21 @@
     "description": "A simple Python HTTP request handler. This class serves files from the current directory and below, directly mapping the directory structure to HTTP requests.",
     "parameters": [
       "id",
+      "secret",
       "cpu"
     ],
     "parameterInfos": {
       "cpu": {
         "name": "cpu",
         "default": "100"
+      },
+      "secret": {
+        "name": "secret",
+        "default": "guessme",
+        "secret": true
       }
     },
-    "version": "dd44c11eb388522e2b879e56d86cd758"
+    "version": "0993c48883a3d2cdd0d191f438dc964c"
   },
   "parameterValues": {
     "id": "test-http"

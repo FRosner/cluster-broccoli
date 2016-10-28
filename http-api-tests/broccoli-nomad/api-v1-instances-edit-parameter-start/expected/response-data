@@ -38,7 +38,8 @@
             {
               "Name": "test-http-web-ui-1",
               "Tags": [
-                "protocol-http"
+                "protocol-http",
+                "guessme"
               ],
               "PortLabel": "ui",
               "Checks": [

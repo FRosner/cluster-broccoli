@@ -1,25 +1,30 @@
 {
-  "id": "test-http",
-  "parameterValues": {
-    "id": "test-http",
-    "cpu": "250"
-  },
-  "status": "unknown",
-  "services": {},
+  "id": "http",
   "template": {
     "id": "http-server",
     "description": "A simple Python HTTP request handler. This class serves files from the current directory and below, directly mapping the directory structure to HTTP requests.",
     "parameters": [
       "id",
+      "secret",
       "cpu"
     ],
     "parameterInfos": {
       "cpu": {
         "name": "cpu",
         "default": "100"
+      },
+      "secret": {
+        "name": "secret",
+        "default": "guessme",
+        "secret": true
       }
     },
-    "version": "dd44c11eb388522e2b879e56d86cd758",
-    "id": "http-server"
-  }
+    "version": "0993c48883a3d2cdd0d191f438dc964c"
+  },
+  "parameterValues": {
+    "id": "http",
+    "cpu": "250"
+  },
+  "status": "unknown",
+  "services": {}
 }
