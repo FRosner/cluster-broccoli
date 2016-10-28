@@ -1,5 +1,5 @@
 {
-  "id": "http",
+  "id": "test-http",
   "template": {
     "id": "http-server",
     "description": "A simple Python HTTP request handler. This class serves files from the current directory and below, directly mapping the directory structure to HTTP requests.",
@@ -22,7 +22,7 @@
     "version": "0993c48883a3d2cdd0d191f438dc964c"
   },
   "parameterValues": {
-    "id": "http",
+    "id": "test-http",
     "cpu": "250"
   },
   "status": "unknown",
