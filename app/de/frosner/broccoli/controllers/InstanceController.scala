@@ -33,12 +33,29 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
     val eventuallyFilteredInstances = maybeTemplateId.map(
       id => eventuallyInstances.map(_.filter(_.template.id == id))
     ).getOrElse(eventuallyInstances)
-    eventuallyFilteredInstances.map(filteredInstances => Ok(Json.toJson(filteredInstances)))
+    val eventuallyAnonymizedInstances = if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
+      eventuallyFilteredInstances
+    } else {
+      eventuallyFilteredInstances.map(_.map(InstanceController.removeSecretVariables))
+    }
+    eventuallyAnonymizedInstances.map(filteredInstances => Ok(Json.toJson(filteredInstances)))
   }
 
   def show(id: String) = Action.async {
     val eventuallyMaybeInstance = instanceService.ask(GetInstance(id)).mapTo[Option[Instance]]
-    eventuallyMaybeInstance.map(_.find(_.id == id).map(instance => Ok(Json.toJson(instance))).getOrElse(NotFound))
+    eventuallyMaybeInstance.map {
+      _.find(_.id == id).map {
+        instance => Ok(Json.toJson{
+          if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
+            instance
+          } else {
+            InstanceController.removeSecretVariables(instance)
+          }
+        })
+      }.getOrElse {
+        NotFound
+      }
+    }
   }
 
   def create = Action.async { request =>
@@ -131,6 +148,31 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
     } else {
       Future(Status(403)(s"Instance deletion only allowed in '${conf.PERMISSIONS_MODE_ADMINISTRATOR}' mode."))
     }
+  }
+
+}
+
+object InstanceController {
+
+  def removeSecretVariables(instance: Instance): Instance = {
+    // FIXME "censoring" through setting the values null is ugly but using Option[String] gives me stupid Json errors
+    val template = instance.template
+    val parameterInfos = template.parameterInfos
+    val newParameterValues = instance.parameterValues.map { case (parameter, value) =>
+      val possiblyCensoredValue = if (parameterInfos.get(parameter).exists(_.secret == Some(true))) {
+        null.asInstanceOf[String]
+      } else {
+        value
+      }
+      (parameter, possiblyCensoredValue)
+    }
+    Instance(
+      id = instance.id,
+      template = template,
+      status = instance.status,
+      services = instance.services,
+      parameterValues = newParameterValues
+    )
   }
 
 }

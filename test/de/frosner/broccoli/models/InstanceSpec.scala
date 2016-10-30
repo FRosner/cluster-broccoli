@@ -5,7 +5,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, 
 import de.frosner.broccoli.services.InstanceService
 import org.specs2.mutable.Specification
 import org.specs2.mutable._
-import play.api.libs.json.JsString
+import play.api.libs.json.{JsString, Json}
 
 class InstanceSpec extends Specification {
 
