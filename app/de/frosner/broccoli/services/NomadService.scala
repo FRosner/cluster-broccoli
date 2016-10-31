@@ -21,7 +21,7 @@ class NomadService @Inject()(configuration: Configuration,
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   private val nomadBaseUrl = configuration.getString(conf.NOMAD_URL_KEY).getOrElse(conf.NOMAD_URL_DEFAULT)
-  private val nomadJobPrefix = configuration.getString(conf.NOMAD_JOB_PREFIX_KEY).getOrElse(conf.NOMAD_JOB_PREFIX_DEFAULT)
+  private val nomadJobPrefix = conf.getNomadJobPrefix(configuration)
 
   def receive = {
     case GetStatuses => executeGetStatuses()
