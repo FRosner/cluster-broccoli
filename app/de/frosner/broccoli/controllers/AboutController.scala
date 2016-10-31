@@ -3,12 +3,13 @@ package de.frosner.broccoli.controllers
 import javax.inject.Inject
 
 import de.frosner.broccoli.build.BuildInfo
-import de.frosner.broccoli.services.{BuildInfoService, PermissionsService}
+import de.frosner.broccoli.services.{BuildInfoService, InstanceService, PermissionsService}
 import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.mvc.{Action, AnyContent, Controller}
 
 class AboutController @Inject()(buildInfoService: BuildInfoService,
-                                permissionsService: PermissionsService) extends Controller {
+                                permissionsService: PermissionsService,
+                                instanceService: InstanceService) extends Controller {
 
   def about: Action[AnyContent] = Action {
     Ok(JsObject(Map(
@@ -24,6 +25,9 @@ class AboutController @Inject()(buildInfoService: BuildInfoService,
       )),
       "permissions" -> JsObject(Map(
         "mode" -> JsString(permissionsService.permissionsMode)
+      )),
+      "nomad" -> JsObject(Map(
+        "jobPrefix" -> JsString(instanceService.nomadJobPrefix)
       ))
     )))
   }

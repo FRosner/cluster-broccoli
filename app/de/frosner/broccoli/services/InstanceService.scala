@@ -58,7 +58,7 @@ class InstanceService @Inject()(templateService: TemplateService,
   private val instancesFile = new File(instancesFilePath)
   private val instancesFileLockPath = instancesFilePath + ".lock"
 
-  private val nomadJobPrefix = {
+  val nomadJobPrefix = {
     val prefix = conf.getNomadJobPrefix(configuration)
     Logger.info(s"Using ${conf.NOMAD_JOB_PREFIX_KEY}=$prefix")
     prefix
