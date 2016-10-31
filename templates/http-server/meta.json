@@ -3,6 +3,10 @@
   "parameters": {
     "cpu": {
       "default": "100"
+    },
+    "secret": {
+      "default": "guessme",
+      "secret": true
     }
   }
 }

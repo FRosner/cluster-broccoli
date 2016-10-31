@@ -5,7 +5,7 @@ import de.frosner.broccoli.services.TemplateService
 import org.specs2.mutable.Specification
 import play.api.test.{FakeRequest, PlaySpecification}
 import org.mockito.Mockito._
-import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
+import play.api.libs.json._
 import org.specs2.concurrent.ExecutionEnv
 import play.api.mvc.BodyParsers
 
@@ -20,7 +20,7 @@ class TemplateControllerSpec extends PlaySpecification {
         template = "template {{id}}",
         description = "description",
         parameterInfos = Map(
-          "id" -> ParameterInfo(name = "id", default = Some("myid"))
+          "id" -> ParameterInfo(name = "id", default = Some("myid"), secret = Some(false))
         )
       )
       when(templateService.templates).thenReturn(Seq(template))
@@ -35,7 +35,8 @@ class TemplateControllerSpec extends PlaySpecification {
           "parameterInfos" -> JsObject(Map(
             "id" -> JsObject(Map(
               "name" -> JsString("id"),
-              "default" -> JsString("myid")
+              "default" -> JsString("myid"),
+              "secret" -> JsBoolean(false)
             ))
           )),
           "description" -> JsString(template.description),

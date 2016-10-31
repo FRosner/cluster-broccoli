@@ -33,7 +33,7 @@
                             {
                                 "Id": "",
                                 "Name": "{{id}}-web-ui-1",
-                                "Tags": ["protocol-http"],
+                                "Tags": ["protocol-http", "{{secret}}"],
                                 "PortLabel": "ui",
                                 "Checks": [
                                     {

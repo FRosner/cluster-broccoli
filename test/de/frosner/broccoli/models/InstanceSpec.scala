@@ -5,7 +5,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, 
 import de.frosner.broccoli.services.InstanceService
 import org.specs2.mutable.Specification
 import org.specs2.mutable._
-import play.api.libs.json.JsString
+import play.api.libs.json.{JsString, Json}
 
 class InstanceSpec extends Specification {
 
@@ -38,7 +38,7 @@ class InstanceSpec extends Specification {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos = Map("age" -> ParameterInfo("age", Some("50")))
+          parameterInfos = Map("age" -> ParameterInfo("age", Some("50"), secret = Some(false)))
         ),
         parameterValues = Map("id" -> "Frank"),
         status = InstanceStatus.Unknown,
@@ -54,7 +54,7 @@ class InstanceSpec extends Specification {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos = Map("age" -> ParameterInfo("age", None))
+          parameterInfos = Map("age" -> ParameterInfo("age", None, secret = Some(false)))
         ),
         parameterValues = Map("id" -> "Frank", "age" -> "50"),
         status = InstanceStatus.Unknown,
@@ -70,7 +70,7 @@ class InstanceSpec extends Specification {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos = Map("age" -> ParameterInfo("age", None))
+          parameterInfos = Map("age" -> ParameterInfo("age", None, secret = Some(false)))
         ),
         parameterValues = Map("id" -> "Frank"),
         status = InstanceStatus.Unknown,

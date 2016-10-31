@@ -62,7 +62,8 @@ class TemplateService @Inject() (configuration: Configuration) {
               val name = entry.getKey
               val entryValue = entry.getValue
               val default = if (entryValue.has("default")) Some(entryValue.get("default").asText) else None
-              (name, ParameterInfo(name, default))
+              val secret = if (entryValue.has("secret")) Some(entryValue.get("secret").asBoolean()) else None
+              (name, ParameterInfo(name, default, secret))
             }.toMap
             Success(parameterInfoMap)
           } else {
