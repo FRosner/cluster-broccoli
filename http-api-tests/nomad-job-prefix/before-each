@@ -1,0 +1,7 @@
+#!/bin/bash
+
+docker run -d --net host frosner/cluster-broccoli-test nomad > nomad.did
+sleep 5
+docker run -d --net host frosner/cluster-broccoli-test \
+  /cluster-broccoli-dist/bin/cluster-broccoli -Dbroccoli.templatesDir=/templates -Dbroccoli.nomad.jobPrefix=dev > cluster-broccoli.did
+sleep 5

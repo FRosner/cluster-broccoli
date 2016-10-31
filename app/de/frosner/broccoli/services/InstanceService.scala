@@ -58,6 +58,12 @@ class InstanceService @Inject()(templateService: TemplateService,
   private val instancesFile = new File(instancesFilePath)
   private val instancesFileLockPath = instancesFilePath + ".lock"
 
+  val nomadJobPrefix = {
+    val prefix = conf.getNomadJobPrefix(configuration)
+    Logger.info(s"Using ${conf.NOMAD_JOB_PREFIX_KEY}=$prefix")
+    prefix
+  }
+
   implicit val executionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   @volatile
@@ -77,6 +83,7 @@ class InstanceService @Inject()(templateService: TemplateService,
           Logger.error(s"Error parsing instances in $instancesFilePath: $throwable")
           throw new IllegalStateException(throwable)
         } else {
+          // TODO #21 filter instances based on prefix also on read? might depend also on #45
           maybeInstances.get
         }
       } else {
@@ -92,8 +99,8 @@ class InstanceService @Inject()(templateService: TemplateService,
   }
 
   def receive = {
-    case GetInstances => sender ! instances.values
-    case GetInstance(id) => sender ! instances.get(id)
+    case GetInstances => sender ! getInstances
+    case GetInstance(id) => sender ! getInstance(id)
     case NewInstance(instanceCreation) => sender() ! addInstance(instanceCreation)
     case updateInstanceInfo: UpdateInstance => sender() ! updateInstance(updateInstanceInfo)
     case DeleteInstance(id) => sender ! deleteInstance(id)
@@ -128,96 +135,117 @@ class InstanceService @Inject()(templateService: TemplateService,
     }
   }
 
+  private[this] def getInstances: Iterable[Instance] = {
+    instances.values.filter(_.id.startsWith(nomadJobPrefix))
+  }
+
+  private[this] def getInstance(id: String): Option[Instance] = {
+    instances.get(id).filter(_.id.startsWith(nomadJobPrefix))
+  }
+
   private[this] def addInstance(instanceCreation: InstanceCreation): Try[Instance] = {
     Logger.info(s"Request received to create new instance: $instanceCreation")
     val maybeId = instanceCreation.parameters.get("id") // FIXME requires ID to be defined inside the parameter values
     val templateId = instanceCreation.templateId
     maybeId.map { id =>
-      if (instances.contains(id)) {
-        Failure(newExceptionWithWarning(new IllegalArgumentException(s"There is already an instance having the ID $id")))
+      if (id.startsWith(nomadJobPrefix)) {
+        if (instances.contains(id)) {
+          Failure(newExceptionWithWarning(new IllegalArgumentException(s"There is already an instance having the ID $id")))
+        } else {
+          val potentialTemplate = templateService.template(templateId)
+          potentialTemplate.map { template =>
+            val maybeNewInstance = Try(Instance(id, template, instanceCreation.parameters, InstanceStatus.Stopped, Map.empty))
+            maybeNewInstance.map { newInstance =>
+              instances = instances.updated(id, newInstance)
+              InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
+              newInstance
+            }
+          }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException(s"Template $templateId does not exist."))))
+        }
       } else {
-        val potentialTemplate = templateService.template(templateId)
-        potentialTemplate.map { template =>
-          val maybeNewInstance = Try(Instance(id, template, instanceCreation.parameters, InstanceStatus.Stopped, Map.empty))
-          maybeNewInstance.map { newInstance =>
-            instances = instances.updated(id, newInstance)
-            InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
-            newInstance
-          }
-        }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException(s"Template $templateId does not exist."))))
+        Failure(newExceptionWithWarning(new IllegalArgumentException(s"ID '$id' does not have the required prefix '$nomadJobPrefix'.")))
       }
     }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException("No ID specified"))))
   }
 
   private[this] def updateInstance(updateInstance: UpdateInstance): Option[Try[Instance]] = {
-    val maybeInstance = instances.get(updateInstance.id)
-    maybeInstance.map { instance =>
-      val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (updateInstance.templateSelector.isDefined) {
-        val newTemplateId = updateInstance.templateSelector.get.newTemplateId
-        val newTemplate = templateService.template(newTemplateId)
-        newTemplate.map { template =>
-          // Requested template exists, update the template
-          if (updateInstance.parameterValuesUpdater.isDefined) {
-            // New parameter values are specified
-            val newParameterValues = updateInstance.parameterValuesUpdater.get.newParameterValues
-            instance.updateTemplate(template, newParameterValues)
-          } else {
-            // Just use the old parameter values
-            instance.updateTemplate(template, instance.parameterValues)
+    val updateInstanceId = updateInstance.id
+    if (updateInstanceId.startsWith(nomadJobPrefix)) {
+      val maybeInstance = instances.get(updateInstanceId)
+      maybeInstance.map { instance =>
+        val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (updateInstance.templateSelector.isDefined) {
+          val newTemplateId = updateInstance.templateSelector.get.newTemplateId
+          val newTemplate = templateService.template(newTemplateId)
+          newTemplate.map { template =>
+            // Requested template exists, update the template
+            if (updateInstance.parameterValuesUpdater.isDefined) {
+              // New parameter values are specified
+              val newParameterValues = updateInstance.parameterValuesUpdater.get.newParameterValues
+              instance.updateTemplate(template, newParameterValues)
+            } else {
+              // Just use the old parameter values
+              instance.updateTemplate(template, instance.parameterValues)
+            }
+          }.getOrElse {
+            // New template does not exist
+            Failure(TemplateNotFoundException(newTemplateId))
           }
-        }.getOrElse {
-          // New template does not exist
-          Failure(TemplateNotFoundException(newTemplateId))
-        }
-      } else {
-        // No template update required
-        if (updateInstance.parameterValuesUpdater.isDefined) {
-          // Just update the parameter values
-          val newParameterValues = updateInstance.parameterValuesUpdater.get.newParameterValues
-          instance.updateParameterValues(newParameterValues)
         } else {
-          // Neither template update nor parameter value update required
-          Success(instance)
-        }
-      }
-      val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
-        updateInstance.statusUpdater.map {
-          // Update the instance status
-          case StatusUpdater(InstanceStatus.Running) =>
-            nomadActor.tell(StartJob(instance.templateJson), self)
+          // No template update required
+          if (updateInstance.parameterValuesUpdater.isDefined) {
+            // Just update the parameter values
+            val newParameterValues = updateInstance.parameterValuesUpdater.get.newParameterValues
+            instance.updateParameterValues(newParameterValues)
+          } else {
+            // Neither template update nor parameter value update required
             Success(instance)
-          case StatusUpdater(InstanceStatus.Stopped) =>
-            nomadActor.tell(DeleteJob(instance.id), self)
-            Success(instance)
-          case other =>
-            Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
-        }.getOrElse {
-          // Don't update the instance status
-          Success(instance)
+          }
         }
-      }.flatten
+        val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
+          updateInstance.statusUpdater.map {
+            // Update the instance status
+            case StatusUpdater(InstanceStatus.Running) =>
+              nomadActor.tell(StartJob(instance.templateJson), self)
+              Success(instance)
+            case StatusUpdater(InstanceStatus.Stopped) =>
+              nomadActor.tell(DeleteJob(instance.id), self)
+              Success(instance)
+            case other =>
+              Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
+          }.getOrElse {
+            // Don't update the instance status
+            Success(instance)
+          }
+        }.flatten
 
-      updatedInstance match {
-        case Failure(throwable) => Logger.error(s"Error updating instance: $throwable")
-        case Success(changedInstance) => Logger.debug(s"Successfully applied an update to $changedInstance")
+        updatedInstance match {
+          case Failure(throwable) => Logger.error(s"Error updating instance: $throwable")
+          case Success(changedInstance) => Logger.debug(s"Successfully applied an update to $changedInstance")
+        }
+
+        InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
+        updatedInstance
       }
-
-      InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
-      updatedInstance
+    } else {
+      Some(Failure(newExceptionWithWarning(new IllegalArgumentException(s"ID '$updateInstanceId' does not have the required prefix '$nomadJobPrefix'."))))
     }
   }
 
   private[this] def deleteInstance(id: String): Boolean = {
-    updateInstance(UpdateInstance(
-      id = id,
-      statusUpdater = Some(StatusUpdater(InstanceStatus.Stopped)),
-      parameterValuesUpdater = None,
-      templateSelector = None
-    ))
-    if (instances.contains(id)) {
-      instances = instances - id
-      InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
-      true
+    if (id.startsWith(nomadJobPrefix)) {
+      updateInstance(UpdateInstance(
+        id = id,
+        statusUpdater = Some(StatusUpdater(InstanceStatus.Stopped)),
+        parameterValuesUpdater = None,
+        templateSelector = None
+      ))
+      if (instances.contains(id)) {
+        instances = instances - id
+        InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
+        true
+      } else {
+        false
+      }
     } else {
       false
     }

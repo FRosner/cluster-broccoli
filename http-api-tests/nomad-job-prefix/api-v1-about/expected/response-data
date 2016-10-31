@@ -1,0 +1,3 @@
+#!/bin/bash
+
+grep '"nomad":{"jobPrefix":"dev"}' $1
