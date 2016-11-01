@@ -54,7 +54,10 @@ class InstanceService @Inject()(templateService: TemplateService,
     self
   )
 
-  private val instancesFilePath = configuration.getString(conf.INSTANCES_FILE_KEY).getOrElse(conf.INSTANCES_FILE_DEFAULT)
+  private val instancesFilePath = {
+    if (configuration.getString("broccoli.instancesDir").isDefined) Logger.warn(s"broccoli.instancesDir ignored. Use ${conf.INSTANCES_STORAGE_URL_KEY} instead.")
+    configuration.getString(conf.INSTANCES_STORAGE_URL_KEY).getOrElse(conf.INSTANCES_STORAGE_URL_DEFAULT_FS)
+  }
   private val instancesDirectory = new File(instancesFilePath)
   private val instancesFileLockPath = instancesFilePath + ".lock"
 
