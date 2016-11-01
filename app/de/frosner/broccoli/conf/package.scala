@@ -15,11 +15,12 @@ package object conf {
   val CONSUL_URL_KEY = "broccoli.consul.url"
   val CONSUL_URL_DEFAULT = "http://localhost:8500"
 
-  val TEMPLATES_DIR_KEY = "broccoli.templatesDir"
-  val TEMPLATES_DIR_DEFAULT = "templates"
   val TEMPLATES_STORAGE_TYPE_KEY = "broccoli.templates.storage.type"
   val TEMPLATES_STORAGE_TYPE_FILESYSTEM = "fs"
   val TEMPLATES_STORAGE_TYPE_DEFAULT = TEMPLATES_STORAGE_TYPE_FILESYSTEM
+
+  val TEMPLATES_STORAGE_URL_KEY = "broccoli.templates.storage.url"
+  val TEMPLATES_STORAGE_URL_DEFAULT = "templates"
 
   val INSTANCES_FILE_KEY = "broccoli.instancesFile"
   val INSTANCES_FILE_DEFAULT = "instances"

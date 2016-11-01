@@ -19,7 +19,6 @@ import scala.util.parsing.json.JSON
 @Singleton
 class TemplateService @Inject() (configuration: Configuration) {
 
-  private val templatesDirectoryPath = configuration.getString(conf.TEMPLATES_DIR_KEY).getOrElse(conf.TEMPLATES_DIR_DEFAULT)
   private val templatesStorageType = {
     val storageType = configuration.getString(conf.TEMPLATES_STORAGE_TYPE_KEY).getOrElse(conf.TEMPLATES_STORAGE_TYPE_DEFAULT)
     if (storageType != conf.TEMPLATES_STORAGE_TYPE_FILESYSTEM) {
@@ -29,15 +28,16 @@ class TemplateService @Inject() (configuration: Configuration) {
     Logger.info(s"${conf.TEMPLATES_STORAGE_TYPE_KEY}=$storageType")
     storageType
   }
+  private val templatesUrl = configuration.getString(conf.TEMPLATES_STORAGE_URL_KEY).getOrElse(conf.TEMPLATES_STORAGE_URL_DEFAULT)
 
   val templates: Seq[Template] = {
     if (templatesStorageType == conf.TEMPLATES_STORAGE_TYPE_FILESYSTEM) {
-      val templatesDirectory = new File(templatesDirectoryPath)
-      Logger.info(s"Looking for templates in $templatesDirectoryPath")
+      val templatesDirectory = new File(templatesUrl)
+      Logger.info(s"Looking for templates in $templatesUrl")
       val templateDirectories = if (templatesDirectory.exists && templatesDirectory.isDirectory) {
         templatesDirectory.listFiles.filter(_.isDirectory).toSeq
       } else {
-        Logger.error(s"Templates directory $templatesDirectoryPath is not a directory")
+        Logger.error(s"Templates directory $templatesUrl is not a directory")
         Seq.empty
       }
       Logger.info(s"Found ${templateDirectories.size} template directories: ${templateDirectories.mkString(", ")}")
