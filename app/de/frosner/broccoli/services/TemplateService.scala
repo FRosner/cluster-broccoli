@@ -20,6 +20,7 @@ import scala.util.parsing.json.JSON
 class TemplateService @Inject() (configuration: Configuration) {
 
   private val templatesStorageType = {
+    if (configuration.getString("broccoli.templatesDir").isDefined) Logger.warn(s"'broccoli.templatesDir' ignored. Use ${conf.TEMPLATES_STORAGE_URL_KEY} instead.")
     val storageType = configuration.getString(conf.TEMPLATES_STORAGE_TYPE_KEY).getOrElse(conf.TEMPLATES_STORAGE_TYPE_DEFAULT)
     if (storageType != conf.TEMPLATES_STORAGE_TYPE_FILESYSTEM) {
       Logger.error(s"${conf.TEMPLATES_STORAGE_TYPE_KEY}=$storageType is invalid. Only '${conf.TEMPLATES_STORAGE_TYPE_FILESYSTEM}' supported.")
