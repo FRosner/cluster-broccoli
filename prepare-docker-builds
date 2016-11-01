@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 rm -rf cluster-broccoli-*
 sbt clean && sbt dist
 unzip target/universal/cluster-broccoli*.zip
