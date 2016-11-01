@@ -27,7 +27,8 @@ after_success:
   - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
   - export COMMIT=${TRAVIS_COMMIT::8}
   - export REPO=frosner/cluster-broccoli
-  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
+  - export NICE_BRANCH_NAME=$(echo $TRAVIS_BRANCH | sed -e 's/\//_/g')
+  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo "$NICE_BRANCH_NAME" ; fi`
   - docker build -t $REPO:$COMMIT docker/prod/
   - docker tag $REPO:$COMMIT $REPO:$TAG
   - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
