@@ -29,7 +29,11 @@ class TemplateService @Inject() (configuration: Configuration) {
     Logger.info(s"${conf.TEMPLATES_STORAGE_TYPE_KEY}=$storageType")
     storageType
   }
-  private val templatesUrl = configuration.getString(conf.TEMPLATES_STORAGE_URL_KEY).getOrElse(conf.TEMPLATES_STORAGE_URL_DEFAULT)
+  private val templatesUrl = {
+    val url = configuration.getString(conf.TEMPLATES_STORAGE_URL_KEY).getOrElse(conf.TEMPLATES_STORAGE_URL_DEFAULT)
+    Logger.info(s"${conf.TEMPLATES_STORAGE_URL_KEY}=$url")
+    url
+  }
 
   val templates: Seq[Template] = {
     if (templatesStorageType == conf.TEMPLATES_STORAGE_TYPE_FILESYSTEM) {
