@@ -70,10 +70,10 @@ The following configuration properties are supported.
 | `broccoli.nomad.url` | Address of your nomad server | `http://localhost:4646` |
 | `broccoli.nomad.jobPrefix` | Allow only jobs with this prefix | ` ` (empty) |
 | `broccoli.consul.url` | Address of your consul server | `http://localhost:8500` |
-| `broccoli.polling.frequency` | Integer (seconds) to control the time between asking Nomad and Consul for job and service status. | `1` |
 | `broccoli.consul.lookup` | Lookup method used for consul. Options: `ip` or `dns` (recommended).| `ip` |
 | `broccoli.templatesDir` | Directory where your templates are located | `templates` |
 | `broccoli.instancesFile` | Directory where your instances are located | `instances` |
+| `broccoli.polling.frequency` | Integer (seconds) to control the time between asking Nomad and Consul for job and service status. | `1` |
 | `broccoli.templates.storage.type` | Storage type for templates. Currently only `fs` supported. | `fs` |
 | `broccoli.permissions.mode` | Determines the actions that can be performed with the Broccoli instance. `administrator` (full functionality), `operator` (starting, stopping instances) or `user` (inspecting instance state) | `administrator` |
 | `http.port` | Port to bind the HTTP interface to | `9000` |
