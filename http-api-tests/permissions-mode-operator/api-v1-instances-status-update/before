@@ -8,12 +8,12 @@ docker run -d --net host -v $instances_mount frosner/cluster-broccoli-test \
   -Dbroccoli.instancesFile=/instances/instances \
   -Dbroccoli.templatesDir=/templates \
   -Dbroccoli.permissions.mode=administrator > cluster-broccoli.did
-sleep 5
+sleep $BROCCOLI_SLEEP_MEDIUM
 
 curl -H 'Content-Type: application/json' \
   -X POST -d '{ "templateId": "http-server", "parameters": { "id": "test-http", "cpu": "250" } }' \
   'http://localhost:9000/api/v1/instances'
-sleep 5
+sleep $BROCCOLI_SLEEP_MEDIUM
 
 docker stop $(cat cluster-broccoli.did)
 docker run -d --net host -v $instances_mount frosner/cluster-broccoli-test \
@@ -21,4 +21,4 @@ docker run -d --net host -v $instances_mount frosner/cluster-broccoli-test \
   -Dbroccoli.instancesFile=/instances/instances \
   -Dbroccoli.templatesDir=/templates \
   -Dbroccoli.permissions.mode=operator > cluster-broccoli.did
-sleep 5
+sleep $BROCCOLI_SLEEP_MEDIUM

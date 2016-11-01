@@ -2,19 +2,19 @@
 curl -H 'Content-Type: application/json' \
   -X POST -d '{ "templateId": "http-server", "parameters": { "id": "test", "cpu": "250" } }' \
   'http://localhost:9000/api/v1/instances'
-sleep 2
+sleep $BROCCOLI_SLEEP_SHORT
 
 curl -H 'Content-Type: application/json' \
   -X POST -d '{ "status": "running" }' \
   'http://localhost:9000/api/v1/instances/test'
-sleep 2
+sleep $BROCCOLI_SLEEP_SHORT
 
 curl -H 'Content-Type: application/json' \
   -X POST -d '{ "selectedTemplate": "zeppelin", "parameterValues": { "id": "test" } }' \
   'http://localhost:9000/api/v1/instances/test'
-sleep 2
+sleep $BROCCOLI_SLEEP_SHORT
 
 curl -H 'Content-Type: application/json' \
   -X POST -d '{ "status": "running" }' \
   'http://localhost:9000/api/v1/instances/test'
-sleep 2
+sleep $BROCCOLI_SLEEP_SHORT
