@@ -1,0 +1,15 @@
+#!/bin/bash
+curl -H 'Content-Type: application/json' \
+  -X POST -d '{ "templateId": "http-server", "parameters": { "id": "test-http" } }' \
+  'http://localhost:9000/api/v1/instances'
+sleep 1
+curl -X DELETE 'localhost:9000/api/v1/instances/test-http'
+sleep 1
+docker stop $(cat cluster-broccoli.did)
+sleep 1
+docker run -d --net host frosner/cluster-broccoli-test \
+  -v /tmp/instances:/instances
+  /cluster-broccoli-dist/bin/cluster-broccoli \
+  -Dbroccoli.templatesDir=/templates \
+  -Dbroccoli.instancesDir=/instances > cluster-broccoli.did
+sleep 5

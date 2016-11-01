@@ -1,0 +1,7 @@
+#!/bin/bash
+docker run -d --net host frosner/cluster-broccoli-test \
+  -v /tmp/instances:/instances
+  /cluster-broccoli-dist/bin/cluster-broccoli \
+  -Dbroccoli.templatesDir=/templates \
+  -Dbroccoli.instancesDir=/instances > cluster-broccoli.did
+sleep 5

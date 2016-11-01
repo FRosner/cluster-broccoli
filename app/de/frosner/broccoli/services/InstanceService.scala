@@ -55,7 +55,7 @@ class InstanceService @Inject()(templateService: TemplateService,
   )
 
   private val instancesFilePath = configuration.getString(conf.INSTANCES_FILE_KEY).getOrElse(conf.INSTANCES_FILE_DEFAULT)
-  private val instancesFile = new File(instancesFilePath)
+  private val instancesDirectory = new File(instancesFilePath)
   private val instancesFileLockPath = instancesFilePath + ".lock"
 
   val nomadJobPrefix = {
@@ -66,29 +66,46 @@ class InstanceService @Inject()(templateService: TemplateService,
 
   implicit val executionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
+  // TODO #21 filter instances based on prefix also on read? might depend also on #45
   @volatile
   private var instances: Map[String, Instance] = {
     Logger.info(s"Locking $instancesFilePath ($instancesFileLockPath)")
     val lock = new File(instancesFileLockPath)
     if (lock.createNewFile()) {
       sys.addShutdownHook{
-        Logger.info(s"Releasing lock on $instancesFilePath ($instancesFileLockPath)")
+        Logger.info(s"Releasing lock on '$instancesFilePath' ('$instancesFileLockPath')")
         lock.delete()
       }
-      Logger.info(s"Looking for instances in $instancesFilePath.")
-      if (instancesFile.canRead && instancesFile.isFile) {
-        val maybeInstances = InstanceService.loadInstances(new FileInputStream(instancesFile))
-        if (maybeInstances.isFailure) {
-          val throwable = maybeInstances.failed.get
-          Logger.error(s"Error parsing instances in $instancesFilePath: $throwable")
-          throw new IllegalStateException(throwable)
-        } else {
-          // TODO #21 filter instances based on prefix also on read? might depend also on #45
-          maybeInstances.get
+      Logger.debug(s"Looking for instances in '$instancesFilePath'.")
+      if (instancesDirectory.canRead && instancesDirectory.isDirectory) {
+        val instanceFiles = instancesDirectory.listFiles(new FileFilter {
+          override def accept(pathname: File): Boolean = pathname.getPath.endsWith(".json")
+        })
+        val maybeInstances = instanceFiles.flatMap { instanceFile =>
+          val maybeInstance = InstanceService.loadInstance(new FileInputStream(instanceFile))
+          if (maybeInstance.isFailure) {
+            val throwable = maybeInstance.failed.get
+            Logger.error(s"Error parsing '$instanceFile': $throwable")
+          } else {
+            if (maybeInstance.get.id != instanceFile.getName.stripSuffix(".json")) {
+              Logger.warn(s"Successfully parsed '$instanceFile' but the file name did not match the instance ID.")
+            } else {
+              Logger.info(s"Successfully parsed '$instanceFile'.")
+            }
+          }
+          maybeInstance.toOption
         }
+        maybeInstances.map(instance => (instance.id, instance)).toMap
       } else {
-        Logger.info(s"Instances file $instancesFilePath not found. Initializing with an empty instance collection.")
-        InstanceService.persistInstances(Map.empty[String, Instance], new FileOutputStream(instancesFile))
+        if (instancesDirectory.mkdir()) {
+          Logger.info(s"Instance directory '$instancesFilePath' not found. Initializing with an empty instance collection.")
+          Map.empty
+        } else {
+          val error = s"Instance directory '$instancesFilePath' not found but cannot be created. Exiting."
+          Logger.error(error)
+          System.exit(1)
+          throw new IllegalStateException(error)
+        }
       }
     } else {
       val error = s"Cannot lock $instancesFilePath. Is there another Broccoli instance running?"
@@ -157,7 +174,7 @@ class InstanceService @Inject()(templateService: TemplateService,
             val maybeNewInstance = Try(Instance(id, template, instanceCreation.parameters, InstanceStatus.Stopped, Map.empty))
             maybeNewInstance.map { newInstance =>
               instances = instances.updated(id, newInstance)
-              InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
+              InstanceService.persistInstanceInFile(newInstance, instancesDirectory)
               newInstance
             }
           }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException(s"Template $templateId does not exist."))))
@@ -223,7 +240,7 @@ class InstanceService @Inject()(templateService: TemplateService,
           case Success(changedInstance) => Logger.debug(s"Successfully applied an update to $changedInstance")
         }
 
-        InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
+        InstanceService.persistInstanceInFile(instance, instancesDirectory)
         updatedInstance
       }
     } else {
@@ -240,9 +257,14 @@ class InstanceService @Inject()(templateService: TemplateService,
         templateSelector = None
       ))
       if (instances.contains(id)) {
-        instances = instances - id
-        InstanceService.persistInstances(instances, new FileOutputStream(instancesFile))
-        true
+        val deletedInstance = instances(id)
+        if (InstanceService.unpersistInstanceInFile(deletedInstance, instancesDirectory)) {
+          instances = instances - id
+          true
+        } else {
+          Logger.error(s"Could not delete instance '$id'.")
+          false
+        }
       } else {
         false
       }
@@ -280,19 +302,30 @@ object InstanceService {
 
   case object NomadNotReachable
 
-  def persistInstances(instances: Map[String, Instance], output: OutputStream): Map[String, Instance] = {
+  def persistInstance(instance: Instance, output: OutputStream): Instance = {
     import Instance.instancePersistenceWrites
     val printStream = new PrintStream(output)
-    printStream.append(Json.toJson(instances).toString())
+    printStream.append(Json.toJson(instance).toString())
     printStream.close()
-    instances
+    instance
   }
 
-  def loadInstances(input: InputStream): Try[Map[String, Instance]] = {
+  def instanceToFileName(instance: Instance) = instance.id + ".json"
+
+  def persistInstanceInFile(instance: Instance, instancesDirectory: File) = {
+    persistInstance(instance, new FileOutputStream(new File(instancesDirectory, instanceToFileName(instance))))
+  }
+
+  def unpersistInstanceInFile(instance: Instance, instancesDirectory: File): Boolean = {
+    val instanceFile = new File(instancesDirectory, instanceToFileName(instance))
+    instanceFile.delete()
+  }
+
+  def loadInstance(input: InputStream): Try[Instance] = {
     val source = Source.fromInputStream(input)
-    val instances = Try(Json.parse(input).as[Map[String, Instance]])
+    val instance = Try(Json.parse(input).as[Instance])
     source.close()
-    instances
+    instance
   }
 
 }

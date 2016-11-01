@@ -249,13 +249,11 @@ class InstanceSpec extends Specification {
   "Instance serialization" should {
 
     "work correctly" in {
-      val original = Map(
-        "1" -> Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Heinz"), InstanceStatus.Unknown, Map.empty)
-      )
+      val original = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Heinz"), InstanceStatus.Unknown, Map.empty)
 
       val bos = new ByteArrayOutputStream()
-      InstanceService.persistInstances(original, bos)
-      val deserialized = InstanceService.loadInstances(new ByteArrayInputStream(bos.toByteArray)).get
+      InstanceService.persistInstance(original, bos)
+      val deserialized = InstanceService.loadInstance(new ByteArrayInputStream(bos.toByteArray)).get
 
       original === deserialized
     }
