@@ -31,6 +31,4 @@ RUN echo "#!/bin/bash" > /usr/bin/consul && \
 ADD cluster-broccoli-dist /cluster-broccoli-dist
 
 ADD templates /templates
-RUN echo "#!/bin/bash" > /usr/bin/cluster-broccoli && \
-  echo "exec /cluster-broccoli-dist/bin/cluster-broccoli -Dbroccoli.templatesDir=/templates $*" >> /usr/bin/cluster-broccoli && \
-  chmod 777 /usr/bin/cluster-broccoli
+RUN ln -s /cluster-broccoli-dist/bin/cluster-broccoli /usr/bin/cluster-broccoli
