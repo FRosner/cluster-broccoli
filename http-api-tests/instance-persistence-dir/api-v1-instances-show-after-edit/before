@@ -2,17 +2,17 @@
 curl -H 'Content-Type: application/json' \
   -X POST -d '{ "templateId": "http-server", "parameters": { "id": "test-http", "cpu": "250" } }' \
   'http://localhost:9000/api/v1/instances'
-sleep 2
+sleep $BROCCOLI_SLEEP_SHORT
 curl -v -H 'Content-Type: application/json' \
   -X POST -d '{ "parameterValues": { "id": "test-http", "cpu": "50" } }' \
   'http://localhost:9000/api/v1/instances/test-http'
-sleep 1
+sleep $BROCCOLI_SLEEP_SHORT
 docker stop $(cat cluster-broccoli.did)
-sleep 1
+sleep $BROCCOLI_SLEEP_SHORT
 docker run -d --net host \
   -v /tmp/instances:/instances \
   frosner/cluster-broccoli-test \
   /cluster-broccoli-dist/bin/cluster-broccoli \
   -Dbroccoli.templatesDir=/templates \
   -Dbroccoli.instancesDir=/instances > cluster-broccoli.did
-sleep 5
+sleep $BROCCOLI_SLEEP_MEDIUM

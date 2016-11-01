@@ -2,8 +2,8 @@
 curl -H 'Content-Type: application/json' \
   -X POST -d '{ "templateId": "zeppelin", "parameters": { "id": "test" } }' \
   'http://localhost:9000/api/v1/instances'
-sleep 1
+sleep $BROCCOLI_SLEEP_SHORT
 curl -H 'Content-Type: application/json' \
     -X POST -d '{ "status": "running" }' \
     'http://localhost:9000/api/v1/instances/test'
-sleep 1
+sleep $BROCCOLI_SLEEP_SHORT
