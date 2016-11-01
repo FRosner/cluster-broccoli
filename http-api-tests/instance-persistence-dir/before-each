@@ -5,4 +5,4 @@ docker run -d --net host \
   /cluster-broccoli-dist/bin/cluster-broccoli \
   -Dbroccoli.templatesDir=/templates \
   -Dbroccoli.instancesDir=/instances > cluster-broccoli.did
-sleep 5
+sleep $BROCCOLI_SLEEP_MEDIUM

@@ -1,4 +1,4 @@
 #!/bin/bash
 docker run -d --net host frosner/cluster-broccoli-test \
   /cluster-broccoli-dist/bin/cluster-broccoli -Dbroccoli.templatesDir=/templates -Dbroccoli.permissions.mode=operator > cluster-broccoli.did
-sleep 10
+sleep $BROCCOLI_SLEEP_MEDIUM
