@@ -5,8 +5,6 @@ instances_mount=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/instances:/ins
 docker stop $(cat cluster-broccoli.did)
 docker run -d --net host -v $instances_mount frosner/cluster-broccoli-test \
   /cluster-broccoli-dist/bin/cluster-broccoli \
-  -Dbroccoli.instancesFile=/instances/instances \
-  -Dbroccoli.templatesDir=/templates \
   -Dbroccoli.permissions.mode=administrator > cluster-broccoli.did
 sleep $BROCCOLI_SLEEP_MEDIUM
 
@@ -18,7 +16,5 @@ sleep $BROCCOLI_SLEEP_MEDIUM
 docker stop $(cat cluster-broccoli.did)
 docker run -d --net host -v $instances_mount frosner/cluster-broccoli-test \
   /cluster-broccoli-dist/bin/cluster-broccoli \
-  -Dbroccoli.instancesFile=/instances/instances \
-  -Dbroccoli.templatesDir=/templates \
   -Dbroccoli.permissions.mode=operator > cluster-broccoli.did
 sleep $BROCCOLI_SLEEP_MEDIUM
