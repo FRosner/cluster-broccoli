@@ -17,6 +17,9 @@ package object conf {
 
   val TEMPLATES_DIR_KEY = "broccoli.templatesDir"
   val TEMPLATES_DIR_DEFAULT = "templates"
+  val TEMPLATES_STORAGE_TYPE_KEY = "broccoli.templates.storage.type"
+  val TEMPLATES_STORAGE_TYPE_FILESYSTEM = "fs"
+  val TEMPLATES_STORAGE_TYPE_DEFAULT = TEMPLATES_STORAGE_TYPE_FILESYSTEM
 
   val INSTANCES_FILE_KEY = "broccoli.instancesFile"
   val INSTANCES_FILE_DEFAULT = "instances"
