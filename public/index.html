@@ -30,8 +30,11 @@
     <script type="text/javascript" src="/assets/js/restangular.min.js"></script>
       <!-- restangular STOP -->
     <script src="/assets/broccoli.js"></script>
-    <script src="/assets/broccoliService.js"></script>
+    <script src="/assets/TemplateService.js"></script>
+    <script src="/assets/InstanceService.js"></script>
+    <script src="/assets/AboutService.js"></script>
     <script src="/assets/newInstanceModal.js"></script>
+    <script src="/assets/ModifyInstances.js"></script>
 </head>
 
 <body ng-controller="MainController as main">
@@ -49,11 +52,11 @@
       </div>
         <div class="alert alert-danger" role="alert" ng-if="!broccoliReachable">Cluster Broccoli server is not reachable!</div>
         <div class="row" ng-repeat="template in main.templates" ng-if="broccoliReachable">
-            <div class="col-md-12" style="margin-top: 0px;">
+            <div ng-controller = "ModifyInstanceCntrl as modify_instance" class="col-md-12" style="margin-top: 0px;">
               <h2>
                 <img ng-init="itemsrc='assets/images/plus.svg'"
                      ng-src="{{itemsrc}}"
-                     ng-click="main.createInstance(template)"
+                     ng-click="modify_instance.createInstance(template)"
                      class="img-responsive"
                      data-holder-rendered="true"
                      style="margin-right: 10px; height: 20px; display: inline-block;">
@@ -65,17 +68,17 @@
                 {{template.description}}
               </p>
             </div>
-            <div class="col-md-12" style="margin-top: 20px;">
+            <div ng-controller = "ModifyInstanceCntrl as modify_instance" class="col-md-12" style="margin-top: 20px;">
                 <table class="table table">
                   <tbody>
                       <tr ng-repeat="instance in template.instances">
                         <td class="col-md-4" scope="row">
                           <img ng-src="assets/images/minus.svg"
-                               ng-click="main.deleteInstance(template, instance)"
+                               ng-click="modify_instance.deleteInstance(template, instance)"
                                class="img-responsive instance-button"
                                data-holder-rendered="true">
                           <img ng-src="assets/images/edit.svg"
-                               ng-click="main.editInstance(template, instance)"
+                               ng-click="modify_instance.editInstance(template, instance)"
                                class="img-responsive instance-button"
                                data-holder-rendered="true">
                           {{instance.id}}
