@@ -54,69 +54,63 @@ class InstanceService @Inject()(templateService: TemplateService,
     self
   )
 
-  private val instancesFilePath = {
-    if (configuration.getString("broccoli.instancesFile").isDefined) Logger.warn(s"broccoli.instancesDir ignored. Use ${conf.INSTANCES_STORAGE_URL_KEY} instead.")
-    configuration.getString(conf.INSTANCES_STORAGE_URL_KEY).getOrElse(conf.INSTANCES_STORAGE_URL_DEFAULT_FS)
-  }
-  private val instancesDirectory = new File(instancesFilePath)
-  private val instancesFileLockPath = instancesFilePath + ".lock"
-
   val nomadJobPrefix = {
     val prefix = conf.getNomadJobPrefix(configuration)
     Logger.info(s"Using ${conf.NOMAD_JOB_PREFIX_KEY}=$prefix")
     prefix
   }
 
-  implicit val executionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
+  private val instanceStorage: InstanceStorage = {
+    val instanceStorageType = {
+      val storageType = configuration.getString(conf.INSTANCES_STORAGE_TYPE_KEY).getOrElse(conf.TEMPLATES_STORAGE_TYPE_DEFAULT)
+      val allowedStorageTypes = Set(conf.INSTANCES_STORAGE_TYPE_FS, conf.INSTANCES_STORAGE_TYPE_COUCHDB)
+      if (!allowedStorageTypes.contains(storageType)) {
+        Logger.error(s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType is invalid. Only '${allowedStorageTypes.mkString(", ")} supported.")
+        System.exit(1)
+      }
+      Logger.info(s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType")
+      storageType
+    }
 
-  // TODO #21 filter instances based on prefix also on read? might depend also on #45
-  @volatile
-  private var instances: Map[String, Instance] = {
-    Logger.info(s"Locking $instancesFilePath ($instancesFileLockPath)")
-    val lock = new File(instancesFileLockPath)
-    if (lock.createNewFile()) {
-      sys.addShutdownHook{
-        Logger.info(s"Releasing lock on '$instancesFilePath' ('$instancesFileLockPath')")
-        lock.delete()
-      }
-      Logger.debug(s"Looking for instances in '$instancesFilePath'.")
-      if (instancesDirectory.canRead && instancesDirectory.isDirectory) {
-        val instanceFiles = instancesDirectory.listFiles(new FileFilter {
-          override def accept(pathname: File): Boolean = pathname.getPath.endsWith(".json")
-        })
-        val maybeInstances = instanceFiles.flatMap { instanceFile =>
-          val maybeInstance = InstanceService.loadInstance(new FileInputStream(instanceFile))
-          if (maybeInstance.isFailure) {
-            val throwable = maybeInstance.failed.get
-            Logger.error(s"Error parsing '$instanceFile': $throwable")
-          } else {
-            if (maybeInstance.get.id != instanceFile.getName.stripSuffix(".json")) {
-              Logger.warn(s"Successfully parsed '$instanceFile' but the file name did not match the instance ID.")
-            } else {
-              Logger.info(s"Successfully parsed '$instanceFile'.")
-            }
-          }
-          maybeInstance.toOption
-        }
-        maybeInstances.map(instance => (instance.id, instance)).toMap
-      } else {
-        if (instancesDirectory.mkdir()) {
-          Logger.info(s"Instance directory '$instancesFilePath' not found. Initializing with an empty instance collection.")
-          Map.empty
-        } else {
-          val error = s"Instance directory '$instancesFilePath' not found but cannot be created. Exiting."
-          Logger.error(error)
-          System.exit(1)
-          throw new IllegalStateException(error)
-        }
-      }
-    } else {
-      val error = s"Cannot lock $instancesFilePath. Is there another Broccoli instance running?"
-      Logger.error(error)
-      System.exit(1)
-      throw new IllegalStateException(error)
+    val instanceStorageUrl = {
+      if (configuration.getString("broccoli.instancesFile").isDefined) Logger.warn(s"broccoli.instancesDir ignored. Use ${conf.INSTANCES_STORAGE_URL_KEY} instead.")
+      configuration.getString(conf.INSTANCES_STORAGE_URL_KEY).getOrElse(conf.INSTANCES_STORAGE_URL_DEFAULT_FS)
+    }
+
+    instanceStorageType match {
+      case conf.INSTANCES_STORAGE_TYPE_FS => FileSystemInstanceStorage(new File(instanceStorageUrl), nomadJobPrefix)
+      case conf.INSTANCES_STORAGE_TYPE_COUCHDB => ???
+      case default => throw new IllegalStateException(s"Illegal storage type '${instanceStorageType}")
     }
   }
+
+  sys.addShutdownHook {
+    instanceStorage.close()
+  }
+
+  // TODO these guys need to populate the instances to InstanceWithStatus before sending them to the front-end
+  // TODO I need to clean this stuff up (when deleting an instance)
+  @volatile
+  private var jobStatuses: Map[String, InstanceStatus] = Map.empty
+
+  @volatile
+  private var serviceStatuses: Map[String, Map[String, Service]] = Map.empty
+
+  private def getJobStatusOrDefault(id: String): InstanceStatus = jobStatuses.getOrElse(id, InstanceStatus.Unknown)
+
+  private def getServiceStatusesOrDefault(id: String): Map[String, Service] =
+    serviceStatuses.getOrElse(id, Map.empty)
+
+  private def addStatuses(instance: Instance): InstanceWithStatus = {
+    val instanceId = instance.id
+    InstanceWithStatus(
+      instance = instance,
+      status = getJobStatusOrDefault(instanceId),
+      services = getServiceStatusesOrDefault(instanceId)
+    )
+  }
+
+  implicit val executionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   def receive = {
     case GetInstances => sender ! getInstances
@@ -129,151 +123,126 @@ class InstanceService @Inject()(templateService: TemplateService,
     case NomadNotReachable => setAllStatusesToUnknown()
   }
 
-  private[this] def setAllStatusesToUnknown() = {
-    instances.foreach {
-      case (id, instance) => instance.status = InstanceStatus.Unknown
+  private[this] def setAllStatusesToUnknown(): Unit = {
+    jobStatuses = jobStatuses.map {
+      case (key, value) => (key, InstanceStatus.Unknown)
     }
   }
 
-  private[this] def updateStatusesBasedOnNomad(statuses: Map[String, InstanceStatus]) = {
-    instances.foreach { case (id, instance) =>
-      statuses.get(id) match {
-        case Some(nomadStatus) =>
-          instance.status = nomadStatus
-          nomadActor ! GetServices(id)
-        case None =>
-          instance.status = InstanceStatus.Stopped
-          instance.services = Map.empty
+  private[this] def updateStatusesBasedOnNomad(statuses: Map[String, InstanceStatus]): Unit = {
+    val updatedInstances = instanceStorage.readInstances.map { instances =>
+      instances.foreach { instance =>
+        val id = instance.id
+        statuses.get(id) match {
+          case Some(nomadStatus) =>
+            jobStatuses = jobStatuses.updated(id, nomadStatus)
+            nomadActor ! GetServices(id)
+          case None =>
+            jobStatuses = jobStatuses.updated(id, InstanceStatus.Stopped)
+            serviceStatuses = serviceStatuses.updated(id, Map.empty)
+        }
       }
     }
   }
 
   private[this] def updateServicesBasedOnNomad(jobId: String, services: Iterable[Service]) = {
-    instances.get(jobId) match {
-      case Some(instance) => instance.services = services.map(service => (service.name, service)).toMap
-      case None => Logger.error(s"Received services associated to non-existing job $jobId")
-    }
+    serviceStatuses = serviceStatuses.updated(jobId, services.map(service => (service.name, service)).toMap)
   }
 
-  private[this] def getInstances: Iterable[Instance] = {
-    instances.values.filter(_.id.startsWith(nomadJobPrefix))
+  private[this] def getInstances: Try[Iterable[InstanceWithStatus]] = {
+    instanceStorage.readInstances.map(_.map(addStatuses))
   }
 
-  private[this] def getInstance(id: String): Option[Instance] = {
-    instances.get(id).filter(_.id.startsWith(nomadJobPrefix))
+  private[this] def getInstance(id: String): Try[InstanceWithStatus] = {
+    instanceStorage.readInstance(id).map(addStatuses)
   }
 
-  private[this] def addInstance(instanceCreation: InstanceCreation): Try[Instance] = {
-    Logger.info(s"Request received to create new instance: $instanceCreation")
+  private[this] def addInstance(instanceCreation: InstanceCreation): Try[InstanceWithStatus] = {
     val maybeId = instanceCreation.parameters.get("id") // FIXME requires ID to be defined inside the parameter values
     val templateId = instanceCreation.templateId
-    maybeId.map { id =>
-      if (id.startsWith(nomadJobPrefix)) {
-        if (instances.contains(id)) {
-          Failure(newExceptionWithWarning(new IllegalArgumentException(s"There is already an instance having the ID $id")))
-        } else {
-          val potentialTemplate = templateService.template(templateId)
-          potentialTemplate.map { template =>
-            val maybeNewInstance = Try(Instance(id, template, instanceCreation.parameters, InstanceStatus.Stopped, Map.empty))
-            maybeNewInstance.map { newInstance =>
-              instances = instances.updated(id, newInstance)
-              InstanceService.persistInstanceInFile(newInstance, instancesDirectory)
-              newInstance
-            }
-          }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException(s"Template $templateId does not exist."))))
-        }
+    val maybeCreatedInstance = maybeId.map { id =>
+      if (instanceStorage.readInstance(id).isSuccess) {
+        Failure(newExceptionWithWarning(new IllegalArgumentException(s"There is already an instance having the ID $id")))
       } else {
-        Failure(newExceptionWithWarning(new IllegalArgumentException(s"ID '$id' does not have the required prefix '$nomadJobPrefix'.")))
+        val potentialTemplate = templateService.template(templateId)
+        potentialTemplate.map { template =>
+          val maybeNewInstance = Try(Instance(id, template, instanceCreation.parameters))
+          maybeNewInstance.flatMap(instanceStorage.writeInstance)
+        }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException(s"Template $templateId does not exist."))))
       }
     }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException("No ID specified"))))
+    maybeCreatedInstance.map(addStatuses)
   }
 
-  private[this] def updateInstance(updateInstance: UpdateInstance): Option[Try[Instance]] = {
+  private[this] def updateInstance(updateInstance: UpdateInstance): Try[InstanceWithStatus] = {
     val updateInstanceId = updateInstance.id
-    if (updateInstanceId.startsWith(nomadJobPrefix)) {
-      val maybeInstance = instances.get(updateInstanceId)
-      maybeInstance.map { instance =>
-        val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (updateInstance.templateSelector.isDefined) {
-          val newTemplateId = updateInstance.templateSelector.get.newTemplateId
-          val newTemplate = templateService.template(newTemplateId)
-          newTemplate.map { template =>
-            // Requested template exists, update the template
-            if (updateInstance.parameterValuesUpdater.isDefined) {
-              // New parameter values are specified
-              val newParameterValues = updateInstance.parameterValuesUpdater.get.newParameterValues
-              instance.updateTemplate(template, newParameterValues)
-            } else {
-              // Just use the old parameter values
-              instance.updateTemplate(template, instance.parameterValues)
-            }
-          }.getOrElse {
-            // New template does not exist
-            Failure(TemplateNotFoundException(newTemplateId))
-          }
-        } else {
-          // No template update required
+    val maybeInstance = instanceStorage.readInstance(updateInstanceId)
+    maybeInstance.flatMap { instance =>
+      val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (updateInstance.templateSelector.isDefined) {
+        val newTemplateId = updateInstance.templateSelector.get.newTemplateId
+        val newTemplate = templateService.template(newTemplateId)
+        newTemplate.map { template =>
+          // Requested template exists, update the template
           if (updateInstance.parameterValuesUpdater.isDefined) {
-            // Just update the parameter values
+            // New parameter values are specified
             val newParameterValues = updateInstance.parameterValuesUpdater.get.newParameterValues
-            instance.updateParameterValues(newParameterValues)
+            instance.updateTemplate(template, newParameterValues)
           } else {
-            // Neither template update nor parameter value update required
-            Success(instance)
+            // Just use the old parameter values
+            instance.updateTemplate(template, instance.parameterValues)
           }
-        }
-        val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
-          updateInstance.statusUpdater.map {
-            // Update the instance status
-            case StatusUpdater(InstanceStatus.Running) =>
-              nomadActor.tell(StartJob(instance.templateJson), self)
-              Success(instance)
-            case StatusUpdater(InstanceStatus.Stopped) =>
-              nomadActor.tell(DeleteJob(instance.id), self)
-              Success(instance)
-            case other =>
-              Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
-          }.getOrElse {
-            // Don't update the instance status
-            Success(instance)
-          }
-        }.flatten
-
-        updatedInstance match {
-          case Failure(throwable) => Logger.error(s"Error updating instance: $throwable")
-          case Success(changedInstance) => Logger.debug(s"Successfully applied an update to $changedInstance")
-        }
-
-        InstanceService.persistInstanceInFile(instance, instancesDirectory)
-        updatedInstance
-      }
-    } else {
-      Some(Failure(newExceptionWithWarning(new IllegalArgumentException(s"ID '$updateInstanceId' does not have the required prefix '$nomadJobPrefix'."))))
-    }
-  }
-
-  private[this] def deleteInstance(id: String): Boolean = {
-    if (id.startsWith(nomadJobPrefix)) {
-      updateInstance(UpdateInstance(
-        id = id,
-        statusUpdater = Some(StatusUpdater(InstanceStatus.Stopped)),
-        parameterValuesUpdater = None,
-        templateSelector = None
-      ))
-      if (instances.contains(id)) {
-        val deletedInstance = instances(id)
-        if (InstanceService.unpersistInstanceInFile(deletedInstance, instancesDirectory)) {
-          instances = instances - id
-          true
-        } else {
-          Logger.error(s"Could not delete instance '$id'.")
-          false
+        }.getOrElse {
+          // New template does not exist
+          Failure(TemplateNotFoundException(newTemplateId))
         }
       } else {
-        false
+        // No template update required
+        if (updateInstance.parameterValuesUpdater.isDefined) {
+          // Just update the parameter values
+          val newParameterValues = updateInstance.parameterValuesUpdater.get.newParameterValues
+          instance.updateParameterValues(newParameterValues)
+        } else {
+          // Neither template update nor parameter value update required
+          Success(instance)
+        }
       }
-    } else {
-      false
+      val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
+        updateInstance.statusUpdater.map {
+          // Update the instance status
+          case StatusUpdater(InstanceStatus.Running) =>
+            nomadActor.tell(StartJob(instance.templateJson), self)
+            Success(instance)
+          case StatusUpdater(InstanceStatus.Stopped) =>
+            nomadActor.tell(DeleteJob(instance.id), self)
+            Success(instance)
+          case other =>
+            Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
+        }.getOrElse {
+          // Don't update the instance status
+          Success(instance)
+        }
+      }.flatten
+
+
+      updatedInstance match {
+        case Failure(throwable) => Logger.error(s"Error updating instance: $throwable")
+        case Success(changedInstance) => Logger.debug(s"Successfully applied an update to $changedInstance")
+      }
+
+      updatedInstance.flatMap(instanceStorage.writeInstance).map(addStatuses)
     }
+  }
+
+  private[this] def deleteInstance(id: String): Try[InstanceWithStatus] = {
+    updateInstance(UpdateInstance(
+      id = id,
+      statusUpdater = Some(StatusUpdater(InstanceStatus.Stopped)),
+      parameterValuesUpdater = None,
+      templateSelector = None
+    ))
+    val instanceToDelete = instanceStorage.readInstance(id)
+    val deletedInstance = instanceToDelete.flatMap(instanceStorage.deleteInstance)
+    deletedInstance.map(addStatuses)
   }
 
 }
@@ -304,31 +273,5 @@ object InstanceService {
   case class ConsulServices(jobId: String, jobServices: Iterable[Service])
 
   case object NomadNotReachable
-
-  def persistInstance(instance: Instance, output: OutputStream): Instance = {
-    import Instance.instancePersistenceWrites
-    val printStream = new PrintStream(output)
-    printStream.append(Json.toJson(instance).toString())
-    printStream.close()
-    instance
-  }
-
-  def instanceToFileName(instance: Instance) = instance.id + ".json"
-
-  def persistInstanceInFile(instance: Instance, instancesDirectory: File) = {
-    persistInstance(instance, new FileOutputStream(new File(instancesDirectory, instanceToFileName(instance))))
-  }
-
-  def unpersistInstanceInFile(instance: Instance, instancesDirectory: File): Boolean = {
-    val instanceFile = new File(instancesDirectory, instanceToFileName(instance))
-    instanceFile.delete()
-  }
-
-  def loadInstance(input: InputStream): Try[Instance] = {
-    val source = Source.fromInputStream(input)
-    val instance = Try(Json.parse(input).as[Instance])
-    source.close()
-    instance
-  }
 
 }

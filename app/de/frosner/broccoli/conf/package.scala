@@ -22,8 +22,14 @@ package object conf {
   val TEMPLATES_STORAGE_URL_KEY = "broccoli.templates.storage.url"
   val TEMPLATES_STORAGE_URL_DEFAULT = "templates"
 
+  val INSTANCES_STORAGE_TYPE_KEY = "broccoli.instances.storage.type"
+  val INSTANCES_STORAGE_TYPE_FS = "fs"
+  val INSTANCES_STORAGE_TYPE_COUCHDB = "couchdb"
+  val INSTANCES_STORAGE_TYPE_DEFAULT = INSTANCES_STORAGE_TYPE_FS
+
   val INSTANCES_STORAGE_URL_KEY = "broccoli.instances.storage.url"
   val INSTANCES_STORAGE_URL_DEFAULT_FS = "instances"
+  val INSTANCES_STORAGE_URL_DEFAULT_COUCHBASE = "http://localhost:5984"
 
   val CONSUL_LOOKUP_METHOD_KEY = "broccoli.consul.lookup"
   val CONSUL_LOOKUP_METHOD_IP = "ip"

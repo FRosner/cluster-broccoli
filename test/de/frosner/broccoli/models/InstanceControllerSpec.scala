@@ -10,44 +10,48 @@ class InstanceControllerSpec extends Specification {
   "Instance 'anonymization' should" should {
 
     "remove one secret parameter value" in {
-      val originalInstance = Instance(
-        id = "i",
-        template = Template(
-          id = "t",
-          template = "{{id}} {{password}}",
-          description = "d",
-          parameterInfos = Map(
-            "password" -> ParameterInfo(
-              name = "secret password",
-              default = None,
-              secret = Some(true)
+      val originalInstance = InstanceWithStatus(
+        instance = Instance(
+          id = "i",
+          template = Template(
+            id = "t",
+            template = "{{id}} {{password}}",
+            description = "d",
+            parameterInfos = Map(
+              "password" -> ParameterInfo(
+                name = "secret password",
+                default = None,
+                secret = Some(true)
+              )
             )
+          ),
+          parameterValues = Map(
+            "id" -> "i",
+            "password" -> "noone knows"
           )
-        ),
-        parameterValues = Map(
-          "id" -> "i",
-          "password" -> "noone knows"
         ),
         status = InstanceStatus.Unknown,
         services = Map.empty
       )
-      val expectedInstance = Instance(
-        id = "i",
-        template = Template(
-          id = "t",
-          template = "{{id}} {{password}}",
-          description = "d",
-          parameterInfos = Map(
-            "password" -> ParameterInfo(
-              name = "secret password",
-              default = None,
-              secret = Some(true)
+      val expectedInstance = InstanceWithStatus(
+        instance = Instance(
+          id = "i",
+          template = Template(
+            id = "t",
+            template = "{{id}} {{password}}",
+            description = "d",
+            parameterInfos = Map(
+              "password" -> ParameterInfo(
+                name = "secret password",
+                default = None,
+                secret = Some(true)
+              )
             )
+          ),
+          parameterValues = Map(
+            "id" -> "i",
+            "password" -> null
           )
-        ),
-        parameterValues = Map(
-          "id" -> "i",
-          "password" -> null
         ),
         status = InstanceStatus.Unknown,
         services = Map.empty
@@ -56,54 +60,58 @@ class InstanceControllerSpec extends Specification {
     }
 
     "remove multiple secret parameter values" in {
-      val originalInstance = Instance(
-        id = "i",
-        template = Template(
-          id = "t",
-          template = "{{id}} {{password}}",
-          description = "d",
-          parameterInfos = Map(
-            "password" -> ParameterInfo(
-              name = "secret password",
-              default = None,
-              secret = Some(true)
-            ),
-            "id" -> ParameterInfo(
-              name = "secret id",
-              default = None,
-              secret = Some(true)
+      val originalInstance = InstanceWithStatus(
+        instance = Instance(
+          id = "i",
+          template = Template(
+            id = "t",
+            template = "{{id}} {{password}}",
+            description = "d",
+            parameterInfos = Map(
+              "password" -> ParameterInfo(
+                name = "secret password",
+                default = None,
+                secret = Some(true)
+              ),
+              "id" -> ParameterInfo(
+                name = "secret id",
+                default = None,
+                secret = Some(true)
+              )
             )
+          ),
+          parameterValues = Map(
+            "id" -> "i",
+            "password" -> "noone knows"
           )
-        ),
-        parameterValues = Map(
-          "id" -> "i",
-          "password" -> "noone knows"
         ),
         status = InstanceStatus.Unknown,
         services = Map.empty
       )
-      val expectedInstance = Instance(
-        id = "i",
-        template = Template(
-          id = "t",
-          template = "{{id}} {{password}}",
-          description = "d",
-          parameterInfos = Map(
-            "password" -> ParameterInfo(
-              name = "secret password",
-              default = None,
-              secret = Some(true)
-            ),
-            "id" -> ParameterInfo(
-              name = "secret id",
-              default = None,
-              secret = Some(true)
+      val expectedInstance = InstanceWithStatus(
+        instance = Instance(
+          id = "i",
+          template = Template(
+            id = "t",
+            template = "{{id}} {{password}}",
+            description = "d",
+            parameterInfos = Map(
+              "password" -> ParameterInfo(
+                name = "secret password",
+                default = None,
+                secret = Some(true)
+              ),
+              "id" -> ParameterInfo(
+                name = "secret id",
+                default = None,
+                secret = Some(true)
+              )
             )
+          ),
+          parameterValues = Map(
+            "id" -> null,
+            "password" -> null
           )
-        ),
-        parameterValues = Map(
-          "id" -> null,
-          "password" -> null
         ),
         status = InstanceStatus.Unknown,
         services = Map.empty

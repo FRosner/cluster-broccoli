@@ -7,10 +7,8 @@ import play.api.libs.functional.syntax._
 import scala.util.Try
 
 case class Instance(id: String,
-                    var template: Template,
-                    var parameterValues: Map[String, String],
-                    var status: InstanceStatus,
-                    var services: Map[String, Service]) extends Serializable {
+                    template: Template,
+                    parameterValues: Map[String, String]) extends Serializable {
 
   def requireParameterValueConsistency(parameterValues: Map[String, String], template: Template) = {
     val realParametersWithValues = parameterValues.keySet ++ template.parameterInfos.flatMap {
@@ -29,20 +27,25 @@ case class Instance(id: String,
       requireParameterValueConsistency(newParameterValues, template)
       require(newParameterValues("id") == parameterValues("id"), s"The parameter value 'id' must not be changed.")
 
-      this.parameterValues = newParameterValues
-      this
+      Instance(
+        id = this.id,
+        template = this.template,
+        parameterValues = newParameterValues
+      )
     }
   }
 
   def updateTemplate(newTemplate: Template, newParameterValues: Map[String, String]): Try[Instance] = {
-    Try {
-      val originalTemplate = this.template
-      this.template = newTemplate
-      val tryUpdate = updateParameterValues(newParameterValues)
-      if (tryUpdate.isFailure)
-        this.template = originalTemplate
-      tryUpdate
-    }.flatten
+    Try{
+      requireParameterValueConsistency(newParameterValues, newTemplate)
+      require(newParameterValues("id") == parameterValues("id"), s"The parameter value 'id' must not be changed.")
+
+      Instance(
+        id = this.id,
+        template = newTemplate,
+        parameterValues = newParameterValues
+      )
+    }
   }
 
   def templateJson: JsValue = {
