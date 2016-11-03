@@ -1,18 +1,18 @@
 angular.module('broccoli', ['restangular', 'ui.bootstrap'])
-.controller('MainController',['Restangular','crud_service','$uibModal','$scope','$rootScope','$timeout', function(Restangular, crud_service, $uibModal, $scope, $rootScope, $timeout) {
+.controller('MainController',function(Restangular, AboutService, TemplateService, InstanceService, $scope, $rootScope, $timeout) {
 
-    var vm = this;
-    vm.templates = crud_service.updateTemplates();
-    
+    var vm = this;    
+    vm.templates = {};    
+    vm.about = {}
+
+    $rootScope.broccoliReachable = true;
     $rootScope.dismissRestangularError = function() {
-      console.log("dismiss");
       $rootScope.restangularError = null;
     };
 
     Restangular.setBaseUrl("/api/v1");
 
-    vm.about = {}
-    Restangular.one("about").get().then(function(about) {
+    AboutService.getStatus().then(function(about) {
       vm.about = about;
     });
 
@@ -24,15 +24,33 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
       }
       return false;
     });
+
+    function refreshTemplates() {      
+      TemplateService.getTemplates().then(function(templates) {
+        var templates = templates;        
+        templates.forEach(function(template) {         
+          template.instances = {};
+          vm.templates[template.id] = template;
+          refreshInstances(template);
+          $scope.templates = templates;
+        });
+      });
+    }
+
+  function refreshInstances(template) {
+      InstanceService.getInstances(template).then(function(instances) {
+        $scope.instances = instances;
+        $rootScope.broccoliReachable = true;
+        template.instances = {};
+        instances.forEach(function(instance) {
+        template.instances[instance.id] = instance;
+        return template.instances;
+        });
+      });
+      $timeout(function(){
+        refreshInstances(template);
+      }, 1000);
+    }
     
-    vm.deleteInstance = crud_service.deleteInstance;
-
-    $scope.submitStatus = crud_service.submitStatus;    
-
-    vm.createInstance = crud_service.createInstance;
-    
-    vm.editInstance = crud_service.editInstance;
-
-    crud_service.updateTemplates();
-   
-  }]);
+    refreshTemplates();   
+  });
