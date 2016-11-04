@@ -125,12 +125,9 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
             templateSelector = maybeTemplateSelector
           )
           val eventuallyMaybeExistingAndChangedInstance = instanceService.ask(update).mapTo[Try[InstanceWithStatus]]
-          eventuallyMaybeExistingAndChangedInstance.map { maybeChangedInstance =>
-            if (maybeChangedInstance.isSuccess) {
-              Ok(Json.toJson(maybeChangedInstance.get))
-            } else {
-              Status(400)(s"Invalid request to update an instance: ${maybeChangedInstance.failed.get}")
-            }
+          eventuallyMaybeExistingAndChangedInstance.map {
+            case Success(changedInstance) => Ok(Json.toJson(changedInstance))
+            case Failure(throwable) => Status(404)(s"Invalid request to update an instance: ${throwable}")
           }
         }
       }.getOrElse(Future(Status(400)("Expected JSON data")))
