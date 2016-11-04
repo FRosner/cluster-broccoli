@@ -6,7 +6,6 @@ jdk:
   - oraclejdk8
 script:
   - uname -r
-  - set -e
   - sbt test
   - . prepare-docker-builds
   - docker build -t frosner/cluster-broccoli-test docker/test/
