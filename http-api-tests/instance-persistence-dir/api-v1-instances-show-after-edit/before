@@ -12,5 +12,5 @@ sleep $BROCCOLI_SLEEP_SHORT
 docker run -d --net host \
   -v /tmp/instances:/instances \
   frosner/cluster-broccoli-test \
-  /cluster-broccoli-dist/bin/cluster-broccoli > cluster-broccoli.did
+  cluster-broccoli > cluster-broccoli.did
 sleep $BROCCOLI_SLEEP_MEDIUM
