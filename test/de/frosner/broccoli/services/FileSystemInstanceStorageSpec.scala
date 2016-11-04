@@ -2,6 +2,7 @@ package de.frosner.broccoli.services
 
 import java.io.{File, FileNotFoundException, FileOutputStream, PrintStream}
 import java.lang.IllegalArgumentException
+import java.nio.file.Paths
 import java.util.UUID
 
 import com.fasterxml.jackson.core.JsonParseException
@@ -16,7 +17,8 @@ import scala.util.{Failure, Success, Try}
 class FileSystemInstanceStorageSpec extends Specification {
 
   val testRoot = new File("test/resources/de/frosner/broccoli/services/FileSystemInstanceStorageSpec")
-  require(testRoot.isDirectory && testRoot.canRead && testRoot.canWrite)
+  require(testRoot.isDirectory && testRoot.canRead && testRoot.canWrite,
+    s"Cannot use '$testRoot' properly. Current working dir is '${Paths.get("").toAbsolutePath()}'.")
 
   def usingTempFolder[T](f: File => T): T = {
     val tempFolder = new File(testRoot, UUID.randomUUID().toString)
