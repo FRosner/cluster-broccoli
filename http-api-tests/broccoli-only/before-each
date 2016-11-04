@@ -1,3 +1,4 @@
 #!/bin/bash
 docker run -d --net host frosner/cluster-broccoli-test cluster-broccoli > cluster-broccoli.did
 sleep $BROCCOLI_SLEEP_MEDIUM
+docker logs $(cat cluster-broccoli.did) 2>&1 > /dev/null | grep "Listening for HTTP" || echo "Broccoli did not start, yet"
