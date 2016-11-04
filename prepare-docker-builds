@@ -27,3 +27,5 @@ if [ -z "$BROCCOLI_SLEEP_SHORT" ]; then
   export BROCCOLI_SLEEP_SHORT=1
 fi
 echo '$BROCCOLI_SLEEP_SHORT'="$BROCCOLI_SLEEP_SHORT"
+
+set +e
