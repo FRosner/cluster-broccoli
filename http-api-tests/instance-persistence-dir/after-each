@@ -1,3 +1,3 @@
 #!/bin/bash
 docker stop $(cat cluster-broccoli.did)
-rm -rf $(pwd)/instances
+rm -rf /tmp/instances
