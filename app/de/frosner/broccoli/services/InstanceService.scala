@@ -74,7 +74,9 @@ class InstanceService @Inject()(templateService: TemplateService,
 
     val instanceStorageUrl = {
       if (configuration.getString("broccoli.instancesFile").isDefined) Logger.warn(s"broccoli.instancesDir ignored. Use ${conf.INSTANCES_STORAGE_URL_KEY} instead.")
-      configuration.getString(conf.INSTANCES_STORAGE_URL_KEY).getOrElse(conf.INSTANCES_STORAGE_URL_DEFAULT_FS)
+      val url = configuration.getString(conf.INSTANCES_STORAGE_URL_KEY).getOrElse(conf.INSTANCES_STORAGE_URL_DEFAULT_FS)
+      Logger.info(s"${conf.INSTANCES_STORAGE_URL_KEY}=$url")
+      url
     }
 
     instanceStorageType match {
