@@ -15,8 +15,8 @@ class InstanceStorageSpec extends Specification {
   "Any instance storage" should {
 
     def testStorage = new InstanceStorage {
-      override def readInstancesImpl: Try[Iterable[Instance]] = Failure(new Exception())
-      override def readInstancesImpl(idFilter: (String) => Boolean): Try[Iterable[Instance]] = Failure(new Exception())
+      protected override def readInstancesImpl(): Try[Set[Instance]] = Failure(new Exception())
+      override def readInstancesImpl(idFilter: (String) => Boolean): Try[Set[Instance]] = Failure(new Exception())
       override def readInstanceImpl(id: String): Try[Instance] = Failure(new Exception())
       override def deleteInstanceImpl(toDelete: Instance): Try[Instance] = Failure(new Exception())
       override def writeInstanceImpl(instance: Instance): Try[Instance] = Failure(new Exception())

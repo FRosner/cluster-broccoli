@@ -50,12 +50,12 @@ case class FileSystemInstanceStorage(storageDirectory: File, prefix: String) ext
   }
 
   @volatile
-  override def readInstancesImpl: Try[Iterable[Instance]] = {
+  protected override def readInstancesImpl(): Try[Set[Instance]] = {
     readInstances(_ => true)
   }
 
   @volatile
-  override def readInstancesImpl(idFilter: String => Boolean): Try[Iterable[Instance]] = {
+  override def readInstancesImpl(idFilter: String => Boolean): Try[Set[Instance]] = {
     val instanceIds = Try {
       val instanceFiles = storageDirectory.listFiles(new FileFilter {
         override def accept(pathname: File): Boolean = {
@@ -72,7 +72,7 @@ case class FileSystemInstanceStorage(storageDirectory: File, prefix: String) ext
         case Success(instance) => instance
         case Failure(throwable) => throw throwable
       }
-    })
+    }.toSet)
   }
 
   @volatile

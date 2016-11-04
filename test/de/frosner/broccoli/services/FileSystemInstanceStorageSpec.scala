@@ -142,7 +142,7 @@ class FileSystemInstanceStorageSpec extends Specification {
         storage.writeInstance(instance)
         storage.writeInstance(instance2)
 
-        storage.readInstances === Success(Iterable(instance, instance2))
+        storage.readInstances === Success(Set(instance, instance2))
       }
     }
 
@@ -153,7 +153,7 @@ class FileSystemInstanceStorageSpec extends Specification {
         storage.writeInstance(instance)
         storage.writeInstance(instance2)
 
-        storage.readInstances(_.endsWith("2")) === Success(Iterable(instance2))
+        storage.readInstances(_.endsWith("2")) === Success(Set(instance2))
       }
     }
 
@@ -162,7 +162,7 @@ class FileSystemInstanceStorageSpec extends Specification {
         val storage = FileSystemInstanceStorage(folder, "")
         val newFile = new File(folder, "notJson.exe")
         newFile.createNewFile()
-        storage.readInstances === Success(Iterable.empty[Instance])
+        storage.readInstances === Success(Set.empty[Instance])
       }
     }
 
@@ -174,7 +174,7 @@ class FileSystemInstanceStorageSpec extends Specification {
 
         val storage2 = FileSystemInstanceStorage(folder, "notmatchingprefix")
 
-        storage2.readInstances === Success(Iterable.empty)
+        storage2.readInstances === Success(Set.empty)
       }
     }
 

@@ -41,22 +41,22 @@ trait InstanceStorage {
   /**
     * Reads all instances.
     */
-  def readInstances: Try[Iterable[Instance]] = ifNotClosed {
+  def readInstances(): Try[Set[Instance]] = ifNotClosed {
     readInstancesImpl
   }
 
-  protected def readInstancesImpl: Try[Iterable[Instance]]
+  protected def readInstancesImpl: Try[Set[Instance]]
 
 
 
   /**
     * Reads all instances whose IDs match the given filter.
     */
-  def readInstances(idFilter: String => Boolean): Try[Iterable[Instance]] = ifNotClosed {
+  def readInstances(idFilter: String => Boolean): Try[Set[Instance]] = ifNotClosed {
     readInstancesImpl(idFilter)
   }
 
-  protected def readInstancesImpl(idFilter: String => Boolean): Try[Iterable[Instance]]
+  protected def readInstancesImpl(idFilter: String => Boolean): Try[Set[Instance]]
 
   /**
     * Persists an instance.
