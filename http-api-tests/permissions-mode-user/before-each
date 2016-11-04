@@ -2,3 +2,4 @@
 docker run -d --net host frosner/cluster-broccoli-test \
   /cluster-broccoli-dist/bin/cluster-broccoli -Dbroccoli.permissions.mode=user > cluster-broccoli.did
 sleep $BROCCOLI_SLEEP_MEDIUM
+curl -s localhost:9000 > /dev/null && echo "Broccoli started successfully" || echo "Broccoli did not start, yet"
