@@ -56,7 +56,7 @@ class InstanceService @Inject()(templateService: TemplateService,
 
   val nomadJobPrefix = {
     val prefix = conf.getNomadJobPrefix(configuration)
-    Logger.info(s"Using ${conf.NOMAD_JOB_PREFIX_KEY}=$prefix")
+    Logger.info(s"${conf.NOMAD_JOB_PREFIX_KEY}=$prefix")
     prefix
   }
 
