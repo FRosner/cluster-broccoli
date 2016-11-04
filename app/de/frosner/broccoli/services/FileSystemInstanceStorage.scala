@@ -14,7 +14,7 @@ case class FileSystemInstanceStorage(storageDirectory: File, prefix: String) ext
   import Instance.instancePersistenceWrites
   import Instance.instancePersistenceReads
 
-  require(storageDirectory.isDirectory && storageDirectory.canWrite, "'storageDirectory' needs to be a writable directory")
+  require(storageDirectory.isDirectory && storageDirectory.canWrite, s"'${storageDirectory}' needs to be a writable directory")
   private val lock = new File(storageDirectory, ".lock")
   Logger.info(s"Locking $storageDirectory ($lock)")
   if (!lock.createNewFile()) {

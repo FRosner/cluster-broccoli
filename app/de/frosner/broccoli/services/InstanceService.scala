@@ -78,7 +78,16 @@ class InstanceService @Inject()(templateService: TemplateService,
     }
 
     instanceStorageType match {
-      case conf.INSTANCES_STORAGE_TYPE_FS => FileSystemInstanceStorage(new File(instanceStorageUrl), nomadJobPrefix)
+      case conf.INSTANCES_STORAGE_TYPE_FS => {
+        val maybeStorage = Try(FileSystemInstanceStorage(new File(instanceStorageUrl), nomadJobPrefix))
+        maybeStorage match {
+          case Success(storage) => storage
+          case Failure(throwable) =>
+            Logger.error(s"Cannot start file system instance storage: ${throwable.toString()})")
+            System.exit(1)
+            throw throwable
+        }
+      }
       case conf.INSTANCES_STORAGE_TYPE_COUCHDB => ???
       case default => throw new IllegalStateException(s"Illegal storage type '${instanceStorageType}")
     }
