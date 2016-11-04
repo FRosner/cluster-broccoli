@@ -1,5 +1,6 @@
 package de.frosner.broccoli.controllers
 
+import java.io.FileNotFoundException
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Named}
 
@@ -127,7 +128,9 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
           val eventuallyMaybeExistingAndChangedInstance = instanceService.ask(update).mapTo[Try[InstanceWithStatus]]
           eventuallyMaybeExistingAndChangedInstance.map {
             case Success(changedInstance) => Ok(Json.toJson(changedInstance))
-            case Failure(throwable) => Status(404)(s"Invalid request to update an instance: ${throwable}")
+            case Failure(throwable: FileNotFoundException) => Status(404)(s"Instance not found: ${throwable}")
+            case Failure(throwable: IllegalArgumentException) => Status(400)(s"Invalid request to update an instance: ${throwable}")
+            case Failure(throwable) => Status(500)(s"Something went wrong when updating the instance: ${throwable}")
           }
         }
       }.getOrElse(Future(Status(400)("Expected JSON data")))
