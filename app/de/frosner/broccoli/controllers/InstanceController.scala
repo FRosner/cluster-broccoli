@@ -13,7 +13,7 @@ import de.frosner.broccoli.models.{Instance, InstanceCreation, InstanceStatus, I
 import de.frosner.broccoli.conf
 import Instance.instanceApiWrites
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
-import de.frosner.broccoli.services.{InstanceService, PermissionsService}
+import de.frosner.broccoli.services.{InstanceService, PermissionsService, TemplateNotFoundException}
 import de.frosner.broccoli.services.InstanceService._
 import play.api.Logger
 import play.api.libs.json.{JsObject, JsString, Json}
@@ -128,9 +128,10 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
           val eventuallyMaybeExistingAndChangedInstance = instanceService.ask(update).mapTo[Try[InstanceWithStatus]]
           eventuallyMaybeExistingAndChangedInstance.map {
             case Success(changedInstance) => Ok(Json.toJson(changedInstance))
-            case Failure(throwable: FileNotFoundException) => Status(404)(s"Instance not found: ${throwable}")
-            case Failure(throwable: IllegalArgumentException) => Status(400)(s"Invalid request to update an instance: ${throwable}")
-            case Failure(throwable) => Status(500)(s"Something went wrong when updating the instance: ${throwable}")
+            case Failure(throwable: FileNotFoundException) => Status(404)(s"Instance not found: $throwable")
+            case Failure(throwable: IllegalArgumentException) => Status(400)(s"Invalid request to update an instance: $throwable")
+            case Failure(throwable: TemplateNotFoundException) => Status(400)(s"Invalid request to update an instance: $throwable")
+            case Failure(throwable) => Status(500)(s"Something went wrong when updating the instance: $throwable")
           }
         }
       }.getOrElse(Future(Status(400)("Expected JSON data")))
