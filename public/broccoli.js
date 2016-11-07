@@ -1,152 +1,57 @@
 angular.module('broccoli', ['restangular', 'ui.bootstrap'])
-  .controller('MainController', function(Restangular, $uibModal, $scope, $rootScope, $timeout) {
-    var vm = this;
-    vm.templates = {};
-    $rootScope.broccoliReachable = true;
-    $rootScope.dismissRestangularError = function() {
-      console.log("dismiss");
-      $rootScope.restangularError = null;
-    };
+    .controller('MainController', function(Restangular, AboutService, TemplateService, InstanceService, $scope, $rootScope, $timeout) {
+        var vm = this;
+        vm.templates = {};
+        vm.about = {}
 
-    Restangular.setBaseUrl("/api/v1");
-
-    vm.about = {}
-    Restangular.one("about").get().then(function(about) {
-      vm.about = about;
-    });
-
-    Restangular.setErrorInterceptor(function(response, deferred, responseHandler) {
-      if (response.status == -1) {
-        $rootScope.broccoliReachable = false;
-      } else {
-        $rootScope.restangularError = response.statusText + " (" + response.status + "): " + response.data;
-      }
-      return false;
-    });
-
-    function updateInstances(template) {
-      Restangular.all("instances").getList({ "templateId" : template.id }).then(function(instances) {
         $rootScope.broccoliReachable = true;
-        template.instances = {};
-        instances.forEach(function(instance) {
-          template.instances[instance.id] = instance;
-        });
-      });
-      $timeout(function(){
-        updateInstances(template);
-      }, 1000);
-    }
-
-    function updateTemplates() {
-      console.log("Updating templates")
-      Restangular.all("templates").getList().then(function(templates) {
-        templates.forEach(function(template) {
-          template.instances = {};
-          vm.templates[template.id] = template;
-          updateInstances(template);
-        });
-      });
-    }
-
-    function submitStatus(instance, status) {
-      Restangular.all("instances")
-        .customPOST({ "status": status }, instance.id, {}, {})
-        .then(function(updatedInstance) {
-          $rootScope.restangularError = null;
-          for (i in updatedInstance) {
-            instance[i] = updatedInstance[i];
-          };
-        });
-    }
-
-    function deleteInstance(template, instance) {
-      $rootScope.restangularError = null;
-      delete template.instances[instance.id];
-      instance.remove();
-    }
-    vm.deleteInstance = deleteInstance;
-
-    $scope.submitStatus = submitStatus;
-
-    function createInstance(template) {
-      var modalInstance = $uibModal.open({
-        animation: true,
-        templateUrl: '/assets/newInstanceModal.html',
-        controller: 'NewInstanceCtrl',
-        controllerAs: 'instCtrl',
-        size: undefined,
-        resolve: {
-          template: function () {
-            return template;
-          },
-          instance: function () {
-            return null;
-          },
-          templates: function () {
-            return null;
-          }
-        }
-      });
-
-      modalInstance.result.then(function (result) {
-        var paramsToValue = result.paramsToValue;
-        Restangular.all("instances").post({
-          templateId: template.id,
-          parameters: paramsToValue
-        }).then(function(result) {
-          $rootScope.restangularError = null;
-        }, function(error) {
-          console.log("There was an error creating");
-          console.log(error);
-        });
-      });
-    };
-    vm.createInstance = createInstance;
-
-    function editInstance(template, instance) {
-      var modalInstance = $uibModal.open({
-        animation: true,
-        templateUrl: '/assets/newInstanceModal.html',
-        controller: 'NewInstanceCtrl',
-        controllerAs: 'instCtrl',
-        size: undefined,
-        resolve: {
-          template: function () {
-            return template;
-          },
-          instance: function () {
-            return instance;
-          },
-          templates: function () {
-            return vm.templates;
-          }
-        }
-      });
-
-      modalInstance.result.then(function (result) {
-        var paramsToValue = result.paramsToValue;
-        var newInstance = result.instance;
-        var parameterValuesForSelectedTemplate = {};
-        var postData = {};
-        if (result.selectedTemplate != null && result.selectedTemplate != "unchanged") {
-          postData['selectedTemplate'] = result.selectedTemplate;
-          vm.templates[result.selectedTemplate].parameters.forEach(function(parameter) {
-            parameterValuesForSelectedTemplate[parameter] = newInstance.parameterValues[parameter];
-          });
-          newInstance.parameterValues = parameterValuesForSelectedTemplate;
-        }
-        postData.parameterValues = newInstance.parameterValues;
-        Restangular.all("instances")
-          .customPOST(postData, newInstance.id, {}, {})
-          .then(function(result) {
+        $rootScope.dismissRestangularError = function() {
             $rootScope.restangularError = null;
-          }, function(error) {
-            console.log("There was an error creating");
-            console.log(error);
-          });
-      });
-    };
-    vm.editInstance = editInstance;
+        };
 
-    updateTemplates();
-  });
+        Restangular.setBaseUrl("/api/v1");
+
+        AboutService.getStatus().then(function(about) {
+            vm.about = about;
+        });
+
+        Restangular.setErrorInterceptor(function(response, deferred, responseHandler) {
+            if (response.status == -1) {
+                $rootScope.broccoliReachable = false;
+            } else {
+                $rootScope.restangularError = response.statusText + " (" + response.status + "): " + response.data;
+            }
+            return false;
+        });
+
+        function refreshTemplates() {
+            TemplateService.getTemplates().then(function(templates) {
+                var templates = templates;
+                templates.forEach(function(template) {
+                    template.instances = {};
+                    vm.templates[template.id] = template;
+                    refreshInstances(template);
+                    $scope.templates = templates;
+                });
+            });
+        }
+
+        function refreshInstances(template) {
+            InstanceService.getInstances(template).then(function(instances) {
+                $scope.instances = instances;
+                $rootScope.broccoliReachable = true;
+                template.instances = {};
+                instances.forEach(function(instance) {
+                    template.instances[instance.id] = instance;
+                    return template.instances;
+                });
+            });
+            $timeout(function() {
+                refreshInstances(template);
+            }, 1000);
+        }
+
+        refreshTemplates();
+    });
+    
+        

@@ -9,57 +9,8 @@
     <meta name="author" content="" />
     <!-- Le styles -->
     <link data-require="bootstrap-css" data-semver="3.3.6" rel="stylesheet" href="/assets/css/bootstrap.css" />
-    <style>
-        body {
-            padding-top: 20px;
-        }
-
-        @media (max-width: 979px) {
-            /* Remove any padding from the body */
-            body {
-                padding-top: 0;
-            }
-        }
-
-        .instance-button {
-          margin-right: 10px;
-          height: 1em;
-          display: inline-block;
-        }
-
-        .service-link {
-          margin-right: 10px;
-        }
-
-        .service-status-unknown {
-          color: #6e808e;
-        }
-
-        .service-status-passing:link, .service-status-passing:visited, .service-status-passing:hover, .service-status-passing:active {
-          color: #098552;
-        }
-
-        .service-status-failing:link, .service-status-failing:visited, .service-status-failing:hover, .service-status-failing:active {
-          color: #b94a48;
-        }
-
-        .job-status-label {
-          width: 80px;
-          display: inline-block;
-          font-size: 100%;
-        }
-
-        .instance-input-group {
-          margin-top: 10px;
-          margin-bottom: 10px;
-        }
-
-        [ng-click],
-        [data-ng-click],
-        [x-ng-click] {
-          cursor: pointer;
-        }
-    </style>
+    <link rel="stylesheet" href="/assets/css/index.css" />
+    
     <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
       <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
@@ -79,7 +30,11 @@
     <script type="text/javascript" src="/assets/js/restangular.min.js"></script>
       <!-- restangular STOP -->
     <script src="/assets/broccoli.js"></script>
+    <script src="/assets/TemplateService.js"></script>
+    <script src="/assets/InstanceService.js"></script>
+    <script src="/assets/AboutService.js"></script>
     <script src="/assets/newInstanceModal.js"></script>
+    <script src="/assets/ModifyInstances.js"></script>
 </head>
 
 <body ng-controller="MainController as main">
@@ -97,11 +52,11 @@
       </div>
         <div class="alert alert-danger" role="alert" ng-if="!broccoliReachable">Cluster Broccoli server is not reachable!</div>
         <div class="row" ng-repeat="template in main.templates" ng-if="broccoliReachable">
-            <div class="col-md-12" style="margin-top: 0px;">
+            <div ng-controller = "ModifyInstanceCntrl as modify_instance" class="col-md-12" style="margin-top: 0px;">
               <h2>
-                <img ng-init="itemsrc='assets/plus.svg'"
+                <img ng-init="itemsrc='assets/images/plus.svg'"
                      ng-src="{{itemsrc}}"
-                     ng-click="main.createInstance(template)"
+                     ng-click="modify_instance.createInstance(template)"
                      class="img-responsive"
                      data-holder-rendered="true"
                      style="margin-right: 10px; height: 20px; display: inline-block;">
@@ -113,17 +68,17 @@
                 {{template.description}}
               </p>
             </div>
-            <div class="col-md-12" style="margin-top: 20px;">
+            <div ng-controller = "ModifyInstanceCntrl as modify_instance" class="col-md-12" style="margin-top: 20px;">
                 <table class="table table">
                   <tbody>
                       <tr ng-repeat="instance in template.instances">
                         <td class="col-md-4" scope="row">
-                          <img ng-src="assets/minus.svg"
-                               ng-click="main.deleteInstance(template, instance)"
+                          <img ng-src="assets/images/minus.svg"
+                               ng-click="modify_instance.deleteInstance(template, instance)"
                                class="img-responsive instance-button"
                                data-holder-rendered="true">
-                          <img ng-src="assets/edit.svg"
-                               ng-click="main.editInstance(template, instance)"
+                          <img ng-src="assets/images/edit.svg"
+                               ng-click="modify_instance.editInstance(template, instance)"
                                class="img-responsive instance-button"
                                data-holder-rendered="true">
                           {{instance.id}}
