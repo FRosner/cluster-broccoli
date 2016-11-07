@@ -9,6 +9,8 @@ before_script:
   - sudo apt-get install nodejs
   - sudo apt-get install npm
   - npm install karma --save-dev
+  - npm install karma-jasmine --save-dev
+  - npm install karma-phantomjs-launcher --save-dev
 
 script:
   - uname -r
