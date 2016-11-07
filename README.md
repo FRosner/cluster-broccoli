@@ -38,6 +38,7 @@ Cluster Broccoli provides a RESTful HTTP API. You can control it using curl, wri
 
 - Nomad (HTTP API v1)
 - Consul (HTTP API v1)
+- CouchDB 2.x (persistence layer)
 - Cluster Broccoli Nomad Job + Docker Image (for running the Play application)
 
 ### Using the Production Docker Image
@@ -75,6 +76,6 @@ The following configuration properties are supported.
 | `broccoli.templates.storage.type` | Storage type for templates. Currently only `fs` supported. | `fs` |
 | `broccoli.templates.storage.url` | Storage URL for templates. If storage type is `fs`, this is the directory to load templates from. | `templates` |
 | `broccoli.instances.storage.type` | Storage type for instances. `fs` and `couchdb` are supported. | `fs` |
-| `broccoli.instances.storage.url` | Storage URL for instances. If storage type is `fs`, this is the directory to load/persist instances from/to. If you select `couchdb`, please specify the HTTP endpoint of your database. | `instances` (for `fs` type) / `http://localhost:5984` (for `couchdb` type) |
+| `broccoli.instances.storage.url` | Storage URL for instances. If storage type is `fs`, this is the directory to load/persist instances from/to. If you select `couchdb`, please specify the HTTP endpoint of your database. | `instances` (for `fs` type) / `http://localhost:5984/broccoli_instances` (for `couchdb` type) |
 | `broccoli.permissions.mode` | Determines the actions that can be performed with the Broccoli instance. `administrator` (full functionality), `operator` (starting, stopping instances) or `user` (inspecting instance state) | `administrator` |
 | `http.port` | Port to bind the HTTP interface to | `9000` |

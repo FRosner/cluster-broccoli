@@ -74,24 +74,29 @@ class InstanceService @Inject()(templateService: TemplateService,
 
     val instanceStorageUrl = {
       if (configuration.getString("broccoli.instancesFile").isDefined) Logger.warn(s"broccoli.instancesDir ignored. Use ${conf.INSTANCES_STORAGE_URL_KEY} instead.")
-      val url = configuration.getString(conf.INSTANCES_STORAGE_URL_KEY).getOrElse(conf.INSTANCES_STORAGE_URL_DEFAULT_FS)
+      val url = configuration.getString(conf.INSTANCES_STORAGE_URL_KEY).getOrElse { instanceStorageType match {
+        case conf.INSTANCES_STORAGE_TYPE_FS => conf.INSTANCES_STORAGE_URL_DEFAULT_FS
+        case conf.INSTANCES_STORAGE_TYPE_COUCHDB => conf.INSTANCES_STORAGE_URL_DEFAULT_COUCHDB
+      }}
       Logger.info(s"${conf.INSTANCES_STORAGE_URL_KEY}=$url")
       url
     }
 
-    instanceStorageType match {
+    val maybeInstanceStorage = instanceStorageType match {
       case conf.INSTANCES_STORAGE_TYPE_FS => {
-        val maybeStorage = Try(FileSystemInstanceStorage(new File(instanceStorageUrl), nomadJobPrefix))
-        maybeStorage match {
-          case Success(storage) => storage
-          case Failure(throwable) =>
-            Logger.error(s"Cannot start file system instance storage: ${throwable.toString()})")
-            System.exit(1)
-            throw throwable
-        }
+        Try(FileSystemInstanceStorage(new File(instanceStorageUrl), nomadJobPrefix))
       }
-      case conf.INSTANCES_STORAGE_TYPE_COUCHDB => ???
-      case default => throw new IllegalStateException(s"Illegal storage type '${instanceStorageType}")
+      case conf.INSTANCES_STORAGE_TYPE_COUCHDB => {
+        Try(CouchDBInstanceStorage(instanceStorageUrl, nomadJobPrefix, ws))
+      }
+      case default => throw new IllegalStateException(s"Illegal storage type '$instanceStorageType")
+    }
+    maybeInstanceStorage match {
+      case Success(storage) => storage
+      case Failure(throwable) =>
+        Logger.error(s"Cannot start instance storage: $throwable")
+        System.exit(1)
+        throw throwable
     }
   }
 

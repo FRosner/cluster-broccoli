@@ -29,7 +29,7 @@ package object conf {
 
   val INSTANCES_STORAGE_URL_KEY = "broccoli.instances.storage.url"
   val INSTANCES_STORAGE_URL_DEFAULT_FS = "instances"
-  val INSTANCES_STORAGE_URL_DEFAULT_COUCHBASE = "http://localhost:5984"
+  val INSTANCES_STORAGE_URL_DEFAULT_COUCHDB = "http://localhost:5984/broccoli_instances"
 
   val CONSUL_LOOKUP_METHOD_KEY = "broccoli.consul.lookup"
   val CONSUL_LOOKUP_METHOD_IP = "ip"

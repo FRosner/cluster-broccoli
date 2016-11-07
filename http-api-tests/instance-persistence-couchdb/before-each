@@ -1,0 +1,11 @@
+#!/bin/bash
+docker run -d --net host \
+  -v /tmp/instances:/instances \
+  frosner/cluster-broccoli-test \
+  /cluster-broccoli-dist/bin/cluster-broccoli \
+  -Dbroccoli.templates.storage.type=couchdb > cluster-broccoli.did
+
+docker pull couchdb
+docker run -d --net host couchdb > couchdb.did
+
+sleep $BROCCOLI_SLEEP_MEDIUM
