@@ -41,7 +41,7 @@ describe('Test Suite for InstanceService', function() {
             };
             httpBackend.whenPOST('/api/v1/instances').respond(instance);
             InstanceService.createInstance(template, params_posted).then(function(data) {
-                expect(Restangular.stripRestangular(data)).toEqual(instance);
+                expect(Restangular.stripRestangular(data)).toEqual(" ");
             });
             httpBackend.flush();
         });
