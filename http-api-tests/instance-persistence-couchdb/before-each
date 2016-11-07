@@ -10,3 +10,5 @@ docker run -d --net host \
   -Dbroccoli.instances.storage.type=couchdb > cluster-broccoli.did
 
 sleep $BROCCOLI_SLEEP_MEDIUM
+
+curl -s localhost:9000 > /dev/null && echo "Broccoli started successfully" || echo "Broccoli did not start, yet"
