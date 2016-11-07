@@ -16,7 +16,7 @@ import scala.util.{Failure, Success, Try}
 
 class FileSystemInstanceStorageSpec extends Specification {
 
-  val testRoot = new File("test/resources/de/frosner/broccoli/services/FileSystemInstanceStorageSpec")
+  val testRoot = new File("test/resources/de/frosner/broccoli/services")
   require(testRoot.isDirectory && testRoot.canRead && testRoot.canWrite,
     s"Cannot use '$testRoot' properly. Current working dir is '${Paths.get("").toAbsolutePath()}'.")
 
