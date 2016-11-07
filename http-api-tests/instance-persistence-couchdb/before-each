@@ -2,7 +2,7 @@
 docker run -d --net host \
   frosner/cluster-broccoli-test \
   cluster-broccoli \
-  -Dbroccoli.templates.storage.type=couchdb > cluster-broccoli.did
+  -Dbroccoli.instances.storage.type=couchdb > cluster-broccoli.did
 
 docker pull couchdb
 docker run -d --net host couchdb > couchdb.did

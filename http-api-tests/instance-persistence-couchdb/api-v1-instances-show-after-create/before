@@ -9,5 +9,5 @@ sleep $BROCCOLI_SLEEP_SHORT
 docker run -d --net host \
   frosner/cluster-broccoli-test \
   cluster-broccoli \
-  -Dbroccoli.templates.storage.type=couchdb > cluster-broccoli.did
+  -Dbroccoli.instances.storage.type=couchdb > cluster-broccoli.did
 sleep $BROCCOLI_SLEEP_MEDIUM
