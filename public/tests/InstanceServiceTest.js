@@ -1,105 +1,75 @@
-describe('Test Suite for InstanceService', function () {
-  
-  var Restangular, httpBackend, InstanceService;
+describe('Test Suite for InstanceService', function() {
 
-  var template = [
-    {
-      "id": "http-server",
-      "description": "A simple Python HTTP request handler. This class serves files from the current directory and below, directly mapping the directory structure to HTTP requests.",
-      "parameters": [
-        "id",
-        "cpu"
-      ],
-      "parameterInfos": {
-        "cpu": {
-          "name": "cpu",
-          "default": "100"
-        }
-      },
-      "version": "f88dbbdc8249b8e5075598e165aec527"
-    }
-  ]
+    var Restangular, httpBackend, InstanceService;
 
-  var created_instance = {
-    "id": "my-http",
-    "parameterValues": {
-      "id": "my-http",
-      "cpu": "250"
-    },
-    "status": "stopped",
-    "services": {},
-    "template": {
-      "id": "http-server",
-      "description": "A simple Python HTTP request handler. This class serves files from the current directory and below, directly mapping the directory structure to HTTP requests.",
-      "parameters": [
-        "id",
-        "cpu"
-      ],
-      "parameterInfos": {
-        "cpu": {
-          "name": "cpu",
-          "default": "100"
-        }
-      },
-      "version": "f88dbbdc8249b8e5075598e165aec527"
-    }
-  };
+    beforeEach(angular.mock.module('broccoli'));
 
-  var params_posted = {
-    "parameters":
-      {
-       "id": "my-http", 
-       "cpu": "250" 
-      }
-    };
-
-  beforeEach(angular.mock.module('broccoli'));
-
-  beforeEach(inject(function(_$httpBackend_, _Restangular_,_InstanceService_){
-      httpBackend = _$httpBackend_;      
-      Restangular = _Restangular_;
-      InstanceService = _InstanceService_;   
-      Restangular.setBaseUrl("/api/v1");    
+    beforeEach(inject(function(_$httpBackend_, _Restangular_, _InstanceService_) {
+        httpBackend = _$httpBackend_;
+        Restangular = _Restangular_;
+        InstanceService = _InstanceService_;
+        Restangular.setBaseUrl("/api/v1");
     }));
 
-  afterEach(function() {
-    httpBackend.verifyNoOutstandingExpectation();
-    httpBackend.verifyNoOutstandingRequest();
-  });
-
-  describe('InstanceService test', function(){
-
-    it('should retrieve all created instances', function(){
-        httpBackend.whenGET('/api/v1/instances').respond([created_instance]);
-        InstanceService.getInstances().then(function(data) {
-          expect(Restangular.stripRestangular(data)).toEqual([created_instance]);
-        });
-        httpBackend.flush();
-      });
-
-    it('should create instances', function(){
-      httpBackend.whenPOST('/api/v1/instances').respond(created_instance);
-      InstanceService.createInstance(template,params_posted).then(function(data) {
-        expect(Restangular.stripRestangular(data)).toEqual(created_instance);
-      });        
-        httpBackend.flush();
-      });
-
-    it('should submit status', function(){
-        httpBackend.whenPOST('/api/v1/instances/my-http').respond(created_instance);
-        InstanceService.submitStatus(created_instance,params_posted).then(function(data) {
-          expect(Restangular.stripRestangular(data)).toEqual(created_instance);
-      });
-         httpBackend.flush();
-      });
-
-    it('should edit Instance', function(){
-        httpBackend.whenPOST('/api/v1/instances/my-http').respond(created_instance);
-        InstanceService.editInstance(params_posted,created_instance ).then(function(data){
-          expect(Restangular.stripRestangular(data)).toEqual(created_instance);
-        });
-        httpBackend.flush();
-      });
+    afterEach(function() {
+        httpBackend.verifyNoOutstandingExpectation();
+        httpBackend.verifyNoOutstandingRequest();
     });
-  });
 
+    describe('InstanceService test', function() {
+
+        it('should retrieve all created instances', function() {
+            var instance = {
+                "id": "id"
+            };
+            httpBackend.whenGET('/api/v1/instances').respond([instance]);
+            InstanceService.getInstances().then(function(data) {
+                expect(Restangular.stripRestangular(data)).toEqual([instance]);
+            });
+            httpBackend.flush();
+        });
+
+        it('should create instances', function() {
+            var instance = {
+                "id": "id"
+            };
+            var template = [{
+                "id": "http-server"
+            }];
+            var params_posted = {
+                "params": "params"
+            };
+            httpBackend.whenPOST('/api/v1/instances').respond(instance);
+            InstanceService.createInstance(template, params_posted).then(function(data) {
+                expect(Restangular.stripRestangular(data)).toEqual(instance);
+            });
+            httpBackend.flush();
+        });
+
+        it('should submit status', function() {
+            var instance = {
+                "id": "id"
+            };
+            var status = "running";
+            httpBackend.whenPOST('/api/v1/instances/id').respond(instance);
+            InstanceService.submitStatus(instance, status).then(function(data) {
+                expect(Restangular.stripRestangular(data)).toEqual(instance);
+            });
+            httpBackend.flush();
+        });
+
+        it('should edit Instance', function() {
+            var instance = {
+                "id": "id"
+            };
+            var params_posted = {
+                "params": "params"
+            };
+            httpBackend.whenPOST('/api/v1/instances/id').respond(instance);
+            InstanceService.editInstance(params_posted, instance).then(function(data) {
+                expect(Restangular.stripRestangular(data)).toEqual(instance);
+            });
+            httpBackend.flush();
+        });
+    });
+});
