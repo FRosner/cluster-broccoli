@@ -40,10 +40,16 @@
 <body ng-controller="MainController as main">
     <div class="container">
       <nav class="navbar navbar-default">
-        <div class="container-fluid">
-        </div>
         <div class="navbar-header">
-          <span class="navbar-brand"><span style="margin-right: 10px;">{{main.about.project.name}}</span><small>{{main.about.project.version}}</small></span>
+          <span class="navbar-brand">{{main.about.project.name}}</span>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-left">
+            <li><a>{{main.about.project.version}}</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a>{{main.about.permissions.mode}}</a></li>
+          </ul>
         </div>
       </nav>
       <div class="alert alert-danger alert-dismissible" role="alert" ng-if="restangularError">
