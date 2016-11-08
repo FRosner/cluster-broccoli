@@ -75,7 +75,7 @@ The following configuration properties are supported.
 | `broccoli.polling.frequency` | Integer (seconds) to control the time between asking Nomad and Consul for job and service status. | `1` |
 | `broccoli.templates.storage.type` | Storage type for templates. Currently only `fs` supported. | `fs` |
 | `broccoli.templates.storage.url` | Storage URL for templates. If storage type is `fs`, this is the directory to load templates from. | `templates` |
-| `broccoli.instances.storage.type` | Storage type for instances. `fs` and `couchdb` are supported. | `fs` |
-| `broccoli.instances.storage.url` | Storage URL for instances. If storage type is `fs`, this is the directory to load/persist instances from/to. If you select `couchdb`, please specify the HTTP endpoint of your database. | `instances` (for `fs` type) / `http://localhost:5984/broccoli_instances` (for `couchdb` type) |
+| `broccoli.instances.storage.type` | Storage type for instances. `fs` and `couchdb` are supported. See the [instance documentation](https://github.com/FRosner/cluster-broccoli/wiki/Instances) for details. | `fs` |
+| `broccoli.instances.storage.url` | Storage URL for instances. See the [instance documentation](https://github.com/FRosner/cluster-broccoli/wiki/Instances) for details. | `instances` (`fs`) / `http://localhost:5984/broccoli_instances` (`couchdb`) |
 | `broccoli.permissions.mode` | Determines the actions that can be performed with the Broccoli instance. `administrator` (full functionality), `operator` (starting, stopping instances) or `user` (inspecting instance state) | `administrator` |
 | `http.port` | Port to bind the HTTP interface to | `9000` |
