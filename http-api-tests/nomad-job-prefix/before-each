@@ -3,6 +3,6 @@
 docker run -d --net host frosner/cluster-broccoli-test nomad > nomad.did
 sleep $BROCCOLI_SLEEP_MEDIUM
 docker run -d --net host frosner/cluster-broccoli-test \
-  /cluster-broccoli-dist/bin/cluster-broccoli -Dbroccoli.nomad.jobPrefix=dev > cluster-broccoli.did
+  /cluster-broccoli-dist/bin/cluster-broccoli -Dbroccoli.instances.prefix=dev > cluster-broccoli.did
 sleep $BROCCOLI_SLEEP_MEDIUM
 curl -s localhost:9000 > /dev/null && echo "Broccoli started successfully" || echo "Broccoli did not start, yet"
