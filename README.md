@@ -69,7 +69,7 @@ The following configuration properties are supported.
 | Property | Description | Default |
 | -------- | ----------- | ------- |
 | `broccoli.nomad.url` | Address of your nomad server | `http://localhost:4646` |
-| `broccoli.nomad.jobPrefix` | Allow only jobs with this prefix | ` ` (empty) |
+| `broccoli.instances.prefix` | Allow only jobs with this prefix | ` ` (empty) |
 | `broccoli.consul.url` | Address of your consul server | `http://localhost:8500` |
 | `broccoli.consul.lookup` | Lookup method used for consul. Options: `ip` or `dns` (recommended).| `ip` |
 | `broccoli.polling.frequency` | Integer (seconds) to control the time between asking Nomad and Consul for job and service status. | `1` |
