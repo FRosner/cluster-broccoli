@@ -5,6 +5,7 @@
 logs
 *.lock
 *run-*
+node_modules
 docker/test/cluster-broccoli-dist/
 docker/test/templates
 docker/prod/cluster-broccoli-dist/

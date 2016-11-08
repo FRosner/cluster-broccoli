@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+
+npm install karma --save-dev
+npm install jasmine-core --save-dev
+npm install karma-jasmine --save-dev
+npm install karma-phantomjs-launcher --save-dev
+npm install angular --save-dev
+npm install angular-mocks --save-dev
+
+set +e
