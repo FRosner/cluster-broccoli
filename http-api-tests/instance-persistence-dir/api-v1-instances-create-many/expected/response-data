@@ -4,9 +4,9 @@ actual_num_entries="$(cat $1 | jq '. | length')"
 expected_num_entries=500
 if [ "$actual_num_entries" -eq "$expected_num_entries" ]
 then
-  echo "\033[0;32mGot $expected_num_entries entries.\033[0m"
+  echo -e "\033[0;32mGot $expected_num_entries entries.\033[0m"
   exit 0
 else
-  echo "\033[0;31mExpected $expected_num_entries entries but got $actual_num_entries.\033[0m"
+  echo -e "\033[0;31mExpected $expected_num_entries entries but got $actual_num_entries.\033[0m"
   exit 1
 fi
