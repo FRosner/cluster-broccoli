@@ -1,5 +1,6 @@
 package de.frosner.broccoli.controllers
 
+import java.io.FileNotFoundException
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Named}
 
@@ -8,11 +9,11 @@ import akka.pattern.ask
 import akka.util.Timeout
 import de.frosner.broccoli.models.InstanceStatusJson._
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
-import de.frosner.broccoli.models.{Instance, InstanceCreation, InstanceStatus}
+import de.frosner.broccoli.models.{Instance, InstanceCreation, InstanceStatus, InstanceWithStatus}
 import de.frosner.broccoli.conf
 import Instance.instanceApiWrites
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
-import de.frosner.broccoli.services.{InstanceService, PermissionsService}
+import de.frosner.broccoli.services.{InstanceService, PermissionsService, TemplateNotFoundException}
 import de.frosner.broccoli.services.InstanceService._
 import play.api.Logger
 import play.api.libs.json.{JsObject, JsString, Json}
@@ -20,7 +21,7 @@ import play.api.mvc.{Action, Controller}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 class InstanceController @Inject() (@Named("instance-actor") instanceService: ActorRef,
                                     permissionsService: PermissionsService) extends Controller {
@@ -29,22 +30,25 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
   implicit val timeout: Timeout = Duration.create(5, TimeUnit.SECONDS)
 
   def list(maybeTemplateId: Option[String]) = Action.async {
-    val eventuallyInstances = instanceService.ask(GetInstances).mapTo[Iterable[Instance]]
+    val eventuallyInstances = instanceService.ask(GetInstances).mapTo[Try[Iterable[InstanceWithStatus]]]
     val eventuallyFilteredInstances = maybeTemplateId.map(
-      id => eventuallyInstances.map(_.filter(_.template.id == id))
+      id => eventuallyInstances.map(_.map(_.filter(_.instance.template.id == id)))
     ).getOrElse(eventuallyInstances)
     val eventuallyAnonymizedInstances = if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
       eventuallyFilteredInstances
     } else {
-      eventuallyFilteredInstances.map(_.map(InstanceController.removeSecretVariables))
+      eventuallyFilteredInstances.map(_.map(_.map(InstanceController.removeSecretVariables)))
     }
-    eventuallyAnonymizedInstances.map(filteredInstances => Ok(Json.toJson(filteredInstances)))
+    eventuallyAnonymizedInstances.map {
+      case Success(filteredInstances) => Ok(Json.toJson(filteredInstances))
+      case Failure(throwable) => NotFound(throwable.toString)
+    }
   }
 
   def show(id: String) = Action.async {
-    val eventuallyMaybeInstance = instanceService.ask(GetInstance(id)).mapTo[Option[Instance]]
+    val eventuallyMaybeInstance = instanceService.ask(GetInstance(id)).mapTo[Try[InstanceWithStatus]]
     eventuallyMaybeInstance.map {
-      _.find(_.id == id).map {
+      _.map {
         instance => Ok(Json.toJson{
           if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
             instance
@@ -52,9 +56,9 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
             InstanceController.removeSecretVariables(instance)
           }
         })
-      }.getOrElse {
-        NotFound
-      }
+      }.recover {
+        case throwable => NotFound(throwable.toString)
+      }.get
     }
   }
 
@@ -63,11 +67,11 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
       val maybeValidatedInstanceCreation = request.body.asJson.map(_.validate[InstanceCreation])
       maybeValidatedInstanceCreation.map { validatedInstanceCreation =>
         validatedInstanceCreation.map { instanceCreation =>
-          val eventuallyNewInstance = instanceService.ask(NewInstance(instanceCreation)).mapTo[Try[Instance]]
+          val eventuallyNewInstance = instanceService.ask(NewInstance(instanceCreation)).mapTo[Try[InstanceWithStatus]]
           eventuallyNewInstance.map { newInstance =>
-            newInstance.map { instance =>
-              Status(201)(Json.toJson(instance)).withHeaders(
-                LOCATION -> s"/api/v1/instances/${instance.id}" // TODO String constant
+            newInstance.map { instanceWithStatus =>
+              Status(201)(Json.toJson(instanceWithStatus)).withHeaders(
+                LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
               )
             }.recover {
               case error => Status(400)(error.getMessage)
@@ -121,15 +125,13 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
             parameterValuesUpdater = maybeParameterValuesUpdater,
             templateSelector = maybeTemplateSelector
           )
-          val eventuallyMaybeExistingAndChangedInstance = instanceService.ask(update).mapTo[Option[Try[Instance]]]
-          eventuallyMaybeExistingAndChangedInstance.map { maybeExistingAndChangedInstance =>
-            maybeExistingAndChangedInstance.map { maybeChangedInstance =>
-              if (maybeChangedInstance.isSuccess) {
-                Ok(Json.toJson(maybeChangedInstance.get))
-              } else {
-                Status(400)(s"Invalid request to update an instance: ${maybeChangedInstance.failed.get}")
-              }
-            }.getOrElse(NotFound)
+          val eventuallyMaybeExistingAndChangedInstance = instanceService.ask(update).mapTo[Try[InstanceWithStatus]]
+          eventuallyMaybeExistingAndChangedInstance.map {
+            case Success(changedInstance) => Ok(Json.toJson(changedInstance))
+            case Failure(throwable: FileNotFoundException) => Status(404)(s"Instance not found: $throwable")
+            case Failure(throwable: IllegalArgumentException) => Status(400)(s"Invalid request to update an instance: $throwable")
+            case Failure(throwable: TemplateNotFoundException) => Status(400)(s"Invalid request to update an instance: $throwable")
+            case Failure(throwable) => Status(500)(s"Something went wrong when updating the instance: $throwable")
           }
         }
       }.getOrElse(Future(Status(400)("Expected JSON data")))
@@ -138,12 +140,13 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
 
   def delete(id: String) = Action.async {
     if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
-      val eventuallyDeletedInstance = instanceService.ask(DeleteInstance(id)).mapTo[Boolean]
+      val eventuallyDeletedInstance = instanceService.ask(DeleteInstance(id)).mapTo[Try[InstanceWithStatus]]
       eventuallyDeletedInstance.map { deleted =>
-        if (deleted)
-          Ok
-        else
-          NotFound
+        deleted.map {
+          instance => Ok(Json.toJson(instance))
+        }.recover {
+          case throwable => NotFound(throwable.toString)
+        }.get
       }
     } else {
       Future(Status(403)(s"Instance deletion only allowed in '${conf.PERMISSIONS_MODE_ADMINISTRATOR}' mode."))
@@ -154,8 +157,9 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
 
 object InstanceController {
 
-  def removeSecretVariables(instance: Instance): Instance = {
+  def removeSecretVariables(instanceWithStatus: InstanceWithStatus): InstanceWithStatus = {
     // FIXME "censoring" through setting the values null is ugly but using Option[String] gives me stupid Json errors
+    val instance = instanceWithStatus.instance
     val template = instance.template
     val parameterInfos = template.parameterInfos
     val newParameterValues = instance.parameterValues.map { case (parameter, value) =>
@@ -166,12 +170,10 @@ object InstanceController {
       }
       (parameter, possiblyCensoredValue)
     }
-    Instance(
-      id = instance.id,
-      template = template,
-      status = instance.status,
-      services = instance.services,
-      parameterValues = newParameterValues
+    instanceWithStatus.copy(
+      instance = instanceWithStatus.instance.copy(
+        parameterValues = newParameterValues
+      )
     )
   }
 

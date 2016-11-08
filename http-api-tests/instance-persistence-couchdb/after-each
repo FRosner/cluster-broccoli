@@ -1,0 +1,3 @@
+#!/bin/bash
+docker stop $(cat cluster-broccoli.did)
+docker stop $(cat couchdb.did)

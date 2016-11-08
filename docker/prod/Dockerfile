@@ -1,7 +1,9 @@
 FROM openjdk:8-jre
 
-COPY cluster-broccoli-dist /cluster-broccoli
+ADD cluster-broccoli-dist /cluster-broccoli
 
-COPY templates /templates
+ADD templates /templates
+
+RUN mkdir /instances
 
 ENTRYPOINT ["/cluster-broccoli/bin/cluster-broccoli"]

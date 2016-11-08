@@ -38,6 +38,7 @@ Cluster Broccoli provides a RESTful HTTP API. You can control it using curl, wri
 
 - Nomad (HTTP API v1)
 - Consul (HTTP API v1)
+- CouchDB 2.x (persistence layer)
 - Cluster Broccoli Nomad Job + Docker Image (for running the Play application)
 
 ### Using the Production Docker Image
@@ -70,9 +71,11 @@ The following configuration properties are supported.
 | `broccoli.nomad.url` | Address of your nomad server | `http://localhost:4646` |
 | `broccoli.nomad.jobPrefix` | Allow only jobs with this prefix | ` ` (empty) |
 | `broccoli.consul.url` | Address of your consul server | `http://localhost:8500` |
-| `broccoli.polling.frequency` | Integer (seconds) to control the time between asking Nomad and Consul for job and service status. | `1` |
 | `broccoli.consul.lookup` | Lookup method used for consul. Options: `ip` or `dns` (recommended).| `ip` |
-| `broccoli.templatesDir` | Directory where your templates are located | `templates` |
-| `broccoli.instancesFile` | Directory where your instances are located | `instances` |
+| `broccoli.polling.frequency` | Integer (seconds) to control the time between asking Nomad and Consul for job and service status. | `1` |
+| `broccoli.templates.storage.type` | Storage type for templates. Currently only `fs` supported. | `fs` |
+| `broccoli.templates.storage.url` | Storage URL for templates. If storage type is `fs`, this is the directory to load templates from. | `templates` |
+| `broccoli.instances.storage.type` | Storage type for instances. `fs` and `couchdb` are supported. See the [instance documentation](https://github.com/FRosner/cluster-broccoli/wiki/Instances) for details. | `fs` |
+| `broccoli.instances.storage.url` | Storage URL for instances. See the [instance documentation](https://github.com/FRosner/cluster-broccoli/wiki/Instances) for details. | See [documentation](https://github.com/FRosner/cluster-broccoli/wiki/Instances) |
 | `broccoli.permissions.mode` | Determines the actions that can be performed with the Broccoli instance. `administrator` (full functionality), `operator` (starting, stopping instances) or `user` (inspecting instance state) | `administrator` |
 | `http.port` | Port to bind the HTTP interface to | `9000` |

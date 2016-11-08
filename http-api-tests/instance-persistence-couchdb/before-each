@@ -1,0 +1,14 @@
+#!/bin/bash
+docker pull couchdb
+docker run -d --net host couchdb > couchdb.did
+
+sleep $BROCCOLI_SLEEP_MEDIUM
+
+docker run -d --net host \
+  frosner/cluster-broccoli-test \
+  cluster-broccoli \
+  -Dbroccoli.instances.storage.type=couchdb > cluster-broccoli.did
+
+sleep $BROCCOLI_SLEEP_MEDIUM
+
+curl -s localhost:9000 > /dev/null && echo "Broccoli started successfully" || echo "Broccoli did not start, yet"

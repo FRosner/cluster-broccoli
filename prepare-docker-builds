@@ -1,6 +1,10 @@
 #!/bin/bash
 
+set -e
+
 rm -rf cluster-broccoli-*
+rm -rf docker/test/cluster-broccoli-dist
+rm -rf docker/prod/cluster-broccoli-dist
 sbt clean && sbt dist
 unzip target/universal/cluster-broccoli*.zip
 cp -R cluster-broccoli-* docker/test/cluster-broccoli-dist
@@ -23,3 +27,5 @@ if [ -z "$BROCCOLI_SLEEP_SHORT" ]; then
   export BROCCOLI_SLEEP_SHORT=1
 fi
 echo '$BROCCOLI_SLEEP_SHORT'="$BROCCOLI_SLEEP_SHORT"
+
+set +e

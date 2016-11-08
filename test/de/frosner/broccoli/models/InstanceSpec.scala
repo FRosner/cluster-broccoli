@@ -12,22 +12,22 @@ class InstanceSpec extends Specification {
   "An instance" should {
 
     "be possible to construct if the parameters to be filled match the ones in the template" in {
-      val instance1 = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Heinz"), InstanceStatus.Unknown, Map.empty)
-      val instance2 = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Heinz"), InstanceStatus.Unknown, Map.empty)
+      val instance1 = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Heinz"))
+      val instance2 = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Heinz"))
       instance1 === instance2
     }
 
     "check that the parameters to be filled are the same ones as in the template" in {
-      Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map.empty, InstanceStatus.Unknown, Map.empty) must throwA[IllegalArgumentException]
+      Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map.empty) must throwA[IllegalArgumentException]
     }
 
     "parse the template correctly when it contains a single parameter" in {
-      val instance = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Frank"), InstanceStatus.Unknown, Map.empty)
+      val instance = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Frank"))
       instance.templateJson === JsString("Frank")
     }
 
     "parse the template correctly when it contains multiple parameters" in {
-      val instance = Instance("1", Template("1", "\"{{id}} {{age}}\"", "desc", Map.empty), Map("id" -> "Frank", "age" -> "5"), InstanceStatus.Unknown, Map.empty)
+      val instance = Instance("1", Template("1", "\"{{id}} {{age}}\"", "desc", Map.empty), Map("id" -> "Frank", "age" -> "5"))
       instance.templateJson === JsString("Frank 5")
     }
 
@@ -40,9 +40,7 @@ class InstanceSpec extends Specification {
           description = "desc",
           parameterInfos = Map("age" -> ParameterInfo("age", Some("50"), secret = Some(false)))
         ),
-        parameterValues = Map("id" -> "Frank"),
-        status = InstanceStatus.Unknown,
-        services = Map.empty
+        parameterValues = Map("id" -> "Frank")
       )
       instance.templateJson === JsString("Frank 50")
     }
@@ -56,9 +54,7 @@ class InstanceSpec extends Specification {
           description = "desc",
           parameterInfos = Map("age" -> ParameterInfo("age", None, secret = Some(false)))
         ),
-        parameterValues = Map("id" -> "Frank", "age" -> "50"),
-        status = InstanceStatus.Unknown,
-        services = Map.empty
+        parameterValues = Map("id" -> "Frank", "age" -> "50")
       )
       instance.templateJson === JsString("Frank 50")
     }
@@ -72,9 +68,7 @@ class InstanceSpec extends Specification {
           description = "desc",
           parameterInfos = Map("age" -> ParameterInfo("age", None, secret = Some(false)))
         ),
-        parameterValues = Map("id" -> "Frank"),
-        status = InstanceStatus.Unknown,
-        services = Map.empty
+        parameterValues = Map("id" -> "Frank")
       ) must throwA[IllegalArgumentException]
     }
 
@@ -91,9 +85,7 @@ class InstanceSpec extends Specification {
           description = "desc",
           parameterInfos = Map.empty
         ),
-        parameterValues = Map("id" -> "1", "age" -> "50"),
-        status = InstanceStatus.Unknown,
-        services = Map.empty
+        parameterValues = Map("id" -> "1", "age" -> "50")
       )
       val newParameterValues = Map("id" -> "1", "age" -> "30")
       val newInstance = instance.updateParameterValues(newParameterValues)
@@ -109,9 +101,7 @@ class InstanceSpec extends Specification {
           description = "desc",
           parameterInfos = Map.empty
         ),
-        parameterValues = Map("id" -> "1", "age" -> "50"),
-        status = InstanceStatus.Unknown,
-        services = Map.empty
+        parameterValues = Map("id" -> "1", "age" -> "50")
       )
       val newParameterValues = Map("id" -> "2", "age" -> "40")
       val newInstance = instance.updateParameterValues(newParameterValues)
@@ -127,9 +117,7 @@ class InstanceSpec extends Specification {
           description = "desc",
           parameterInfos = Map.empty
         ),
-        parameterValues = Map("id" -> "1", "age" -> "50"),
-        status = InstanceStatus.Unknown,
-        services = Map.empty
+        parameterValues = Map("id" -> "1", "age" -> "50")
       )
       val newParameterValues = Map("id" -> "1")
       val newInstance = instance.updateParameterValues(newParameterValues)
@@ -158,9 +146,7 @@ class InstanceSpec extends Specification {
       val instance = Instance(
         id = "1",
         template = originalTemplate,
-        parameterValues = originalParameterValues,
-        status = InstanceStatus.Unknown,
-        services = Map.empty
+        parameterValues = originalParameterValues
       )
       val newInstance = instance.updateTemplate(newTemplate, newParameterValues)
       (newInstance.get.template === newTemplate) and (newInstance.get.parameterValues === newParameterValues)
@@ -184,9 +170,7 @@ class InstanceSpec extends Specification {
       val instance = Instance(
         id = "1",
         template = originalTemplate,
-        parameterValues = originalParameterValues,
-        status = InstanceStatus.Unknown,
-        services = Map.empty
+        parameterValues = originalParameterValues
       )
       val newInstance = instance.updateTemplate(newTemplate, newParameterValues)
       (newInstance.get.template === newTemplate) and (newInstance.get.parameterValues === newParameterValues)
@@ -210,9 +194,7 @@ class InstanceSpec extends Specification {
       val instance = Instance(
         id = "1",
         template = originalTemplate,
-        parameterValues = originalParameterValues,
-        status = InstanceStatus.Unknown,
-        services = Map.empty
+        parameterValues = originalParameterValues
       )
       val newInstance = instance.updateTemplate(newTemplate, newParameterValues)
       (newInstance.isFailure === true) and (instance.template === originalTemplate)
@@ -236,26 +218,10 @@ class InstanceSpec extends Specification {
       val instance = Instance(
         id = "1",
         template = originalTemplate,
-        parameterValues = originalParameterValues,
-        status = InstanceStatus.Unknown,
-        services = Map.empty
+        parameterValues = originalParameterValues
       )
       val newInstance = instance.updateTemplate(newTemplate, newParameterValues)
       newInstance.isFailure === true
-    }
-
-  }
-
-  "Instance serialization" should {
-
-    "work correctly" in {
-      val original = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Heinz"), InstanceStatus.Unknown, Map.empty)
-
-      val bos = new ByteArrayOutputStream()
-      InstanceService.persistInstance(original, bos)
-      val deserialized = InstanceService.loadInstance(new ByteArrayInputStream(bos.toByteArray)).get
-
-      original === deserialized
     }
 
   }

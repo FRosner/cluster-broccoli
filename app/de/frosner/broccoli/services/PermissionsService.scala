@@ -26,7 +26,7 @@ class PermissionsService @Inject()(configuration: Configuration) {
         conf.PERMISSIONS_MODE_DEFAULT
       }
     }
-    Logger.info(s"Using ${conf.PERMISSIONS_MODE_KEY}=$result")
+    Logger.info(s"${conf.PERMISSIONS_MODE_KEY}=$result")
     result
   }
 
