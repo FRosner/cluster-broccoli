@@ -31,7 +31,7 @@ angular.module('broccoli')
             });
         }
 
-        function editInstance(template, instance) {
+        function editInstance(template, instance, templates) {
             var modalInstance = $uibModal.open({
                 animation: true,
                 templateUrl: '/assets/newInstanceModal.html',
@@ -46,7 +46,7 @@ angular.module('broccoli')
                       return instance;
                     },
                     templates: function() {
-                      return vm.templates;
+                      return templates;
                     }
                 }
             });
@@ -58,7 +58,7 @@ angular.module('broccoli')
                 var postData = {};
                 if (result.selectedTemplate != null && result.selectedTemplate != "unchanged") {
                     postData['selectedTemplate'] = result.selectedTemplate;
-                    vm.templates[result.selectedTemplate].parameters.forEach(function(parameter) {
+                    templates[result.selectedTemplate].parameters.forEach(function(parameter) {
                         parameterValuesForSelectedTemplate[parameter] = newInstance.parameterValues[parameter];
                     });
                     newInstance.parameterValues = parameterValuesForSelectedTemplate;
