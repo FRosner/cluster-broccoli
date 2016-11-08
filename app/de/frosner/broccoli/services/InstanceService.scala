@@ -104,8 +104,6 @@ class InstanceService @Inject()(templateService: TemplateService,
     instanceStorage.close()
   }
 
-  // TODO these guys need to populate the instances to InstanceWithStatus before sending them to the front-end
-  // TODO I need to clean this stuff up (when deleting an instance)
   @volatile
   private var jobStatuses: Map[String, InstanceStatus] = Map.empty
 

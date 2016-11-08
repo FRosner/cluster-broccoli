@@ -27,7 +27,7 @@ case class CouchDBInstanceStorage(dbUrlString: String, prefix: String, ws: WSCli
     val dbUri = dbUrl.uri
     val dbGet = Await.result(dbUrl.get(), Duration(2, TimeUnit.SECONDS))
     if (dbGet.status == 200) {
-      // TODO check that the result is a database and not just 200
+      // TODO #130 check that the result is a database and not just 200
       Logger.info(s"Using $dbUri to persist instances.")
     } else {
       val dbPut = Await.result(dbUrl.execute("PUT"), Duration(2, TimeUnit.SECONDS))
@@ -118,14 +118,14 @@ case class CouchDBInstanceStorage(dbUrlString: String, prefix: String, ws: WSCli
     ]
   }
    */
-  // TODO /_find http://docs.couchdb.org/en/2.0.0/api/database/find.html#post--db-_find so we can let the DB filter
+  // TODO #131 /_find http://docs.couchdb.org/en/2.0.0/api/database/find.html#post--db-_find so we can let the DB filter
   override def readInstancesImpl(idFilter: String => Boolean): Try[Set[Instance]] = {
     Try {
       val allDocsUrl = ws.url(s"$dbUrlString/_all_docs?include_docs=true")
       val allDocsResult = Await.result(allDocsUrl.get(), Duration(5, TimeUnit.SECONDS))
       val allDocsJsObject = allDocsResult.json.as[JsObject].value
       if (allDocsJsObject("offset").as[JsNumber].value != 0) {
-        // TODO check documentation when offset is actually positive
+        // TODO offset can be used for pagination but we need all the data
         throw new IllegalStateException("Received positive offset so we are missing some data here.")
       } else {
         val rows = allDocsJsObject("rows").as[JsArray].value
