@@ -66,7 +66,6 @@ angular.module('broccoli')
                 postData.parameterValues = newInstance.parameterValues;
                 InstanceService.editInstance(postData, newInstance)
                     .then(function(result) {
-                        console.log(result);
                         $rootScope.restangularError = null;
                     }, function(error) {
                         console.log("There was an error creating");
