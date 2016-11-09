@@ -65,7 +65,7 @@ class InstanceService @Inject()(templateService: TemplateService,
       val storageType = configuration.getString(conf.INSTANCES_STORAGE_TYPE_KEY).getOrElse(conf.TEMPLATES_STORAGE_TYPE_DEFAULT)
       val allowedStorageTypes = Set(conf.INSTANCES_STORAGE_TYPE_FS, conf.INSTANCES_STORAGE_TYPE_COUCHDB)
       if (!allowedStorageTypes.contains(storageType)) {
-        Logger.error(s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType is invalid. Only '${allowedStorageTypes.mkString(", ")} supported.")
+        Logger.error(s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType is invalid. Only ${allowedStorageTypes.mkString(", ")} supported.")
         System.exit(1)
       }
       Logger.info(s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType")
