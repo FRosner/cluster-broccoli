@@ -31,6 +31,10 @@ class InstanceService @Inject()(templateService: TemplateService,
                                 configuration: Configuration,
                                 lifecycle: ApplicationLifecycle) extends Actor with Logging {
 
+  sys.addShutdownHook {
+    context.system.shutdown()
+  }
+  
   private val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
   private val pollingFrequencySecondsTry = pollingFrequencySecondsString match {
     case Some(string) => Try(string.toInt).flatMap {
