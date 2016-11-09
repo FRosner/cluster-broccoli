@@ -12,7 +12,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
         Restangular.setBaseUrl("/api/v1");
 
         AboutService.getStatus().then(function(about) {
-            vm.about = about;
+          vm.about = about;
         });
 
         Restangular.setErrorInterceptor(function(response, deferred, responseHandler) {
