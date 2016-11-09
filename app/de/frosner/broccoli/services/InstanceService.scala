@@ -32,6 +32,9 @@ class InstanceService @Inject()(templateService: TemplateService,
                                 lifecycle: ApplicationLifecycle) extends Actor with Logging {
 
   sys.addShutdownHook {
+    Logger.info("Shutting down actor system 1")
+    system.shutdown()
+    Logger.info("Shutting down actor system 2")
     context.system.shutdown()
   }
   
@@ -105,6 +108,7 @@ class InstanceService @Inject()(templateService: TemplateService,
   }
 
   sys.addShutdownHook {
+    Logger.info("Closing instanceStorage")
     instanceStorage.close()
   }
 
