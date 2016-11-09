@@ -31,6 +31,9 @@ class InstanceService @Inject()(templateService: TemplateService,
                                 configuration: Configuration,
                                 lifecycle: ApplicationLifecycle) extends Actor with Logging {
 
+  // If I don't do this here it will not terminate
+  lifecycle.addStopHook(() => Future())
+
   private val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
   private val pollingFrequencySecondsTry = pollingFrequencySecondsString match {
     case Some(string) => Try(string.toInt).flatMap {
@@ -65,7 +68,7 @@ class InstanceService @Inject()(templateService: TemplateService,
       val storageType = configuration.getString(conf.INSTANCES_STORAGE_TYPE_KEY).getOrElse(conf.TEMPLATES_STORAGE_TYPE_DEFAULT)
       val allowedStorageTypes = Set(conf.INSTANCES_STORAGE_TYPE_FS, conf.INSTANCES_STORAGE_TYPE_COUCHDB)
       if (!allowedStorageTypes.contains(storageType)) {
-        Logger.error(s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType is invalid. Only '${allowedStorageTypes.mkString(", ")} supported.")
+        Logger.error(s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType is invalid. Only ${allowedStorageTypes.mkString(", ")} supported.")
         System.exit(1)
       }
       Logger.info(s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType")
@@ -101,6 +104,7 @@ class InstanceService @Inject()(templateService: TemplateService,
   }
 
   sys.addShutdownHook {
+    Logger.info("Closing instanceStorage")
     instanceStorage.close()
   }
 
