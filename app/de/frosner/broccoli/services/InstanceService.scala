@@ -31,13 +31,9 @@ class InstanceService @Inject()(templateService: TemplateService,
                                 configuration: Configuration,
                                 lifecycle: ApplicationLifecycle) extends Actor with Logging {
 
-  sys.addShutdownHook {
-    Logger.info("Shutting down actor system 1")
-    system.shutdown()
-    Logger.info("Shutting down actor system 2")
-    context.system.shutdown()
-  }
-  
+  // If I don't do this here it will not terminate
+  lifecycle.addStopHook(() => Future())
+
   private val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
   private val pollingFrequencySecondsTry = pollingFrequencySecondsString match {
     case Some(string) => Try(string.toInt).flatMap {
