@@ -19,27 +19,23 @@
             </select>
           </div>
         </div>
-        <div ng-repeat="param in instCtrl.parameters" class="input-group instance-input-group" ng-if="instCtrl.deleteInstance == null">
+        <div class="alert alert-danger" role="alert" ng-if="instCtrl.deleteInstance != null">
+          Deleting {{instCtrl.instance.id}} will also stop its execution.
+        </div>
+        <h4> Parameters</h4>
+        <div ng-repeat="param in instCtrl.parameters" class="input-group instance-input-group">
           <span class="input-group-addon" id="basic-addon1">{{param.name}}</span>
           <input type="text" class="form-control" placeholder="{{param.default}}"
-                 aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param.id]"
-                 focus-field="$index == 0">
-        </div>
-        <div ng-if="instCtrl.deleteInstance != null">
-          <div ng-repeat="param in instCtrl.parameters" class="input-group instance-input-group">
-            <span class="input-group-addon" id="basic-addon1">{{param.name}}</span>
-            <input type="text" class="form-control" placeholder="{{param.default}}"
-                   aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param.id]" readonly>
-          </div>
-          <div class="alert alert-danger" role="alert">Deletion will result in submitting a stop request to nomad.
-          </div>
+            aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param.id]"
+            focus-field="instCtrl.deleteInstance == null && $index == 0" ng-readonly ="instCtrl.deleteInstance != null" >
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-warning" type="button" ng-click="instCtrl.cancel()">Cancel
+        <button class="btn btn-warning" type="button" ng-click="instCtrl.cancel()">
+        Cancel
         </button>
         <button ng-class="instCtrl.deleteInstance? 'btn btn-danger' : 'btn btn-primary'" type="submit" ng-disabled="!broccoliReachable">
-          {{instCtrl.okText}}
+        {{instCtrl.okText}}
         </button>
       </div>
     </div>
