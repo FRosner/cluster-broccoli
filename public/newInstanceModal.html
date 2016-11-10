@@ -6,9 +6,8 @@
       </div>
       <div class="panel-body">
         <div ng-if="instCtrl.instance != null" style="margin-bottom: 1em">
-          <div class="input-group" ng-if="instCtrl.dropdown.templates != null">
-            <span class="input-group-addon" id="basic-addon1">Template
-            </span>
+          <div ng-if="instCtrl.dropdown.templates != null">
+            <h4> Template</h4>
             <select ng-model="instCtrl.dropdown.selectedTemplate" class="form-control" aria-describedby="basic-addon1">
               <option value="unchanged" selected="selected">
                 unchanged
