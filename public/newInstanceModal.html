@@ -7,7 +7,8 @@
       <div class="panel-body">
         <div ng-if="instCtrl.instance != null" style="margin-bottom: 1em">
           <div class="input-group" ng-if="instCtrl.dropdown.templates != null">
-            <span class="input-group-addon" id="basic-addon1">Template</span>
+            <span class="input-group-addon" id="basic-addon1">Template
+            </span>
             <select ng-model="instCtrl.dropdown.selectedTemplate" class="form-control" aria-describedby="basic-addon1">
               <option value="unchanged" selected="selected">
                 unchanged
@@ -18,16 +19,28 @@
             </select>
           </div>
         </div>
-        <div ng-repeat="param in instCtrl.parameters" class="input-group instance-input-group">
+        <div ng-repeat="param in instCtrl.parameters" class="input-group instance-input-group" ng-if="instCtrl.deleteInstance == null">
           <span class="input-group-addon" id="basic-addon1">{{param.name}}</span>
           <input type="text" class="form-control" placeholder="{{param.default}}"
-            aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param.id]"
-            focus-field="$index == 0">
+                 aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param.id]"
+                 focus-field="$index == 0">
+        </div>
+        <div ng-if="instCtrl.deleteInstance != null">
+          <div ng-repeat="param in instCtrl.parameters" class="input-group instance-input-group">
+            <span class="input-group-addon" id="basic-addon1">{{param.name}}</span>
+            <input type="text" class="form-control" placeholder="{{param.default}}"
+                   aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param.id]" readonly>
+          </div>
+          <div class="alert alert-danger" role="alert">Deletion will result in submitting a stop request to nomad.
+          </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-warning" type="button" ng-click="instCtrl.cancel()">Cancel</button>
-        <button class="btn btn-primary" type="submit" ng-disabled="!broccoliReachable">{{instCtrl.okText}}</button>
+        <button class="btn btn-warning" type="button" ng-click="instCtrl.cancel()">Cancel
+        </button>
+        <button ng-class="instCtrl.deleteInstance? 'btn btn-danger' : 'btn btn-primary'" type="submit" ng-disabled="!broccoliReachable">
+          {{instCtrl.okText}}
+        </button>
       </div>
     </div>
   </form>
