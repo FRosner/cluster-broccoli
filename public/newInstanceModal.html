@@ -26,7 +26,7 @@
           <span class="input-group-addon" id="basic-addon1">{{param.name}}</span>
           <input type="text" class="form-control" placeholder="{{param.default}}"
             aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param.id]"
-            focus-field="instCtrl.deleteInstance == null && $index == 0" ng-readonly ="instCtrl.deleteInstance != null" >
+            focus-field="$index == 0" ng-readonly ="instCtrl.deleteInstance != null" >
         </div>
       </div>
       <div class="modal-footer">
