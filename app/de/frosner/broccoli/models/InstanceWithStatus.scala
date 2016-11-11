@@ -6,6 +6,7 @@ import play.api.libs.functional.syntax._
 
 import scala.util.Try
 
+// TODO try making this a trait, like a decorator
 case class InstanceWithStatus(instance: Instance, status: InstanceStatus, services: Map[String, Service]) extends Serializable
 
 object InstanceWithStatus {
