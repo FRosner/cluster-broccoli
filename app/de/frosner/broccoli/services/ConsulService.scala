@@ -100,21 +100,24 @@ class ConsulService @Inject()(configuration: Configuration,
       }
     }
     val serviceResponse = Try(Await.result(Future.sequence(serviceResponses), Duration(5, TimeUnit.SECONDS)))
+    def unknownService(name: String) = Service(
+      name = name,
+      protocol = "",
+      address = "",
+      port = 80,
+      status = ServiceStatus.Unknown
+    )
     serviceResponse match {
       case Success(services: Iterable[Seq[Service]]) => {
-        serviceStatuses = serviceStatuses.updated(jobId, services.flatten.map(service => (service.name, service)).toMap)
+        val healthyOrUnhealthyServices = services.flatten.map(service => (service.name, service)).toMap
+        val allServices = serviceNames.map { name =>
+          (name, healthyOrUnhealthyServices.getOrElse(name, unknownService(name)))
+        }.toMap
+        serviceStatuses = serviceStatuses.updated(jobId, allServices)
       }
       case Failure(throwable) =>
         Logger.error(throwable.toString)
-        val unknownServices = serviceNames.map(
-          name => Service(
-            name = name,
-            protocol = "",
-            address = "",
-            port = 80,
-            status = ServiceStatus.Unknown
-          )
-        )
+        val unknownServices = serviceNames.map(unknownService)
         ConsulServices(jobId, unknownServices)
         serviceStatuses = serviceStatuses.updated(jobId, unknownServices.map(service => (service.name, service)).toMap)
     }
