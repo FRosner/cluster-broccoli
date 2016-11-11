@@ -17,6 +17,9 @@ angular.module('broccoli')
                     },
                     templates: function() {
                       return null;
+                    },
+                    deleteInstance:function(){
+                      return null;
                     }
                 }
             });
@@ -47,6 +50,9 @@ angular.module('broccoli')
                     },
                     templates: function() {
                       return templates;
+                    },
+                    deleteInstance: function() {
+                      return null;
                     }
                 }
             });
@@ -75,6 +81,7 @@ angular.module('broccoli')
         };
 
         function submitStatus(instance, status) {
+
             InstanceService.submitStatus(instance, status)
                 .then(function(updatedInstance) {
                     $rootScope.restangularError = null;
@@ -85,12 +92,36 @@ angular.module('broccoli')
         }
 
         function deleteInstance(template, instance) {
-            $rootScope.restangularError = null;
-            InstanceService.deleteInstance(template, instance);
+          $scope.deleteInstance = true;
+          var modalInstance = $uibModal.open({
+                animation: true,
+                templateUrl:'/assets/newInstanceModal.html',
+                controller: 'NewInstanceCtrl',
+                controllerAs: 'instCtrl',
+                size: undefined,
+                resolve: {
+                    template: function() {
+                      return template;
+                    },
+                    instance: function() {
+                      return instance;
+                    },
+                    templates: function() {
+                     return null;
+                    },
+                    deleteInstance: function() {
+                      return $scope.deleteInstance;
+                    }
+                }
+            });
+          modalInstance.result.then(function(result) {
+                $rootScope.restangularError = null;
+                InstanceService.deleteInstance(template, instance)
+            });
         }
 
 
-        vm.deleteInstance = InstanceService.deleteInstance;
+        vm.deleteInstance = deleteInstance;
 
         $scope.submitStatus = submitStatus;
 

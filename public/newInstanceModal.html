@@ -6,8 +6,8 @@
       </div>
       <div class="panel-body">
         <div ng-if="instCtrl.instance != null" style="margin-bottom: 1em">
-          <div class="input-group" ng-if="instCtrl.dropdown.templates != null">
-            <span class="input-group-addon" id="basic-addon1">Template</span>
+          <div ng-if="instCtrl.dropdown.templates != null">
+            <h4> Template</h4>
             <select ng-model="instCtrl.dropdown.selectedTemplate" class="form-control" aria-describedby="basic-addon1">
               <option value="unchanged" selected="selected">
                 unchanged
@@ -18,16 +18,24 @@
             </select>
           </div>
         </div>
+        <div class="alert alert-danger" role="alert" ng-if="instCtrl.deleteInstance != null">
+          Deleting {{instCtrl.instance.id}} will also stop its execution.
+        </div>
+        <h4> Parameters</h4>
         <div ng-repeat="param in instCtrl.parameters" class="input-group instance-input-group">
           <span class="input-group-addon" id="basic-addon1">{{param.name}}</span>
           <input type="text" class="form-control" placeholder="{{param.default}}"
             aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param.id]"
-            focus-field="$index == 0">
+            focus-field="$index == 0" ng-readonly ="instCtrl.deleteInstance != null" >
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-warning" type="button" ng-click="instCtrl.cancel()">Cancel</button>
-        <button class="btn btn-primary" type="submit" ng-disabled="!broccoliReachable">{{instCtrl.okText}}</button>
+        <button class="btn btn-warning" type="button" ng-click="instCtrl.cancel()">
+        Cancel
+        </button>
+        <button ng-class="instCtrl.deleteInstance? 'btn btn-danger' : 'btn btn-primary'" type="submit" ng-disabled="!broccoliReachable">
+        {{instCtrl.okText}}
+        </button>
       </div>
     </div>
   </form>
