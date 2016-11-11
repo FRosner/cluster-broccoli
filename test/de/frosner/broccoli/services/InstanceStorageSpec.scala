@@ -3,7 +3,7 @@ package de.frosner.broccoli.services
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.{Instance, InstanceStatus, Template}
+import de.frosner.broccoli.models.{Instance, InstanceStatus, ParameterInfo, Template}
 import org.specs2.matcher.MatchResult
 import org.specs2.mutable.Specification
 import play.api.Configuration
