@@ -6,18 +6,16 @@ import javax.inject.Singleton
 
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.{ParameterInfo, Template}
-import play.Logger
+import de.frosner.broccoli.util.Logging
 import play.api.Configuration
-import play.api.libs.json.JsObject
 import play.libs.Json
 
 import scala.collection.JavaConversions
 import scala.io.Source
 import scala.util.{Failure, Success, Try}
-import scala.util.parsing.json.JSON
 
 @Singleton
-class TemplateService @Inject() (configuration: Configuration) {
+class TemplateService @Inject() (configuration: Configuration) extends Logging {
 
   private lazy val templatesStorageType = {
     val storageType = configuration.getString(conf.TEMPLATES_STORAGE_TYPE_KEY).getOrElse(conf.TEMPLATES_STORAGE_TYPE_DEFAULT)

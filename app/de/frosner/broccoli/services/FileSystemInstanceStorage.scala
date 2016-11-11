@@ -3,13 +3,13 @@ package de.frosner.broccoli.services
 import java.io._
 
 import de.frosner.broccoli.models.Instance
-import play.api.Logger
+import de.frosner.broccoli.util.Logging
 import play.api.libs.json.Json
 
 import scala.util.{Failure, Success, Try}
 
 @volatile
-case class FileSystemInstanceStorage(storageDirectory: File, prefix: String) extends InstanceStorage {
+case class FileSystemInstanceStorage(storageDirectory: File, prefix: String) extends InstanceStorage with Logging {
 
   import Instance.instancePersistenceWrites
   import Instance.instancePersistenceReads

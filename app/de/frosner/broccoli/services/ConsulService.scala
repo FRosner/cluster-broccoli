@@ -1,13 +1,14 @@
 package de.frosner.broccoli.services
 
 import java.util.concurrent.TimeUnit
-import javax.inject.{Singleton, Inject}
+import javax.inject.{Inject, Singleton}
 
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.{Service, ServiceStatus}
+import de.frosner.broccoli.util.Logging
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
-import play.api.{Configuration, Logger}
+import play.api.Configuration
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -16,7 +17,7 @@ import scala.util.{Failure, Success, Try}
 
 @Singleton()
 class ConsulService @Inject()(configuration: Configuration,
-                              ws: WSClient) {
+                              ws: WSClient) extends Logging {
 
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -29,19 +30,20 @@ class ConsulService @Inject()(configuration: Configuration,
     lookupMethod match {
       case conf.CONSUL_LOOKUP_METHOD_DNS => {
         val requestUrl = consulBaseUrl + "/v1/agent/self"
-        Logger.info(s"Requesting Consul domain from $requestUrl")
-        val request = ws.url(requestUrl)
-        val response = request.get().map(_.json.as[JsObject])
-        val eventuallyConsulDomain = response.map{ jsObject =>
-          (jsObject \ "Config" \ "Domain").get.as[JsString].value.stripSuffix(".")
+        TimeLogger.info(s"GET $requestUrl") {
+          val request = ws.url(requestUrl)
+          val response = request.get().map(_.json.as[JsObject])
+          val eventuallyConsulDomain = response.map { jsObject =>
+            (jsObject \ "Config" \ "Domain").get.as[JsString].value.stripSuffix(".")
+          }
+          val tryConsulDomain = Try(Await.result(eventuallyConsulDomain, Duration(5, TimeUnit.SECONDS))).recoverWith {
+            case throwable =>
+              Logger.warn(s"Cannot reach Consul to read the configuration from $requestUrl, falling back to IP based lookup: $throwable")
+              Failure(throwable)
+          }
+          tryConsulDomain.foreach(domain => Logger.info(s"Advertising Consul entities through DNS using '$domain' as the domain."))
+          tryConsulDomain.toOption
         }
-        val tryConsulDomain = Try(Await.result(eventuallyConsulDomain, Duration(5, TimeUnit.SECONDS))).recoverWith{
-          case throwable =>
-            Logger.warn(s"Cannot reach Consul to read the configuration from $requestUrl, falling back to IP based lookup: $throwable")
-            Failure(throwable)
-        }
-        tryConsulDomain.foreach(domain => Logger.info(s"Advertising Consul entities through DNS using '$domain' as the domain."))
-        tryConsulDomain.toOption
       }
       case conf.CONSUL_LOOKUP_METHOD_IP =>
         Logger.info("Advertising Consul entities through IP addresses.")
@@ -63,7 +65,6 @@ class ConsulService @Inject()(configuration: Configuration,
       val healthRequest = ws.url(healthQueryUrl)
       val requests = Future.sequence(List(catalogRequest.get(), healthRequest.get()))
       requests.map { case List(catalogResponse, healthResponse) =>
-        Logger.info(s"${catalogRequest.uri} ${healthRequest.uri}")
         val catalogResponseJson = catalogResponse.json
         val healthResponseJson = healthResponse.json
         Logger.debug(s"${catalogRequest.uri} => $catalogResponseJson")
