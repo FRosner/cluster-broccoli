@@ -6,11 +6,11 @@ import javax.inject.{Inject, Named, Singleton}
 import akka.actor._
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.InstanceStatus._
-import de.frosner.broccoli.models.{Instance, InstanceStatus}
+import de.frosner.broccoli.models.{Instance, InstanceStatus, Service}
 import de.frosner.broccoli.services.InstanceService.{NomadNotReachable, NomadStatuses}
 import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
 import play.api.libs.ws.WSClient
-import play.api.{Configuration}
+import play.api.Configuration
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -31,6 +31,17 @@ class NomadService @Inject()(configuration: Configuration,
   @volatile
   var jobStatuses: Map[String, InstanceStatus] = Map.empty
 
+  def getJobStatusOrDefault(id: String): InstanceStatus = {
+    if (nomadReachable) {
+      jobStatuses.getOrElse(id, InstanceStatus.Stopped)
+    } else {
+      InstanceStatus.Unknown
+    }
+  }
+
+  @volatile
+  var nomadReachable: Boolean = true
+
   def requestStatuses() = {
     val queryUrl = nomadBaseUrl + "/v1/jobs"
     val jobsRequest = ws.url(queryUrl).withQueryString("prefix" -> nomadJobPrefix)
@@ -49,11 +60,12 @@ class NomadService @Inject()(configuration: Configuration,
           case default => logger.warn(s"Unmatched status received: $default")
             InstanceStatus.Unknown
         })
+        nomadReachable = true
         updateStatusesBasedOnNomad(idsAndStatuses.toMap)
       }
       case Failure(throwable) => {
         logger.error(throwable.toString)
-        nomadNotReachable()
+        nomadReachable = false
       }
     }
   }
@@ -78,12 +90,6 @@ class NomadService @Inject()(configuration: Configuration,
 //    }
 //  }
 
-  private def nomadNotReachable(): Unit = {
-    jobStatuses = jobStatuses.map {
-      case (key, value) => (key, InstanceStatus.Unknown)
-    }
-  }
-
   private def updateStatusesBasedOnNomad(statuses: Map[String, InstanceStatus]): Unit = {
     jobStatuses = statuses
     statuses.keys.foreach(requestServices)
@@ -103,9 +109,10 @@ class NomadService @Inject()(configuration: Configuration,
       case Success(jobServiceIds) =>
         logger.debug(s"${jobRequest.uri} => ${jobServiceIds.mkString(", ")}")
         consulService.requestServiceStatus(id, jobServiceIds)
+        nomadReachable = true
       case Failure(throwable) =>
         logger.error(throwable.toString)
-        nomadNotReachable()
+        nomadReachable = false
     }
   }
 

@@ -107,19 +107,12 @@ class InstanceService @Inject()(templateService: TemplateService,
     instanceStorage.close()
   }
 
-  private def getJobStatusOrDefault(id: String): InstanceStatus = {
-    nomadService.jobStatuses.getOrElse(id, InstanceStatus.Stopped)
-  }
-
-  private def getServiceStatusesOrDefault(id: String): Map[String, Service] =
-    consulService.serviceStatuses.getOrElse(id, Map.empty)
-
   private def addStatuses(instance: Instance): InstanceWithStatus = {
     val instanceId = instance.id
     InstanceWithStatus(
       instance = instance,
-      status = getJobStatusOrDefault(instanceId),
-      services = getServiceStatusesOrDefault(instanceId)
+      status = nomadService.getJobStatusOrDefault(instanceId),
+      services = consulService.getServiceStatusesOrDefault(instanceId)
     )
   }
 

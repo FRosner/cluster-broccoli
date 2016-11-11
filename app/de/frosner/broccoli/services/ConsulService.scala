@@ -52,6 +52,10 @@ class ConsulService @Inject()(configuration: Configuration,
     }
   }
 
+  def getServiceStatusesOrDefault(id: String): Map[String, Service] = {
+    serviceStatuses.getOrElse(id, Map.empty)
+  }
+
   def requestServiceStatus(jobId: String, serviceNames: Iterable[String]) = {
     val serviceResponses: Iterable[Future[Seq[Service]]] = serviceNames.map { name =>
       val catalogQueryUrl = consulBaseUrl + s"/v1/catalog/service/$name"
