@@ -71,13 +71,33 @@ class InstanceStorageSpec extends Specification {
     "should not allow deleteInstance if closed" in {
       val storage = testStorage
       storage.close()
-      storage.deleteInstance(null) should throwA[IllegalStateException]
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = "\"{{id}} {{age}}\"",
+          description = "desc",
+          parameterInfos = Map("age" -> ParameterInfo("age", None, secret = Some(false)))
+        ),
+        parameterValues = Map("id" -> "Frank", "age" -> "50")
+      )
+      storage.deleteInstance(instance) should throwA[IllegalStateException]
     }
 
     "should not allow writeInstance if closed" in {
       val storage = testStorage
       storage.close()
-      storage.writeInstance(null) should throwA[IllegalStateException]
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = "\"{{id}} {{age}}\"",
+          description = "desc",
+          parameterInfos = Map("age" -> ParameterInfo("age", None, secret = Some(false)))
+        ),
+        parameterValues = Map("id" -> "Frank", "age" -> "50")
+      )
+      storage.writeInstance(instance) should throwA[IllegalStateException]
     }
 
   }
