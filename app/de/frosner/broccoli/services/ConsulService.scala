@@ -30,19 +30,20 @@ class ConsulService @Inject()(configuration: Configuration,
     lookupMethod match {
       case conf.CONSUL_LOOKUP_METHOD_DNS => {
         val requestUrl = consulBaseUrl + "/v1/agent/self"
-        Logger.info(s"Requesting Consul domain from $requestUrl")
-        val request = ws.url(requestUrl)
-        val response = request.get().map(_.json.as[JsObject])
-        val eventuallyConsulDomain = response.map{ jsObject =>
-          (jsObject \ "Config" \ "Domain").get.as[JsString].value.stripSuffix(".")
+        TimeLogger.info(s"GET $requestUrl") {
+          val request = ws.url(requestUrl)
+          val response = request.get().map(_.json.as[JsObject])
+          val eventuallyConsulDomain = response.map { jsObject =>
+            (jsObject \ "Config" \ "Domain").get.as[JsString].value.stripSuffix(".")
+          }
+          val tryConsulDomain = Try(Await.result(eventuallyConsulDomain, Duration(5, TimeUnit.SECONDS))).recoverWith {
+            case throwable =>
+              Logger.warn(s"Cannot reach Consul to read the configuration from $requestUrl, falling back to IP based lookup: $throwable")
+              Failure(throwable)
+          }
+          tryConsulDomain.foreach(domain => Logger.info(s"Advertising Consul entities through DNS using '$domain' as the domain."))
+          tryConsulDomain.toOption
         }
-        val tryConsulDomain = Try(Await.result(eventuallyConsulDomain, Duration(5, TimeUnit.SECONDS))).recoverWith{
-          case throwable =>
-            Logger.warn(s"Cannot reach Consul to read the configuration from $requestUrl, falling back to IP based lookup: $throwable")
-            Failure(throwable)
-        }
-        tryConsulDomain.foreach(domain => Logger.info(s"Advertising Consul entities through DNS using '$domain' as the domain."))
-        tryConsulDomain.toOption
       }
       case conf.CONSUL_LOOKUP_METHOD_IP =>
         Logger.info("Advertising Consul entities through IP addresses.")
@@ -64,7 +65,6 @@ class ConsulService @Inject()(configuration: Configuration,
       val healthRequest = ws.url(healthQueryUrl)
       val requests = Future.sequence(List(catalogRequest.get(), healthRequest.get()))
       requests.map { case List(catalogResponse, healthResponse) =>
-        Logger.info(s"${catalogRequest.uri} ${healthRequest.uri}")
         val catalogResponseJson = catalogResponse.json
         val healthResponseJson = healthResponse.json
         Logger.debug(s"${catalogRequest.uri} => $catalogResponseJson")
