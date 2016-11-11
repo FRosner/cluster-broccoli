@@ -4,8 +4,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.{Singleton, Inject}
 
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.{Instance, InstanceStatus, Service, ServiceStatus}
-import de.frosner.broccoli.services.InstanceService.{ConsulServices, NomadNotReachable, NomadStatuses}
+import de.frosner.broccoli.models.{Service, ServiceStatus}
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.{Configuration, Logger}
@@ -118,7 +117,6 @@ class ConsulService @Inject()(configuration: Configuration,
       case Failure(throwable) =>
         Logger.error(throwable.toString)
         val unknownServices = serviceNames.map(unknownService)
-        ConsulServices(jobId, unknownServices)
         serviceStatuses = serviceStatuses.updated(jobId, unknownServices.map(service => (service.name, service)).toMap)
     }
   }

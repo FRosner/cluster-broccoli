@@ -3,11 +3,9 @@ package de.frosner.broccoli.services
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Named, Singleton}
 
-import akka.actor._
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.InstanceStatus._
-import de.frosner.broccoli.models.{Instance, InstanceStatus, Service}
-import de.frosner.broccoli.services.InstanceService.{NomadNotReachable, NomadStatuses}
+import de.frosner.broccoli.models.InstanceStatus
 import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
 import play.api.libs.ws.WSClient
 import play.api.Configuration
@@ -82,22 +80,6 @@ class NomadService @Inject()(configuration: Configuration,
   // TODO should this go back to InstanceService or how? I mean I need to check the existing instances in order to know whether
   // TODO something is stopped (i.e. not present in Nomad). Or we use a cache that let's the stuff expire if you don't get an answer from Nomad
   // https://www.playframework.com/documentation/2.5.x/ScalaCache
-  //
-//  private def updateStatusesBasedOnNomad(statuses: Map[String, InstanceStatus]): Unit = {
-//    val updatedInstances = instanceStorage.readInstances.map { instances =>
-//      instances.foreach { instance =>
-//        val id = instance.id
-//        statuses.get(id) match {
-//          case Some(nomadStatus) =>
-//            jobStatuses = jobStatuses.updated(id, nomadStatus)
-//            nomadService.requestServices(id)
-//          case None =>
-//            jobStatuses = jobStatuses.updated(id, InstanceStatus.Stopped)
-//            consulService.serviceStatuses = consulService.serviceStatuses.updated(id, Map.empty)
-//        }
-//      }
-//    }
-//  }
 
   private def updateStatusesBasedOnNomad(statuses: Map[String, InstanceStatus]): Unit = {
     jobStatuses = statuses

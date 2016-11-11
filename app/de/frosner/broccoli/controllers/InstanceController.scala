@@ -114,13 +114,12 @@ class InstanceController @Inject() (instanceService: InstanceService,
           Status(403)(s"Updating parameter values or templates only available when running in " +
             s"'${conf.PERMISSIONS_MODE_ADMINISTRATOR}' mode.")
         } else {
-          val update = UpdateInstance(
+          val maybeExistingAndChangedInstance = instanceService.updateInstance(
             id = id,
             statusUpdater = maybeStatusUpdater,
             parameterValuesUpdater = maybeParameterValuesUpdater,
             templateSelector = maybeTemplateSelector
           )
-          val maybeExistingAndChangedInstance = instanceService.updateInstance(update)
           maybeExistingAndChangedInstance match {
             case Success(changedInstance) => Ok(Json.toJson(changedInstance))
             case Failure(throwable: FileNotFoundException) => Status(404)(s"Instance not found: $throwable")

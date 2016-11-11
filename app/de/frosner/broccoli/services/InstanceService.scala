@@ -1,26 +1,19 @@
 package de.frosner.broccoli.services
 
-import java.io.{ObjectOutputStream, _}
+import java.io._
 import java.util.concurrent.{TimeUnit, ScheduledThreadPoolExecutor}
-import javax.inject.{Inject, Named, Singleton}
+import javax.inject.{Inject, Singleton}
 
-import akka.actor._
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import de.frosner.broccoli.util.Logging
-import play.api.{Configuration, Play}
-import play.api.libs.json.{JsArray, JsString, Json}
+import play.api.Configuration
 import play.api.libs.ws.WSClient
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 import InstanceService._
 import de.frosner.broccoli.conf
 import play.Logger
-import play.api.inject.ApplicationLifecycle
-
-import scala.io.Source
 
 @Singleton
 class InstanceService @Inject()(templateService: TemplateService,
@@ -144,18 +137,21 @@ class InstanceService @Inject()(templateService: TemplateService,
     maybeCreatedInstance.map(addStatuses)
   }
 
-  def updateInstance(updateInstance: UpdateInstance): Try[InstanceWithStatus] = {
-    val updateInstanceId = updateInstance.id
+  def updateInstance(id: String,
+                     statusUpdater: Option[StatusUpdater],
+                     parameterValuesUpdater: Option[ParameterValuesUpdater],
+                     templateSelector: Option[TemplateSelector]): Try[InstanceWithStatus] = {
+    val updateInstanceId = id
     val maybeInstance = instanceStorage.readInstance(updateInstanceId)
     maybeInstance.flatMap { instance =>
-      val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (updateInstance.templateSelector.isDefined) {
-        val newTemplateId = updateInstance.templateSelector.get.newTemplateId
+      val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (templateSelector.isDefined) {
+        val newTemplateId = templateSelector.get.newTemplateId
         val newTemplate = templateService.template(newTemplateId)
         newTemplate.map { template =>
           // Requested template exists, update the template
-          if (updateInstance.parameterValuesUpdater.isDefined) {
+          if (parameterValuesUpdater.isDefined) {
             // New parameter values are specified
-            val newParameterValues = updateInstance.parameterValuesUpdater.get.newParameterValues
+            val newParameterValues = parameterValuesUpdater.get.newParameterValues
             instance.updateTemplate(template, newParameterValues)
           } else {
             // Just use the old parameter values
@@ -167,9 +163,9 @@ class InstanceService @Inject()(templateService: TemplateService,
         }
       } else {
         // No template update required
-        if (updateInstance.parameterValuesUpdater.isDefined) {
+        if (parameterValuesUpdater.isDefined) {
           // Just update the parameter values
-          val newParameterValues = updateInstance.parameterValuesUpdater.get.newParameterValues
+          val newParameterValues = parameterValuesUpdater.get.newParameterValues
           instance.updateParameterValues(newParameterValues)
         } else {
           // Neither template update nor parameter value update required
@@ -177,7 +173,7 @@ class InstanceService @Inject()(templateService: TemplateService,
         }
       }
       val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
-        updateInstance.statusUpdater.map {
+        statusUpdater.map {
           // Update the instance status
           case StatusUpdater(InstanceStatus.Running) =>
             nomadService.startJob(instance.templateJson).map(_ => instance)
@@ -203,12 +199,12 @@ class InstanceService @Inject()(templateService: TemplateService,
 
   @volatile
   def deleteInstance(id: String): Try[InstanceWithStatus] = {
-    updateInstance(UpdateInstance(
+    updateInstance(
       id = id,
       statusUpdater = Some(StatusUpdater(InstanceStatus.Stopped)),
       parameterValuesUpdater = None,
       templateSelector = None
-    ))
+    )
     val instanceToDelete = instanceStorage.readInstance(id)
     val deletedInstance = instanceToDelete.flatMap(instanceStorage.deleteInstance)
     deletedInstance.map(addStatuses)
@@ -218,29 +214,10 @@ class InstanceService @Inject()(templateService: TemplateService,
 
 object InstanceService {
 
-  case object GetInstances
-
-  case class GetInstance(id: String)
-
-  case class NewInstance(instanceCreation: InstanceCreation)
-
   case class StatusUpdater(newStatus: InstanceStatus)
 
   case class ParameterValuesUpdater(newParameterValues: Map[String, String])
 
   case class TemplateSelector(newTemplateId: String)
-
-  case class UpdateInstance(id: String,
-                            statusUpdater: Option[StatusUpdater],
-                            parameterValuesUpdater: Option[ParameterValuesUpdater],
-                            templateSelector: Option[TemplateSelector])
-
-  case class DeleteInstance(id: String)
-
-  case class NomadStatuses(statuses: Map[String, InstanceStatus])
-
-  case class ConsulServices(jobId: String, jobServices: Iterable[Service])
-
-  case object NomadNotReachable
 
 }
