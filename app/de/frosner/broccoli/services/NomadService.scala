@@ -40,7 +40,16 @@ class NomadService @Inject()(configuration: Configuration,
   }
 
   @volatile
-  var nomadReachable: Boolean = true
+  private var nomadReachable: Boolean = true
+
+  def setNomadNotReachable() = {
+    nomadReachable = false
+    consulService.serviceStatuses = Map.empty
+  }
+
+  def setNomadReachable() = {
+    nomadReachable = true
+  }
 
   def requestStatuses() = {
     val queryUrl = nomadBaseUrl + "/v1/jobs"
@@ -60,12 +69,12 @@ class NomadService @Inject()(configuration: Configuration,
           case default => logger.warn(s"Unmatched status received: $default")
             InstanceStatus.Unknown
         })
-        nomadReachable = true
+        setNomadReachable()
         updateStatusesBasedOnNomad(idsAndStatuses.toMap)
       }
       case Failure(throwable) => {
         logger.error(throwable.toString)
-        nomadReachable = false
+        setNomadNotReachable()
       }
     }
   }
@@ -109,10 +118,10 @@ class NomadService @Inject()(configuration: Configuration,
       case Success(jobServiceIds) =>
         logger.debug(s"${jobRequest.uri} => ${jobServiceIds.mkString(", ")}")
         consulService.requestServiceStatus(id, jobServiceIds)
-        nomadReachable = true
+        setNomadReachable()
       case Failure(throwable) =>
         logger.error(throwable.toString)
-        nomadReachable = false
+        setNomadNotReachable()
     }
   }
 
