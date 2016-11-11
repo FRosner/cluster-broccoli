@@ -62,7 +62,7 @@ class InstanceController @Inject() (instanceService: InstanceService,
               LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
             )
           }.recover { case error =>
-            Status(400)("Invalid JSON format: " + error.toString)
+            Status(400)(error.toString)
           }.get
         }.getOrElse(Status(400)("Expected JSON data"))
       }.getOrElse(Status(400)("Expected JSON data"))
