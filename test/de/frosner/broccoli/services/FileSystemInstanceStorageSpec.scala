@@ -84,18 +84,6 @@ class FileSystemInstanceStorageSpec extends Specification {
       }
     }
 
-    "fail if the prefix does not match" in {
-      usingTempFolder { folder =>
-        val storage1 = FileSystemInstanceStorage(folder, "")
-        storage1.writeInstance(instance)
-        storage1.close()
-
-        val storage2 = FileSystemInstanceStorage(folder, "notmatchingprefix")
-
-        storage2.readInstance(instance.id).failed.get should beAnInstanceOf[PrefixViolationException]
-      }
-    }
-
     "fail if the file is not readable" in {
       usingTempFolder { folder =>
         val storage = FileSystemInstanceStorage(folder, "")
@@ -190,17 +178,6 @@ class FileSystemInstanceStorageSpec extends Specification {
 
   }
 
-  "Writing an instance" should {
-
-    "fail if the prefix does not match" in {
-      usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder, "notmatchinfprefix")
-        storage.writeInstance(instance).failed.get should beAnInstanceOf[PrefixViolationException]
-      }
-    }
-
-  }
-
   "Deleting an instance" should {
 
     "work" in {
@@ -209,18 +186,6 @@ class FileSystemInstanceStorageSpec extends Specification {
         storage.writeInstance(instance)
         storage.deleteInstance(instance)
         storage.readInstance(instance.id).isFailure === true
-      }
-    }
-
-    "fail if the prefix does not match" in {
-      usingTempFolder { folder =>
-        val storage1 = FileSystemInstanceStorage(folder, "")
-        storage1.writeInstance(instance)
-        storage1.close()
-
-        val storage2 = FileSystemInstanceStorage(folder, "notmatchingprefix")
-
-        storage2.deleteInstance(instance).failed.get should beAnInstanceOf[PrefixViolationException]
       }
     }
 

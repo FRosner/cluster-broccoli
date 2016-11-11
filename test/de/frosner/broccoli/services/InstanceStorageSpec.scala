@@ -21,23 +21,6 @@ class InstanceStorageSpec extends Specification {
       override def deleteInstanceImpl(toDelete: Instance): Try[Instance] = Failure(new Exception())
       override def writeInstanceImpl(instance: Instance): Try[Instance] = Failure(new Exception())
       override def closeImpl(): Unit = {}
-      override val prefix: String = "prefix"
-      def testSuccess = {
-        val expected = "blub"
-        checkPrefix("prefix-bla"){Success(expected)} === Success(expected)
-      }
-      def testFailure = {
-        val expected = "blub"
-        checkPrefix("bla"){Success(expected)} should beFailedTry
-      }
-    }
-
-    "succeed if the prefix matches" in {
-      testStorage.testSuccess
-    }
-
-    "fail if the prefix does not match" in {
-      testStorage.testFailure
     }
 
     "be closed after closing" in {

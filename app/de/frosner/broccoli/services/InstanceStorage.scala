@@ -1,24 +1,11 @@
 package de.frosner.broccoli.services
 
-import java.io._
-
 import de.frosner.broccoli.models.Instance
 import de.frosner.broccoli.util.Logging
-import play.api.Logger
-import play.api.libs.json.Json
 
 import scala.util.{Failure, Success, Try}
 
 trait InstanceStorage extends Logging {
-
-  val prefix: String
-  protected def checkPrefix[F, T](id: String)(f: => Try[T]): Try[T] = {
-    if (id.startsWith(prefix)) {
-      f
-    } else {
-      Failure(PrefixViolationException(id, prefix))
-    }
-  }
 
   private def ifNotClosed[T](f: => T): T = {
     if (!isClosed) {
@@ -39,8 +26,6 @@ trait InstanceStorage extends Logging {
 
   protected def readInstanceImpl(id: String): Try[Instance]
 
-
-
   /**
     * Reads all instances.
     */
@@ -51,8 +36,6 @@ trait InstanceStorage extends Logging {
   }
 
   protected def readInstancesImpl: Try[Set[Instance]]
-
-
 
   /**
     * Reads all instances whose IDs match the given filter.

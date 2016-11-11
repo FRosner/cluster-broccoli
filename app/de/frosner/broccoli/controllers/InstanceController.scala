@@ -21,19 +21,16 @@ class InstanceController @Inject() (instanceService: InstanceService,
                                     permissionsService: PermissionsService) extends Controller with Logging {
 
   def list(maybeTemplateId: Option[String]) = Action {
-    val maybeInstances = instanceService.getInstances
-    val maybeFilteredInstances = maybeTemplateId.map(
-      id => maybeInstances.map(_.filter(_.instance.template.id == id))
-    ).getOrElse(maybeInstances)
-    val maybeAnonymizedInstances = if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
-      maybeFilteredInstances
+    val instances = instanceService.getInstances
+    val filteredInstances = maybeTemplateId.map(
+      id => instances.filter(_.instance.template.id == id)
+    ).getOrElse(instances)
+    val anonymizedInstances = if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
+      filteredInstances
     } else {
-      maybeFilteredInstances.map(_.map(InstanceController.removeSecretVariables))
+      filteredInstances.map(InstanceController.removeSecretVariables)
     }
-    maybeAnonymizedInstances match {
-      case Success(filteredInstances) => Ok(Json.toJson(filteredInstances))
-      case Failure(throwable) => NotFound(throwable.toString)
-    }
+    Ok(Json.toJson(anonymizedInstances))
   }
 
   def show(id: String) = Action {
@@ -46,9 +43,7 @@ class InstanceController @Inject() (instanceService: InstanceService,
           InstanceController.removeSecretVariables(instance)
         }
       })
-    }.recover {
-      case throwable => NotFound(throwable.toString)
-    }.get
+    }.getOrElse(NotFound(s"Instance $id not found."))
   }
 
   def create = Action { request =>

@@ -74,8 +74,10 @@ The following configuration properties are supported.
 | `broccoli.consul.lookup` | Lookup method used for consul. Options: `ip` or `dns` (recommended).| `ip` |
 | `broccoli.polling.frequency` | Integer (seconds) to control the time between asking Nomad and Consul for job and service status. | `1` |
 | `broccoli.templates.storage.type` | Storage type for templates. Currently only `fs` supported. | `fs` |
-| `broccoli.templates.storage.url` | Storage URL for templates. If storage type is `fs`, this is the directory to load templates from. | `templates` |
+| `broccoli.templates.storage.fs.url` | Storage directory for templates in `fs` mode. | `templates` |
 | `broccoli.instances.storage.type` | Storage type for instances. `fs` and `couchdb` are supported. See the [instance documentation](https://github.com/FRosner/cluster-broccoli/wiki/Instances) for details. | `fs` |
-| `broccoli.instances.storage.url` | Storage URL for instances. See the [instance documentation](https://github.com/FRosner/cluster-broccoli/wiki/Instances) for details. | See [documentation](https://github.com/FRosner/cluster-broccoli/wiki/Instances) |
+| `broccoli.instances.storage.fs.url` | Storage directory for instances in `fs` mode. | `instances` |
+| `broccoli.instances.storage.couchdb.url` | URL to CouchDB in `couchdb` mode. | `http://localhost:5984` |
+| `broccoli.instances.storage.couchdb.dbName` | Database name in `couchdb` mode. | `broccoli_instances` |
 | `broccoli.permissions.mode` | Determines the actions that can be performed with the Broccoli instance. `administrator` (full functionality), `operator` (starting, stopping instances) or `user` (inspecting instance state) | `administrator` |
 | `http.port` | Port to bind the HTTP interface to | `9000` |

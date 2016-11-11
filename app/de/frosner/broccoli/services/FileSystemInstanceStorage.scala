@@ -33,18 +33,16 @@ case class FileSystemInstanceStorage(storageDirectory: File, prefix: String) ext
   }
 
   override def readInstanceImpl(id: String): Try[Instance] = {
-    checkPrefix(id) {
-      val input = Try(new FileInputStream(idToFile(id)))
-      val instance = input.map(i => Json.parse(i).as[Instance])
-      input.foreach(_.close())
-      instance.flatMap { instance =>
-        if (instance.id != id) {
-          val error = s"Instance id (${instance.id}) does not match file name ($id)"
-          Logger.error(error)
-          Failure(new IllegalStateException(error))
-        } else {
-          Success(instance)
-        }
+    val input = Try(new FileInputStream(idToFile(id)))
+    val instance = input.map(i => Json.parse(i).as[Instance])
+    input.foreach(_.close())
+    instance.flatMap { instance =>
+      if (instance.id != id) {
+        val error = s"Instance id (${instance.id}) does not match file name ($id)"
+        Logger.error(error)
+        Failure(new IllegalStateException(error))
+      } else {
+        Success(instance)
       }
     }
   }
@@ -67,7 +65,7 @@ case class FileSystemInstanceStorage(storageDirectory: File, prefix: String) ext
       instanceFiles.map(_.getName.stripSuffix(".json"))
     }
     instanceIds.map(_.map { id =>
-      val tryInstance = readInstance(id)
+      val tryInstance = readInstanceImpl(id)
       tryInstance match {
         case Success(instance) => instance
         case Failure(throwable) => throw throwable
@@ -78,24 +76,20 @@ case class FileSystemInstanceStorage(storageDirectory: File, prefix: String) ext
   @volatile
   override def writeInstanceImpl(instance: Instance): Try[Instance] = {
     val id = instance.id
-    checkPrefix(id) {
-      val file = idToFile(id)
-      val printStream = Try(new PrintStream(new FileOutputStream(file)))
-      val afterWrite = printStream.map(_.append(Json.toJson(instance).toString()))
-      printStream.map(_.close())
-      afterWrite.map(_ => instance)
-    }
+    val file = idToFile(id)
+    val printStream = Try(new PrintStream(new FileOutputStream(file)))
+    val afterWrite = printStream.map(_.append(Json.toJson(instance).toString()))
+    printStream.map(_.close())
+    afterWrite.map(_ => instance)
   }
 
   @volatile
   override def deleteInstanceImpl(toDelete: Instance): Try[Instance] = {
     val id = toDelete.id
-    checkPrefix(id) {
-      val file = idToFile(id)
-      val deleted = Try(file.delete())
-      deleted.flatMap { success =>
-        if (success) Success(toDelete) else Failure(new FileNotFoundException(s"Could not delete $file"))
-      }
+    val file = idToFile(id)
+    val deleted = Try(file.delete())
+    deleted.flatMap { success =>
+      if (success) Success(toDelete) else Failure(new FileNotFoundException(s"Could not delete $file"))
     }
   }
 
