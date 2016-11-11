@@ -1,41 +1,29 @@
 package de.frosner.broccoli.services
 
-import java.io.{ObjectOutputStream, _}
-import java.util.concurrent.TimeUnit
-import javax.inject.{Inject, Named, Singleton}
+import java.io._
+import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
+import javax.inject.{Inject, Singleton}
 
-import akka.actor._
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
-import de.frosner.broccoli.services.NomadService.{DeleteJob, GetServices, GetStatuses, StartJob}
 import de.frosner.broccoli.util.Logging
-import play.api.{Configuration, Play}
-import play.api.libs.json.{JsArray, JsString, Json}
+import play.api.Configuration
 import play.api.libs.ws.WSClient
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 import InstanceService._
 import de.frosner.broccoli.conf
 import play.Logger
-import play.api.inject.ApplicationLifecycle
-
-import scala.io.Source
 
 @Singleton
 class InstanceService @Inject()(templateService: TemplateService,
-                                system: ActorSystem,
-                                @Named("nomad-actor") nomadActor: ActorRef,
+                                nomadService: NomadService,
+                                consulService: ConsulService,
                                 ws: WSClient,
-                                configuration: Configuration,
-                                lifecycle: ApplicationLifecycle) extends Actor with Logging {
+                                configuration: Configuration) extends Logging {
 
-  // If I don't do this here it will not terminate
-  lifecycle.addStopHook(() => Future())
-
-  private val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
-  private val pollingFrequencySecondsTry = pollingFrequencySecondsString match {
+  private lazy val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
+  private lazy val pollingFrequencySecondsTry = pollingFrequencySecondsString match {
     case Some(string) => Try(string.toInt).flatMap {
       int => if (int >= 1) Success(int) else Failure(new Exception())
     }
@@ -45,25 +33,29 @@ class InstanceService @Inject()(templateService: TemplateService,
     Logger.error(s"Invalid ${conf.POLLING_FREQUENCY_KEY} specified: '${pollingFrequencySecondsString.get}'. Needs to be a positive integer.")
     System.exit(1)
   }
-  private val pollingFrequencySeconds = pollingFrequencySecondsTry.get
+  private lazy val pollingFrequencySeconds = pollingFrequencySecondsTry.get
   Logger.info(s"Nomad/Consul polling frequency set to $pollingFrequencySeconds seconds")
-  private val cancellable: Cancellable = system.scheduler.schedule(
-    initialDelay = Duration.Zero,
-    interval = Duration.create(pollingFrequencySeconds, TimeUnit.SECONDS),
-    receiver = nomadActor,
-    message = GetStatuses
-  )(
-    system.dispatcher,
-    self
-  )
 
-  val nomadJobPrefix = {
+  private val scheduler = new ScheduledThreadPoolExecutor(1)
+  private val task = new Runnable {
+    def run() = {
+      nomadService.requestStatuses()
+    }
+  }
+  private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0, pollingFrequencySeconds, TimeUnit.SECONDS)
+
+  sys.addShutdownHook{
+    scheduledTask.cancel(false)
+    scheduler.shutdown()
+  }
+
+  lazy val nomadJobPrefix = {
     val prefix = conf.getNomadJobPrefix(configuration)
     Logger.info(s"${conf.NOMAD_JOB_PREFIX_KEY}=$prefix")
     prefix
   }
 
-  private val instanceStorage: InstanceStorage = {
+  private lazy val instanceStorage: InstanceStorage = {
     val instanceStorageType = {
       val storageType = configuration.getString(conf.INSTANCES_STORAGE_TYPE_KEY).getOrElse(conf.TEMPLATES_STORAGE_TYPE_DEFAULT)
       val allowedStorageTypes = Set(conf.INSTANCES_STORAGE_TYPE_FS, conf.INSTANCES_STORAGE_TYPE_COUCHDB)
@@ -94,88 +86,41 @@ class InstanceService @Inject()(templateService: TemplateService,
       }
       case default => throw new IllegalStateException(s"Illegal storage type '$instanceStorageType")
     }
-    maybeInstanceStorage match {
+    val instanceStorage = maybeInstanceStorage match {
       case Success(storage) => storage
       case Failure(throwable) =>
         Logger.error(s"Cannot start instance storage: $throwable")
         System.exit(1)
         throw throwable
     }
+    sys.addShutdownHook {
+      Logger.info("Closing instanceStorage")
+      instanceStorage.close()
+    }
+    instanceStorage
   }
-
-  sys.addShutdownHook {
-    Logger.info("Closing instanceStorage")
-    instanceStorage.close()
-  }
-
-  @volatile
-  private var jobStatuses: Map[String, InstanceStatus] = Map.empty
-
-  @volatile
-  private var serviceStatuses: Map[String, Map[String, Service]] = Map.empty
-
-  private def getJobStatusOrDefault(id: String): InstanceStatus = jobStatuses.getOrElse(id, InstanceStatus.Unknown)
-
-  private def getServiceStatusesOrDefault(id: String): Map[String, Service] =
-    serviceStatuses.getOrElse(id, Map.empty)
 
   private def addStatuses(instance: Instance): InstanceWithStatus = {
     val instanceId = instance.id
     InstanceWithStatus(
       instance = instance,
-      status = getJobStatusOrDefault(instanceId),
-      services = getServiceStatusesOrDefault(instanceId)
+      status = nomadService.getJobStatusOrDefault(instanceId),
+      services = consulService.getServiceStatusesOrDefault(instanceId)
     )
   }
 
   implicit val executionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  def receive = {
-    case GetInstances => sender ! getInstances
-    case GetInstance(id) => sender ! getInstance(id)
-    case NewInstance(instanceCreation) => sender() ! addInstance(instanceCreation)
-    case updateInstanceInfo: UpdateInstance => sender() ! updateInstance(updateInstanceInfo)
-    case DeleteInstance(id) => sender ! deleteInstance(id)
-    case NomadStatuses(statuses) => updateStatusesBasedOnNomad(statuses)
-    case ConsulServices(id, services) => updateServicesBasedOnNomad(id, services)
-    case NomadNotReachable => setAllStatusesToUnknown()
-  }
-
-  private[this] def setAllStatusesToUnknown(): Unit = {
-    jobStatuses = jobStatuses.map {
-      case (key, value) => (key, InstanceStatus.Unknown)
-    }
-  }
-
-  private[this] def updateStatusesBasedOnNomad(statuses: Map[String, InstanceStatus]): Unit = {
-    val updatedInstances = instanceStorage.readInstances.map { instances =>
-      instances.foreach { instance =>
-        val id = instance.id
-        statuses.get(id) match {
-          case Some(nomadStatus) =>
-            jobStatuses = jobStatuses.updated(id, nomadStatus)
-            nomadActor ! GetServices(id)
-          case None =>
-            jobStatuses = jobStatuses.updated(id, InstanceStatus.Stopped)
-            serviceStatuses = serviceStatuses.updated(id, Map.empty)
-        }
-      }
-    }
-  }
-
-  private[this] def updateServicesBasedOnNomad(jobId: String, services: Iterable[Service]) = {
-    serviceStatuses = serviceStatuses.updated(jobId, services.map(service => (service.name, service)).toMap)
-  }
-
-  private[this] def getInstances: Try[Iterable[InstanceWithStatus]] = {
+  def getInstances: Try[Iterable[InstanceWithStatus]] = {
     instanceStorage.readInstances.map(_.map(addStatuses))
   }
 
-  private[this] def getInstance(id: String): Try[InstanceWithStatus] = {
+  def getInstance(id: String): Try[InstanceWithStatus] = {
     instanceStorage.readInstance(id).map(addStatuses)
   }
 
-  private[this] def addInstance(instanceCreation: InstanceCreation): Try[InstanceWithStatus] = {
+  @volatile
+  def addInstance(instanceCreation: InstanceCreation): Try[InstanceWithStatus] = {
     val maybeId = instanceCreation.parameters.get("id") // FIXME requires ID to be defined inside the parameter values
     val templateId = instanceCreation.templateId
     val maybeCreatedInstance = maybeId.map { id =>
@@ -192,18 +137,21 @@ class InstanceService @Inject()(templateService: TemplateService,
     maybeCreatedInstance.map(addStatuses)
   }
 
-  private[this] def updateInstance(updateInstance: UpdateInstance): Try[InstanceWithStatus] = {
-    val updateInstanceId = updateInstance.id
+  def updateInstance(id: String,
+                     statusUpdater: Option[StatusUpdater],
+                     parameterValuesUpdater: Option[ParameterValuesUpdater],
+                     templateSelector: Option[TemplateSelector]): Try[InstanceWithStatus] = {
+    val updateInstanceId = id
     val maybeInstance = instanceStorage.readInstance(updateInstanceId)
     maybeInstance.flatMap { instance =>
-      val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (updateInstance.templateSelector.isDefined) {
-        val newTemplateId = updateInstance.templateSelector.get.newTemplateId
+      val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (templateSelector.isDefined) {
+        val newTemplateId = templateSelector.get.newTemplateId
         val newTemplate = templateService.template(newTemplateId)
         newTemplate.map { template =>
           // Requested template exists, update the template
-          if (updateInstance.parameterValuesUpdater.isDefined) {
+          if (parameterValuesUpdater.isDefined) {
             // New parameter values are specified
-            val newParameterValues = updateInstance.parameterValuesUpdater.get.newParameterValues
+            val newParameterValues = parameterValuesUpdater.get.newParameterValues
             instance.updateTemplate(template, newParameterValues)
           } else {
             // Just use the old parameter values
@@ -215,9 +163,9 @@ class InstanceService @Inject()(templateService: TemplateService,
         }
       } else {
         // No template update required
-        if (updateInstance.parameterValuesUpdater.isDefined) {
+        if (parameterValuesUpdater.isDefined) {
           // Just update the parameter values
-          val newParameterValues = updateInstance.parameterValuesUpdater.get.newParameterValues
+          val newParameterValues = parameterValuesUpdater.get.newParameterValues
           instance.updateParameterValues(newParameterValues)
         } else {
           // Neither template update nor parameter value update required
@@ -225,14 +173,12 @@ class InstanceService @Inject()(templateService: TemplateService,
         }
       }
       val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
-        updateInstance.statusUpdater.map {
+        statusUpdater.map {
           // Update the instance status
           case StatusUpdater(InstanceStatus.Running) =>
-            nomadActor.tell(StartJob(instance.templateJson), self)
-            Success(instance)
+            nomadService.startJob(instance.templateJson).map(_ => instance)
           case StatusUpdater(InstanceStatus.Stopped) =>
-            nomadActor.tell(DeleteJob(instance.id), self)
-            Success(instance)
+            nomadService.deleteJob(instance.id).map(_ => instance)
           case other =>
             Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
         }.getOrElse {
@@ -251,13 +197,14 @@ class InstanceService @Inject()(templateService: TemplateService,
     }
   }
 
-  private[this] def deleteInstance(id: String): Try[InstanceWithStatus] = {
-    updateInstance(UpdateInstance(
+  @volatile
+  def deleteInstance(id: String): Try[InstanceWithStatus] = {
+    updateInstance(
       id = id,
       statusUpdater = Some(StatusUpdater(InstanceStatus.Stopped)),
       parameterValuesUpdater = None,
       templateSelector = None
-    ))
+    )
     val instanceToDelete = instanceStorage.readInstance(id)
     val deletedInstance = instanceToDelete.flatMap(instanceStorage.deleteInstance)
     deletedInstance.map(addStatuses)
@@ -267,29 +214,10 @@ class InstanceService @Inject()(templateService: TemplateService,
 
 object InstanceService {
 
-  case object GetInstances
-
-  case class GetInstance(id: String)
-
-  case class NewInstance(instanceCreation: InstanceCreation)
-
   case class StatusUpdater(newStatus: InstanceStatus)
 
   case class ParameterValuesUpdater(newParameterValues: Map[String, String])
 
   case class TemplateSelector(newTemplateId: String)
-
-  case class UpdateInstance(id: String,
-                            statusUpdater: Option[StatusUpdater],
-                            parameterValuesUpdater: Option[ParameterValuesUpdater],
-                            templateSelector: Option[TemplateSelector])
-
-  case class DeleteInstance(id: String)
-
-  case class NomadStatuses(statuses: Map[String, InstanceStatus])
-
-  case class ConsulServices(jobId: String, jobServices: Iterable[Service])
-
-  case object NomadNotReachable
 
 }

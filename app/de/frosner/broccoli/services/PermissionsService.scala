@@ -8,7 +8,7 @@ import play.api.{Configuration, Logger}
 @Singleton
 class PermissionsService @Inject()(configuration: Configuration) {
 
-  val permissionsMode: String = {
+  private lazy val permissionsMode: String = {
     val maybePermissionsMode = configuration.getString(conf.PERMISSIONS_MODE_KEY)
     val result = maybePermissionsMode match {
       case Some(mode) => {
@@ -29,5 +29,7 @@ class PermissionsService @Inject()(configuration: Configuration) {
     Logger.info(s"${conf.PERMISSIONS_MODE_KEY}=$result")
     result
   }
+
+  def getPermissionsMode(): String = permissionsMode
 
 }

@@ -23,7 +23,7 @@ class TemplateControllerSpec extends PlaySpecification {
           "id" -> ParameterInfo(name = "id", default = Some("myid"), secret = Some(false))
         )
       )
-      when(templateService.templates).thenReturn(Seq(template))
+      when(templateService.getTemplates).thenReturn(Seq(template))
       val controller = new TemplateController(templateService)
 
       val result = controller.list.apply(FakeRequest())

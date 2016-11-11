@@ -10,10 +10,10 @@ import play.api.mvc.{Action, AnyContent, Controller}
 
 class TemplateController @Inject() (templateService: TemplateService) extends Controller {
 
-  private val templates = templateService.templates
+  private val templates = templateService.getTemplates
 
   def list: Action[AnyContent] = Action {
-    Ok(Json.toJson(templateService.templates))
+    Ok(Json.toJson(templateService.getTemplates))
   }
 
   def show(id: String): Action[AnyContent] = Action {

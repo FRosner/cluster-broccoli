@@ -1,14 +1,10 @@
 package de.frosner.broccoli.services
 
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
+import javax.inject.{Singleton, Inject}
 
-import akka.actor._
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.{Instance, InstanceStatus, Service, ServiceStatus}
-import de.frosner.broccoli.services.ConsulService.ServiceStatusRequest
-import de.frosner.broccoli.services.InstanceService.{ConsulServices, NomadNotReachable, NomadStatuses}
-import de.frosner.broccoli.services.NomadService._
+import de.frosner.broccoli.models.{Service, ServiceStatus}
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.{Configuration, Logger}
@@ -18,12 +14,17 @@ import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 
 
-class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extends Actor {
+@Singleton()
+class ConsulService @Inject()(configuration: Configuration,
+                              ws: WSClient) {
 
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  private val consulBaseUrl = configuration.getString(conf.CONSUL_URL_KEY).getOrElse(conf.CONSUL_URL_DEFAULT)
-  private val consulDomain: Option[String] = {
+  @volatile
+  var serviceStatuses: Map[String, Map[String, Service]] = Map.empty
+
+  private lazy val consulBaseUrl = configuration.getString(conf.CONSUL_URL_KEY).getOrElse(conf.CONSUL_URL_DEFAULT)
+  private lazy val consulDomain: Option[String] = {
     val lookupMethod = configuration.getString(conf.CONSUL_LOOKUP_METHOD_KEY).getOrElse(conf.CONSUL_LOOKUP_METHOD_IP)
     lookupMethod match {
       case conf.CONSUL_LOOKUP_METHOD_DNS => {
@@ -50,72 +51,79 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
     }
   }
 
-  def receive = {
-    case ServiceStatusRequest(jobId, serviceNames) =>
-      val sendingService = sender()
-      val serviceResponses: Iterable[Future[Seq[Service]]] = serviceNames.map { name =>
-        val catalogQueryUrl = consulBaseUrl + s"/v1/catalog/service/$name"
-        val catalogRequest = ws.url(catalogQueryUrl)
-        val healthQueryUrl = consulBaseUrl + s"/v1/health/service/$name?passing"
-        val healthRequest = ws.url(healthQueryUrl)
-        val requests = Future.sequence(List(catalogRequest.get(), healthRequest.get()))
-        requests.map { case List(catalogResponse, healthResponse) =>
-          val catalogResponseJson = catalogResponse.json
-          val healthResponseJson = healthResponse.json
-          Logger.debug(s"${catalogRequest.uri} => $catalogResponseJson")
-          Logger.debug(s"${healthRequest.uri} => $healthResponseJson")
-          val responseJsonArray = catalogResponseJson.as[JsArray]
-          responseJsonArray.value.map { serviceJson =>
-            val fields = serviceJson.as[JsObject].value
-            // TODO proper JSON parsing with exception handling
-            val serviceName = fields("ServiceName").as[JsString].value
-            val serviceProtocol = ConsulService.extractProtocolFromTags(fields("ServiceTags")) match {
-              case Some(protocol) => protocol
-              case None => Logger.warn("Service did not specify a single protocol tag (e.g. protocol-https). Assuming https.")
-                "https"
-            }
-            val serviceAddress = consulDomain.map { domain =>
-              fields("ServiceName").as[JsString].value + ".service." + domain
-            }.getOrElse {
-              fields("ServiceAddress").as[JsString].value
-            }
-            val servicePort = fields("ServicePort").as[JsNumber].value.toInt
-            val serviceStatus = {
-              val healthyServiceInstances = healthResponseJson.as[JsArray]
-              if (healthyServiceInstances.value.isEmpty) ServiceStatus.Failing else ServiceStatus.Passing
-            }
-            Service(
-              name = serviceName,
-              protocol = serviceProtocol,
-              address = serviceAddress,
-              port = servicePort,
-              status = serviceStatus
-            )
+  def getServiceStatusesOrDefault(id: String): Map[String, Service] = {
+    serviceStatuses.getOrElse(id, Map.empty)
+  }
+
+  def requestServiceStatus(jobId: String, serviceNames: Iterable[String]) = {
+    val serviceResponses: Iterable[Future[Seq[Service]]] = serviceNames.map { name =>
+      val catalogQueryUrl = consulBaseUrl + s"/v1/catalog/service/$name"
+      val catalogRequest = ws.url(catalogQueryUrl)
+      val healthQueryUrl = consulBaseUrl + s"/v1/health/service/$name?passing"
+      val healthRequest = ws.url(healthQueryUrl)
+      val requests = Future.sequence(List(catalogRequest.get(), healthRequest.get()))
+      requests.map { case List(catalogResponse, healthResponse) =>
+        Logger.info(s"${catalogRequest.uri} ${healthRequest.uri}")
+        val catalogResponseJson = catalogResponse.json
+        val healthResponseJson = healthResponse.json
+        Logger.debug(s"${catalogRequest.uri} => $catalogResponseJson")
+        Logger.debug(s"${healthRequest.uri} => $healthResponseJson")
+        val responseJsonArray = catalogResponseJson.as[JsArray]
+        responseJsonArray.value.map { serviceJson =>
+          val fields = serviceJson.as[JsObject].value
+          // TODO proper JSON parsing with exception handling
+          val serviceName = fields("ServiceName").as[JsString].value
+          val serviceProtocol = ConsulService.extractProtocolFromTags(fields("ServiceTags")) match {
+            case Some(protocol) => protocol
+            case None => Logger.warn("Service did not specify a single protocol tag (e.g. protocol-https). Assuming https.")
+              "https"
           }
+          val serviceAddress = consulDomain.map { domain =>
+            fields("ServiceName").as[JsString].value + ".service." + domain
+          }.getOrElse {
+            fields("ServiceAddress").as[JsString].value
+          }
+          val servicePort = fields("ServicePort").as[JsNumber].value.toInt
+          val serviceStatus = {
+            val healthyServiceInstances = healthResponseJson.as[JsArray]
+            if (healthyServiceInstances.value.isEmpty) ServiceStatus.Failing else ServiceStatus.Passing
+          }
+          Service(
+            name = serviceName,
+            protocol = serviceProtocol,
+            address = serviceAddress,
+            port = servicePort,
+            status = serviceStatus
+          )
         }
       }
-      val serviceResponse = Future.sequence(serviceResponses)
-      serviceResponse.onComplete {
-        case Success(services: Iterable[Seq[Service]]) => sendingService ! ConsulServices(jobId, services.flatten)
-        case Failure(throwable) =>
-          Logger.error(throwable.toString)
-          val unknownServices = serviceNames.map(
-            name => Service(
-              name = name,
-              protocol = "",
-              address = "",
-              port = 80,
-              status = ServiceStatus.Unknown
-            )
-          )
-          sendingService ! ConsulServices(jobId, unknownServices)
+    }
+    val serviceResponse = Try(Await.result(Future.sequence(serviceResponses), Duration(5, TimeUnit.SECONDS)))
+    def unknownService(name: String) = Service(
+      name = name,
+      protocol = "",
+      address = "",
+      port = 80,
+      status = ServiceStatus.Unknown
+    )
+    serviceResponse match {
+      case Success(services: Iterable[Seq[Service]]) => {
+        val healthyOrUnhealthyServices = services.flatten.map(service => (service.name, service)).toMap
+        val allServices = serviceNames.map { name =>
+          (name, healthyOrUnhealthyServices.getOrElse(name, unknownService(name)))
+        }.toMap
+        serviceStatuses = serviceStatuses.updated(jobId, allServices)
       }
+      case Failure(throwable) =>
+        Logger.error(throwable.toString)
+        val unknownServices = serviceNames.map(unknownService)
+        serviceStatuses = serviceStatuses.updated(jobId, unknownServices.map(service => (service.name, service)).toMap)
+    }
   }
 
 }
 
 object ConsulService {
-  case class ServiceStatusRequest(jobId: String, serviceNames: Iterable[String])
 
   def extractProtocolFromTags(tagsJs: JsValue): Option[String] = {
     val tags = tagsJs.as[JsArray].value.map(_.as[JsString].value)
@@ -126,5 +134,6 @@ object ConsulService {
       case others => None
     }
   }
+
 }
 

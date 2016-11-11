@@ -24,7 +24,7 @@ class AboutController @Inject()(buildInfoService: BuildInfoService,
         "version" -> JsString(buildInfoService.sbtVersion)
       )),
       "permissions" -> JsObject(Map(
-        "mode" -> JsString(permissionsService.permissionsMode)
+        "mode" -> JsString(permissionsService.getPermissionsMode)
       )),
       "nomad" -> JsObject(Map(
         "jobPrefix" -> JsString(instanceService.nomadJobPrefix)

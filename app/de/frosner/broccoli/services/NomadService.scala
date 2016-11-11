@@ -1,37 +1,55 @@
 package de.frosner.broccoli.services
 
-import javax.inject.{Inject, Named}
+import java.util.concurrent.TimeUnit
+import javax.inject.{Inject, Named, Singleton}
 
-import akka.actor._
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.{Instance, InstanceStatus}
-import de.frosner.broccoli.services.ConsulService.ServiceStatusRequest
-import de.frosner.broccoli.services.InstanceService.{NomadNotReachable, NomadStatuses}
-import de.frosner.broccoli.services.NomadService._
+import de.frosner.broccoli.models.InstanceStatus._
+import de.frosner.broccoli.models.InstanceStatus
 import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
 import play.api.libs.ws.WSClient
-import play.api.{Configuration, Logger}
+import play.api.Configuration
 
-import scala.util.{Failure, Success}
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import scala.util.{Failure, Success, Try}
 
+@Singleton
 class NomadService @Inject()(configuration: Configuration,
-                             @Named("consul-actor") consulActor: ActorRef,
-                             ws: WSClient) extends Actor {
+                             consulService: ConsulService,
+                             ws: WSClient) {
 
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  private val nomadBaseUrl = configuration.getString(conf.NOMAD_URL_KEY).getOrElse(conf.NOMAD_URL_DEFAULT)
-  private val nomadJobPrefix = conf.getNomadJobPrefix(configuration)
+  private lazy val nomadBaseUrl = configuration.getString(conf.NOMAD_URL_KEY).getOrElse(conf.NOMAD_URL_DEFAULT)
+  private lazy val nomadJobPrefix = conf.getNomadJobPrefix(configuration)
 
-  def receive = {
-    case GetStatuses => executeGetStatuses()
-    case GetServices(id) => executeGetServices(id)
-    case StartJob(job) => executeStartJob(job)
-    case DeleteJob(id) => executeDeleteJob(id)
+  private val logger = play.api.Logger(this.getClass.getSimpleName)
+
+  @volatile
+  var jobStatuses: Map[String, InstanceStatus] = Map.empty
+
+  def getJobStatusOrDefault(id: String): InstanceStatus = {
+    if (nomadReachable) {
+      jobStatuses.getOrElse(id, InstanceStatus.Stopped)
+    } else {
+      InstanceStatus.Unknown
+    }
   }
 
-  private[this] def executeGetStatuses() = {
-    val sendingService = sender()
+  @volatile
+  private var nomadReachable: Boolean = true
+
+  def setNomadNotReachable() = {
+    nomadReachable = false
+    consulService.serviceStatuses = Map.empty
+  }
+
+  def setNomadReachable() = {
+    nomadReachable = true
+  }
+
+  def requestStatuses() = {
     val queryUrl = nomadBaseUrl + "/v1/jobs"
     val jobsRequest = ws.url(queryUrl).withQueryString("prefix" -> nomadJobPrefix)
     val jobsResponse = jobsRequest.get().map(_.json.as[JsArray])
@@ -41,25 +59,34 @@ class NomadService @Inject()(configuration: Configuration,
     })
     jobsWithTemplate.onComplete{
       case Success((ids, statuses)) => {
-        Logger.debug(s"${jobsRequest.uri} => ${ids.zip(statuses).mkString(", ")}")
+        logger.debug(s"${jobsRequest.uri} => ${ids.zip(statuses).mkString(", ")}")
         val idsAndStatuses = ids.zip(statuses.map {
           case "running" => InstanceStatus.Running
           case "pending" => InstanceStatus.Pending
           case "dead" => InstanceStatus.Dead
-          case default => Logger.warn(s"Unmatched status received: $default")
+          case default => logger.warn(s"Unmatched status received: $default")
             InstanceStatus.Unknown
         })
-        sendingService ! NomadStatuses(idsAndStatuses.toMap)
+        setNomadReachable()
+        updateStatusesBasedOnNomad(idsAndStatuses.toMap)
       }
       case Failure(throwable) => {
-        Logger.error(throwable.toString)
-        sendingService ! NomadNotReachable
+        logger.error(throwable.toString)
+        setNomadNotReachable()
       }
     }
   }
 
-  private[this] def executeGetServices(id: String) = {
-    val sendingService = sender()
+  // TODO should this go back to InstanceService or how? I mean I need to check the existing instances in order to know whether
+  // TODO something is stopped (i.e. not present in Nomad). Or we use a cache that let's the stuff expire if you don't get an answer from Nomad
+  // https://www.playframework.com/documentation/2.5.x/ScalaCache
+
+  private def updateStatusesBasedOnNomad(statuses: Map[String, InstanceStatus]): Unit = {
+    jobStatuses = statuses
+    statuses.keys.foreach(requestServices)
+  }
+
+  def requestServices(id: String): Unit = {
     val queryUrl = nomadBaseUrl + s"/v1/job/$id"
     val jobRequest = ws.url(queryUrl)
     val jobResponse = jobRequest.get().map(_.json.as[JsObject])
@@ -71,34 +98,43 @@ class NomadService @Inject()(configuration: Configuration,
     }
     eventuallyJobServiceIds.onComplete {
       case Success(jobServiceIds) =>
-        Logger.debug(s"${jobRequest.uri} => ${jobServiceIds.mkString(", ")}")
-        consulActor.tell(ServiceStatusRequest(id, jobServiceIds), sendingService)
+        logger.debug(s"${jobRequest.uri} => ${jobServiceIds.mkString(", ")}")
+        consulService.requestServiceStatus(id, jobServiceIds)
+        setNomadReachable()
       case Failure(throwable) =>
-        Logger.error(throwable.toString)
-        sendingService ! NomadNotReachable
+        logger.error(throwable.toString)
+        setNomadNotReachable()
     }
   }
 
-  private[this] def executeStartJob(job: JsValue) = {
+  def startJob(job: JsValue): Try[Unit] = {
     val queryUrl = nomadBaseUrl + "/v1/jobs"
     val request = ws.url(queryUrl)
-    Logger.info(s"Sending job definition to ${request.uri}")
-    request.post(job)
+    logger.info(s"Sending job definition to ${request.uri}")
+    Try {
+      val result = Await.result(request.post(job), Duration(5, TimeUnit.SECONDS))
+      if (result.status == 200) {
+        Success()
+      } else {
+        Failure(NomadRequestFailed(request.uri.toString, result.status))
+      }
+    }.flatten
   }
 
-  private[this] def executeDeleteJob(id: String) = {
+  def deleteJob(id: String) = {
     val queryUrl = nomadBaseUrl + s"/v1/job/$id"
     val request = ws.url(queryUrl)
-    Logger.info(s"Sending deletion request to ${request.uri}")
-    request.delete()
+    logger.info(s"Sending deletion request to ${request.uri}")
+    Try {
+      val result = Await.result(request.delete(), Duration(5, TimeUnit.SECONDS))
+      if (result.status == 200) {
+        jobStatuses -= id
+        consulService.serviceStatuses -= id
+        Success()
+      } else {
+        Failure(NomadRequestFailed(request.uri.toString, result.status))
+      }
+    }.flatten
   }
 
 }
-
-object NomadService {
-  case object GetStatuses
-  case class GetServices(id: String)
-  case class StartJob(job: JsValue)
-  case class DeleteJob(id: String)
-}
-

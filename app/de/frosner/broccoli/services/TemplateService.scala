@@ -19,7 +19,7 @@ import scala.util.parsing.json.JSON
 @Singleton
 class TemplateService @Inject() (configuration: Configuration) {
 
-  private val templatesStorageType = {
+  private lazy val templatesStorageType = {
     val storageType = configuration.getString(conf.TEMPLATES_STORAGE_TYPE_KEY).getOrElse(conf.TEMPLATES_STORAGE_TYPE_DEFAULT)
     if (storageType != conf.TEMPLATES_STORAGE_TYPE_FILESYSTEM) {
       Logger.error(s"${conf.TEMPLATES_STORAGE_TYPE_KEY}=$storageType is invalid. Only '${conf.TEMPLATES_STORAGE_TYPE_FILESYSTEM}' supported.")
@@ -28,14 +28,14 @@ class TemplateService @Inject() (configuration: Configuration) {
     Logger.info(s"${conf.TEMPLATES_STORAGE_TYPE_KEY}=$storageType")
     storageType
   }
-  private val templatesUrl = {
+  private lazy val templatesUrl = {
     if (configuration.getString("broccoli.templatesDir").isDefined) Logger.warn(s"'broccoli.templatesDir' ignored. Use ${conf.TEMPLATES_STORAGE_URL_KEY} instead.")
     val url = configuration.getString(conf.TEMPLATES_STORAGE_URL_KEY).getOrElse(conf.TEMPLATES_STORAGE_URL_DEFAULT)
     Logger.info(s"${conf.TEMPLATES_STORAGE_URL_KEY}=$url")
     url
   }
 
-  val templates: Seq[Template] = {
+  private lazy val templates: Seq[Template] = {
     if (templatesStorageType == conf.TEMPLATES_STORAGE_TYPE_FILESYSTEM) {
       val templatesDirectory = new File(templatesUrl)
       Logger.info(s"Looking for templates in $templatesUrl")
@@ -103,6 +103,8 @@ class TemplateService @Inject() (configuration: Configuration) {
       throw new IllegalStateException(s"$templatesStorageType not supported")
     }
   }
+
+  def getTemplates: Seq[Template] = templates
 
   def template(id: String): Option[Template] = templates.find(_.id == id)
 
