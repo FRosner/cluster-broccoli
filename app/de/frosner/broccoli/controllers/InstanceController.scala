@@ -4,7 +4,6 @@ import java.io.FileNotFoundException
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Named}
 
-import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import de.frosner.broccoli.models.InstanceStatusJson._
@@ -19,15 +18,11 @@ import play.api.Logger
 import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.mvc.{Action, Controller}
 
-import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 
 class InstanceController @Inject() (instanceService: InstanceService,
                                     permissionsService: PermissionsService) extends Controller {
-
-  implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-  implicit val timeout: Timeout = Duration.create(5, TimeUnit.SECONDS)
 
   def list(maybeTemplateId: Option[String]) = Action {
     val maybeInstances = instanceService.getInstances
