@@ -21,8 +21,8 @@ class NomadService @Inject()(configuration: Configuration,
 
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  private val nomadBaseUrl = configuration.getString(conf.NOMAD_URL_KEY).getOrElse(conf.NOMAD_URL_DEFAULT)
-  private val nomadJobPrefix = conf.getNomadJobPrefix(configuration)
+  private lazy val nomadBaseUrl = configuration.getString(conf.NOMAD_URL_KEY).getOrElse(conf.NOMAD_URL_DEFAULT)
+  private lazy val nomadJobPrefix = conf.getNomadJobPrefix(configuration)
 
   private val logger = play.api.Logger(this.getClass.getSimpleName)
 

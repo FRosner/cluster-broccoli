@@ -29,7 +29,7 @@ class InstanceController @Inject() (instanceService: InstanceService,
     val maybeFilteredInstances = maybeTemplateId.map(
       id => maybeInstances.map(_.filter(_.instance.template.id == id))
     ).getOrElse(maybeInstances)
-    val maybeAnonymizedInstances = if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
+    val maybeAnonymizedInstances = if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
       maybeFilteredInstances
     } else {
       maybeFilteredInstances.map(_.map(InstanceController.removeSecretVariables))
@@ -44,7 +44,7 @@ class InstanceController @Inject() (instanceService: InstanceService,
     val maybeInstance = instanceService.getInstance(id)
     maybeInstance.map {
       instance => Ok(Json.toJson{
-        if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
+        if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
           instance
         } else {
           InstanceController.removeSecretVariables(instance)
@@ -56,7 +56,7 @@ class InstanceController @Inject() (instanceService: InstanceService,
   }
 
   def create = Action { request =>
-    if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
+    if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
       val maybeValidatedInstanceCreation = request.body.asJson.map(_.validate[InstanceCreation])
       maybeValidatedInstanceCreation.map { validatedInstanceCreation =>
         validatedInstanceCreation.map { instanceCreation =>
@@ -78,7 +78,7 @@ class InstanceController @Inject() (instanceService: InstanceService,
 
 
   def update(id: String) = Action { request =>
-    if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_USER) {
+    if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_USER) {
       Status(403)(s"Updating instances now allowed when running in permissions mode '${conf.PERMISSIONS_MODE_USER}'.")
     } else {
       val maybeJsObject = request.body.asJson.map(_.as[JsObject])
@@ -105,7 +105,7 @@ class InstanceController @Inject() (instanceService: InstanceService,
         if (maybeStatusUpdater.isEmpty && maybeParameterValuesUpdater.isEmpty && maybeTemplateSelector.isEmpty) {
           Status(400)("Invalid request to update an instance. Please refer to the API documentation.")
         } else if ((maybeParameterValuesUpdater.isDefined || maybeTemplateSelector.isDefined) &&
-              permissionsService.permissionsMode != conf.PERMISSIONS_MODE_ADMINISTRATOR) {
+              permissionsService.getPermissionsMode != conf.PERMISSIONS_MODE_ADMINISTRATOR) {
           Status(403)(s"Updating parameter values or templates only available when running in " +
             s"'${conf.PERMISSIONS_MODE_ADMINISTRATOR}' mode.")
         } else {
@@ -128,7 +128,7 @@ class InstanceController @Inject() (instanceService: InstanceService,
   }
 
   def delete(id: String) = Action {
-    if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
+    if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
       val maybeDeletedInstance = instanceService.deleteInstance(id)
       maybeDeletedInstance.map {
         instance => Ok(Json.toJson(instance))

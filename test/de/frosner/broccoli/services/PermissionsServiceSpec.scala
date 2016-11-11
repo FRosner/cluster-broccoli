@@ -18,7 +18,7 @@ class PermissionsServiceSpec extends Specification {
       mode => Configuration((conf.PERMISSIONS_MODE_KEY, mode))
     ).getOrElse(Configuration())
     val service = new PermissionsService(configuration)
-    service.permissionsMode === expectedPermissionsMode
+    service.getPermissionsMode === expectedPermissionsMode
   }
 
   "Permissions service" should {

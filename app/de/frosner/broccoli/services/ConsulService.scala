@@ -23,8 +23,8 @@ class ConsulService @Inject()(configuration: Configuration,
   @volatile
   var serviceStatuses: Map[String, Map[String, Service]] = Map.empty
 
-  private val consulBaseUrl = configuration.getString(conf.CONSUL_URL_KEY).getOrElse(conf.CONSUL_URL_DEFAULT)
-  private val consulDomain: Option[String] = {
+  private lazy val consulBaseUrl = configuration.getString(conf.CONSUL_URL_KEY).getOrElse(conf.CONSUL_URL_DEFAULT)
+  private lazy val consulDomain: Option[String] = {
     val lookupMethod = configuration.getString(conf.CONSUL_LOOKUP_METHOD_KEY).getOrElse(conf.CONSUL_LOOKUP_METHOD_IP)
     lookupMethod match {
       case conf.CONSUL_LOOKUP_METHOD_DNS => {

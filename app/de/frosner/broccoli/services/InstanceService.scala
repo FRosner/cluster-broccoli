@@ -1,7 +1,7 @@
 package de.frosner.broccoli.services
 
 import java.io._
-import java.util.concurrent.{TimeUnit, ScheduledThreadPoolExecutor}
+import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import javax.inject.{Inject, Singleton}
 
 import de.frosner.broccoli.models._
@@ -22,8 +22,8 @@ class InstanceService @Inject()(templateService: TemplateService,
                                 ws: WSClient,
                                 configuration: Configuration) extends Logging {
 
-  private val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
-  private val pollingFrequencySecondsTry = pollingFrequencySecondsString match {
+  private lazy val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
+  private lazy val pollingFrequencySecondsTry = pollingFrequencySecondsString match {
     case Some(string) => Try(string.toInt).flatMap {
       int => if (int >= 1) Success(int) else Failure(new Exception())
     }
@@ -33,29 +33,29 @@ class InstanceService @Inject()(templateService: TemplateService,
     Logger.error(s"Invalid ${conf.POLLING_FREQUENCY_KEY} specified: '${pollingFrequencySecondsString.get}'. Needs to be a positive integer.")
     System.exit(1)
   }
-  private val pollingFrequencySeconds = pollingFrequencySecondsTry.get
+  private lazy val pollingFrequencySeconds = pollingFrequencySecondsTry.get
   Logger.info(s"Nomad/Consul polling frequency set to $pollingFrequencySeconds seconds")
 
-  val scheduler = new ScheduledThreadPoolExecutor(1)
-  val task = new Runnable {
+  private val scheduler = new ScheduledThreadPoolExecutor(1)
+  private val task = new Runnable {
     def run() = {
       nomadService.requestStatuses()
     }
   }
-  val scheduledTask = scheduler.scheduleAtFixedRate(task, 0, pollingFrequencySeconds, TimeUnit.SECONDS)
+  private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0, pollingFrequencySeconds, TimeUnit.SECONDS)
 
   sys.addShutdownHook{
     scheduledTask.cancel(false)
     scheduler.shutdown()
   }
 
-  val nomadJobPrefix = {
+  lazy val nomadJobPrefix = {
     val prefix = conf.getNomadJobPrefix(configuration)
     Logger.info(s"${conf.NOMAD_JOB_PREFIX_KEY}=$prefix")
     prefix
   }
 
-  private val instanceStorage: InstanceStorage = {
+  private lazy val instanceStorage: InstanceStorage = {
     val instanceStorageType = {
       val storageType = configuration.getString(conf.INSTANCES_STORAGE_TYPE_KEY).getOrElse(conf.TEMPLATES_STORAGE_TYPE_DEFAULT)
       val allowedStorageTypes = Set(conf.INSTANCES_STORAGE_TYPE_FS, conf.INSTANCES_STORAGE_TYPE_COUCHDB)
@@ -86,18 +86,18 @@ class InstanceService @Inject()(templateService: TemplateService,
       }
       case default => throw new IllegalStateException(s"Illegal storage type '$instanceStorageType")
     }
-    maybeInstanceStorage match {
+    val instanceStorage = maybeInstanceStorage match {
       case Success(storage) => storage
       case Failure(throwable) =>
         Logger.error(s"Cannot start instance storage: $throwable")
         System.exit(1)
         throw throwable
     }
-  }
-
-  sys.addShutdownHook {
-    Logger.info("Closing instanceStorage")
-    instanceStorage.close()
+    sys.addShutdownHook {
+      Logger.info("Closing instanceStorage")
+      instanceStorage.close()
+    }
+    instanceStorage
   }
 
   private def addStatuses(instance: Instance): InstanceWithStatus = {
