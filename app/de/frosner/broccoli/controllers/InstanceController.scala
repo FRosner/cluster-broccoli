@@ -23,73 +23,68 @@ import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 
-class InstanceController @Inject() (@Named("instance-actor") instanceService: ActorRef,
+class InstanceController @Inject() (instanceService: InstanceService,
                                     permissionsService: PermissionsService) extends Controller {
 
   implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
   implicit val timeout: Timeout = Duration.create(5, TimeUnit.SECONDS)
 
-  def list(maybeTemplateId: Option[String]) = Action.async {
-    val eventuallyInstances = instanceService.ask(GetInstances).mapTo[Try[Iterable[InstanceWithStatus]]]
-    val eventuallyFilteredInstances = maybeTemplateId.map(
-      id => eventuallyInstances.map(_.map(_.filter(_.instance.template.id == id)))
-    ).getOrElse(eventuallyInstances)
-    val eventuallyAnonymizedInstances = if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
-      eventuallyFilteredInstances
+  def list(maybeTemplateId: Option[String]) = Action {
+    val maybeInstances = instanceService.getInstances
+    val maybeFilteredInstances = maybeTemplateId.map(
+      id => maybeInstances.map(_.filter(_.instance.template.id == id))
+    ).getOrElse(maybeInstances)
+    val maybeAnonymizedInstances = if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
+      maybeFilteredInstances
     } else {
-      eventuallyFilteredInstances.map(_.map(_.map(InstanceController.removeSecretVariables)))
+      maybeFilteredInstances.map(_.map(InstanceController.removeSecretVariables))
     }
-    eventuallyAnonymizedInstances.map {
+    maybeAnonymizedInstances match {
       case Success(filteredInstances) => Ok(Json.toJson(filteredInstances))
       case Failure(throwable) => NotFound(throwable.toString)
     }
   }
 
-  def show(id: String) = Action.async {
-    val eventuallyMaybeInstance = instanceService.ask(GetInstance(id)).mapTo[Try[InstanceWithStatus]]
-    eventuallyMaybeInstance.map {
-      _.map {
-        instance => Ok(Json.toJson{
-          if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
-            instance
-          } else {
-            InstanceController.removeSecretVariables(instance)
-          }
-        })
-      }.recover {
-        case throwable => NotFound(throwable.toString)
-      }.get
-    }
+  def show(id: String) = Action {
+    val maybeInstance = instanceService.getInstance(id)
+    maybeInstance.map {
+      instance => Ok(Json.toJson{
+        if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
+          instance
+        } else {
+          InstanceController.removeSecretVariables(instance)
+        }
+      })
+    }.recover {
+      case throwable => NotFound(throwable.toString)
+    }.get
   }
 
-  def create = Action.async { request =>
+  def create = Action { request =>
     if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
       val maybeValidatedInstanceCreation = request.body.asJson.map(_.validate[InstanceCreation])
       maybeValidatedInstanceCreation.map { validatedInstanceCreation =>
         validatedInstanceCreation.map { instanceCreation =>
-          val eventuallyNewInstance = instanceService.ask(NewInstance(instanceCreation)).mapTo[Try[InstanceWithStatus]]
-          eventuallyNewInstance.map { newInstance =>
-            newInstance.map { instanceWithStatus =>
-              Status(201)(Json.toJson(instanceWithStatus)).withHeaders(
-                LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
-              )
-            }.recover {
-              case error => Status(400)(error.getMessage)
-            }.get
-          }
-        }.recoverTotal { case error =>
-          Future(Status(400)("Invalid JSON format: " + error.toString))
-        }
-      }.getOrElse(Future(Status(400)("Expected JSON data")))
+          val tryNewInstance = instanceService.addInstance(instanceCreation)
+          tryNewInstance.map { instanceWithStatus =>
+            Status(201)(Json.toJson(instanceWithStatus)).withHeaders(
+              LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
+            )
+          }.recover { case error =>
+            Status(400)("Invalid JSON format: " + error.toString)
+          }.get
+        }.getOrElse(Status(400)("Expected JSON data"))
+      }.getOrElse(Status(400)("Expected JSON data"))
     } else {
-      Future(Status(403)(s"Broccoli must be running in '${conf.PERMISSIONS_MODE_ADMINISTRATOR}' " +
-        s"permissions mode to allow the creation of instances."))
+      Status(403)(s"Broccoli must be running in '${conf.PERMISSIONS_MODE_ADMINISTRATOR}' " +
+        s"permissions mode to allow the creation of instances.")
     }
   }
 
-  def update(id: String) = Action.async { request =>
+
+  def update(id: String) = Action { request =>
     if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_USER) {
-      Future(Status(403)(s"Updating instances now allowed when running in permissions mode '${conf.PERMISSIONS_MODE_USER}'."))
+      Status(403)(s"Updating instances now allowed when running in permissions mode '${conf.PERMISSIONS_MODE_USER}'.")
     } else {
       val maybeJsObject = request.body.asJson.map(_.as[JsObject])
       maybeJsObject.map { jsObject =>
@@ -113,20 +108,20 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
             Logger.warn(s"Received unrecognized instance update field: $key")
         }
         if (maybeStatusUpdater.isEmpty && maybeParameterValuesUpdater.isEmpty && maybeTemplateSelector.isEmpty) {
-          Future(Status(400)("Invalid request to update an instance. Please refer to the API documentation."))
+          Status(400)("Invalid request to update an instance. Please refer to the API documentation.")
         } else if ((maybeParameterValuesUpdater.isDefined || maybeTemplateSelector.isDefined) &&
               permissionsService.permissionsMode != conf.PERMISSIONS_MODE_ADMINISTRATOR) {
-          Future(Status(403)(s"Updating parameter values or templates only available when running in " +
-            s"'${conf.PERMISSIONS_MODE_ADMINISTRATOR}' mode."))
-      } else {
+          Status(403)(s"Updating parameter values or templates only available when running in " +
+            s"'${conf.PERMISSIONS_MODE_ADMINISTRATOR}' mode.")
+        } else {
           val update = UpdateInstance(
             id = id,
             statusUpdater = maybeStatusUpdater,
             parameterValuesUpdater = maybeParameterValuesUpdater,
             templateSelector = maybeTemplateSelector
           )
-          val eventuallyMaybeExistingAndChangedInstance = instanceService.ask(update).mapTo[Try[InstanceWithStatus]]
-          eventuallyMaybeExistingAndChangedInstance.map {
+          val maybeExistingAndChangedInstance = instanceService.updateInstance(update)
+          maybeExistingAndChangedInstance match {
             case Success(changedInstance) => Ok(Json.toJson(changedInstance))
             case Failure(throwable: FileNotFoundException) => Status(404)(s"Instance not found: $throwable")
             case Failure(throwable: IllegalArgumentException) => Status(400)(s"Invalid request to update an instance: $throwable")
@@ -134,22 +129,20 @@ class InstanceController @Inject() (@Named("instance-actor") instanceService: Ac
             case Failure(throwable) => Status(500)(s"Something went wrong when updating the instance: $throwable")
           }
         }
-      }.getOrElse(Future(Status(400)("Expected JSON data")))
+      }.getOrElse(Status(400)("Expected JSON data"))
     }
   }
 
-  def delete(id: String) = Action.async {
+  def delete(id: String) = Action {
     if (permissionsService.permissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
-      val eventuallyDeletedInstance = instanceService.ask(DeleteInstance(id)).mapTo[Try[InstanceWithStatus]]
-      eventuallyDeletedInstance.map { deleted =>
-        deleted.map {
-          instance => Ok(Json.toJson(instance))
-        }.recover {
-          case throwable => NotFound(throwable.toString)
-        }.get
-      }
+      val maybeDeletedInstance = instanceService.deleteInstance(id)
+      maybeDeletedInstance.map {
+        instance => Ok(Json.toJson(instance))
+      }.recover {
+        case throwable => NotFound(throwable.toString)
+      }.get
     } else {
-      Future(Status(403)(s"Instance deletion only allowed in '${conf.PERMISSIONS_MODE_ADMINISTRATOR}' mode."))
+      Status(403)(s"Instance deletion only allowed in '${conf.PERMISSIONS_MODE_ADMINISTRATOR}' mode.")
     }
   }
 
