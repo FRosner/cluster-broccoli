@@ -1,11 +1,8 @@
 package de.frosner.broccoli.controllers
 
 import java.io.FileNotFoundException
-import java.util.concurrent.TimeUnit
-import javax.inject.{Inject, Named}
+import javax.inject.Inject
 
-import akka.pattern.ask
-import akka.util.Timeout
 import de.frosner.broccoli.models.InstanceStatusJson._
 import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
 import de.frosner.broccoli.models.{Instance, InstanceCreation, InstanceStatus, InstanceWithStatus}
@@ -14,15 +11,14 @@ import Instance.instanceApiWrites
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
 import de.frosner.broccoli.services.{InstanceService, PermissionsService, TemplateNotFoundException}
 import de.frosner.broccoli.services.InstanceService._
-import play.api.Logger
+import de.frosner.broccoli.util.Logging
 import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.mvc.{Action, Controller}
 
-import scala.concurrent.duration.Duration
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 class InstanceController @Inject() (instanceService: InstanceService,
-                                    permissionsService: PermissionsService) extends Controller {
+                                    permissionsService: PermissionsService) extends Controller with Logging {
 
   def list(maybeTemplateId: Option[String]) = Action {
     val maybeInstances = instanceService.getInstances

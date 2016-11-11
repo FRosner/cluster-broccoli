@@ -3,10 +3,11 @@ package de.frosner.broccoli.services
 import javax.inject.{Inject, Singleton}
 
 import de.frosner.broccoli.conf
-import play.api.{Configuration, Logger}
+import de.frosner.broccoli.util.Logging
+import play.api.Configuration
 
 @Singleton
-class PermissionsService @Inject()(configuration: Configuration) {
+class PermissionsService @Inject()(configuration: Configuration) extends Logging {
 
   private lazy val permissionsMode: String = {
     val maybePermissionsMode = configuration.getString(conf.PERMISSIONS_MODE_KEY)

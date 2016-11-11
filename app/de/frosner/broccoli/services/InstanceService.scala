@@ -13,7 +13,6 @@ import play.api.libs.ws.WSClient
 import scala.util.{Failure, Success, Try}
 import InstanceService._
 import de.frosner.broccoli.conf
-import play.Logger
 
 @Singleton
 class InstanceService @Inject()(templateService: TemplateService,

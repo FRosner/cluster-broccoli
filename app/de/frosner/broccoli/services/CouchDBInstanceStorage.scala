@@ -1,23 +1,21 @@
 package de.frosner.broccoli.services
 
-import java.io._
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 
 import de.frosner.broccoli.models.Instance
-import play.api.Logger
+import de.frosner.broccoli.util.Logging
 import play.api.libs.json.{JsObject, _}
-import play.api.libs.ws.{WSClient, WSRequest}
+import play.api.libs.ws.WSClient
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.Await
+import scala.util.Try
 
 /**
   * Instance storage using CouchDB as a peristence layer.
   * On construction it is checking whether the instance DB exists and creating it if it doesn't.
   */
-case class CouchDBInstanceStorage(dbUrlString: String, prefix: String, ws: WSClient) extends InstanceStorage {
+case class CouchDBInstanceStorage(dbUrlString: String, prefix: String, ws: WSClient) extends InstanceStorage with Logging {
 
   import Instance.{instancePersistenceReads, instancePersistenceWrites}
 
