@@ -4,13 +4,15 @@ import javax.inject.Inject
 
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.{AuthElement, LoginLogout}
+import play.api.Configuration
 import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc.{Action, Controller, Results}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class SecurityController extends Controller with Logging with LoginLogout with AuthElement with AuthConfigImpl {
+class SecurityController @Inject() (override val configuration: Configuration)
+  extends Controller with Logging with LoginLogout with AuthElement with AuthConfigImpl {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
