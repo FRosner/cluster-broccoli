@@ -42,6 +42,9 @@ package object conf {
   val POLLING_FREQUENCY_KEY = "broccoli.polling.frequency"
   val POLLING_FREQUENCY_DEFAULT = 1
 
+  val AUTH_SESSION_TIMEOUT_KEY = "broccoli.auth.session.timeout"
+  val AUTH_SESSION_TIMEOUT_DEFAULT = 3600
+
   val PERMISSIONS_MODE_KEY = "broccoli.permissions.mode"
   val PERMISSIONS_MODE_ADMINISTRATOR = "administrator"
   val PERMISSIONS_MODE_OPERATOR = "operator"
