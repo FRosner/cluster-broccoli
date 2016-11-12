@@ -30,6 +30,7 @@ class SecurityController @Inject() (override val securityService: SecurityServic
       formWithErrors => Future.successful(Results.BadRequest),
       account => {
         if (securityService.isAllowedToAuthenticate(account)) {
+          Logger.info(s"Login successful for user '${account.name}'.")
           gotoLoginSucceeded(account.name)
         } else {
           Logger.info(s"Login failed for user '${account.name}'.")
