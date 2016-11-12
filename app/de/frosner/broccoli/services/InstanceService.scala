@@ -14,13 +14,19 @@ import play.api.libs.ws.WSClient
 import scala.util.{Failure, Success, Try}
 import InstanceService._
 import de.frosner.broccoli.conf
+import play.api.inject.ApplicationLifecycle
+
+import scala.concurrent.Future
 
 @Singleton
 class InstanceService @Inject()(templateService: TemplateService,
                                 nomadService: NomadService,
                                 consulService: ConsulService,
                                 ws: WSClient,
+                                applicationLifecycle: ApplicationLifecycle,
                                 configuration: Configuration) extends Logging {
+
+  applicationLifecycle.addStopHook(() => Future ())
 
   private lazy val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
   private lazy val pollingFrequencySecondsTry = pollingFrequencySecondsString match {

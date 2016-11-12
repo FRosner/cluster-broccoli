@@ -62,7 +62,7 @@ case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, prefix: 
 
   override def closeImpl(): Unit = {
     Logger.info(s"Releasing lock from CouchDB ($lockUri)")
-    dbLockUrl.delete()
+    Await.ready(dbLockUrl.delete(), Duration(5, TimeUnit.SECONDS))
   }
 
   /*
