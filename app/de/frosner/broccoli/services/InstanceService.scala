@@ -1,6 +1,7 @@
 package de.frosner.broccoli.services
 
 import java.io._
+import java.net.ConnectException
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import javax.inject.{Inject, Singleton}
 
@@ -253,8 +254,14 @@ class InstanceService @Inject()(templateService: TemplateService,
       parameterValuesUpdater = None,
       templateSelector = None
     )
-    val tryDelete = tryStopping.flatMap { stoppedInstance =>
-      val tryDelete = instanceStorage.deleteInstance(stoppedInstance.instance)
+    val tryDelete = tryStopping.map(_.instance).recover {
+      case throwable: ConnectException => {
+        // TODO #144
+        Logger.warn(s"Failed to stop $id. It might be running when Nomad is reachable again.")
+        instancesMap(id)
+      }
+    }.flatMap { stoppedInstance =>
+      val tryDelete = instanceStorage.deleteInstance(stoppedInstance)
       tryDelete.foreach(instance => instancesMap -= instance.id)
       tryDelete
     }
