@@ -41,6 +41,11 @@ Cluster Broccoli provides a RESTful HTTP API. You can control it using curl, wri
 - CouchDB 1.6 (persistence layer)
 - Cluster Broccoli Nomad Job + Docker Image (for running the Play application)
 
+#### Distributed Application Server
+
+Broccoli needs to run as a single instance.
+It is neither supported to run multiple Broccoli instances sharing the same instance storage, nor running Broccoli in distributed mode because it uses a [local cache](http://www.ehcache.org/) to store the session IDs.
+
 ### Using the Production Docker Image
 
 If you only need an image to run the Broccoli distribution, go with the JRE based [production-ready image](https://hub.docker.com/r/frosner/cluster-broccoli/).
