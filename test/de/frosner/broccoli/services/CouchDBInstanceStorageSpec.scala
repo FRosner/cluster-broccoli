@@ -142,6 +142,7 @@ class CouchDBInstanceStorageSpec extends Specification {
       } { implicit port =>
         WsTestClient.withClient { client =>
           CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", "", client).close()
+          Thread.sleep(2000)
           released === true
         }
       }
