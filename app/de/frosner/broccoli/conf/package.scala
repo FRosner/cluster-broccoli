@@ -1,5 +1,6 @@
 package de.frosner.broccoli
 
+import de.frosner.broccoli.controllers.Account
 import play.api.Configuration
 
 package object conf {
@@ -44,6 +45,11 @@ package object conf {
 
   val AUTH_SESSION_TIMEOUT_KEY = "broccoli.auth.session.timeout"
   val AUTH_SESSION_TIMEOUT_DEFAULT = 3600
+
+  val AUTH_MODE_CONF_ACCOUNTS_KEY = "broccoli.auth.conf.accounts"
+  val AUTH_MODE_CONF_ACCOUNTS_DEFAULT = Set(Account(name = "administrator", password = "broccoli")) // [{username:administrator,password:broccoli}]
+  val AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY = "username"
+  val AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY = "password"
 
   val PERMISSIONS_MODE_KEY = "broccoli.permissions.mode"
   val PERMISSIONS_MODE_ADMINISTRATOR = "administrator"

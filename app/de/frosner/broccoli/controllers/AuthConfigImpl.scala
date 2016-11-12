@@ -1,6 +1,7 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.conf
+import de.frosner.broccoli.services.SecurityService
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.{AuthConfig, CookieTokenAccessor}
 import play.api.Configuration
@@ -12,7 +13,7 @@ import scala.util.{Failure, Success, Try}
 
 trait AuthConfigImpl extends AuthConfig with Logging {
 
-  val configuration: Configuration
+  val securityService: SecurityService
 
   type Id = String
 
@@ -22,22 +23,9 @@ trait AuthConfigImpl extends AuthConfig with Logging {
 
   val idTag: ClassTag[Id] = scala.reflect.classTag[Id]
 
-  // TODO check if setting it wrong will exit also in production
-  private lazy val sessionTimeOutString: Option[String] = configuration.getString(conf.AUTH_SESSION_TIMEOUT_KEY)
-  private lazy val sessionTimeOutTry: Try[Int] = sessionTimeOutString match {
-    case Some(string) => Try(string.toInt).flatMap {
-      int => if (int >= 1) Success(int) else Failure(new Exception())
-    }
-    case None => Success(conf.AUTH_SESSION_TIMEOUT_DEFAULT)
-  }
-  if (sessionTimeOutTry.isFailure) {
-    Logger.error(s"Invalid ${conf.AUTH_SESSION_TIMEOUT_DEFAULT} specified: '${sessionTimeOutString.get}'. Needs to be a positive integer.")
-    System.exit(1)
-  }
-  lazy val sessionTimeoutInSeconds = sessionTimeOutTry.get
-  Logger.info(s"${conf.AUTH_SESSION_TIMEOUT_KEY}=$sessionTimeoutInSeconds")
+  val sessionTimeoutInSeconds = securityService.sessionTimeoutInSeconds
 
-  def resolveUser(id: Id)(implicit ctx: ExecutionContext): Future[Option[User]] = Future(Some(Account("frank", "secret")))//Account.findById(id)
+  def resolveUser(id: Id)(implicit ctx: ExecutionContext): Future[Option[User]] = Future.successful(securityService.getAccount(id))
 
   def loginSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
     Future.successful(Results.Ok("loginSucceeded"))
