@@ -9,7 +9,7 @@ import de.frosner.broccoli.models.{Instance, InstanceCreation, InstanceStatus, I
 import de.frosner.broccoli.conf
 import Instance.instanceApiWrites
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
-import de.frosner.broccoli.services.{InstanceService, PermissionsService, TemplateNotFoundException}
+import de.frosner.broccoli.services.{InstanceNotFoundException, InstanceService, PermissionsService, TemplateNotFoundException}
 import de.frosner.broccoli.services.InstanceService._
 import de.frosner.broccoli.util.Logging
 import play.api.libs.json.{JsObject, JsString, Json}
@@ -109,6 +109,7 @@ class InstanceController @Inject() (instanceService: InstanceService,
           maybeExistingAndChangedInstance match {
             case Success(changedInstance) => Ok(Json.toJson(changedInstance))
             case Failure(throwable: FileNotFoundException) => Status(404)(s"Instance not found: $throwable")
+            case Failure(throwable: InstanceNotFoundException) => Status(404)(s"Instance not found: $throwable")
             case Failure(throwable: IllegalArgumentException) => Status(400)(s"Invalid request to update an instance: $throwable")
             case Failure(throwable: TemplateNotFoundException) => Status(400)(s"Invalid request to update an instance: $throwable")
             case Failure(throwable) => Status(500)(s"Something went wrong when updating the instance: $throwable")
