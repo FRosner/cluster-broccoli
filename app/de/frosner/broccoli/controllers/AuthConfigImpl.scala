@@ -43,6 +43,7 @@ trait AuthConfigImpl extends AuthConfig with Logging {
 
   def authorize(user: User, authority: Authority)(implicit ctx: ExecutionContext): Future[Boolean] = Future.successful {
     true
+    // TODO #145 every logged in user is authorized for now
 //    (user.role, authority) match {
 //      case (Administrator, _)       => true
 //      case (NormalUser, NormalUser) => true
