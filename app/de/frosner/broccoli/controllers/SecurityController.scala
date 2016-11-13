@@ -12,7 +12,7 @@ import play.api.mvc.{Action, Controller, Results}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class SecurityController @Inject() (override val securityService: SecurityService)
+case class SecurityController @Inject() (override val securityService: SecurityService)
   extends Controller with Logging with LoginLogout with AuthElement with AuthConfigImpl {
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -20,8 +20,8 @@ class SecurityController @Inject() (override val securityService: SecurityServic
   // https://www.playframework.com/documentation/2.5.x/ScalaForms
   val loginForm = Form {
     mapping(
-      "username" -> text,
-      "password" -> text
+      SecurityController.UsernameFormKey -> text,
+      SecurityController.PasswordFormKey -> text
     )(Account.apply)(Account.unapply)
   }
 
@@ -49,5 +49,12 @@ class SecurityController @Inject() (override val securityService: SecurityServic
     val title = "message main"
     Ok(user.name)
   }
+
+}
+
+object SecurityController {
+
+  val UsernameFormKey = "username"
+  val PasswordFormKey = "password"
 
 }

@@ -23,3 +23,5 @@ libraryDependencies += play.sbt.Play.autoImport.cache
 resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
 
 routesGenerator := InjectedRoutesGenerator
+
+parallelExecution in Test := false
