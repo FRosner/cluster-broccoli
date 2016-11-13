@@ -2,7 +2,6 @@ package de.frosner.broccoli.controllers
 
 import javax.inject.Inject
 
-import de.frosner.broccoli.build.BuildInfo
 import de.frosner.broccoli.services.{BuildInfoService, InstanceService, PermissionsService}
 import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.mvc.{Action, AnyContent, Controller}
