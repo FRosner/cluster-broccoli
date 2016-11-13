@@ -13,7 +13,7 @@ import collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 @Singleton()
-class SecurityService @Inject() (configuration: Configuration) extends Logging {
+case class SecurityService @Inject() (configuration: Configuration) extends Logging {
 
   // TODO check if setting it wrong will exit also in production
   private lazy val sessionTimeOutString: Option[String] = configuration.getString(conf.AUTH_SESSION_TIMEOUT_KEY)
