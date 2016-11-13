@@ -27,22 +27,23 @@ class TemplateControllerSpec extends PlaySpecification {
       val controller = new TemplateController(templateService)
 
       val result = controller.list.apply(FakeRequest())
-      status(result) must be equalTo 200
-      contentAsJson(result) must be equalTo JsArray(Seq(
-        JsObject(Map(
-          "id" -> JsString(template.id),
-          "parameters" -> JsArray(Seq(JsString("id"))),
-          "parameterInfos" -> JsObject(Map(
-            "id" -> JsObject(Map(
-              "name" -> JsString("id"),
-              "default" -> JsString("myid"),
-              "secret" -> JsBoolean(false)
-            ))
-          )),
-          "description" -> JsString(template.description),
-          "version" -> JsString(template.version)
+      (status(result) must be equalTo 200) and {
+        contentAsJson(result) must be equalTo JsArray(Seq(
+          JsObject(Map(
+            "id" -> JsString(template.id),
+            "parameters" -> JsArray(Seq(JsString("id"))),
+            "parameterInfos" -> JsObject(Map(
+              "id" -> JsObject(Map(
+                "name" -> JsString("id"),
+                "default" -> JsString("myid"),
+                "secret" -> JsBoolean(false)
+              ))
+            )),
+            "description" -> JsString(template.description),
+            "version" -> JsString(template.version)
+          ))
         ))
-      ))
+      }
     }
 
   }
@@ -61,14 +62,15 @@ class TemplateControllerSpec extends PlaySpecification {
       val controller = new TemplateController(templateService)
 
       val result = controller.show("id").apply(FakeRequest())
-      status(result) must be equalTo 200
-      contentAsJson(result) must be equalTo JsObject(Map(
-        "id" -> JsString(template.id),
-        "parameters" -> JsArray(Seq(JsString("id"))),
-        "parameterInfos" -> JsObject(Map.empty[String, JsValue]),
-        "description" -> JsString(template.description),
-        "version" -> JsString(template.version)
-      ))
+      (status(result) must be equalTo 200) and {
+        contentAsJson(result) must be equalTo JsObject(Map(
+          "id" -> JsString(template.id),
+          "parameters" -> JsArray(Seq(JsString("id"))),
+          "parameterInfos" -> JsObject(Map.empty[String, JsValue]),
+          "description" -> JsString(template.description),
+          "version" -> JsString(template.version)
+        ))
+      }
     }
 
     "return 404 if the template does not exist" in {
