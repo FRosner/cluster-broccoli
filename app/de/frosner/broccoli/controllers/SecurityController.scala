@@ -4,7 +4,7 @@ import javax.inject.Inject
 
 import de.frosner.broccoli.services.SecurityService
 import de.frosner.broccoli.util.Logging
-import jp.t2v.lab.play2.auth.{AuthElement, LoginLogout}
+import jp.t2v.lab.play2.auth.{AuthenticationElement, LoginLogout}
 import play.api.Configuration
 import play.api.data._
 import play.api.data.Forms._
@@ -13,7 +13,7 @@ import play.api.mvc.{Action, Controller, Results}
 import scala.concurrent.{ExecutionContext, Future}
 
 case class SecurityController @Inject() (override val securityService: SecurityService)
-  extends Controller with Logging with LoginLogout with AuthElement with AuthConfigImpl {
+  extends Controller with Logging with LoginLogout with AuthenticationElement with AuthConfigImpl {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -44,7 +44,7 @@ case class SecurityController @Inject() (override val securityService: SecurityS
     gotoLogoutSucceeded
   }
 
-  def verify = StackAction(AuthorityKey -> NormalUser) { implicit request =>
+  def verify = StackAction { implicit request =>
     val user = loggedIn
     val title = "message main"
     Ok(user.name)
