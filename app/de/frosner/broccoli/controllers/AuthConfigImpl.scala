@@ -40,7 +40,6 @@ trait AuthConfigImpl extends AuthConfig with Logging {
     Future.successful(Results.Forbidden("authorizationFailed"))
   }
 
-
   def authorize(user: User, authority: Authority)(implicit ctx: ExecutionContext): Future[Boolean] = Future.successful {
     true
     // TODO #145 every logged in user is authorized for now
@@ -52,9 +51,18 @@ trait AuthConfigImpl extends AuthConfig with Logging {
   }
 
   override lazy val tokenAccessor = new CookieTokenAccessor(
-    // Set the secure flag only in production
-    cookieSecureOption = play.api.Play.isProd(play.api.Play.current),
-    cookieMaxAge       = Some(sessionTimeoutInSeconds)
+    cookieName = AuthConfigImpl.CookieName,
+    cookieSecureOption = play.api.Play.maybeApplication.exists(app => play.api.Play.isProd(app)),
+    cookieHttpOnlyOption = true,
+    cookieDomainOption = None,
+    cookiePathOption = "/",
+    cookieMaxAge = Some(sessionTimeoutInSeconds)
   )
+
+}
+
+object AuthConfigImpl {
+
+  val CookieName = "BROCCOLI_SESS_ID"
 
 }

@@ -57,7 +57,7 @@ class SecurityControllerSpec extends PlaySpecification {
       val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, account.password))
       val result = controller.login.apply(requestWithData)
       (status(result) must be equalTo 200) and
-        (header("Set-Cookie", result) should beSome.which((s: String) => s.matches("PLAY2AUTH_SESS_ID=.+; .*")))
+        (header("Set-Cookie", result) should beSome.which((s: String) => s.matches(s"${AuthConfigImpl.CookieName}=.+; .*")))
     }
 
     "return 401 when the POST request is valid but the authentication failed" in new WithApplication {
@@ -84,7 +84,7 @@ class SecurityControllerSpec extends PlaySpecification {
       val controller = securityController(List(account))
       val result = controller.logout.apply(FakeRequest().withLoggedIn(controller)(account.name))
       (status(result) must be equalTo 200) and
-        (header("Set-Cookie", result) should beSome.which((s: String) => s.startsWith("PLAY2AUTH_SESS_ID=; ")))
+        (header("Set-Cookie", result) should beSome.which((s: String) => s.startsWith(s"${AuthConfigImpl.CookieName}=; ")))
     }
 
   }
