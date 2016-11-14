@@ -1,20 +1,19 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.models.{ParameterInfo, Template}
-import de.frosner.broccoli.services.TemplateService
-import org.specs2.mutable.Specification
-import play.api.test.{FakeRequest, PlaySpecification}
+import de.frosner.broccoli.services.{SecurityService, TemplateService}
+import play.api.test.{FakeRequest, PlaySpecification, WithApplication}
 import org.mockito.Mockito._
 import play.api.libs.json._
 import org.specs2.concurrent.ExecutionEnv
-import play.api.mvc.BodyParsers
 
-class TemplateControllerSpec extends PlaySpecification {
+class TemplateControllerSpec extends PlaySpecification with AuthUtils {
 
-  "list templates" should {
+  sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
-    "list all available templates" in { implicit ee: ExecutionEnv =>
-      val templateService = mock(classOf[TemplateService])
+  "list" should {
+
+    "list all available templates" in new WithApplication {
       val template = Template(
         id = "id",
         template = "template {{id}}",
@@ -23,63 +22,86 @@ class TemplateControllerSpec extends PlaySpecification {
           "id" -> ParameterInfo(name = "id", default = Some("myid"), secret = Some(false))
         )
       )
-      when(templateService.getTemplates).thenReturn(Seq(template))
-      val controller = new TemplateController(templateService)
 
-      val result = controller.list.apply(FakeRequest())
-      (status(result) must be equalTo 200) and {
-        contentAsJson(result) must be equalTo JsArray(Seq(
-          JsObject(Map(
-            "id" -> JsString(template.id),
-            "parameters" -> JsArray(Seq(JsString("id"))),
-            "parameterInfos" -> JsObject(Map(
-              "id" -> JsObject(Map(
-                "name" -> JsString("id"),
-                "default" -> JsString("myid"),
-                "secret" -> JsBoolean(false)
-              ))
-            )),
-            "description" -> JsString(template.description),
-            "version" -> JsString(template.version)
+      testWithAllAuths { securityService =>
+          TemplateController(
+            templateService = withTemplates(mock(classOf[TemplateService]), List(template)),
+            securityService = securityService
+          )
+      } { controller =>
+        controller.list
+      } {
+        identity
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and {
+          contentAsJson(result) must be equalTo JsArray(Seq(
+            JsObject(Map(
+              "id" -> JsString(template.id),
+              "parameters" -> JsArray(Seq(JsString("id"))),
+              "parameterInfos" -> JsObject(Map(
+                "id" -> JsObject(Map(
+                  "name" -> JsString("id"),
+                  "default" -> JsString("myid"),
+                  "secret" -> JsBoolean(false)
+                ))
+              )),
+              "description" -> JsString(template.description),
+              "version" -> JsString(template.version)
+            ))
           ))
-        ))
+        }
       }
     }
-
   }
 
-  "show template" should {
+  "show" should {
 
-    "return the template if it exists" in { implicit ee: ExecutionEnv =>
-      val templateService = mock(classOf[TemplateService])
+    "return the template if it exists" in new WithApplication {
       val template = Template(
         id = "id",
         template = "template {{id}}",
         description = "description",
         parameterInfos = Map.empty
       )
-      when(templateService.template("id")).thenReturn(Some(template))
-      val controller = new TemplateController(templateService)
 
-      val result = controller.show("id").apply(FakeRequest())
-      (status(result) must be equalTo 200) and {
-        contentAsJson(result) must be equalTo JsObject(Map(
-          "id" -> JsString(template.id),
-          "parameters" -> JsArray(Seq(JsString("id"))),
-          "parameterInfos" -> JsObject(Map.empty[String, JsValue]),
-          "description" -> JsString(template.description),
-          "version" -> JsString(template.version)
-        ))
+      testWithAllAuths { securityService =>
+        TemplateController(
+          templateService = withTemplates(mock(classOf[TemplateService]), List(template)),
+          securityService = securityService
+        )
+      } { controller =>
+        controller.show("id")
+      } {
+        identity
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and {
+          contentAsJson(result) must be equalTo JsObject(Map(
+            "id" -> JsString(template.id),
+            "parameters" -> JsArray(Seq(JsString("id"))),
+            "parameterInfos" -> JsObject(Map.empty[String, JsValue]),
+            "description" -> JsString(template.description),
+            "version" -> JsString(template.version)
+          ))
+        }
       }
     }
 
-    "return 404 if the template does not exist" in {
+    "return 404 if the template does not exist" in new WithApplication {
       val templateService = mock(classOf[TemplateService])
       when(templateService.template("id")).thenReturn(None)
-      val controller = new TemplateController(templateService)
 
-      val result = controller.show("id").apply(FakeRequest())
-      status(result) must be equalTo 404
+      testWithAllAuths { securityService =>
+        TemplateController(
+          templateService = templateService,
+          securityService = securityService
+        )
+      } { controller =>
+        controller.show("id")
+      } {
+        identity
+      } { (controller, result) =>
+        status(result) must be equalTo 404
+      }
     }
 
   }
