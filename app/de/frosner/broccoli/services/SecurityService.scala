@@ -3,7 +3,7 @@ package de.frosner.broccoli.services
 import javax.inject.{Inject, Singleton}
 
 import com.typesafe.config.{ConfigObject, ConfigValueType}
-import de.frosner.broccoli.controllers.Account
+import de.frosner.broccoli.controllers.UserAccount
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.conf.IllegalConfigException
 import de.frosner.broccoli.util.Logging
@@ -30,14 +30,36 @@ case class SecurityService @Inject() (configuration: Configuration) extends Logg
   lazy val sessionTimeoutInSeconds = sessionTimeOutTry.get
   Logger.info(s"${conf.AUTH_SESSION_TIMEOUT_KEY}=$sessionTimeoutInSeconds")
 
-  private lazy val accounts: Set[Account] = {
+  lazy val authMode: String = {
+    val maybeAuthMode = configuration.getString(conf.AUTH_MODE_KEY)
+    val result = maybeAuthMode match {
+      case Some(mode) => {
+        if (Set(conf.AUTH_MODE_CONF, conf.AUTH_MODE_NONE).contains(mode)) {
+          mode
+        } else {
+          val errorMessage = s"Invalid ${conf.AUTH_MODE_KEY}: $mode"
+          Logger.error(errorMessage)
+          System.exit(1)
+          throw new IllegalArgumentException(errorMessage)
+        }
+      }
+      case None => {
+        conf.AUTH_MODE_DEFAULT
+      }
+    }
+    Logger.info(s"${conf.AUTH_MODE_KEY}=$result")
+    result
+  }
+
+
+  private lazy val accounts: Set[UserAccount] = {
     val tryAccounts = Try {
       configuration.getList(conf.AUTH_MODE_CONF_ACCOUNTS_KEY).map { users =>
         users.asScala.map { potentialUserObject =>
           potentialUserObject.valueType() match {
             case ConfigValueType.OBJECT => {
               val userObject = potentialUserObject.asInstanceOf[ConfigObject]
-              Account(
+              UserAccount(
                 name = userObject.get(conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY).unwrapped().asInstanceOf[String],
                 password = userObject.get(conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY).unwrapped().asInstanceOf[String]
               )
@@ -61,8 +83,8 @@ case class SecurityService @Inject() (configuration: Configuration) extends Logg
     accounts
   }
 
-  def isAllowedToAuthenticate(account: Account): Boolean = accounts.contains(account)
+  def isAllowedToAuthenticate(account: UserAccount): Boolean = accounts.contains(account)
 
-  def getAccount(id: String): Option[Account] = accounts.find(_.name == id)
+  def getAccount(id: String): Option[UserAccount] = accounts.find(_.name == id)
 
 }

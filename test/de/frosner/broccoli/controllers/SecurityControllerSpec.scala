@@ -11,10 +11,11 @@ class SecurityControllerSpec extends PlaySpecification {
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
-  def securityController(accounts: Iterable[Account]): SecurityController = {
+  def securityController(accounts: Iterable[UserAccount]): SecurityController = {
     val securityService = mock(classOf[SecurityService])
     accounts.foreach { account =>
       when(securityService.getAccount(account.name)).thenReturn(Some(account))
+      when(securityService.authMode).thenReturn(conf.AUTH_MODE_CONF)
     }
     SecurityController(securityService)
   }
@@ -22,17 +23,24 @@ class SecurityControllerSpec extends PlaySpecification {
   "verify" should {
 
     "return 200 if the user is authenticated" in new WithApplication {
-      val account = Account("frank", "pass")
+      val account = UserAccount("frank", "pass")
       val controller = securityController(List(account))
       val result = controller.verify.apply(FakeRequest().withLoggedIn(controller)(account.name))
       status(result) must be equalTo 200
     }
 
     "return 403 if the user is not authenticated but allowed" in new WithApplication {
-      val account = Account("frank", "pass")
+      val account = UserAccount("frank", "pass")
       val controller = securityController(List(account))
       val result = controller.verify.apply(FakeRequest())
       status(result) must be equalTo 403
+    }
+
+    "return 200 if auth is disabled" in {
+      val controller = securityController(List.empty)
+      when(controller.securityService.authMode).thenReturn(conf.AUTH_MODE_NONE)
+      val result = controller.verify.apply(FakeRequest())
+      status(result) must be equalTo 200
     }
 
   }
@@ -51,7 +59,7 @@ class SecurityControllerSpec extends PlaySpecification {
 
 
     "return 200 and a session ID in a cookie on successful login" in new WithApplication {
-      val account = Account("frank", "pass")
+      val account = UserAccount("frank", "pass")
       val controller = securityController(List(account))
       when(controller.securityService.isAllowedToAuthenticate(account)).thenReturn(true)
       val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, account.password))
@@ -61,7 +69,7 @@ class SecurityControllerSpec extends PlaySpecification {
     }
 
     "return 401 when the POST request is valid but the authentication failed" in new WithApplication {
-      val account = Account("frank", "pass")
+      val account = UserAccount("frank", "pass")
       val controller = securityController(List(account))
       val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, account.password))
       val result = controller.login.apply(requestWithData)
@@ -69,7 +77,7 @@ class SecurityControllerSpec extends PlaySpecification {
     }
 
     "return 400 when the POST request is invalid" in new WithApplication {
-      val account = Account("frank", "pass")
+      val account = UserAccount("frank", "pass")
       val controller = securityController(List(account))
       val result = controller.login.apply(FakeRequest().withLoggedIn(controller)(account.name))
       status(result) must be equalTo 400
@@ -80,7 +88,7 @@ class SecurityControllerSpec extends PlaySpecification {
   "logout" should {
 
     "return 200 and an empty cookie on successful logout" in new WithApplication {
-      val account = Account("frank", "pass")
+      val account = UserAccount("frank", "pass")
       val controller = securityController(List(account))
       val result = controller.logout.apply(FakeRequest().withLoggedIn(controller)(account.name))
       (status(result) must be equalTo 200) and
