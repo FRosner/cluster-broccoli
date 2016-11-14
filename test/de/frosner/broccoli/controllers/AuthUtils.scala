@@ -13,13 +13,14 @@ import scala.concurrent.Future
 
 trait AuthUtils extends ServiceMocks {
 
-  def testWithAllAuths[T <: AuthConfigImpl](account: Account)
-                                           (controller: SecurityService => T)
+  def testWithAllAuths[T <: AuthConfigImpl](controller: SecurityService => T)
                                            (action: T => Action[AnyContent])
                                            (requestModifier: FakeRequest[_] => FakeRequest[_])
                                            (matcher: (T, Future[Result]) => MatchResult[_]): MatchResult[_] = {
 
-    val noAuthController = controller(withAuthNone(mock(classOf[SecurityService]))    )
+    val account = UserAccount("user", "pass")
+
+    val noAuthController = controller(withAuthNone(mock(classOf[SecurityService])))
     val noAuthRequest = requestModifier(FakeRequest()).asInstanceOf[FakeRequest[AnyContent]]
     val noAuthResult = action(noAuthController).apply(noAuthRequest)
     val noAuthMatcher = matcher(noAuthController, noAuthResult)

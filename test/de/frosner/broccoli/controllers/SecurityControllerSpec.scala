@@ -1,21 +1,19 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.conf
-import de.frosner.broccoli.services.{BuildInfoService, InstanceService, PermissionsService, SecurityService}
+import de.frosner.broccoli.services.SecurityService
 import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Mockito._
-import play.api.libs.json.{JsObject, JsString}
 import play.api.mvc.MultipartFormData
-import play.api.test.{FakeRequest, PlaySpecification, _}
+import play.api.test._
 
-class SecurityControllerSpec extends PlaySpecification with ServiceMocks with AuthUtils {
+class SecurityControllerSpec extends PlaySpecification with AuthUtils {
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
   "verify" should {
 
     "work" in new WithApplication {
-      testWithAllAuths(UserAccount("frank", "pass")) {
+      testWithAllAuths {
         securityService => SecurityController(securityService)
       } {
         controller => controller.verify
