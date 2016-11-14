@@ -1,7 +1,8 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.services.{BuildInfoService, InstanceService, PermissionsService, SecurityService}
+import de.frosner.broccoli.models.Template
+import de.frosner.broccoli.services._
 import org.mockito.Mockito._
 import org.mockito.internal.util.MockUtil
 
@@ -48,6 +49,14 @@ trait ServiceMocks {
     requireMock(permissionsService)
     when(permissionsService.getPermissionsMode()).thenReturn(conf.PERMISSIONS_MODE_DEFAULT)
     permissionsService
+  }
+
+  def withTemplates(templateService: TemplateService, templates: Seq[Template]): TemplateService = {
+    when(templateService.getTemplates).thenReturn(templates)
+    templates.foreach { template =>
+      when(templateService.template(template.id)).thenReturn(Some(template))
+    }
+    templateService
   }
 
 }
