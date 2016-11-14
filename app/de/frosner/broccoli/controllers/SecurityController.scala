@@ -4,7 +4,7 @@ import javax.inject.Inject
 
 import de.frosner.broccoli.services.SecurityService
 import de.frosner.broccoli.util.Logging
-import jp.t2v.lab.play2.auth.{AuthenticationElement, LoginLogout}
+import jp.t2v.lab.play2.auth.{BroccoliSimpleAuthorization, LoginLogout}
 import play.api.Configuration
 import play.api.data._
 import play.api.data.Forms._
@@ -13,7 +13,7 @@ import play.api.mvc.{Action, Controller, Results}
 import scala.concurrent.{ExecutionContext, Future}
 
 case class SecurityController @Inject() (override val securityService: SecurityService)
-  extends Controller with Logging with LoginLogout with AuthenticationElement with AuthConfigImpl {
+  extends Controller with Logging with LoginLogout with BroccoliSimpleAuthorization with AuthConfigImpl {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -22,7 +22,7 @@ case class SecurityController @Inject() (override val securityService: SecurityS
     mapping(
       SecurityController.UsernameFormKey -> text,
       SecurityController.PasswordFormKey -> text
-    )(Account.apply)(Account.unapply)
+    )(UserAccount.apply)(UserAccount.unapply)
   }
 
   def login = Action.async { implicit request =>

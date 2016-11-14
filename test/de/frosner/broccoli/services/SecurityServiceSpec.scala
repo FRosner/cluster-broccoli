@@ -3,7 +3,7 @@ package de.frosner.broccoli.services
 import com.google.common.collect.{ImmutableMap, Iterables, Lists, Maps}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.controllers.Account
+import de.frosner.broccoli.controllers.UserAccount
 import org.specs2.mutable.Specification
 import play.api.Configuration
 
@@ -11,7 +11,7 @@ import collection.JavaConverters._
 
 class SecurityServiceSpec extends Specification {
 
-  def configWithAccounts(accounts: Iterable[Account]): Configuration = {
+  def configWithAccounts(accounts: Iterable[UserAccount]): Configuration = {
     val accountsJava = accounts.map { account =>
       ImmutableMap.of(
         conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY, account.name,
@@ -25,7 +25,7 @@ class SecurityServiceSpec extends Specification {
     Configuration(config)
   }
 
-  val account = Account("frank", "pass")
+  val account = UserAccount("frank", "pass")
 
   "An authentication check" should {
 
