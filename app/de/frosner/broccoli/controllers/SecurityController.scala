@@ -13,7 +13,7 @@ import play.api.mvc.{Action, Controller, Results}
 import scala.concurrent.{ExecutionContext, Future}
 
 case class SecurityController @Inject() (override val securityService: SecurityService)
-  extends Controller with Logging with LoginLogout with BroccoliSimpleAuthorization with AuthConfigImpl {
+  extends Controller with Logging with LoginLogout with BroccoliSimpleAuthorization {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 

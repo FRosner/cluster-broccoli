@@ -1,14 +1,14 @@
 package jp.t2v.lab.play2.auth
 
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.controllers.Anonymous
+import de.frosner.broccoli.controllers.{Anonymous, AuthConfigImpl}
 import de.frosner.broccoli.services.SecurityService
 import jp.t2v.lab.play2.stackc.{RequestAttributeKey, RequestWithAttributes, StackableController}
 import play.api.mvc.{Controller, Result}
 
 import scala.concurrent.Future
 
-trait BroccoliRoleAuthorization extends StackableController with AsyncAuth {
+trait BroccoliRoleAuthorization extends StackableController with AsyncAuth with AuthConfigImpl {
 
   self: Controller with AuthConfig =>
 
