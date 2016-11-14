@@ -1,42 +1,29 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.services.SecurityService
+import de.frosner.broccoli.services.{BuildInfoService, InstanceService, PermissionsService, SecurityService}
 import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Mockito._
+import play.api.libs.json.{JsObject, JsString}
 import play.api.mvc.MultipartFormData
 import play.api.test.{FakeRequest, PlaySpecification, _}
 
-class SecurityControllerSpec extends PlaySpecification with ServiceMocks {
+class SecurityControllerSpec extends PlaySpecification with ServiceMocks with AuthUtils {
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
   "verify" should {
 
-    "return 200 if the user is authenticated" in new WithApplication {
-      val account = UserAccount("frank", "pass")
-      val controller = SecurityController(
-        securityService = withAuthConf(mock(classOf[SecurityService]), List(account))
-      )
-      val result = controller.verify.apply(FakeRequest().withLoggedIn(controller)(account.name))
-      status(result) must be equalTo 200
-    }
-
-    "return 403 if the user is not authenticated but allowed" in new WithApplication {
-      val account = UserAccount("frank", "pass")
-      val controller = SecurityController(
-        securityService = withAuthConf(mock(classOf[SecurityService]), List(account))
-      )
-      val result = controller.verify.apply(FakeRequest())
-      status(result) must be equalTo 403
-    }
-
-    "return 200 if auth is disabled" in {
-      val controller = SecurityController(
-        securityService = withAuthNone(mock(classOf[SecurityService]))
-      )
-      val result = controller.verify.apply(FakeRequest())
-      status(result) must be equalTo 200
+    "work" in new WithApplication {
+      testWithAllAuths(UserAccount("frank", "pass")) {
+        securityService => SecurityController(securityService)
+      } {
+        controller => controller.verify
+      } {
+        identity
+      } {
+        (controller, result) => status(result) must be equalTo 200
+      }
     }
 
   }
