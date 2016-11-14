@@ -26,8 +26,6 @@ class InstanceService @Inject()(templateService: TemplateService,
                                 applicationLifecycle: ApplicationLifecycle,
                                 configuration: Configuration) extends Logging {
 
-  applicationLifecycle.addStopHook(() => Future ())
-
   private lazy val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
   private lazy val pollingFrequencySecondsTry = pollingFrequencySecondsString match {
     case Some(string) => Try(string.toInt).flatMap {
@@ -106,9 +104,13 @@ class InstanceService @Inject()(templateService: TemplateService,
         throw throwable
     }
     sys.addShutdownHook {
-      Logger.info("Closing instanceStorage")
+      Logger.info("Closing instanceStorage (shutdown hook)")
       instanceStorage.close()
     }
+    applicationLifecycle.addStopHook(() => Future {
+      Logger.info("Closing instanceStorage (stop hook)")
+      instanceStorage.close()
+    })
     instanceStorage
   }
 
