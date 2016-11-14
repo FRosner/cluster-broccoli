@@ -3,7 +3,7 @@ package de.frosner.broccoli.services
 import javax.inject.{Inject, Singleton}
 
 import com.typesafe.config.{ConfigObject, ConfigValueType}
-import de.frosner.broccoli.controllers.UserAccount
+import de.frosner.broccoli.controllers.{Account, UserAccount}
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.conf.IllegalConfigException
 import de.frosner.broccoli.util.Logging
@@ -52,8 +52,8 @@ case class SecurityService @Inject() (configuration: Configuration) extends Logg
   }
 
 
-  private lazy val accounts: Set[UserAccount] = {
-    val tryAccounts = Try {
+  private lazy val accounts: Set[Account] = {
+    val tryAccounts: Try[Iterable[Account]] = Try {
       configuration.getList(conf.AUTH_MODE_CONF_ACCOUNTS_KEY).map { users =>
         users.asScala.map { potentialUserObject =>
           potentialUserObject.valueType() match {
@@ -83,8 +83,8 @@ case class SecurityService @Inject() (configuration: Configuration) extends Logg
     accounts
   }
 
-  def isAllowedToAuthenticate(account: UserAccount): Boolean = accounts.contains(account)
+  def isAllowedToAuthenticate(account: Account): Boolean = accounts.contains(account)
 
-  def getAccount(id: String): Option[UserAccount] = accounts.find(_.name == id)
+  def getAccount(id: String): Option[Account] = accounts.find(_.name == id)
 
 }
