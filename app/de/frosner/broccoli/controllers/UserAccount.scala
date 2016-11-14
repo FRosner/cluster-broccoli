@@ -10,7 +10,7 @@ sealed trait Account {
 
 case class UserAccount(name: String, password: String) extends Account
 
-case object Anonymous extends Account {
+object Anonymous extends Account {
 
   val name = "anonymous"
 
