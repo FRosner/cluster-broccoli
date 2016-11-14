@@ -1,23 +1,19 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.services.{BuildInfoService, InstanceService, PermissionsService, SecurityService}
-import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Mockito._
-import org.specs2.matcher.MatchResult
 import play.api.libs.json.{JsObject, JsString}
-import play.api.mvc.{Action, AnyContent, Result}
-import play.api.test.{FakeRequest, PlaySpecification, _}
+import play.api.test._
 
-import scala.concurrent.Future
 
-class AboutControllerSpec extends PlaySpecification with ServiceMocks with AuthUtils {
+class AboutControllerSpec extends PlaySpecification with AuthUtils {
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
   "about" should {
 
-    "return the about object" in {
-      testWithAllAuths(UserAccount("frank", "pass")) {
+    "return the about object" in new WithApplication {
+      testWithAllAuths {
         securityService =>
           AboutController(
             buildInfoService = withDummyValues(mock(classOf[BuildInfoService])),
