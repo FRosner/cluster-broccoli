@@ -17,7 +17,7 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
         securityService =>
           AboutController(
             buildInfoService = withDummyValues(mock(classOf[BuildInfoService])),
-            instanceService = withEmptyInstancePrefix(mock(classOf[InstanceService])),
+            instanceService = mock(classOf[InstanceService]),
             permissionsService = withDefaultPermissionsMode(mock(classOf[PermissionsService])),
             securityService = securityService
           )
@@ -40,9 +40,6 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
             )),
             "permissions" -> JsObject(Map(
               "mode" -> JsString(controller.permissionsService.getPermissionsMode())
-            )),
-            "nomad" -> JsObject(Map(
-              "jobPrefix" -> JsString(controller.instanceService.nomadJobPrefix)
             ))
           ))
         }

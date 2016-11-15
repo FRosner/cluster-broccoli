@@ -8,11 +8,6 @@ package object conf {
   val NOMAD_URL_KEY = "broccoli.nomad.url"
   val NOMAD_URL_DEFAULT = "http://localhost:4646"
 
-  val NOMAD_JOB_PREFIX_KEY = "broccoli.instances.prefix"
-  val NOMAD_JOB_PREFIX_DEFAULT = ""
-  def getNomadJobPrefix(configuration: Configuration): String =
-    configuration.getString(conf.NOMAD_JOB_PREFIX_KEY).getOrElse(conf.NOMAD_JOB_PREFIX_DEFAULT)
-
   val CONSUL_URL_KEY = "broccoli.consul.url"
   val CONSUL_URL_DEFAULT = "http://localhost:8500"
 
