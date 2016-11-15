@@ -1,7 +1,7 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.Template
+import de.frosner.broccoli.models.{Account, Template}
 import de.frosner.broccoli.services._
 import org.mockito.Mockito._
 import org.mockito.internal.util.MockUtil

@@ -2,6 +2,7 @@ package de.frosner.broccoli.controllers
 
 import javax.inject.Inject
 
+import de.frosner.broccoli.models.UserAccount
 import de.frosner.broccoli.services.SecurityService
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.{BroccoliSimpleAuthorization, LoginLogout}

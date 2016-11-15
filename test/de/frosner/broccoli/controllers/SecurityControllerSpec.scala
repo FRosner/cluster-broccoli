@@ -1,5 +1,6 @@
 package de.frosner.broccoli.controllers
 
+import de.frosner.broccoli.models.UserAccount
 import de.frosner.broccoli.services.SecurityService
 import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Mockito._

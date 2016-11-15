@@ -3,7 +3,7 @@ package de.frosner.broccoli.services
 import com.google.common.collect.{ImmutableMap, Iterables, Lists, Maps}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.controllers.UserAccount
+import de.frosner.broccoli.models.UserAccount
 import org.specs2.mutable.Specification
 import play.api.Configuration
 

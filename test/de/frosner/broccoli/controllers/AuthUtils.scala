@@ -1,5 +1,6 @@
 package de.frosner.broccoli.controllers
 
+import de.frosner.broccoli.models.UserAccount
 import de.frosner.broccoli.services.SecurityService
 import org.specs2.matcher.MatchResult
 import org.specs2.matcher.MatchersImplicits._
