@@ -3,9 +3,9 @@ package de.frosner.broccoli.services
 import javax.inject.{Inject, Singleton}
 
 import com.typesafe.config.{ConfigObject, ConfigValueType}
-import de.frosner.broccoli.controllers.{Account, UserAccount}
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.conf.IllegalConfigException
+import de.frosner.broccoli.models.{Account, UserAccount}
 import de.frosner.broccoli.util.Logging
 import play.api.Configuration
 

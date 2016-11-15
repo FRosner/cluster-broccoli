@@ -1,4 +1,4 @@
-package de.frosner.broccoli.controllers
+package de.frosner.broccoli.models
 
 sealed trait Account {
 

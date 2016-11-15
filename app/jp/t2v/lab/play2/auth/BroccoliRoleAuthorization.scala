@@ -1,7 +1,8 @@
 package jp.t2v.lab.play2.auth
 
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.controllers.{Anonymous, AuthConfigImpl}
+import de.frosner.broccoli.controllers.AuthConfigImpl
+import de.frosner.broccoli.models.Anonymous
 import de.frosner.broccoli.services.SecurityService
 import jp.t2v.lab.play2.stackc.{RequestAttributeKey, RequestWithAttributes, StackableController}
 import play.api.mvc.{Controller, Result}

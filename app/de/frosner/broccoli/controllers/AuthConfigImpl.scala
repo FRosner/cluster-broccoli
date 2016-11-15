@@ -1,6 +1,7 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.conf
+import de.frosner.broccoli.models.{Account, Role}
 import de.frosner.broccoli.services.SecurityService
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.{AuthConfig, CookieTokenAccessor}
