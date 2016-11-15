@@ -48,26 +48,26 @@ class FileSystemInstanceStorageSpec extends Specification {
   "Using the file system instance storage" should {
 
     "require the storage directory to be present" in {
-      FileSystemInstanceStorage(new File(UUID.randomUUID().toString), "") should throwA[IllegalArgumentException]
+      FileSystemInstanceStorage(new File(UUID.randomUUID().toString)) should throwA[IllegalArgumentException]
     }
 
     "fail if the storage directory is already locked" in {
       usingTempFolder { folder =>
-        FileSystemInstanceStorage(folder, "")
-        FileSystemInstanceStorage(folder, "") should throwA[IllegalStateException]
+        FileSystemInstanceStorage(folder)
+        FileSystemInstanceStorage(folder) should throwA[IllegalStateException]
       }
     }
 
     "lock the storage directory" in {
       usingTempFolder { folder =>
-        FileSystemInstanceStorage(folder, "")
+        FileSystemInstanceStorage(folder)
         new File(folder, ".lock").isFile === true
       }
     }
 
     "unlock the storage directory on close" in {
       usingTempFolder { folder =>
-        FileSystemInstanceStorage(folder, "").close()
+        FileSystemInstanceStorage(folder).close()
         new File(folder, ".lock").isFile === false
       }
     }
@@ -78,7 +78,7 @@ class FileSystemInstanceStorageSpec extends Specification {
 
     "work" in {
       usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder, "")
+        val storage = FileSystemInstanceStorage(folder)
         storage.writeInstance(instance)
         storage.readInstance(instance.id) === Success(instance)
       }
@@ -86,7 +86,7 @@ class FileSystemInstanceStorageSpec extends Specification {
 
     "fail if the file is not readable" in {
       usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder, "")
+        val storage = FileSystemInstanceStorage(folder)
         storage.writeInstance(instance)
         val instanceFile = new File(folder, instance.id + ".json")
         instanceFile.setReadable(false)
@@ -96,7 +96,7 @@ class FileSystemInstanceStorageSpec extends Specification {
 
     "fail if the file is not a valid JSON" in {
       usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder, "")
+        val storage = FileSystemInstanceStorage(folder)
         storage.writeInstance(instance)
         val instanceFile = new File(folder, instance.id + ".json")
         val writer = new PrintStream(new FileOutputStream(instanceFile))
@@ -108,7 +108,7 @@ class FileSystemInstanceStorageSpec extends Specification {
 
     "fail if the instance ID does not match the file name" in {
       usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder, "")
+        val storage = FileSystemInstanceStorage(folder)
         storage.writeInstance(instance)
         val instanceFile = new File(folder, instance.id + ".json")
         val fileContent = Source.fromFile(instanceFile).getLines().mkString("").replaceFirst("^\\{\"id\"\\:\"prefix\\-id\"", "{\"id\":\"not-matching\"")
@@ -125,7 +125,7 @@ class FileSystemInstanceStorageSpec extends Specification {
 
     "not apply an additional filter if called without one" in {
       usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder, "")
+        val storage = FileSystemInstanceStorage(folder)
         val instance2 = instance.copy(id = instance.id + "2")
         storage.writeInstance(instance)
         storage.writeInstance(instance2)
@@ -136,7 +136,7 @@ class FileSystemInstanceStorageSpec extends Specification {
 
     "apply an additional filter if specified" in {
       usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder, "")
+        val storage = FileSystemInstanceStorage(folder)
         val instance2 = instance.copy(id = instance.id + "2")
         storage.writeInstance(instance)
         storage.writeInstance(instance2)
@@ -147,28 +147,16 @@ class FileSystemInstanceStorageSpec extends Specification {
 
     "filter out non .json files from the directory" in {
       usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder, "")
+        val storage = FileSystemInstanceStorage(folder)
         val newFile = new File(folder, "notJson.exe")
         newFile.createNewFile()
         storage.readInstances === Success(Set.empty[Instance])
       }
     }
 
-    "filter out instances not matching the prefix" in {
-      usingTempFolder { folder =>
-        val storage1 = FileSystemInstanceStorage(folder, "")
-        storage1.writeInstance(instance)
-        storage1.close()
-
-        val storage2 = FileSystemInstanceStorage(folder, "notmatchingprefix")
-
-        storage2.readInstances === Success(Set.empty)
-      }
-    }
-
     "fail if reading any of the instances fails" in {
       usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder, "")
+        val storage = FileSystemInstanceStorage(folder)
         storage.writeInstance(instance)
         val instanceFile = new File(folder, instance.id + ".json")
         instanceFile.setReadable(false)
@@ -182,7 +170,7 @@ class FileSystemInstanceStorageSpec extends Specification {
 
     "work" in {
       usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder, "")
+        val storage = FileSystemInstanceStorage(folder)
         storage.writeInstance(instance)
         storage.deleteInstance(instance)
         storage.readInstance(instance.id).isFailure === true
@@ -191,7 +179,7 @@ class FileSystemInstanceStorageSpec extends Specification {
 
     "fail if the file does not exist" in {
       usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder, "")
+        val storage = FileSystemInstanceStorage(folder)
         storage.deleteInstance(instance).failed.get should beAnInstanceOf[FileNotFoundException]
       }
     }

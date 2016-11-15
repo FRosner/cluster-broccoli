@@ -26,9 +26,6 @@ case class AboutController @Inject()(buildInfoService: BuildInfoService,
       )),
       "permissions" -> JsObject(Map(
         "mode" -> JsString(permissionsService.getPermissionsMode())
-      )),
-      "nomad" -> JsObject(Map(
-        "jobPrefix" -> JsString(instanceService.nomadJobPrefix)
       ))
     )))
   }

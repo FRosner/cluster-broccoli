@@ -39,12 +39,6 @@ trait ServiceMocks {
     buildInfoService
   }
 
-  def withEmptyInstancePrefix(instanceService: InstanceService): InstanceService = {
-    requireMock(instanceService)
-    when(instanceService.nomadJobPrefix).thenReturn("")
-    instanceService
-  }
-
   def withDefaultPermissionsMode(permissionsService: PermissionsService): PermissionsService = {
     requireMock(permissionsService)
     when(permissionsService.getPermissionsMode()).thenReturn(conf.PERMISSIONS_MODE_DEFAULT)

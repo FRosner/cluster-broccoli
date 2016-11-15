@@ -23,7 +23,6 @@ class NomadService @Inject()(configuration: Configuration,
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   private lazy val nomadBaseUrl = configuration.getString(conf.NOMAD_URL_KEY).getOrElse(conf.NOMAD_URL_DEFAULT)
-  private lazy val nomadJobPrefix = conf.getNomadJobPrefix(configuration)
 
   @volatile
   var jobStatuses: Map[String, InstanceStatus] = Map.empty
@@ -50,7 +49,7 @@ class NomadService @Inject()(configuration: Configuration,
 
   def requestStatuses() = {
     val queryUrl = nomadBaseUrl + "/v1/jobs"
-    val jobsRequest = ws.url(queryUrl).withQueryString("prefix" -> nomadJobPrefix)
+    val jobsRequest = ws.url(queryUrl)
     val jobsResponse = jobsRequest.get().map(_.json.as[JsArray])
     val jobsWithTemplate = jobsResponse.map(jsArray => {
       val (ids, statuses) = ((jsArray \\ "ID").map(_.as[JsString].value), (jsArray \\ "Status").map(_.as[JsString].value))
