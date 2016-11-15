@@ -1,7 +1,7 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.{Account, Template}
+import de.frosner.broccoli.models.{Account, Instance, InstanceWithStatus, Template}
 import de.frosner.broccoli.services._
 import org.mockito.Mockito._
 import org.mockito.internal.util.MockUtil
@@ -52,11 +52,36 @@ trait ServiceMocks {
   }
 
   def withTemplates(templateService: TemplateService, templates: Seq[Template]): TemplateService = {
+    requireMock(templateService)
     when(templateService.getTemplates).thenReturn(templates)
     templates.foreach { template =>
       when(templateService.template(template.id)).thenReturn(Some(template))
     }
     templateService
   }
+
+  def withInstances(instanceService: InstanceService, instances: Iterable[InstanceWithStatus]): InstanceService = {
+    requireMock(instanceService)
+    when(instanceService.getInstances).thenReturn(instances)
+    instances.foreach { instance =>
+      when(instanceService.getInstance(instance.instance.id)).thenReturn(Some(instance))
+    }
+    instanceService
+  }
+
+  private def withPermissionsMode(permissionsService: PermissionsService, permissionsMode: String): PermissionsService = {
+    requireMock(permissionsService)
+    when(permissionsService.getPermissionsMode()).thenReturn(permissionsMode)
+    permissionsService
+  }
+
+  def withAdminMode(permissionsService: PermissionsService): PermissionsService =
+    withPermissionsMode(permissionsService, conf.PERMISSIONS_MODE_ADMINISTRATOR)
+
+  def withOperatorMode(permissionsService: PermissionsService): PermissionsService =
+    withPermissionsMode(permissionsService, conf.PERMISSIONS_MODE_OPERATOR)
+
+  def withUserMode(permissionsService: PermissionsService): PermissionsService =
+    withPermissionsMode(permissionsService, conf.PERMISSIONS_MODE_USER)
 
 }

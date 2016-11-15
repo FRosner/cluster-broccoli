@@ -9,31 +9,34 @@ import de.frosner.broccoli.models.{Instance, InstanceCreation, InstanceStatus, I
 import de.frosner.broccoli.conf
 import Instance.instanceApiWrites
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
-import de.frosner.broccoli.services.{InstanceNotFoundException, InstanceService, PermissionsService, TemplateNotFoundException}
+import de.frosner.broccoli.services._
 import de.frosner.broccoli.services.InstanceService._
 import de.frosner.broccoli.util.Logging
+import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
 import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.mvc.{Action, Controller}
 
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
-class InstanceController @Inject() (instanceService: InstanceService,
-                                    permissionsService: PermissionsService) extends Controller with Logging {
+case class InstanceController @Inject() (instanceService: InstanceService,
+                                         permissionsService: PermissionsService,
+                                         override val securityService: SecurityService)
+  extends Controller with Logging with BroccoliSimpleAuthorization {
 
-  def list(maybeTemplateId: Option[String]) = Action {
+  def list(maybeTemplateId: Option[String]) = StackAction { implicit request =>
     val instances = instanceService.getInstances
     val filteredInstances = maybeTemplateId.map(
       id => instances.filter(_.instance.template.id == id)
     ).getOrElse(instances)
-    val anonymizedInstances = if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
-      filteredInstances
-    } else {
+    val anonymizedInstances = if (permissionsService.getPermissionsMode != conf.PERMISSIONS_MODE_ADMINISTRATOR) {
       filteredInstances.map(InstanceController.removeSecretVariables)
+    } else {
+      filteredInstances
     }
     Ok(Json.toJson(anonymizedInstances))
   }
 
-  def show(id: String) = Action {
+  def show(id: String) = StackAction { implicit request =>
     val maybeInstance = instanceService.getInstance(id)
     maybeInstance.map {
       instance => Ok(Json.toJson{
@@ -46,7 +49,7 @@ class InstanceController @Inject() (instanceService: InstanceService,
     }.getOrElse(NotFound(s"Instance $id not found."))
   }
 
-  def create = Action { request =>
+  def create = StackAction { implicit request =>
     if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
       val maybeValidatedInstanceCreation = request.body.asJson.map(_.validate[InstanceCreation])
       maybeValidatedInstanceCreation.map { validatedInstanceCreation =>
@@ -68,7 +71,7 @@ class InstanceController @Inject() (instanceService: InstanceService,
   }
 
 
-  def update(id: String) = Action { request =>
+  def update(id: String) = StackAction { implicit request =>
     if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_USER) {
       Status(403)(s"Updating instances now allowed when running in permissions mode '${conf.PERMISSIONS_MODE_USER}'.")
     } else {
@@ -77,16 +80,18 @@ class InstanceController @Inject() (instanceService: InstanceService,
         // extract updates
         val fields = jsObject.value
         val maybeStatusUpdater = fields.get("status").flatMap { value =>
-          val maybeValidatedNewStatus = value.validate[InstanceStatus]
+          val maybeValidatedNewStatus = Try(value.as[InstanceStatus])
           maybeValidatedNewStatus.map(status => Some(StatusUpdater(status))).getOrElse(None)
         }
-        val maybeParameterValuesUpdater = fields.get("parameterValues").map { value =>
-          val parameterValues = value.as[JsObject].value
-          ParameterValuesUpdater(parameterValues.map { case (k, v) => (k, v.as[JsString].value) }.toMap)
-        }
-        val maybeTemplateSelector = fields.get("selectedTemplate").map { value =>
+        val maybeParameterValuesUpdater = Try{
+          fields.get("parameterValues").map { value =>
+            val parameterValues = value.as[JsObject].value
+            ParameterValuesUpdater(parameterValues.map { case (k, v) => (k, v.as[JsString].value) }.toMap)
+          }
+        }.toOption.getOrElse(None)
+        val maybeTemplateSelector = Try(fields.get("selectedTemplate").map { value =>
           TemplateSelector(value.as[JsString].value)
-        }
+        }).toOption.getOrElse(None)
 
         // warn for unrecognized updates
         fields.foreach { case (key, _) =>
@@ -119,13 +124,14 @@ class InstanceController @Inject() (instanceService: InstanceService,
     }
   }
 
-  def delete(id: String) = Action {
+  def delete(id: String) = StackAction { implicit request =>
     if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
       val maybeDeletedInstance = instanceService.deleteInstance(id)
       maybeDeletedInstance.map {
         instance => Ok(Json.toJson(instance))
       }.recover {
-        case throwable => NotFound(throwable.toString)
+        case throwable: InstanceNotFoundException => NotFound(throwable.toString)
+        case throwable => Status(400)(throwable.toString)
       }.get
     } else {
       Status(403)(s"Instance deletion only allowed in '${conf.PERMISSIONS_MODE_ADMINISTRATOR}' mode.")
