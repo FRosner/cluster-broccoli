@@ -27,9 +27,9 @@ class TemplateService @Inject() (configuration: Configuration) extends Logging {
     storageType
   }
   private lazy val templatesUrl = {
-    if (configuration.getString("broccoli.templatesDir").isDefined) Logger.warn(s"'broccoli.templatesDir' ignored. Use ${conf.TEMPLATES_STORAGE_URL_KEY} instead.")
-    val url = configuration.getString(conf.TEMPLATES_STORAGE_URL_KEY).getOrElse(conf.TEMPLATES_STORAGE_URL_DEFAULT)
-    Logger.info(s"${conf.TEMPLATES_STORAGE_URL_KEY}=$url")
+    if (configuration.getString("broccoli.templatesDir").isDefined) Logger.warn(s"'broccoli.templatesDir' ignored. Use ${conf.TEMPLATES_STORAGE_FS_URL_KEY} instead.")
+    val url = configuration.getString(conf.TEMPLATES_STORAGE_FS_URL_KEY).getOrElse(conf.TEMPLATES_STORAGE_FS_URL_DEFAULT)
+    Logger.info(s"${conf.TEMPLATES_STORAGE_FS_URL_KEY}=$url")
     url
   }
 

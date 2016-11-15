@@ -1,6 +1,7 @@
 package de.frosner.broccoli.services
 
 import java.io._
+import java.net.ConnectException
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import javax.inject.{Inject, Singleton}
 
@@ -13,12 +14,16 @@ import play.api.libs.ws.WSClient
 import scala.util.{Failure, Success, Try}
 import InstanceService._
 import de.frosner.broccoli.conf
+import play.api.inject.ApplicationLifecycle
+
+import scala.concurrent.Future
 
 @Singleton
 class InstanceService @Inject()(templateService: TemplateService,
                                 nomadService: NomadService,
                                 consulService: ConsulService,
                                 ws: WSClient,
+                                applicationLifecycle: ApplicationLifecycle,
                                 configuration: Configuration) extends Logging {
 
   private lazy val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
@@ -56,7 +61,7 @@ class InstanceService @Inject()(templateService: TemplateService,
 
   private lazy val instanceStorage: InstanceStorage = {
     val instanceStorageType = {
-      val storageType = configuration.getString(conf.INSTANCES_STORAGE_TYPE_KEY).getOrElse(conf.TEMPLATES_STORAGE_TYPE_DEFAULT)
+      val storageType = configuration.getString(conf.INSTANCES_STORAGE_TYPE_KEY).getOrElse(conf.INSTANCES_STORAGE_TYPE_DEFAULT)
       val allowedStorageTypes = Set(conf.INSTANCES_STORAGE_TYPE_FS, conf.INSTANCES_STORAGE_TYPE_COUCHDB)
       if (!allowedStorageTypes.contains(storageType)) {
         Logger.error(s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType is invalid. Only ${allowedStorageTypes.mkString(", ")} supported.")
@@ -66,22 +71,28 @@ class InstanceService @Inject()(templateService: TemplateService,
       storageType
     }
 
-    val instanceStorageUrl = {
-      if (configuration.getString("broccoli.instancesFile").isDefined) Logger.warn(s"broccoli.instancesFile ignored. Use ${conf.INSTANCES_STORAGE_URL_KEY} instead.")
-      val url = configuration.getString(conf.INSTANCES_STORAGE_URL_KEY).getOrElse { instanceStorageType match {
-        case conf.INSTANCES_STORAGE_TYPE_FS => conf.INSTANCES_STORAGE_URL_DEFAULT_FS
-        case conf.INSTANCES_STORAGE_TYPE_COUCHDB => conf.INSTANCES_STORAGE_URL_DEFAULT_COUCHDB
-      }}
-      Logger.info(s"${conf.INSTANCES_STORAGE_URL_KEY}=$url")
-      url
-    }
-
     val maybeInstanceStorage = instanceStorageType match {
       case conf.INSTANCES_STORAGE_TYPE_FS => {
-        Try(FileSystemInstanceStorage(new File(instanceStorageUrl), nomadJobPrefix))
+        val instanceDir = {
+          if (configuration.getString("broccoli.instancesFile").isDefined) Logger.warn(s"broccoli.instancesFile ignored. Use ${conf.INSTANCES_STORAGE_FS_URL_KEY} instead.")
+          val url = configuration.getString(conf.INSTANCES_STORAGE_FS_URL_KEY).getOrElse(conf.INSTANCES_STORAGE_FS_URL_DEFAULT)
+          Logger.info(s"${conf.INSTANCES_STORAGE_FS_URL_KEY}=$url")
+          url
+        }
+        Try(FileSystemInstanceStorage(new File(instanceDir), nomadJobPrefix))
       }
       case conf.INSTANCES_STORAGE_TYPE_COUCHDB => {
-        Try(CouchDBInstanceStorage(instanceStorageUrl, nomadJobPrefix, ws))
+        val couchDbUrl = {
+          val url = configuration.getString(conf.INSTANCES_STORAGE_COUCHDB_URL_KEY).getOrElse(conf.INSTANCES_STORAGE_COUCHDB_URL_DEFAULT)
+          Logger.info(s"${conf.INSTANCES_STORAGE_COUCHDB_URL_KEY}=$url")
+          url
+        }
+        val couchDbName = {
+          val name = configuration.getString(conf.INSTANCES_STORAGE_COUCHDB_DBNAME_KEY).getOrElse(conf.INSTANCES_STORAGE_COUCHDB_DBNAME_DEFAULT)
+          Logger.info(s"${conf.INSTANCES_STORAGE_COUCHDB_DBNAME_KEY}=$name")
+          name
+        }
+        Try(CouchDBInstanceStorage(couchDbUrl, couchDbName, nomadJobPrefix, ws))
       }
       case default => throw new IllegalStateException(s"Illegal storage type '$instanceStorageType")
     }
@@ -93,10 +104,45 @@ class InstanceService @Inject()(templateService: TemplateService,
         throw throwable
     }
     sys.addShutdownHook {
-      Logger.info("Closing instanceStorage")
+      Logger.info("Closing instanceStorage (shutdown hook)")
       instanceStorage.close()
     }
+    applicationLifecycle.addStopHook(() => Future {
+      Logger.info("Closing instanceStorage (stop hook)")
+      instanceStorage.close()
+    })
     instanceStorage
+  }
+
+  @volatile
+  private var instancesMap: Map[String, Instance] = Map.empty
+  @volatile
+  private var instancesMapInitialized = false
+  @volatile
+  private def initializeInstancesMap: Map[String, Instance] = {
+    instancesMapInitialized = true
+    instancesMap = instanceStorage.readInstances(_.startsWith(nomadJobPrefix)) match {
+      case Success(instances) => instances.map(instance => (instance.id, instance)).toMap
+      case Failure(throwable) => {
+        Logger.error(s"Failed to load the instances: ${throwable.toString}")
+        throw throwable
+      }
+    }
+    instancesMap
+  }
+
+  /*
+    I have to make this initialization "lazy" (but there are not lazy vars in Scala),
+    because Play does not like it when you use System.exit(1) during the construction
+    of dependency injected components.
+   */
+  @volatile
+  private def instances = {
+    if (instancesMapInitialized) {
+      instancesMap
+    } else {
+      initializeInstancesMap
+    }
   }
 
   private def addStatuses(instance: Instance): InstanceWithStatus = {
@@ -110,12 +156,12 @@ class InstanceService @Inject()(templateService: TemplateService,
 
   implicit val executionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  def getInstances: Try[Iterable[InstanceWithStatus]] = {
-    instanceStorage.readInstances.map(_.map(addStatuses))
+  def getInstances: Iterable[InstanceWithStatus] = {
+    instances.values.map(addStatuses)
   }
 
-  def getInstance(id: String): Try[InstanceWithStatus] = {
-    instanceStorage.readInstance(id).map(addStatuses)
+  def getInstance(id: String): Option[InstanceWithStatus] = {
+    instances.get(id).map(addStatuses)
   }
 
   @volatile
@@ -123,13 +169,17 @@ class InstanceService @Inject()(templateService: TemplateService,
     val maybeId = instanceCreation.parameters.get("id") // FIXME requires ID to be defined inside the parameter values
     val templateId = instanceCreation.templateId
     val maybeCreatedInstance = maybeId.map { id =>
-      if (instanceStorage.readInstance(id).isSuccess) {
+      if (instances.contains(id)) {
         Failure(newExceptionWithWarning(new IllegalArgumentException(s"There is already an instance having the ID $id")))
       } else {
         val potentialTemplate = templateService.template(templateId)
         potentialTemplate.map { template =>
           val maybeNewInstance = Try(Instance(id, template, instanceCreation.parameters))
-          maybeNewInstance.flatMap(instanceStorage.writeInstance)
+          maybeNewInstance.flatMap { newInstance =>
+            val result = instanceStorage.writeInstance(newInstance)
+            result.foreach { writtenInstance => instancesMap = instancesMap.updated(id, writtenInstance) }
+            result
+          }
         }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException(s"Template $templateId does not exist."))))
       }
     }.getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException("No ID specified"))))
@@ -141,8 +191,8 @@ class InstanceService @Inject()(templateService: TemplateService,
                      parameterValuesUpdater: Option[ParameterValuesUpdater],
                      templateSelector: Option[TemplateSelector]): Try[InstanceWithStatus] = {
     val updateInstanceId = id
-    val maybeInstance = instanceStorage.readInstance(updateInstanceId)
-    maybeInstance.flatMap { instance =>
+    val maybeInstance = instances.get(id)
+    val maybeUpdatedInstance = maybeInstance.map { instance =>
       val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (templateSelector.isDefined) {
         val newTemplateId = templateSelector.get.newTemplateId
         val newTemplate = templateService.template(newTemplateId)
@@ -192,21 +242,38 @@ class InstanceService @Inject()(templateService: TemplateService,
         case Success(changedInstance) => Logger.debug(s"Successfully applied an update to $changedInstance")
       }
 
-      updatedInstance.flatMap(instanceStorage.writeInstance).map(addStatuses)
+      updatedInstance.flatMap { instance =>
+        val maybeWrittenInstance = instanceStorage.writeInstance(instance)
+        maybeWrittenInstance.foreach(written => instancesMap = instancesMap.updated(id, written))
+        maybeWrittenInstance
+      }.map(addStatuses)
+    }
+    maybeUpdatedInstance match {
+      case Some(tryUpdatedInstance) => tryUpdatedInstance
+      case None => Failure(InstanceNotFoundException(id))
     }
   }
 
   @volatile
   def deleteInstance(id: String): Try[InstanceWithStatus] = {
-    updateInstance(
+    val tryStopping = updateInstance(
       id = id,
       statusUpdater = Some(StatusUpdater(InstanceStatus.Stopped)),
       parameterValuesUpdater = None,
       templateSelector = None
     )
-    val instanceToDelete = instanceStorage.readInstance(id)
-    val deletedInstance = instanceToDelete.flatMap(instanceStorage.deleteInstance)
-    deletedInstance.map(addStatuses)
+    val tryDelete = tryStopping.map(_.instance).recover {
+      case throwable: ConnectException => {
+        // TODO #144
+        Logger.warn(s"Failed to stop $id. It might be running when Nomad is reachable again.")
+        instancesMap(id)
+      }
+    }.flatMap { stoppedInstance =>
+      val tryDelete = instanceStorage.deleteInstance(stoppedInstance)
+      tryDelete.foreach(instance => instancesMap -= instance.id)
+      tryDelete
+    }
+    tryDelete.map(addStatuses)
   }
 
 }

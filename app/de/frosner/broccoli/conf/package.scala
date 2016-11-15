@@ -19,17 +19,21 @@ package object conf {
   val TEMPLATES_STORAGE_TYPE_FILESYSTEM = "fs"
   val TEMPLATES_STORAGE_TYPE_DEFAULT = TEMPLATES_STORAGE_TYPE_FILESYSTEM
 
-  val TEMPLATES_STORAGE_URL_KEY = "broccoli.templates.storage.url"
-  val TEMPLATES_STORAGE_URL_DEFAULT = "templates"
+  val TEMPLATES_STORAGE_FS_URL_KEY = "broccoli.templates.storage.fs.url"
+  val TEMPLATES_STORAGE_FS_URL_DEFAULT = "templates"
 
   val INSTANCES_STORAGE_TYPE_KEY = "broccoli.instances.storage.type"
   val INSTANCES_STORAGE_TYPE_FS = "fs"
   val INSTANCES_STORAGE_TYPE_COUCHDB = "couchdb"
   val INSTANCES_STORAGE_TYPE_DEFAULT = INSTANCES_STORAGE_TYPE_FS
 
-  val INSTANCES_STORAGE_URL_KEY = "broccoli.instances.storage.url"
-  val INSTANCES_STORAGE_URL_DEFAULT_FS = "instances"
-  val INSTANCES_STORAGE_URL_DEFAULT_COUCHDB = "http://localhost:5984/broccoli_instances"
+  val INSTANCES_STORAGE_FS_URL_KEY = "broccoli.instances.storage.fs.url"
+  val INSTANCES_STORAGE_FS_URL_DEFAULT = "instances"
+
+  val INSTANCES_STORAGE_COUCHDB_URL_KEY = "broccoli.instances.storage.couchdb.url"
+  val INSTANCES_STORAGE_COUCHDB_URL_DEFAULT = "http://localhost:5984"
+  val INSTANCES_STORAGE_COUCHDB_DBNAME_KEY = "broccoli.instances.storage.couchdb.dbName"
+  val INSTANCES_STORAGE_COUCHDB_DBNAME_DEFAULT = "broccoli_instances"
 
   val CONSUL_LOOKUP_METHOD_KEY = "broccoli.consul.lookup"
   val CONSUL_LOOKUP_METHOD_IP = "ip"

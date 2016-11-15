@@ -15,9 +15,14 @@ import scala.util.Try
   * Instance storage using CouchDB as a peristence layer.
   * On construction it is checking whether the instance DB exists and creating it if it doesn't.
   */
-case class CouchDBInstanceStorage(dbUrlString: String, prefix: String, ws: WSClient) extends InstanceStorage with Logging {
+case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, prefix: String, ws: WSClient) extends InstanceStorage with Logging {
 
   import Instance.{instancePersistenceReads, instancePersistenceWrites}
+
+  private val dbUrlString = s"$couchBaseUrl/$dbName"
+
+  private val dbLockUrl = ws.url(s"$couchBaseUrl/_config/broccoli/$dbName")
+  private val lockUri = dbLockUrl.uri
 
   {
     require(!dbUrlString.trim.isEmpty, "CouchDB HTTP API URL must not be empty.")
@@ -35,6 +40,14 @@ case class CouchDBInstanceStorage(dbUrlString: String, prefix: String, ws: WSCli
         throw new IllegalArgumentException(s"$dbUri did not exist but failed to create: HTTP status code ${dbPut.status}")
       }
     }
+
+    val lockRequest = Await.result(dbLockUrl.put(JsString("lock")), Duration(2, TimeUnit.SECONDS))
+    val tryLock = Try(lockRequest.json.as[JsString].value)
+    if (tryLock.isFailure || !tryLock.get.isEmpty) {
+      throw new IllegalArgumentException(s"Unable to aquire lock for CouchDB ($lockUri)")
+    } else {
+      Logger.info(s"Successfully locked CouchDB ($lockUri)")
+    }
   }
 
   private def requireDocIdEqualToInstanceId[T](docId: JsValue, instanceId: JsValue)(f: => T): T = {
@@ -48,6 +61,8 @@ case class CouchDBInstanceStorage(dbUrlString: String, prefix: String, ws: WSCli
   }
 
   override def closeImpl(): Unit = {
+    Logger.info(s"Releasing lock from CouchDB ($lockUri)")
+    Await.ready(dbLockUrl.delete(), Duration(5, TimeUnit.SECONDS))
   }
 
   /*
@@ -58,24 +73,22 @@ case class CouchDBInstanceStorage(dbUrlString: String, prefix: String, ws: WSCli
   }
    */
   override def readInstanceImpl(id: String): Try[Instance] = {
-    checkPrefix(id) {
-      Try {
-        val instanceUrl = ws.url(s"$dbUrlString/$id")
-        val instanceResult = Await.result(instanceUrl.get(), Duration(5, TimeUnit.SECONDS))
-        if (instanceResult.status == 200) {
-          val instanceFields = instanceResult.json.as[JsObject].value
-          val docId = instanceFields("_id")
-          val instanceId = instanceFields("id")
-          println(instanceFields)
-          requireDocIdEqualToInstanceId(docId, instanceId) {
-            val publicFields = instanceFields.filter {
-              case (key, value) => !key.startsWith("_")
-            }
-            JsObject(publicFields).as[Instance]
+    Try {
+      val instanceUrl = ws.url(s"$dbUrlString/$id")
+      val instanceResult = Await.result(instanceUrl.get(), Duration(5, TimeUnit.SECONDS))
+      if (instanceResult.status == 200) {
+        val instanceFields = instanceResult.json.as[JsObject].value
+        val docId = instanceFields("_id")
+        val instanceId = instanceFields("id")
+        println(instanceFields)
+        requireDocIdEqualToInstanceId(docId, instanceId) {
+          val publicFields = instanceFields.filter {
+            case (key, value) => !key.startsWith("_")
           }
-        } else {
-          throw new InstanceNotFoundException(id)
+          JsObject(publicFields).as[Instance]
         }
+      } else {
+        throw new InstanceNotFoundException(id)
       }
     }
   }
@@ -144,63 +157,59 @@ case class CouchDBInstanceStorage(dbUrlString: String, prefix: String, ws: WSCli
 
   override def writeInstanceImpl(instance: Instance): Try[Instance] = {
     val id = instance.id
-    checkPrefix(id) {
-      Try {
-        val instanceUrl = ws.url(s"$dbUrlString/$id")
-        val instanceResult = Await.result(instanceUrl.get(), Duration(5, TimeUnit.SECONDS))
-        def checkStatusCode(status: Int) = {
-          if (status == 201) {
-            instance
-          } else {
-            throw new IllegalStateException(s"Persisting instance '$id' failed. HTTP status code: $status")
-          }
+    Try {
+      val instanceUrl = ws.url(s"$dbUrlString/$id")
+      val instanceResult = Await.result(instanceUrl.get(), Duration(5, TimeUnit.SECONDS))
+      def checkStatusCode(status: Int) = {
+        if (status == 201) {
+          instance
+        } else {
+          throw new IllegalStateException(s"Persisting instance '$id' failed. HTTP status code: $status")
         }
-        instanceResult.status match {
-          case 404 => {
-            // Instance does not exist so it will be created
-            val creationResult = Await.result(instanceUrl.put(Json.toJson(instance)), Duration(5, TimeUnit.SECONDS))
-            checkStatusCode(creationResult.status)
-          }
-          case 200 => {
-            // Instance already exists so we are overwriting
-            val presentInstanceRevision = instanceResult.json.as[JsObject].value("_rev").as[JsString]
-            val instanceJson = Json.toJson(instance).as[JsObject]
-            val instanceJsonWithRev = JsObject(instanceJson.value.updated("_rev", presentInstanceRevision))
-            val creationResult = Await.result(instanceUrl.put(instanceJsonWithRev), Duration(5, TimeUnit.SECONDS))
-            checkStatusCode(creationResult.status)
-          }
-          case other => throw new IllegalStateException(s"Unexpected status code returned from ${instanceUrl.uri}: $other")
+      }
+      instanceResult.status match {
+        case 404 => {
+          // Instance does not exist so it will be created
+          val creationResult = Await.result(instanceUrl.put(Json.toJson(instance)), Duration(5, TimeUnit.SECONDS))
+          checkStatusCode(creationResult.status)
         }
+        case 200 => {
+          // Instance already exists so we are overwriting
+          val presentInstanceRevision = instanceResult.json.as[JsObject].value("_rev").as[JsString]
+          val instanceJson = Json.toJson(instance).as[JsObject]
+          val instanceJsonWithRev = JsObject(instanceJson.value.updated("_rev", presentInstanceRevision))
+          val creationResult = Await.result(instanceUrl.put(instanceJsonWithRev), Duration(5, TimeUnit.SECONDS))
+          checkStatusCode(creationResult.status)
+        }
+        case other => throw new IllegalStateException(s"Unexpected status code returned from ${instanceUrl.uri}: $other")
       }
     }
   }
 
   override def deleteInstanceImpl(instance: Instance): Try[Instance] = {
     val id = instance.id
-    checkPrefix(id) {
-      Try {
-        val readInstanceUrl = ws.url(s"$dbUrlString/$id")
-        val instanceResult = Await.result(readInstanceUrl.get(), Duration(5, TimeUnit.SECONDS))
-        def checkStatusCode(status: Int) = {
-          if (status == 200) {
-            instance
-          } else {
-            throw new IllegalStateException(s"Deleting instance '$id' failed. HTTP status code: $status")
-          }
+    Try {
+      val readInstanceUrl = ws.url(s"$dbUrlString/$id")
+      val instanceResult = Await.result(readInstanceUrl.get(), Duration(5, TimeUnit.SECONDS))
+      def checkStatusCode(status: Int) = {
+        if (status == 200) {
+          instance
+        } else {
+          throw new IllegalStateException(s"Deleting instance '$id' failed. HTTP status code: $status")
         }
-        instanceResult.status match {
-          case 404 => {
-            throw new InstanceNotFoundException(id)
-          }
-          case 200 => {
-            // Instance already exists so we are overwriting
-            val presentInstanceRevision = instanceResult.json.as[JsObject].value("_rev").as[JsString]
-            val deleteInstanceUrl = ws.url(s"$dbUrlString/$id?rev=${presentInstanceRevision.value}")
-            val creationResult = Await.result(deleteInstanceUrl.delete(), Duration(5, TimeUnit.SECONDS))
-            checkStatusCode(creationResult.status)
-          }
-          case other => throw new IllegalStateException(s"Unexpected status code returned from ${readInstanceUrl.uri}: $other")
+      }
+      instanceResult.status match {
+        case 404 => {
+          throw new InstanceNotFoundException(id)
         }
+        case 200 => {
+          // Instance already exists so we are overwriting
+          val presentInstanceRevision = instanceResult.json.as[JsObject].value("_rev").as[JsString]
+          val deleteInstanceUrl = ws.url(s"$dbUrlString/$id?rev=${presentInstanceRevision.value}")
+          val creationResult = Await.result(deleteInstanceUrl.delete(), Duration(5, TimeUnit.SECONDS))
+          checkStatusCode(creationResult.status)
+        }
+        case other => throw new IllegalStateException(s"Unexpected status code returned from ${readInstanceUrl.uri}: $other")
       }
     }
   }

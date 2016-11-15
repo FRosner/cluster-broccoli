@@ -9,7 +9,7 @@ import de.frosner.broccoli.models.{Instance, InstanceCreation, InstanceStatus, I
 import de.frosner.broccoli.conf
 import Instance.instanceApiWrites
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
-import de.frosner.broccoli.services.{InstanceService, PermissionsService, TemplateNotFoundException}
+import de.frosner.broccoli.services.{InstanceNotFoundException, InstanceService, PermissionsService, TemplateNotFoundException}
 import de.frosner.broccoli.services.InstanceService._
 import de.frosner.broccoli.util.Logging
 import play.api.libs.json.{JsObject, JsString, Json}
@@ -21,19 +21,16 @@ class InstanceController @Inject() (instanceService: InstanceService,
                                     permissionsService: PermissionsService) extends Controller with Logging {
 
   def list(maybeTemplateId: Option[String]) = Action {
-    val maybeInstances = instanceService.getInstances
-    val maybeFilteredInstances = maybeTemplateId.map(
-      id => maybeInstances.map(_.filter(_.instance.template.id == id))
-    ).getOrElse(maybeInstances)
-    val maybeAnonymizedInstances = if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
-      maybeFilteredInstances
+    val instances = instanceService.getInstances
+    val filteredInstances = maybeTemplateId.map(
+      id => instances.filter(_.instance.template.id == id)
+    ).getOrElse(instances)
+    val anonymizedInstances = if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
+      filteredInstances
     } else {
-      maybeFilteredInstances.map(_.map(InstanceController.removeSecretVariables))
+      filteredInstances.map(InstanceController.removeSecretVariables)
     }
-    maybeAnonymizedInstances match {
-      case Success(filteredInstances) => Ok(Json.toJson(filteredInstances))
-      case Failure(throwable) => NotFound(throwable.toString)
-    }
+    Ok(Json.toJson(anonymizedInstances))
   }
 
   def show(id: String) = Action {
@@ -46,9 +43,7 @@ class InstanceController @Inject() (instanceService: InstanceService,
           InstanceController.removeSecretVariables(instance)
         }
       })
-    }.recover {
-      case throwable => NotFound(throwable.toString)
-    }.get
+    }.getOrElse(NotFound(s"Instance $id not found."))
   }
 
   def create = Action { request =>
@@ -62,7 +57,7 @@ class InstanceController @Inject() (instanceService: InstanceService,
               LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
             )
           }.recover { case error =>
-            Status(400)("Invalid JSON format: " + error.toString)
+            Status(400)(error.toString)
           }.get
         }.getOrElse(Status(400)("Expected JSON data"))
       }.getOrElse(Status(400)("Expected JSON data"))
@@ -114,6 +109,7 @@ class InstanceController @Inject() (instanceService: InstanceService,
           maybeExistingAndChangedInstance match {
             case Success(changedInstance) => Ok(Json.toJson(changedInstance))
             case Failure(throwable: FileNotFoundException) => Status(404)(s"Instance not found: $throwable")
+            case Failure(throwable: InstanceNotFoundException) => Status(404)(s"Instance not found: $throwable")
             case Failure(throwable: IllegalArgumentException) => Status(400)(s"Invalid request to update an instance: $throwable")
             case Failure(throwable: TemplateNotFoundException) => Status(400)(s"Invalid request to update an instance: $throwable")
             case Failure(throwable) => Status(500)(s"Something went wrong when updating the instance: $throwable")
