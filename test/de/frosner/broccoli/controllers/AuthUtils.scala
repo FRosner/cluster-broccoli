@@ -1,6 +1,6 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.models.UserAccount
+import de.frosner.broccoli.models.{Account, UserAccount}
 import de.frosner.broccoli.services.SecurityService
 import org.specs2.matcher.MatchResult
 import org.specs2.matcher.MatchersImplicits._
@@ -14,18 +14,11 @@ import scala.concurrent.Future
 
 trait AuthUtils extends ServiceMocks {
 
-  def testWithAllAuths[T <: AuthConfigImpl](controller: SecurityService => T)
-                                           (action: T => Action[AnyContent])
-                                           (requestModifier: FakeRequest[_] => FakeRequest[_])
-                                           (matcher: (T, Future[Result]) => MatchResult[_]): MatchResult[_] = {
-
-    val account = UserAccount("user", "pass")
-
-    val noAuthController = controller(withAuthNone(mock(classOf[SecurityService])))
-    val noAuthRequest = requestModifier(FakeRequest()).asInstanceOf[FakeRequest[AnyContent]]
-    val noAuthResult = action(noAuthController).apply(noAuthRequest)
-    val noAuthMatcher = matcher(noAuthController, noAuthResult)
-
+  def testWithAccountAuths[T <: AuthConfigImpl](account: Account)
+                                               (controller: SecurityService => T)
+                                               (action: T => Action[AnyContent])
+                                               (requestModifier: FakeRequest[_] => FakeRequest[_])
+                                               (matcher: (T, Future[Result]) => MatchResult[_]): MatchResult[_] = {
     val confAuthController = controller(withAuthConf(mock(classOf[SecurityService]), List(account)))
     val confAuthRequest = requestModifier(
       FakeRequest().withLoggedIn(confAuthController)(account.name)
@@ -33,11 +26,27 @@ trait AuthUtils extends ServiceMocks {
     val confAuthResult = action(confAuthController).apply(confAuthRequest)
     val confAuthMatcher = matcher(confAuthController, confAuthResult)
 
+    val noAuthController = controller(withAuthNone(mock(classOf[SecurityService])))
+    val noAuthRequest = requestModifier(FakeRequest()).asInstanceOf[FakeRequest[AnyContent]]
     val confAuthNoLoginResult = action(confAuthController).apply(noAuthRequest)
     val confAuthNoLoginMatcher = status(confAuthNoLoginResult) === 403
 
-    noAuthMatcher and confAuthMatcher and confAuthNoLoginMatcher
+    confAuthMatcher and confAuthNoLoginMatcher
+  }
 
+  def testWithAllAuths[T <: AuthConfigImpl](controller: SecurityService => T)
+                                           (action: T => Action[AnyContent])
+                                           (requestModifier: FakeRequest[_] => FakeRequest[_])
+                                           (matcher: (T, Future[Result]) => MatchResult[_]): MatchResult[_] = {
+    val account = UserAccount("user", "pass", ".*")
+    val noAuthController = controller(withAuthNone(mock(classOf[SecurityService])))
+    val noAuthRequest = requestModifier(FakeRequest()).asInstanceOf[FakeRequest[AnyContent]]
+    val noAuthResult = action(noAuthController).apply(noAuthRequest)
+    val noAuthMatcher = matcher(noAuthController, noAuthResult)
+
+    val authMatchers = testWithAccountAuths(account)(controller)(action)(requestModifier)(matcher)
+
+    noAuthMatcher and authMatchers
   }
 
 }

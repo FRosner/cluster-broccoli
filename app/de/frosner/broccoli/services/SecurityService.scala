@@ -2,10 +2,10 @@ package de.frosner.broccoli.services
 
 import javax.inject.{Inject, Singleton}
 
-import com.typesafe.config.{ConfigObject, ConfigValueType}
+import com.typesafe.config.{ConfigObject, ConfigValueFactory, ConfigValueType}
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.conf.IllegalConfigException
-import de.frosner.broccoli.models.{Account, UserAccount}
+import de.frosner.broccoli.models.{Account, Credentials, UserAccount}
 import de.frosner.broccoli.util.Logging
 import play.api.Configuration
 
@@ -51,27 +51,8 @@ case class SecurityService @Inject() (configuration: Configuration) extends Logg
     result
   }
 
-
   private lazy val accounts: Set[Account] = {
-    val tryAccounts: Try[Iterable[Account]] = Try {
-      configuration.getList(conf.AUTH_MODE_CONF_ACCOUNTS_KEY).map { users =>
-        users.asScala.map { potentialUserObject =>
-          potentialUserObject.valueType() match {
-            case ConfigValueType.OBJECT => {
-              val userObject = potentialUserObject.asInstanceOf[ConfigObject]
-              UserAccount(
-                name = userObject.get(conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY).unwrapped().asInstanceOf[String],
-                password = userObject.get(conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY).unwrapped().asInstanceOf[String]
-              )
-            }
-            case valueType => {
-              throw new IllegalConfigException(conf.AUTH_MODE_CONF_ACCOUNTS_KEY, s"Expected ${ConfigValueType.OBJECT} but got $valueType")
-            }
-          }
-        }
-      }.getOrElse(conf.AUTH_MODE_CONF_ACCOUNTS_DEFAULT)
-    }
-    val accounts = tryAccounts match {
+    val accounts = SecurityService.tryAccounts(configuration) match {
       case Success(userObjects) => userObjects.toSet
       case Failure(throwable) => {
         Logger.error(s"Error parsing ${conf.AUTH_MODE_CONF_ACCOUNTS_KEY}: $throwable")
@@ -83,8 +64,37 @@ case class SecurityService @Inject() (configuration: Configuration) extends Logg
     accounts
   }
 
-  def isAllowedToAuthenticate(account: Account): Boolean = accounts.contains(account)
+  def isAllowedToAuthenticate(credentials: Credentials): Boolean = accounts.exists {
+    account => account.name == credentials.name && account.password == credentials.password
+  }
 
   def getAccount(id: String): Option[Account] = accounts.find(_.name == id)
+
+}
+
+object SecurityService {
+
+  private[services] def tryAccounts(configuration: Configuration): Try[Iterable[Account]] = Try {
+    configuration.getList(conf.AUTH_MODE_CONF_ACCOUNTS_KEY).map { users =>
+      users.asScala.map { potentialUserObject =>
+        potentialUserObject.valueType() match {
+          case ConfigValueType.OBJECT => {
+            val userObject = potentialUserObject.asInstanceOf[ConfigObject]
+            UserAccount(
+              name = userObject.get(conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY).unwrapped().asInstanceOf[String],
+              password = userObject.get(conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY).unwrapped().asInstanceOf[String],
+              instanceRegex = userObject.getOrDefault(
+                conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY,
+                ConfigValueFactory.fromAnyRef(conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_DEFAULT)
+              ).unwrapped().asInstanceOf[String]
+            )
+          }
+          case valueType => {
+            throw new IllegalConfigException(conf.AUTH_MODE_CONF_ACCOUNTS_KEY, s"Expected ${ConfigValueType.OBJECT} but got $valueType")
+          }
+        }
+      }
+    }.getOrElse(conf.AUTH_MODE_CONF_ACCOUNTS_DEFAULT)
+  }
 
 }

@@ -16,6 +16,12 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
+  val accountWithRegex = UserAccount(
+    name = "user",
+    password = "pass",
+    instanceRegex = "^matching-.*"
+  )
+
   val instanceWithStatus = InstanceWithStatus(
     instance = Instance(
       id = "i",
@@ -128,6 +134,30 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       }
     }
 
+    "filter based on the instanceRegex defined in the account settings" in new WithApplication {
+      val matchingInstance = instanceWithStatus.copy(
+        instance = instanceWithStatus.instance.copy(
+          id = "matching-"
+        )
+      )
+      testWithAccountAuths {
+        accountWithRegex
+      } {
+        securityService => InstanceController(
+          instanceService = withInstances(mock(classOf[InstanceService]), instances ++ List(matchingInstance)),
+          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
+          securityService = securityService
+        )
+      } {
+        controller => controller.list(None)
+      } {
+        request => request
+      } {
+        (controller, result) => (status(result) must be equalTo 200) and
+          (contentAsJson(result) must be equalTo Json.toJson(List(matchingInstance)))
+      }
+    }
+
   }
 
   "show" should {
@@ -201,6 +231,24 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } {
         (controller, result) => (status(result) must be equalTo 200) and
           (contentAsJson(result).toString must not contain "thisshouldnotappearanywhere")
+      }
+    }
+
+    "return 404 if the instance does not match the account regex" in new WithApplication {
+      testWithAccountAuths {
+        accountWithRegex
+      } {
+        securityService => InstanceController(
+          instanceService = withInstances(mock(classOf[InstanceService]), instances),
+          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
+          securityService = securityService
+        )
+      } {
+        controller => controller.show(instanceWithStatus.instance.id)
+      } {
+        request => request
+      } {
+        (controller, result) => status(result) must be equalTo 404
       }
     }
 
@@ -290,6 +338,32 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         request => request.withJsonBody(Json.toJson(instanceCreation))
       } {
         (controller, result) => status(result) must be equalTo 400
+      }
+    }
+
+    "fail if the instance ID does not match the account prefix" in new WithApplication {
+      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceCreation = InstanceCreation(
+        templateId = "template",
+        parameters = Map(
+          "id" -> "id"
+        )
+      )
+      when(instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
+      testWithAccountAuths {
+        accountWithRegex
+      } {
+        securityService => InstanceController(
+          instanceService = instanceService,
+          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
+          securityService = securityService
+        )
+      } {
+        controller => controller.create
+      } {
+        request => request.withJsonBody(Json.toJson(instanceCreation))
+      } {
+        (controller, result) => status(result) must be equalTo 403
       }
     }
 
@@ -463,6 +537,36 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } {
         (controller, result) => status(result) must be equalTo 404
+      }
+    }
+
+    "fail if the instance does not match the account instance prefix" in new WithApplication {
+      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      when(instanceService.updateInstance(
+        id = instanceWithStatus.instance.id,
+        statusUpdater = Some(StatusUpdater(InstanceStatus.Running)),
+        parameterValuesUpdater = None,
+        templateSelector = None
+      )).thenReturn(Success(instanceWithStatus))
+
+      testWithAccountAuths {
+        accountWithRegex
+      } {
+        securityService => InstanceController(
+          instanceService = instanceService,
+          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
+          securityService = securityService
+        )
+      } {
+        controller => controller.update(instanceWithStatus.instance.id)
+      } {
+        request => request.withJsonBody(
+          JsObject(Map(
+            "status" -> Json.toJson(InstanceStatus.Running)
+          ))
+        )
+      } {
+        (controller, result) => status(result) must be equalTo 403
       }
     }
 
@@ -738,6 +842,27 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         request => request
       } {
         (controller, result) => status(result) must be equalTo 400
+      }
+    }
+
+    "not succeed if the instance id does not match the account prefix" in new WithApplication {
+      val instanceService = withInstances(mock(classOf[InstanceService]), instances)
+      when(instanceService.deleteInstance(instanceWithStatus.instance.id)).thenReturn(Success(instanceWithStatus))
+
+      testWithAccountAuths {
+        accountWithRegex
+      } {
+        securityService => InstanceController(
+          instanceService = instanceService,
+          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
+          securityService = securityService
+        )
+      } {
+        controller => controller.delete(instanceWithStatus.instance.id)
+      } {
+        request => request
+      } {
+        (controller, result) => status(result) must be equalTo 403
       }
     }
 

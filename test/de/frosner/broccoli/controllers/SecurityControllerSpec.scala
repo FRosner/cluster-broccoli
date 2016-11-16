@@ -11,6 +11,8 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
+  val account = UserAccount("frank", "pass", ".*")
+
   "verify" should {
 
     "work" in new WithApplication {
@@ -41,7 +43,6 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
 
 
     "return 200 and a session ID in a cookie on successful login" in new WithApplication {
-      val account = UserAccount("frank", "pass")
       val controller = SecurityController(
         securityService = withAuthConf(mock(classOf[SecurityService]), List(account))
       )
@@ -52,7 +53,6 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "return 401 when the POST request is valid but the authentication failed" in new WithApplication {
-      val account = UserAccount("frank", "pass")
       val controller = SecurityController(
         securityService = withAuthConf(mock(classOf[SecurityService]), List(account))
       )
@@ -63,7 +63,6 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "return 400 when the POST request is invalid" in new WithApplication {
-      val account = UserAccount("frank", "pass")
       val controller = SecurityController(
         securityService = withAuthConf(mock(classOf[SecurityService]), List(account))
       )
@@ -76,7 +75,6 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
   "logout" should {
 
     "return 200 and an empty cookie on successful logout" in new WithApplication {
-      val account = UserAccount("frank", "pass")
       val controller = SecurityController(
         securityService = withAuthConf(mock(classOf[SecurityService]), List(account))
       )

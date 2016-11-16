@@ -2,7 +2,7 @@ package de.frosner.broccoli.controllers
 
 import javax.inject.Inject
 
-import de.frosner.broccoli.models.UserAccount
+import de.frosner.broccoli.models.{UserAccount, UserCredentials}
 import de.frosner.broccoli.services.SecurityService
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.{BroccoliSimpleAuthorization, LoginLogout}
@@ -23,7 +23,7 @@ case class SecurityController @Inject() (override val securityService: SecurityS
     mapping(
       SecurityController.UsernameFormKey -> text,
       SecurityController.PasswordFormKey -> text
-    )(UserAccount.apply)(UserAccount.unapply)
+    )(UserCredentials.apply)(UserCredentials.unapply)
   }
 
   def login = Action.async { implicit request =>

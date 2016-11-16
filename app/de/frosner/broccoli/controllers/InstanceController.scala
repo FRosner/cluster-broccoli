@@ -24,10 +24,11 @@ case class InstanceController @Inject() (instanceService: InstanceService,
   extends Controller with Logging with BroccoliSimpleAuthorization {
 
   def list(maybeTemplateId: Option[String]) = StackAction { implicit request =>
+    val user = loggedIn
     val instances = instanceService.getInstances
     val filteredInstances = maybeTemplateId.map(
       id => instances.filter(_.instance.template.id == id)
-    ).getOrElse(instances)
+    ).getOrElse(instances).filter(_.instance.id.matches(user.instanceRegex))
     val anonymizedInstances = if (permissionsService.getPermissionsMode != conf.PERMISSIONS_MODE_ADMINISTRATOR) {
       filteredInstances.map(InstanceController.removeSecretVariables)
     } else {
@@ -37,16 +38,21 @@ case class InstanceController @Inject() (instanceService: InstanceService,
   }
 
   def show(id: String) = StackAction { implicit request =>
-    val maybeInstance = instanceService.getInstance(id)
-    maybeInstance.map {
-      instance => Ok(Json.toJson{
-        if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
-          instance
-        } else {
-          InstanceController.removeSecretVariables(instance)
-        }
-      })
-    }.getOrElse(NotFound(s"Instance $id not found."))
+    val notFound = NotFound(s"Instance $id not found.")
+    if (id.matches(loggedIn.instanceRegex)) {
+      val maybeInstance = instanceService.getInstance(id)
+      maybeInstance.map {
+        instance => Ok(Json.toJson {
+          if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
+            instance
+          } else {
+            InstanceController.removeSecretVariables(instance)
+          }
+        })
+      }.getOrElse(notFound)
+    } else {
+      notFound
+    }
   }
 
   def create = StackAction { implicit request =>
@@ -54,14 +60,21 @@ case class InstanceController @Inject() (instanceService: InstanceService,
       val maybeValidatedInstanceCreation = request.body.asJson.map(_.validate[InstanceCreation])
       maybeValidatedInstanceCreation.map { validatedInstanceCreation =>
         validatedInstanceCreation.map { instanceCreation =>
-          val tryNewInstance = instanceService.addInstance(instanceCreation)
-          tryNewInstance.map { instanceWithStatus =>
-            Status(201)(Json.toJson(instanceWithStatus)).withHeaders(
-              LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
-            )
-          }.recover { case error =>
-            Status(400)(error.toString)
-          }.get
+          val maybeId = instanceCreation.parameters.get("id")
+          val instanceRegex = loggedIn.instanceRegex
+          maybeId match {
+            case Some(id) if id.matches(instanceRegex) =>
+              val tryNewInstance = instanceService.addInstance(instanceCreation)
+              tryNewInstance.map { instanceWithStatus =>
+                Status(201)(Json.toJson(instanceWithStatus)).withHeaders(
+                  LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
+                )
+              }.recover { case error =>
+                Status(400)(error.toString)
+              }.get
+            case Some(id) => Status(403)(s"Only allowed to create instances matching $instanceRegex")
+            case None => Status(400)(s"Instance ID missing")
+          }
         }.getOrElse(Status(400)("Expected JSON data"))
       }.getOrElse(Status(400)("Expected JSON data"))
     } else {
@@ -72,8 +85,11 @@ case class InstanceController @Inject() (instanceService: InstanceService,
 
 
   def update(id: String) = StackAction { implicit request =>
+    val instanceRegex = loggedIn.instanceRegex
     if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_USER) {
       Status(403)(s"Updating instances now allowed when running in permissions mode '${conf.PERMISSIONS_MODE_USER}'.")
+    } else if (!id.matches(instanceRegex)) {
+      Status(403)(s"Only allowed to update instances matching $instanceRegex")
     } else {
       val maybeJsObject = request.body.asJson.map(_.as[JsObject])
       maybeJsObject.map { jsObject =>
@@ -126,13 +142,18 @@ case class InstanceController @Inject() (instanceService: InstanceService,
 
   def delete(id: String) = StackAction { implicit request =>
     if (permissionsService.getPermissionsMode == conf.PERMISSIONS_MODE_ADMINISTRATOR) {
-      val maybeDeletedInstance = instanceService.deleteInstance(id)
-      maybeDeletedInstance.map {
-        instance => Ok(Json.toJson(instance))
-      }.recover {
-        case throwable: InstanceNotFoundException => NotFound(throwable.toString)
-        case throwable => Status(400)(throwable.toString)
-      }.get
+      val instanceRegex = loggedIn.instanceRegex
+      if (id.matches(instanceRegex)) {
+        val maybeDeletedInstance = instanceService.deleteInstance(id)
+        maybeDeletedInstance.map {
+          instance => Ok(Json.toJson(instance))
+        }.recover {
+          case throwable: InstanceNotFoundException => NotFound(throwable.toString)
+          case throwable => Status(400)(throwable.toString)
+        }.get
+      } else {
+        Status(403)(s"Only allowed to delete instances matching $instanceRegex")
+      }
     } else {
       Status(403)(s"Instance deletion only allowed in '${conf.PERMISSIONS_MODE_ADMINISTRATOR}' mode.")
     }

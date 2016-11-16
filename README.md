@@ -71,17 +71,36 @@ If you only intend to develop Broccoli and want to quickly get started with the 
 In order to configure Cluster Broccoli, you can add key value pairs to your [configuration](https://www.playframework.com/documentation/2.4.x/Configuration).
 The following configuration properties are supported.
 
+### Nomad and Consul
+
 | Property | Description | Default |
 | -------- | ----------- | ------- |
 | `broccoli.nomad.url` | Address of your nomad server | `http://localhost:4646` |
 | `broccoli.consul.url` | Address of your consul server | `http://localhost:8500` |
 | `broccoli.consul.lookup` | Lookup method used for consul. Options: `ip` or `dns` (recommended).| `ip` |
 | `broccoli.polling.frequency` | Integer (seconds) to control the time between asking Nomad and Consul for job and service status. | `1` |
+
+### Templates and Instances
+
+| Property | Description | Default |
+| -------- | ----------- | ------- |
 | `broccoli.templates.storage.type` | Storage type for templates. Currently only `fs` supported. | `fs` |
 | `broccoli.templates.storage.fs.url` | Storage directory for templates in `fs` mode. | `templates` |
 | `broccoli.instances.storage.type` | Storage type for instances. `fs` and `couchdb` are supported. See the [instance documentation](https://github.com/FRosner/cluster-broccoli/wiki/Instances) for details. | `fs` |
 | `broccoli.instances.storage.fs.url` | Storage directory for instances in `fs` mode. | `instances` |
 | `broccoli.instances.storage.couchdb.url` | URL to CouchDB in `couchdb` mode. | `http://localhost:5984` |
 | `broccoli.instances.storage.couchdb.dbName` | Database name in `couchdb` mode. | `broccoli_instances` |
+
+### Security
+
+| Property | Description | Default |
+| -------- | ----------- | ------- |
 | `broccoli.permissions.mode` | Determines the actions that can be performed with the Broccoli instance. `administrator` (full functionality), `operator` (starting, stopping instances) or `user` (inspecting instance state) | `administrator` |
+| `broccoli.auth.mode` | Authentication and authorization mode (`none` or `conf`). | `none` |
+| `broccoli.auth.conf.accounts` | User accounts when running in `conf` mode. | `[{username:administrator, password:broccoli, instanceRegex:".*"}]` |
+
+### Web Server
+
+| Property | Description | Default |
+| -------- | ----------- | ------- |
 | `http.port` | Port to bind the HTTP interface to | `9000` |
