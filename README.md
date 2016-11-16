@@ -103,4 +103,5 @@ The following configuration properties are supported.
 
 | Property | Description | Default |
 | -------- | ----------- | ------- |
-| `http.port` | Port to bind the HTTP interface to | `9000` |
+| `http.port` | Port to bind the HTTP interface to. | `9000` |
+| `https.port` | Port to listen for HTTPS connections. See [Play documentation](https://www.playframework.com/documentation/2.4.x/ConfiguringHttps) for details. | |
