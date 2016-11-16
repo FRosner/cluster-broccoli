@@ -1,7 +1,7 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.{Account, Instance, InstanceWithStatus, Template}
+import de.frosner.broccoli.models._
 import de.frosner.broccoli.services._
 import org.mockito.Mockito._
 import org.mockito.internal.util.MockUtil
@@ -18,7 +18,8 @@ trait ServiceMocks {
     requireMock(securityService)
     allowed.foreach { account =>
       when(securityService.getAccount(account.name)).thenReturn(Some(account))
-      when(securityService.isAllowedToAuthenticate(account)).thenReturn(true)
+      val credentials = UserCredentials(account.name, account.password)
+      when(securityService.isAllowedToAuthenticate(credentials)).thenReturn(true)
     }
     when(securityService.authMode).thenReturn(conf.AUTH_MODE_CONF)
     securityService

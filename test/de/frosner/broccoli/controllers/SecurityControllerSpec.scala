@@ -1,6 +1,6 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.models.UserAccount
+import de.frosner.broccoli.models.{Role, UserAccount, UserCredentials}
 import de.frosner.broccoli.services.SecurityService
 import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Mockito._
@@ -11,7 +11,7 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
-  val account = UserAccount("frank", "pass", ".*")
+  val account = UserAccount("frank", "pass", ".*", Role.Administrator)
 
   "verify" should {
 
@@ -56,7 +56,7 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
       val controller = SecurityController(
         securityService = withAuthConf(mock(classOf[SecurityService]), List(account))
       )
-      when(controller.securityService.isAllowedToAuthenticate(account)).thenReturn(false)
+      when(controller.securityService.isAllowedToAuthenticate(UserCredentials(account.name, account.password))).thenReturn(false)
       val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, account.password))
       val result = controller.login.apply(requestWithData)
       status(result) must be equalTo 401

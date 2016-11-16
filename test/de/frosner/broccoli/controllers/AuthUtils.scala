@@ -1,6 +1,6 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.models.{Account, UserAccount}
+import de.frosner.broccoli.models.{Account, Role, UserAccount}
 import de.frosner.broccoli.services.SecurityService
 import org.specs2.matcher.MatchResult
 import org.specs2.matcher.MatchersImplicits._
@@ -38,7 +38,7 @@ trait AuthUtils extends ServiceMocks {
                                            (action: T => Action[AnyContent])
                                            (requestModifier: FakeRequest[_] => FakeRequest[_])
                                            (matcher: (T, Future[Result]) => MatchResult[_]): MatchResult[_] = {
-    val account = UserAccount("user", "pass", ".*")
+    val account = UserAccount("user", "pass", ".*", Role.Administrator)
     val noAuthController = controller(withAuthNone(mock(classOf[SecurityService])))
     val noAuthRequest = requestModifier(FakeRequest()).asInstanceOf[FakeRequest[AnyContent]]
     val noAuthResult = action(noAuthController).apply(noAuthRequest)

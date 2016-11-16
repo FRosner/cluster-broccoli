@@ -97,7 +97,7 @@ The following configuration properties are supported.
 | -------- | ----------- | ------- |
 | `broccoli.permissions.mode` | Determines the actions that can be performed with the Broccoli instance. `administrator` (full functionality), `operator` (starting, stopping instances) or `user` (inspecting instance state) | `administrator` |
 | `broccoli.auth.mode` | Authentication and authorization mode (`none` or `conf`). | `none` |
-| `broccoli.auth.conf.accounts` | User accounts when running in `conf` mode. | `[{username:administrator, password:broccoli, instanceRegex:".*"}]` |
+| `broccoli.auth.conf.accounts` | User accounts when running in `conf` mode. | `[{username:administrator, password:broccoli, role:administrator, instanceRegex:".*"}]` |
 
 ### Web Server
 

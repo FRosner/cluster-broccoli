@@ -1,5 +1,7 @@
 package de.frosner.broccoli.models
 
+import de.frosner.broccoli.models.Role.Role
+
 sealed trait Credentials {
 
   val name: String
@@ -18,11 +20,14 @@ sealed trait Account extends Credentials {
 
   val instanceRegex: String
 
+  val role: Role
+
 }
 
 case class UserAccount(name: String,
                        password: String,
-                       instanceRegex: String) extends Account
+                       instanceRegex: String,
+                       role: Role) extends Account
 
 object Anonymous extends Account {
 
@@ -31,6 +36,8 @@ object Anonymous extends Account {
   val password = ""
 
   val instanceRegex = ".*"
+
+  val role = Role.Administrator
 
 }
 

@@ -5,7 +5,7 @@ import javax.inject.{Inject, Singleton}
 import com.typesafe.config.{ConfigObject, ConfigValueFactory, ConfigValueType}
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.conf.IllegalConfigException
-import de.frosner.broccoli.models.{Account, Credentials, UserAccount}
+import de.frosner.broccoli.models.{Account, Credentials, Role, UserAccount}
 import de.frosner.broccoli.util.Logging
 import play.api.Configuration
 
@@ -86,7 +86,13 @@ object SecurityService {
               instanceRegex = userObject.getOrDefault(
                 conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY,
                 ConfigValueFactory.fromAnyRef(conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_DEFAULT)
-              ).unwrapped().asInstanceOf[String]
+              ).unwrapped().asInstanceOf[String],
+              role = Role.withName(
+                userObject.getOrDefault(
+                  conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY,
+                  ConfigValueFactory.fromAnyRef(conf.AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT.toString)
+                ).unwrapped().asInstanceOf[String]
+              )
             )
           }
           case valueType => {

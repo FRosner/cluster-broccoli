@@ -3,11 +3,12 @@ package de.frosner.broccoli.services
 import com.google.common.collect.{ImmutableMap, Iterables, Lists, Maps}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.UserAccount
+import de.frosner.broccoli.models.{Role, UserAccount}
 import org.specs2.mutable.Specification
 import play.api.Configuration
 
 import collection.JavaConverters._
+import scala.util.Success
 
 class SecurityServiceSpec extends Specification {
 
@@ -16,6 +17,7 @@ class SecurityServiceSpec extends Specification {
       ImmutableMap.of(
         conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY, account.name,
         conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY, account.password,
+        conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY, account.role.toString,
         conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY, account.instanceRegex
       )
     }.asJava
@@ -26,7 +28,7 @@ class SecurityServiceSpec extends Specification {
     Configuration(config)
   }
 
-  val account = UserAccount("frank", "pass", "^test.*")
+  val account = UserAccount("frank", "pass", "^test.*", Role.Administrator)
 
   "An authentication check" should {
 
@@ -63,6 +65,41 @@ class SecurityServiceSpec extends Specification {
 
   "Parsing accounts from the configuration" should {
 
+    "parse correctly" in {
+      val accountsJava = Iterable{
+        ImmutableMap.of(
+          conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY, account.name,
+          conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY, account.password,
+          conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY, account.instanceRegex,
+          conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY, account.role.toString
+        )
+      }.asJava
+      val config = ConfigFactory.empty().withValue(
+        conf.AUTH_MODE_CONF_ACCOUNTS_KEY,
+        ConfigValueFactory.fromIterable(accountsJava)
+      )
+      SecurityService.tryAccounts(Configuration(config)) === Success(Iterable(account))
+    }
+
+    "not require the optional parameters" in {
+      val accountsJava = Iterable{
+        ImmutableMap.of(
+          conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY, account.name,
+          conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY, account.password
+        )
+      }.asJava
+      val config = ConfigFactory.empty().withValue(
+        conf.AUTH_MODE_CONF_ACCOUNTS_KEY,
+        ConfigValueFactory.fromIterable(accountsJava)
+      )
+      SecurityService.tryAccounts(Configuration(config)) === Success(Iterable(UserAccount(
+        name = account.name,
+        password = account.password,
+        instanceRegex = conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_DEFAULT,
+        role = conf.AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT
+      )))
+    }
+
     "fail if the accounts are not a config list" in {
       val config = ConfigFactory.empty().withValue(
         conf.AUTH_MODE_CONF_ACCOUNTS_KEY,
@@ -84,6 +121,7 @@ class SecurityServiceSpec extends Specification {
         ImmutableMap.of(
           conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY, 5,
           conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY, account.password,
+          conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY, account.role.toString,
           conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY, account.instanceRegex
         )
       }.asJava
@@ -99,6 +137,7 @@ class SecurityServiceSpec extends Specification {
         ImmutableMap.of(
           conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY, account.name,
           conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY, 5,
+          conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY, account.role.toString,
           conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY, account.instanceRegex
         )
       }.asJava
@@ -114,7 +153,24 @@ class SecurityServiceSpec extends Specification {
         ImmutableMap.of(
           conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY, account.name,
           conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY, account.password,
+          conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY, account.role.toString,
           conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY, 5
+        )
+      }.asJava
+      val config = ConfigFactory.empty().withValue(
+        conf.AUTH_MODE_CONF_ACCOUNTS_KEY,
+        ConfigValueFactory.fromIterable(accountsJava)
+      )
+      SecurityService.tryAccounts(Configuration(config)).failed.get should beAnInstanceOf[Exception]
+    }
+
+    "if the role is not a string" in {
+      val accountsJava = Iterable{
+        ImmutableMap.of(
+          conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY, account.name,
+          conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY, account.password,
+          conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY, 5,
+          conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY, account.instanceRegex
         )
       }.asJava
       val config = ConfigFactory.empty().withValue(

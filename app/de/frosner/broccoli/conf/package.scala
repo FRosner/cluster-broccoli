@@ -1,6 +1,6 @@
 package de.frosner.broccoli
 
-import de.frosner.broccoli.models.UserAccount
+import de.frosner.broccoli.models.{Role, UserAccount}
 import play.api.Configuration
 
 package object conf {
@@ -46,16 +46,20 @@ package object conf {
   val AUTH_MODE_CONF = "conf"
   val AUTH_MODE_DEFAULT = AUTH_MODE_NONE
 
-  val AUTH_MODE_CONF_ACCOUNTS_KEY = "broccoli.auth.conf.accounts"
-  val AUTH_MODE_CONF_ACCOUNTS_DEFAULT = Set(UserAccount(
-    name = "administrator",
-    password = "broccoli",
-    instanceRegex = AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_DEFAULT
-  ))
   val AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY = "username"
   val AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY = "password"
   val AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY = "instanceRegex"
   val AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_DEFAULT = ".*"
+  val AUTH_MODE_CONF_ACCOUNT_ROLE_KEY = "role"
+  val AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT = Role.Administrator
+
+  val AUTH_MODE_CONF_ACCOUNTS_KEY = "broccoli.auth.conf.accounts"
+  val AUTH_MODE_CONF_ACCOUNTS_DEFAULT = Set(UserAccount(
+    name = "administrator",
+    password = "broccoli",
+    instanceRegex = AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_DEFAULT,
+    role = AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT
+  ))
 
   val PERMISSIONS_MODE_KEY = "broccoli.permissions.mode"
   val PERMISSIONS_MODE_ADMINISTRATOR = "administrator"

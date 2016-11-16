@@ -19,7 +19,8 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
   val accountWithRegex = UserAccount(
     name = "user",
     password = "pass",
-    instanceRegex = "^matching-.*"
+    instanceRegex = "^matching-.*",
+    role = Role.Administrator
   )
 
   val instanceWithStatus = InstanceWithStatus(

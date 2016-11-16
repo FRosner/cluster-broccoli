@@ -1,6 +1,7 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.conf
+import de.frosner.broccoli.models.Role.Role
 import de.frosner.broccoli.models.{Account, Role}
 import de.frosner.broccoli.services.SecurityService
 import de.frosner.broccoli.util.Logging
