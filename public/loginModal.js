@@ -1,5 +1,5 @@
 angular.module('broccoli')
-  .controller('LoginModal',  function($scope, $cookies, Restangular, $q, $timeout,$uibModalInstance){
+  .controller('LoginModal',  function($scope, Restangular, $uibModalInstance){
       var vm = this;
       vm.ok =ok; 
       vm.credentials = {};

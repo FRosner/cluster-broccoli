@@ -1,5 +1,5 @@
 angular.module('broccoli')
-  .controller('LoginCntrl', function(Restangular, AuthenticationService, $uibModal, $scope, $rootScope ,$cookies) {
+  .controller('LoginCntrl', function(Restangular, AuthenticationService, $uibModal, $scope, $rootScope) {
     var vm = this;     
     function loginUser(credentials) {
         var modalInstance = $uibModal.open({
