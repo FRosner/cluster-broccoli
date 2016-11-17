@@ -25,6 +25,10 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
           $rootScope.isLoggedIn = false;
         } else if (response.status == 403) {
           $rootScope.isLoggedIn = false;
+        } else if (response.config.url == "/api/v1/auth/login") {
+          $rootScope.restangularError = "Login failed!"
+        } else if (response.config.url == "/api/v1/auth/logout") {
+          $rootScope.restangularError = "Logout failed!"
         } else {
           $rootScope.restangularError = response.statusText + " (" + response.status + "): " + response.data;
         }
