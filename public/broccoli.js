@@ -78,9 +78,11 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
                   return template.instances;
               });
           });
-          $timeout(function() {
+          if ($scope.isLoggedIn) {
+            $timeout(function () {
               refreshInstances(template);
-          }, 1000);
+            }, 1000);
+          }
       }
 
       refreshTemplates();
