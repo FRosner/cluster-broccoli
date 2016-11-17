@@ -30,16 +30,16 @@ trait AuthConfigImpl extends AuthConfig with Logging {
   def resolveUser(id: Id)(implicit ctx: ExecutionContext): Future[Option[User]] = Future.successful(securityService.getAccount(id))
 
   def loginSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
-    Future.successful(Results.Ok("loginSucceeded"))
+    Future.successful(Results.Ok("Login successful."))
 
   def logoutSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
-    Future.successful(Results.Ok("logoutSucceeded"))
+    Future.successful(Results.Ok("Logout successful."))
 
   def authenticationFailed(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
-    Future.successful(Results.Forbidden("authenticationFailed"))
+    Future.successful(Results.Forbidden("Authentication failed."))
 
   override def authorizationFailed(request: RequestHeader, user: User, authority: Option[Authority])(implicit context: ExecutionContext): Future[Result] = {
-    Future.successful(Results.Forbidden("authorizationFailed"))
+    Future.successful(Results.Forbidden(s"Authorization failed: Your privileges (${user.role}) are not matching the required (${authority.getOrElse("None")})."))
   }
 
   def authorize(user: User, authority: Authority)(implicit ctx: ExecutionContext): Future[Boolean] = Future.successful {
