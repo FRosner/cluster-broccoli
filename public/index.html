@@ -69,10 +69,16 @@
           </ul>
         </div>
       </nav>
-      <div class="alert alert-danger alert-dismissible" role="alert" ng-if="restangularError">
-        <button type="button" class="close" ng-click="dismissRestangularError()" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        {{restangularError}}
+      <div class="progress" ng-show="pageLoading" style="margin: auto; position: absolute; top: 0; left: 0; bottom: 0; right: 0; width: 50%;">
+        <div class="progress-bar progress-bar-striped active {{(!pageLoadingProgress) ? 'notransition' : ''}}" role="progressbar"
+             aria-valuenow="{{pageLoadingProgress}}" aria-valuemin="0" aria-valuemax="100" style="width:{{pageLoadingProgress}}%">
+        </div>
       </div>
+      <div ng-if="!pageLoading">
+        <div class="alert alert-danger alert-dismissible" role="alert" ng-if="restangularError">
+          <button type="button" class="close" ng-click="dismissRestangularError()" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          {{restangularError}}
+        </div>
         <div class="alert alert-danger" role="alert" ng-if="!broccoliReachable">Cluster Broccoli server is not reachable!</div>
         <div ng-controller="LoginCntrl as login">
         <div class="row" ng-repeat="template in main.templates"  ng-if="broccoliReachable && isLoggedIn">
@@ -154,6 +160,7 @@
             </div>
         </div>
         </div>
+      </div>
     </div>
     <!-- /container -->
 </body>
