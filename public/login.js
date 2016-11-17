@@ -16,7 +16,7 @@ angular.module('broccoli')
             }
         });
         modalInstance.result.then(function(response) {
-          $scope.user = response.credentials.username;     
+          $scope.user = response.credentials.username;
           var credentials = response.credentials;
           AuthenticationService.login(credentials).then(function(response) {
             $rootScope.restangularError = null;        
@@ -32,5 +32,5 @@ angular.module('broccoli')
       };
 
     vm.loginUser = loginUser;
-    vm.logoutUser = logoutUser;          
-  })
+    vm.logoutUser = logoutUser;
+  });

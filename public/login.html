@@ -5,13 +5,19 @@
         <h3 class="panel-title">Login</h3>
       </div>
       <div class="panel-body">
-        <div class="form-group">
-          <input type="username" class="input-group instance-input-group" id="username" placeholder="Enter username" ng-model ="loginmodal.credentials.username" value ="{{username}}">
+        <div class="input-group instance-input-group">
+          <span class="input-group-addon" id="basic-addon1">Username</span>
+          <input type="text" id="username" class="form-control" aria-describedby="basic-addon1"
+            ng-model="loginmodal.credentials.username" focus-field="true">
         </div>
-        <div class="form-group">
-          <input type="password" class="input-group instance-input-group" id="password" placeholder="Enter password" ng-model ="loginmodal.credentials.password" value ="{{password}}">
+        <div class="input-group">
+          <span class="input-group-addon" id="basic-addon1">Password</span>
+          <input type="password" id="password" class="form-control" aria-describedby="basic-addon1"
+            ng-model="loginmodal.credentials.password">
         </div>
-        <button type="submit" class="btn btn-default">Submit</button>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-default" ng-disabled="!broccoliReachable">Submit</button>
       </div>
     </form>
 </div>
