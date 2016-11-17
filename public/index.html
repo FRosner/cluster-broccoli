@@ -54,7 +54,7 @@
             <li>
               <a data-holder-rendered="true"
                    ng-click="login.loginUser(credentials)"
-                   ng-disabled="!broccoliReachable">Login</a>
+                   ng-if="broccoliReachable">Login</a>
             </li>
           </ul>
           <ul class="nav navbar-nav navbar-right" ng-if="isLoggedIn">
