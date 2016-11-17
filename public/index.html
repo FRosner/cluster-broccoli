@@ -71,7 +71,6 @@
       </div>
         <div class="alert alert-danger" role="alert" ng-if="!broccoliReachable">Cluster Broccoli server is not reachable!</div>
         <div ng-controller="LoginCntrl as login">
-        <div class="alert alert-danger" role="alert" ng-if="!isLoggedIn">Please Login to Continue!</div>
         <div class="row" ng-repeat="template in main.templates"  ng-if="broccoliReachable && isLoggedIn">
             <div ng-controller = "ModifyInstanceCntrl as modify_instance" class="col-md-12" style="margin-top: 0px;">
               <h2>
