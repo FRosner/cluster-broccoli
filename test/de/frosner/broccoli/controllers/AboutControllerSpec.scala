@@ -1,8 +1,9 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.services.{BuildInfoService, InstanceService, SecurityService}
+import de.frosner.broccoli.models.{UserAccount, Role, Anonymous}
 import org.mockito.Mockito._
-import play.api.libs.json.{JsObject, JsString}
+import play.api.libs.json.{JsObject, JsString, JsBoolean}
 import play.api.test._
 
 
@@ -12,8 +13,9 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
 
   "about" should {
 
-    "return the about object" in new WithApplication {
-      testWithAllAuths {
+    "return the about object with authentication" in new WithApplication {
+      val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      testWithAllAuths(account) {
         securityService =>
           AboutController(
             buildInfoService = withDummyValues(mock(classOf[BuildInfoService])),
@@ -36,10 +38,21 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
             )),
             "sbt" -> JsObject(Map(
               "version" -> JsString(controller.buildInfoService.sbtVersion)
+            )),
+            "auth" -> JsObject(Map(
+              "enabled" -> JsBoolean(true),
+              "user" -> JsObject(Map(
+                "name" -> JsString(account.name),
+                "role" -> JsString(account.role.toString)
+              ))
             ))
           ))
         }
       }
+    }
+
+    "return the about object without authentication" in new WithApplication {
+      true === false
     }
 
   }

@@ -56,12 +56,12 @@
                    ng-click="login.loginUser(credentials)">Login</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right" ng-if="isLoggedIn">
-              <li><a ng-if="isLoggedIn"
+              <li><a ng-if="isLoggedIn && (main.about.auth.enabled)"
                    data-holder-rendered="true"
                    ng-click="login.logoutUser()">Logout</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right" ng-if="isLoggedIn">
-            <li><a>{{main.about.permissions.mode}}</a></li>
+            <li><a>{{main.about.auth.user.name}} ({{main.about.auth.user.role}})</a></li>
           </ul>
         </div>
       </nav>
@@ -77,7 +77,7 @@
               <h2>
                 <img ng-init="itemsrc='assets/images/plus.svg'"
                      ng-src="{{itemsrc}}"
-                     ng-if="main.about.permissions.mode == 'administrator'"
+                     ng-if="main.about.auth.user.role == 'administrator'"
                      ng-click="modify_instance.createInstance(template)"
                      class="img-responsive"
                      data-holder-rendered="true"
@@ -96,12 +96,12 @@
                       <tr ng-repeat="instance in template.instances">
                         <td class="col-md-4" scope="row">
                           <img ng-src="assets/images/minus.svg"
-                               ng-if="main.about.permissions.mode == 'administrator'"
+                               ng-if="main.about.auth.user.role == 'administrator'"
                                ng-click="modify_instance.deleteInstance(template, instance)"
                                class="img-responsive instance-button"
                                data-holder-rendered="true">
                           <img ng-src="assets/images/edit.svg"
-                               ng-if="main.about.permissions.mode == 'administrator'"
+                               ng-if="main.about.auth.user.role == 'administrator'"
                                ng-click="modify_instance.editInstance(template, instance, main.templates)"
                                class="img-responsive instance-button"
                                data-holder-rendered="true">
@@ -122,7 +122,7 @@
                         <td class="col-md-1">
                           <button type="button"
                                   class="btn btn-xs"
-                                  ng-if="(instance.status == 'stopped' || instance.status == 'unknown') && (main.about.permissions.mode == 'administrator' || main.about.permissions.mode == 'operator')"
+                                  ng-if="(instance.status == 'stopped' || instance.status == 'unknown') && (main.about.auth.user.role == 'administrator' || main.about.auth.user.role == 'operator')"
                                   ng-disabled="instance.status == 'unknown'"
                                   title="Start instance"
                                   ng-click="submitStatus(instance, 'running')">
@@ -130,7 +130,7 @@
                           </button>
                           <button type="button"
                                   class="btn btn-xs"
-                                  ng-if="(instance.status != 'stopped' && instance.status != 'unknown') && (main.about.permissions.mode == 'administrator' || main.about.permissions.mode == 'operator')"
+                                  ng-if="(instance.status != 'stopped' && instance.status != 'unknown') && (main.about.auth.user.role == 'administrator' || main.about.auth.user.role == 'operator')"
                                   ng-disabled="instance.status == 'unknown'"
                                   title="Resubmit instance"
                                   ng-click="submitStatus(instance, 'running')">
@@ -138,7 +138,7 @@
                           </button>
                           <button type="button"
                                   class="btn btn-xs"
-                                  ng-if="main.about.permissions.mode == 'administrator' || main.about.permissions.mode == 'operator'"
+                                  ng-if="main.about.auth.user.role == 'administrator' || main.about.auth.user.role == 'operator'"
                                   ng-disabled="instance.status == 'stopped' || instance.status == 'unknown'"
                                   title="Stop instance"
                                   ng-click="submitStatus(instance, 'stopped')">
