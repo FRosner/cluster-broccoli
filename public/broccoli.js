@@ -13,21 +13,38 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
 
       Restangular.addResponseInterceptor(function(data, operation, what, url, response, deferred) {
         $rootScope.broccoliReachable = true;
-        $rootScope.isLoggedIn = true;
+        if (url != "/api/v1/status") {
+          $rootScope.isLoggedIn = true;
+        }
         return data;
       });
 
       Restangular.setErrorInterceptor(function(response, deferred, responseHandler) {
         if (response.status == -1) {
           $rootScope.broccoliReachable = false;
+          $rootScope.isLoggedIn = false;
         } else if (response.status == 403) {
           $rootScope.isLoggedIn = false;
         } else {
-            $rootScope.restangularError = response.statusText + " (" + response.status + "): " + response.data;
+          $rootScope.restangularError = response.statusText + " (" + response.status + "): " + response.data;
         }
         return false;
       });
 
+      function askStatus() {
+        AboutService.getStatus().then(function(about) {
+          vm.about = about;
+        });
+      }
+
+      function refreshStatus() {
+        Restangular.one("status").get();
+        $timeout(function() {
+          refreshStatus()
+        }, 1000);
+      }
+
+      refreshStatus();
 
       $rootScope.$watch('isLoggedIn', function(val) {
         if(val) {

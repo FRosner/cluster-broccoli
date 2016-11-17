@@ -43,7 +43,8 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
               "enabled" -> JsBoolean(true),
               "user" -> JsObject(Map(
                 "name" -> JsString(account.name),
-                "role" -> JsString(account.role.toString)
+                "role" -> JsString(account.role.toString),
+                "instanceRegex" -> JsString(account.instanceRegex)
               ))
             ))
           ))
@@ -74,7 +75,8 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
             "enabled" -> JsBoolean(false),
             "user" -> JsObject(Map(
               "name" -> JsString(Anonymous.name),
-              "role" -> JsString(Anonymous.role.toString)
+              "role" -> JsString(Anonymous.role.toString),
+              "instanceRegex" -> JsString(Anonymous.instanceRegex)
             ))
           ))
         ))

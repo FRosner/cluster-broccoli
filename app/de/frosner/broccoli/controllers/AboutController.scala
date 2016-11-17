@@ -29,7 +29,8 @@ case class AboutController @Inject()(buildInfoService: BuildInfoService,
         "enabled" -> JsBoolean(securityService.authMode != conf.AUTH_MODE_NONE),
         "user" -> JsObject(Map(
           "name" -> JsString(user.name),
-          "role" -> JsString(user.role.toString)
+          "role" -> JsString(user.role.toString),
+          "instanceRegex" -> JsString(user.instanceRegex)
         ))
       ))
     )))
