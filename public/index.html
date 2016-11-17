@@ -47,7 +47,7 @@
           <span class="navbar-brand">Cluster Broccoli</span>
         </div>
         <div class="navbar-collapse collapse" ng-controller="LoginCntrl as login">
-          <ul class="nav navbar-nav navbar-left">
+          <ul class="nav navbar-nav navbar-left" ng-if="!pageLoading">
             <li><a>{{main.about.project.version}}</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right" ng-if="!isLoggedIn">
@@ -58,7 +58,7 @@
             </li>
           </ul>
           <ul class="nav navbar-nav navbar-right" ng-if="isLoggedIn">
-            <li>
+            <li ng-show="!pageLoading">
               <a>{{main.about.auth.user.name}} ({{main.about.auth.user.role}}, {{main.about.auth.user.instanceRegex}})</a>
             </li>
             <li>
