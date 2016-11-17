@@ -2,7 +2,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
     .controller('MainController', function(Restangular, AboutService, TemplateService, InstanceService ,$scope, $rootScope, $timeout) {
         var vm = this;
         vm.templates = {};
-        vm.about = {}
+        vm.about = {};
 
         $rootScope.broccoliReachable = true;
         $rootScope.dismissRestangularError = function() {
@@ -32,9 +32,11 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
         $rootScope.$watch('isLoggedIn', function(val) {
           if(val) {
             AboutService.getStatus().then(function(about) {
-            vm.about = about;
+              vm.about = about;
             });
             refreshTemplates();
+          } else {
+            vm.about = {};
           }
         });
 
