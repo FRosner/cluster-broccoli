@@ -1,4 +1,4 @@
-angular.module('broccoli', ['restangular', 'ui.bootstrap','ngCookies'])
+angular.module('broccoli', ['restangular', 'ui.bootstrap'])
     .controller('MainController', function(Restangular, AboutService, TemplateService, InstanceService ,$scope, $rootScope, $timeout) {
         var vm = this;
         vm.templates = {};
@@ -66,5 +66,3 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap','ngCookies'])
 
         refreshTemplates();
     });
-    
-        
