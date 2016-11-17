@@ -1,5 +1,5 @@
-angular.module('broccoli', ['restangular', 'ui.bootstrap'])
-    .controller('MainController', function(Restangular, AboutService, TemplateService, InstanceService, $scope, $rootScope, $timeout) {
+angular.module('broccoli', ['restangular', 'ui.bootstrap','ngCookies'])
+    .controller('MainController', function(Restangular, AboutService, TemplateService, InstanceService ,$scope, $rootScope, $timeout) {
         var vm = this;
         vm.templates = {};
         vm.about = {}
@@ -11,17 +11,31 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
 
         Restangular.setBaseUrl("/api/v1");
 
-        AboutService.getStatus().then(function(about) {
-          vm.about = about;
+        Restangular.addResponseInterceptor(function(data, operation, what, url, response, deferred) {
+          $rootScope.broccoliReachable = true;
+          $rootScope.isLoggedIn = true;
+          return data;
         });
 
         Restangular.setErrorInterceptor(function(response, deferred, responseHandler) {
-            if (response.status == -1) {
-                $rootScope.broccoliReachable = false;
-            } else {
-                $rootScope.restangularError = response.statusText + " (" + response.status + "): " + response.data;
-            }
-            return false;
+          if (response.status == -1) {
+            $rootScope.broccoliReachable = false;
+          } else if (response.status == 403) {
+            $rootScope.isLoggedIn = false;
+          } else {
+              $rootScope.restangularError = response.statusText + " (" + response.status + "): " + response.data;
+          }
+          return false;
+        });
+
+
+        $rootScope.$watch('isLoggedIn', function(val) {
+          if(val) {
+            AboutService.getStatus().then(function(about) {
+            vm.about = about;
+            });
+            refreshTemplates();
+          }
         });
 
         function refreshTemplates() {
@@ -39,7 +53,6 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
         function refreshInstances(template) {
             InstanceService.getInstances(template).then(function(instances) {
                 $scope.instances = instances;
-                $rootScope.broccoliReachable = true;
                 template.instances = {};
                 instances.forEach(function(instance) {
                     template.instances[instance.id] = instance;

@@ -25,6 +25,7 @@
     <script data-require="jquery" data-semver="2.2.0" src="/assets/js/jquery.min.js"></script>
     <script src="/assets/js/angular.min.js"></script>
     <script src="/assets/js/ui-bootstrap-tpls.min.js"></script>
+    <script src="/assets/js/angular-cookies.min.js"></script>
       <!-- restangular START -->
     <script src="/assets/js/lodash.min.js"></script>
     <script type="text/javascript" src="/assets/js/restangular.min.js"></script>
@@ -35,6 +36,9 @@
     <script src="/assets/AboutService.js"></script>
     <script src="/assets/newInstanceModal.js"></script>
     <script src="/assets/ModifyInstances.js"></script>
+    <script src="/assets/login.js"></script>
+    <script src="/assets/loginModal.js"></script>
+    <script src="/assets/AuthenticationService.js"></script>
 </head>
 
 <body ng-controller="MainController as main">
@@ -43,21 +47,33 @@
         <div class="navbar-header">
           <span class="navbar-brand">{{main.about.project.name}}</span>
         </div>
-        <div class="navbar-collapse collapse">
+        <div class="navbar-collapse collapse" ng-controller="LoginCntrl as login">
           <ul class="nav navbar-nav navbar-left">
             <li><a>{{main.about.project.version}}</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
+            <li><a ng-if="!isLoggedIn"
+                   data-holder-rendered="true"
+                   ng-click="login.loginUser(credentials)">Login</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right" ng-if="isLoggedIn">
+              <li><a ng-if="isLoggedIn"
+                   data-holder-rendered="true"
+                   ng-click="login.logoutUser()">Logout</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right" ng-if="isLoggedIn">
             <li><a>{{main.about.permissions.mode}}</a></li>
           </ul>
         </div>
       </nav>
-      <div class="alert alert-danger alert-dismissible" role="alert" ng-if="restangularError">
+      <div class="alert alert-danger alert-dismissible" role="alert" ng-if="restangularError && isLoggedIn">
         <button type="button" class="close" ng-click="dismissRestangularError()" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         {{restangularError}}
       </div>
         <div class="alert alert-danger" role="alert" ng-if="!broccoliReachable">Cluster Broccoli server is not reachable!</div>
-        <div class="row" ng-repeat="template in main.templates" ng-if="broccoliReachable">
+        <div ng-controller="LoginCntrl as login">
+        <div class="alert alert-danger" role="alert" ng-if="!isLoggedIn">Please Login to Continue!</div>
+        <div class="row" ng-repeat="template in main.templates"  ng-if="broccoliReachable && isLoggedIn">
             <div ng-controller = "ModifyInstanceCntrl as modify_instance" class="col-md-12" style="margin-top: 0px;">
               <h2>
                 <img ng-init="itemsrc='assets/images/plus.svg'"
@@ -134,6 +150,7 @@
                   </tbody>
                 </table>
             </div>
+        </div>
         </div>
     </div>
     <!-- /container -->
