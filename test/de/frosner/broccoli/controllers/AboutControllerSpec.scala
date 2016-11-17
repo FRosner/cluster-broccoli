@@ -52,7 +52,33 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "return the about object without authentication" in new WithApplication {
-      true === false
+      val controller = AboutController(
+        buildInfoService = withDummyValues(mock(classOf[BuildInfoService])),
+        instanceService = mock(classOf[InstanceService]),
+        securityService = withAuthNone(mock(classOf[SecurityService]))
+      )
+      val result = controller.about(FakeRequest())
+      (status(result) must be equalTo 200) and {
+        contentAsJson(result) must be equalTo JsObject(Map(
+          "project" -> JsObject(Map(
+            "name" -> JsString(controller.buildInfoService.projectName),
+            "version" -> JsString(controller.buildInfoService.projectVersion)
+          )),
+          "scala" -> JsObject(Map(
+            "version" -> JsString(controller.buildInfoService.scalaVersion)
+          )),
+          "sbt" -> JsObject(Map(
+            "version" -> JsString(controller.buildInfoService.sbtVersion)
+          )),
+          "auth" -> JsObject(Map(
+            "enabled" -> JsBoolean(false),
+            "user" -> JsObject(Map(
+              "name" -> JsString(Anonymous.name),
+              "role" -> JsString(Anonymous.role.toString)
+            ))
+          ))
+        ))
+      }
     }
 
   }
