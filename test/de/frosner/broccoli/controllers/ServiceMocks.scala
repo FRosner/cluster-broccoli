@@ -40,12 +40,6 @@ trait ServiceMocks {
     buildInfoService
   }
 
-  def withDefaultPermissionsMode(permissionsService: PermissionsService): PermissionsService = {
-    requireMock(permissionsService)
-    when(permissionsService.getPermissionsMode()).thenReturn(conf.PERMISSIONS_MODE_DEFAULT)
-    permissionsService
-  }
-
   def withTemplates(templateService: TemplateService, templates: Seq[Template]): TemplateService = {
     requireMock(templateService)
     when(templateService.getTemplates).thenReturn(templates)
@@ -63,20 +57,5 @@ trait ServiceMocks {
     }
     instanceService
   }
-
-  private def withPermissionsMode(permissionsService: PermissionsService, permissionsMode: String): PermissionsService = {
-    requireMock(permissionsService)
-    when(permissionsService.getPermissionsMode()).thenReturn(permissionsMode)
-    permissionsService
-  }
-
-  def withAdminMode(permissionsService: PermissionsService): PermissionsService =
-    withPermissionsMode(permissionsService, conf.PERMISSIONS_MODE_ADMINISTRATOR)
-
-  def withOperatorMode(permissionsService: PermissionsService): PermissionsService =
-    withPermissionsMode(permissionsService, conf.PERMISSIONS_MODE_OPERATOR)
-
-  def withUserMode(permissionsService: PermissionsService): PermissionsService =
-    withPermissionsMode(permissionsService, conf.PERMISSIONS_MODE_USER)
 
 }

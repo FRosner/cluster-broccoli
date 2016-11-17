@@ -1,7 +1,7 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.services.{BuildInfoService, InstanceNotFoundException, InstanceService, PermissionsService}
+import de.frosner.broccoli.services.{BuildInfoService, InstanceNotFoundException, InstanceService}
 import org.mockito.Mockito._
 import play.api.libs.json._
 import play.api.test._
@@ -21,6 +21,20 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     password = "pass",
     instanceRegex = "^matching-.*",
     role = Role.Administrator
+  )
+
+  val operator = UserAccount(
+    name = "Operator",
+    password = "pass",
+    instanceRegex = ".*",
+    role = Role.Operator
+  )
+
+  val user = UserAccount(
+    name = "User",
+    password = "pass",
+    instanceRegex = ".*",
+    role = Role.NormalUser
   )
 
   val instanceWithStatus = InstanceWithStatus(
@@ -62,7 +76,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances),
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -86,7 +99,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances ++ List(notMatchingInstance)),
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -102,9 +114,10 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     "censor secret variables if running in operator mode" in new WithApplication {
       // TODO helper function to test against multiple roles (allowed and not allowed ones)
       testWithAllAuths {
+        operator
+      } {
         securityService => InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances),
-          permissionsService = withOperatorMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -120,9 +133,10 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     "censor secret variables if running in user mode" in new WithApplication {
       // TODO helper function to test against multiple roles (allowed and not allowed ones)
       testWithAllAuths {
+        user
+      } {
         securityService => InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances),
-          permissionsService = withUserMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -141,12 +155,11 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           id = "matching-"
         )
       )
-      testWithAccountAuths {
+      testWithAllAuths {
         accountWithRegex
       } {
         securityService => InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances ++ List(matchingInstance)),
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -167,7 +180,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances),
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -187,7 +199,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -202,9 +213,10 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     "censor secret variables if running in operator mode" in new WithApplication {
       // TODO helper function (see above)
       testWithAllAuths {
+        operator
+      } {
         securityService => InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances),
-          permissionsService = withOperatorMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -220,9 +232,10 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     "censor secret variables if running in user mode" in new WithApplication {
       // TODO helper function (see above)
       testWithAllAuths {
+        user
+      } {
         securityService => InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances),
-          permissionsService = withUserMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -236,12 +249,11 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "return 404 if the instance does not match the account regex" in new WithApplication {
-      testWithAccountAuths {
+      testWithAllAuths {
         accountWithRegex
       } {
         securityService => InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances),
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -269,7 +281,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -288,7 +299,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -305,7 +315,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -330,7 +339,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -351,12 +359,11 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       )
       when(instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
-      testWithAccountAuths {
+      testWithAllAuths {
         accountWithRegex
       } {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -379,9 +386,10 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       )
 
       testWithAllAuths {
+        operator
+      } {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withOperatorMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -404,9 +412,10 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       )
 
       testWithAllAuths {
+        user
+      } {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withUserMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -434,7 +443,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -465,7 +473,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -496,7 +503,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -525,7 +531,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -550,12 +555,11 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         templateSelector = None
       )).thenReturn(Success(instanceWithStatus))
 
-      testWithAccountAuths {
+      testWithAllAuths {
         accountWithRegex
       } {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -576,7 +580,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -594,7 +597,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -614,7 +616,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -636,7 +637,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -660,7 +660,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -679,10 +678,9 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     "not allow instance status updates if not running in admin or operator mode" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
 
-      testWithAllAuths {
+      testWithAllAuths(user) {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withUserMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -701,10 +699,9 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     "not allow instance parameter updates if not running in administrator mode" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
 
-      val operatorMatchers = testWithAllAuths {
+      val operatorMatchers = testWithAllAuths(operator) {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withOperatorMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -720,10 +717,9 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } {
         (controller, result) => status(result) must be equalTo 403
       }
-      val userMatchers = testWithAllAuths {
+      val userMatchers = testWithAllAuths(user) {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withUserMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -745,10 +741,9 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     "not allow template updates if not running in administrator mode" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
 
-      val operatorMatchers = testWithAllAuths {
+      val operatorMatchers = testWithAllAuths(operator) {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withOperatorMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -762,10 +757,9 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } {
         (controller, result) => status(result) must be equalTo 403
       }
-      val userMatchers = testWithAllAuths {
+      val userMatchers = testWithAllAuths(user) {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withUserMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -793,7 +787,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -814,7 +807,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -834,7 +826,6 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -850,12 +841,11 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       val instanceService = withInstances(mock(classOf[InstanceService]), instances)
       when(instanceService.deleteInstance(instanceWithStatus.instance.id)).thenReturn(Success(instanceWithStatus))
 
-      testWithAccountAuths {
+      testWithAllAuths {
         accountWithRegex
       } {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withAdminMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -870,10 +860,9 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     "should only be allowed in administrator mode" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), instances)
 
-      val operatorMatcher = testWithAllAuths {
+      val operatorMatcher = testWithAllAuths(operator) {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withOperatorMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {
@@ -883,10 +872,9 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } {
         (controller, result) => status(result) must be equalTo 403
       }
-      val userMatcher = testWithAllAuths {
+      val userMatcher = testWithAllAuths(user) {
         securityService => InstanceController(
           instanceService = instanceService,
-          permissionsService = withUserMode(mock(classOf[PermissionsService])),
           securityService = securityService
         )
       } {

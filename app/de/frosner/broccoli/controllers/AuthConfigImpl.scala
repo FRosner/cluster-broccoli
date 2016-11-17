@@ -43,13 +43,11 @@ trait AuthConfigImpl extends AuthConfig with Logging {
   }
 
   def authorize(user: User, authority: Authority)(implicit ctx: ExecutionContext): Future[Boolean] = Future.successful {
-    true
-    // TODO #145 every logged in user is authorized for now
-//    (user.role, authority) match {
-//      case (Administrator, _)       => true
-//      case (NormalUser, NormalUser) => true
-//      case _                        => false
-//    }
+    user.role match {
+      case Role.Administrator => true
+      case Role.Operator => authority == Role.Operator || authority == Role.NormalUser
+      case Role.NormalUser => authority == Role.NormalUser
+    }
   }
 
   override lazy val tokenAccessor = new CookieTokenAccessor(

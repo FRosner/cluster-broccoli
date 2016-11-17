@@ -2,13 +2,12 @@ package de.frosner.broccoli.controllers
 
 import javax.inject.Inject
 
-import de.frosner.broccoli.services.{BuildInfoService, InstanceService, PermissionsService, SecurityService}
+import de.frosner.broccoli.services.{BuildInfoService, InstanceService, SecurityService}
 import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
 import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.mvc.{Action, AnyContent, Controller}
 
 case class AboutController @Inject()(buildInfoService: BuildInfoService,
-                                     permissionsService: PermissionsService,
                                      instanceService: InstanceService,
                                      override val securityService: SecurityService) extends Controller with BroccoliSimpleAuthorization {
 
@@ -23,9 +22,6 @@ case class AboutController @Inject()(buildInfoService: BuildInfoService,
       )),
       "sbt" -> JsObject(Map(
         "version" -> JsString(buildInfoService.sbtVersion)
-      )),
-      "permissions" -> JsObject(Map(
-        "mode" -> JsString(permissionsService.getPermissionsMode())
       ))
     )))
   }
