@@ -7,8 +7,8 @@ do
     'http://localhost:9000/api/v1/instances' > /dev/null
 done
 sleep $BROCCOLI_SLEEP_SHORT
-docker logs $(cat cluster-broccoli.did)
 docker stop $(cat cluster-broccoli.did)
+docker logs $(cat cluster-broccoli.did)
 sleep $BROCCOLI_SLEEP_SHORT
 docker run -d --net host \
   frosner/cluster-broccoli-test \
