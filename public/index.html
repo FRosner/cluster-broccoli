@@ -102,7 +102,7 @@
           <div ng-controller = "ModifyInstanceCntrl as modify_instance" class="col-md-12" style="margin-top: 20px;">
             <table class="table table">
               <tbody>
-                <tr ng-repeat="instance in template.instances | toArray | orderBy:'id':reverse">
+                <tr ng-repeat="instance in template.instances | toArray | orderBy:'id'">
                   <td class="col-md-4" scope="row">
                     <img ng-src="assets/images/minus.svg"
                          ng-if="main.about.auth.user.role == 'administrator'"
