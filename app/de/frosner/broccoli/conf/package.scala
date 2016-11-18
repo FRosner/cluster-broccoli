@@ -1,16 +1,12 @@
 package de.frosner.broccoli
 
+import de.frosner.broccoli.models.{Role, UserAccount}
 import play.api.Configuration
 
 package object conf {
 
   val NOMAD_URL_KEY = "broccoli.nomad.url"
   val NOMAD_URL_DEFAULT = "http://localhost:4646"
-
-  val NOMAD_JOB_PREFIX_KEY = "broccoli.instances.prefix"
-  val NOMAD_JOB_PREFIX_DEFAULT = ""
-  def getNomadJobPrefix(configuration: Configuration): String =
-    configuration.getString(conf.NOMAD_JOB_PREFIX_KEY).getOrElse(conf.NOMAD_JOB_PREFIX_DEFAULT)
 
   val CONSUL_URL_KEY = "broccoli.consul.url"
   val CONSUL_URL_DEFAULT = "http://localhost:8500"
@@ -41,6 +37,29 @@ package object conf {
 
   val POLLING_FREQUENCY_KEY = "broccoli.polling.frequency"
   val POLLING_FREQUENCY_DEFAULT = 1
+
+  val AUTH_SESSION_TIMEOUT_KEY = "broccoli.auth.session.timeout"
+  val AUTH_SESSION_TIMEOUT_DEFAULT = 3600
+
+  val AUTH_MODE_KEY = "broccoli.auth.mode"
+  val AUTH_MODE_NONE = "none"
+  val AUTH_MODE_CONF = "conf"
+  val AUTH_MODE_DEFAULT = AUTH_MODE_NONE
+
+  val AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY = "username"
+  val AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY = "password"
+  val AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY = "instanceRegex"
+  val AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_DEFAULT = ".*"
+  val AUTH_MODE_CONF_ACCOUNT_ROLE_KEY = "role"
+  val AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT = Role.Administrator
+
+  val AUTH_MODE_CONF_ACCOUNTS_KEY = "broccoli.auth.conf.accounts"
+  val AUTH_MODE_CONF_ACCOUNTS_DEFAULT = Set(UserAccount(
+    name = "administrator",
+    password = "broccoli",
+    instanceRegex = AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_DEFAULT,
+    role = AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT
+  ))
 
   val PERMISSIONS_MODE_KEY = "broccoli.permissions.mode"
   val PERMISSIONS_MODE_ADMINISTRATOR = "administrator"

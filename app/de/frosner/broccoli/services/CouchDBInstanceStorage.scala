@@ -15,7 +15,7 @@ import scala.util.Try
   * Instance storage using CouchDB as a peristence layer.
   * On construction it is checking whether the instance DB exists and creating it if it doesn't.
   */
-case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, prefix: String, ws: WSClient) extends InstanceStorage with Logging {
+case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSClient) extends InstanceStorage with Logging {
 
   import Instance.{instancePersistenceReads, instancePersistenceWrites}
 
@@ -150,7 +150,7 @@ case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, prefix: 
             }
             JsObject(publicFields).as[Instance]
           }
-        }.toSet.filter(instance => instance.id.startsWith(prefix) && idFilter(instance.id))
+        }.toSet.filter(instance => idFilter(instance.id))
       }
     }
   }

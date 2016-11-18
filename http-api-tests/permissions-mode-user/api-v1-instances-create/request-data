@@ -1,7 +1,0 @@
-{
-  "templateId": "http-server",
-  "parameters": {
-    "id": "test-http",
-    "cpu": "250"
-  }
-}

@@ -41,6 +41,11 @@ Cluster Broccoli provides a RESTful HTTP API. You can control it using curl, wri
 - CouchDB 1.6 (persistence layer)
 - Cluster Broccoli Nomad Job + Docker Image (for running the Play application)
 
+#### Distributed Application Server
+
+Broccoli needs to run as a single instance.
+It is neither supported to run multiple Broccoli instances sharing the same instance storage, nor running Broccoli in distributed mode because it uses a [local cache](http://www.ehcache.org/) to store the session IDs.
+
 ### Using the Production Docker Image
 
 If you only need an image to run the Broccoli distribution, go with the JRE based [production-ready image](https://hub.docker.com/r/frosner/cluster-broccoli/).
@@ -66,18 +71,37 @@ If you only intend to develop Broccoli and want to quickly get started with the 
 In order to configure Cluster Broccoli, you can add key value pairs to your [configuration](https://www.playframework.com/documentation/2.4.x/Configuration).
 The following configuration properties are supported.
 
+### Nomad and Consul
+
 | Property | Description | Default |
 | -------- | ----------- | ------- |
 | `broccoli.nomad.url` | Address of your nomad server | `http://localhost:4646` |
-| `broccoli.instances.prefix` | Allow only jobs with this prefix | ` ` (empty) |
 | `broccoli.consul.url` | Address of your consul server | `http://localhost:8500` |
 | `broccoli.consul.lookup` | Lookup method used for consul. Options: `ip` or `dns` (recommended).| `ip` |
 | `broccoli.polling.frequency` | Integer (seconds) to control the time between asking Nomad and Consul for job and service status. | `1` |
+
+### Templates and Instances
+
+| Property | Description | Default |
+| -------- | ----------- | ------- |
 | `broccoli.templates.storage.type` | Storage type for templates. Currently only `fs` supported. | `fs` |
 | `broccoli.templates.storage.fs.url` | Storage directory for templates in `fs` mode. | `templates` |
 | `broccoli.instances.storage.type` | Storage type for instances. `fs` and `couchdb` are supported. See the [instance documentation](https://github.com/FRosner/cluster-broccoli/wiki/Instances) for details. | `fs` |
 | `broccoli.instances.storage.fs.url` | Storage directory for instances in `fs` mode. | `instances` |
 | `broccoli.instances.storage.couchdb.url` | URL to CouchDB in `couchdb` mode. | `http://localhost:5984` |
 | `broccoli.instances.storage.couchdb.dbName` | Database name in `couchdb` mode. | `broccoli_instances` |
+
+### Security
+
+| Property | Description | Default |
+| -------- | ----------- | ------- |
 | `broccoli.permissions.mode` | Determines the actions that can be performed with the Broccoli instance. `administrator` (full functionality), `operator` (starting, stopping instances) or `user` (inspecting instance state) | `administrator` |
-| `http.port` | Port to bind the HTTP interface to | `9000` |
+| `broccoli.auth.mode` | Authentication and authorization mode (`none` or `conf`). | `none` |
+| `broccoli.auth.conf.accounts` | User accounts when running in `conf` mode. | `[{username:administrator, password:broccoli, role:administrator, instanceRegex:".*"}]` |
+
+### Web Server
+
+| Property | Description | Default |
+| -------- | ----------- | ------- |
+| `http.port` | Port to bind the HTTP interface to. | `9000` |
+| `https.port` | Port to listen for HTTPS connections. See [Play documentation](https://www.playframework.com/documentation/2.4.x/ConfiguringHttps) for details. | |

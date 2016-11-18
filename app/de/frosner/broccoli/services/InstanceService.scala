@@ -53,12 +53,6 @@ class InstanceService @Inject()(templateService: TemplateService,
     scheduler.shutdown()
   }
 
-  lazy val nomadJobPrefix = {
-    val prefix = conf.getNomadJobPrefix(configuration)
-    Logger.info(s"${conf.NOMAD_JOB_PREFIX_KEY}=$prefix")
-    prefix
-  }
-
   private lazy val instanceStorage: InstanceStorage = {
     val instanceStorageType = {
       val storageType = configuration.getString(conf.INSTANCES_STORAGE_TYPE_KEY).getOrElse(conf.INSTANCES_STORAGE_TYPE_DEFAULT)
@@ -79,7 +73,7 @@ class InstanceService @Inject()(templateService: TemplateService,
           Logger.info(s"${conf.INSTANCES_STORAGE_FS_URL_KEY}=$url")
           url
         }
-        Try(FileSystemInstanceStorage(new File(instanceDir), nomadJobPrefix))
+        Try(FileSystemInstanceStorage(new File(instanceDir)))
       }
       case conf.INSTANCES_STORAGE_TYPE_COUCHDB => {
         val couchDbUrl = {
@@ -92,7 +86,7 @@ class InstanceService @Inject()(templateService: TemplateService,
           Logger.info(s"${conf.INSTANCES_STORAGE_COUCHDB_DBNAME_KEY}=$name")
           name
         }
-        Try(CouchDBInstanceStorage(couchDbUrl, couchDbName, nomadJobPrefix, ws))
+        Try(CouchDBInstanceStorage(couchDbUrl, couchDbName, ws))
       }
       case default => throw new IllegalStateException(s"Illegal storage type '$instanceStorageType")
     }
@@ -121,7 +115,7 @@ class InstanceService @Inject()(templateService: TemplateService,
   @volatile
   private def initializeInstancesMap: Map[String, Instance] = {
     instancesMapInitialized = true
-    instancesMap = instanceStorage.readInstances(_.startsWith(nomadJobPrefix)) match {
+    instancesMap = instanceStorage.readInstances match {
       case Success(instances) => instances.map(instance => (instance.id, instance)).toMap
       case Failure(throwable) => {
         Logger.error(s"Failed to load the instances: ${throwable.toString}")

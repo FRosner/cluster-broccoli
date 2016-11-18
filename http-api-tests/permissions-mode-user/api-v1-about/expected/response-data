@@ -1,3 +1,0 @@
-#!/bin/bash
-
-grep "user" $1

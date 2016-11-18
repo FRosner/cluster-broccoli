@@ -9,12 +9,12 @@ import play.api.libs.json.Json
 import scala.util.{Failure, Success, Try}
 
 @volatile
-case class FileSystemInstanceStorage(storageDirectory: File, prefix: String) extends InstanceStorage with Logging {
+case class FileSystemInstanceStorage(storageDirectory: File) extends InstanceStorage with Logging {
 
   import Instance.instancePersistenceWrites
   import Instance.instancePersistenceReads
 
-  require(storageDirectory.isDirectory && storageDirectory.canWrite, s"'${storageDirectory}' needs to be a writable directory")
+  require(storageDirectory.isDirectory && storageDirectory.canWrite, s"'$storageDirectory' needs to be a writable directory")
   private val lock = new File(storageDirectory, ".lock")
   Logger.info(s"Locking $storageDirectory ($lock)")
   if (!lock.createNewFile()) {
@@ -59,7 +59,7 @@ case class FileSystemInstanceStorage(storageDirectory: File, prefix: String) ext
         override def accept(pathname: File): Boolean = {
           val fileName = pathname.getName
           val id = fileName.stripSuffix(".json")
-          fileName.endsWith(".json") && idFilter(id) && id.startsWith(prefix)
+          fileName.endsWith(".json") && idFilter(id)
         }
       })
       instanceFiles.map(_.getName.stripSuffix(".json"))

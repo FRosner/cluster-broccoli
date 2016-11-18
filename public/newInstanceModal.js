@@ -60,7 +60,7 @@ angular.module('broccoli')
         if (vm.paramsToValue[param] == "") {
           delete vm.paramsToValue[param];
         }
-      }); 
+      });
       $uibModalInstance.close({
         "paramsToValue": vm.paramsToValue,
         "instance": instance,
@@ -71,19 +71,4 @@ angular.module('broccoli')
     function cancel() {
       $uibModalInstance.dismiss();
     };
-})
-  .directive('focusField', function() {
-  return{
-         restrict: 'A',
-
-         link: function(scope, element, attrs){
-           scope.$watch(function(){
-             return scope.$eval(attrs.focusField);
-             },function (newValue){
-               if (newValue === true){
-                   element[0].focus();
-               }
-           });
-         }
-     };
-});
+  });

@@ -1,3 +1,0 @@
-#!/bin/bash
-
-grep "operator" $1

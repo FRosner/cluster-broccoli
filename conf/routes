@@ -16,6 +16,15 @@ DELETE  /api/v1/instances/:id                      @de.frosner.broccoli.controll
 # About
 GET     /api/v1/about                              @de.frosner.broccoli.controllers.AboutController.about
 
+# Status
+
+GET     /api/v1/status                              @de.frosner.broccoli.controllers.StatusController.status
+
+# Authentication
+POST    /api/v1/auth/login        @de.frosner.broccoli.controllers.SecurityController.login()
+POST    /api/v1/auth/logout       @de.frosner.broccoli.controllers.SecurityController.logout()
+GET     /api/v1/auth/verify       @de.frosner.broccoli.controllers.SecurityController.verify()
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file                       @controllers.Assets.versioned(path="/public", file)
 
