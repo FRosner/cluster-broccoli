@@ -5,7 +5,7 @@ import javax.inject.{Inject, Named, Singleton}
 
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.InstanceStatus._
-import de.frosner.broccoli.models.InstanceStatus
+import de.frosner.broccoli.models.{Instance, InstanceStatus}
 import de.frosner.broccoli.util.Logging
 import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
 import play.api.libs.ws.WSClient
@@ -47,7 +47,7 @@ class NomadService @Inject()(configuration: Configuration,
     nomadReachable = true
   }
 
-  def requestStatuses() = {
+  def requestStatuses(instanceIds: Set[String]) = {
     val queryUrl = nomadBaseUrl + "/v1/jobs"
     val jobsRequest = ws.url(queryUrl)
     val jobsResponse = jobsRequest.get().map(_.json.as[JsArray])
@@ -65,11 +65,14 @@ class NomadService @Inject()(configuration: Configuration,
           case default => Logger.warn(s"Unmatched status received: $default")
             InstanceStatus.Unknown
         })
+        val filteredIdsAndStatuses = idsAndStatuses.filter {
+          case (id, status) => instanceIds.contains(id)
+        }
         setNomadReachable()
-        updateStatusesBasedOnNomad(idsAndStatuses.toMap)
+        updateStatusesBasedOnNomad(filteredIdsAndStatuses.toMap)
       }
       case Failure(throwable) => {
-        Logger.error(throwable.toString)
+        Logger.error(s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
         setNomadNotReachable()
       }
     }
@@ -100,7 +103,7 @@ class NomadService @Inject()(configuration: Configuration,
         consulService.requestServiceStatus(id, jobServiceIds)
         setNomadReachable()
       case Failure(throwable) =>
-        Logger.error(throwable.toString)
+        Logger.error(s"Requesting services for $id failed: $throwable")
         setNomadNotReachable()
     }
   }
