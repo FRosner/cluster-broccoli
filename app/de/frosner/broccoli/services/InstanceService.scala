@@ -133,12 +133,12 @@ class InstanceService @Inject()(templateService: TemplateService,
   @volatile
   private def instances = synchronized {
     if (instancesMapInitialized) {
-      Logger.info(s"Returning instances: ${instancesMap.map(_._1)}")
+      Logger.info(s"Returning instances: $instancesMap")
       instancesMap
     } else {
       Logger.info(s"Initializing instances.")
       val x = initializeInstancesMap
-      Logger.info(s"Initializing instances: ${x.map(_._1)}")
+      Logger.info(s"Initializing instances: $x")
       x
     }
   }
