@@ -40,6 +40,19 @@ class InstanceService @Inject()(templateService: TemplateService,
   private lazy val pollingFrequencySeconds = pollingFrequencySecondsTry.get
   Logger.info(s"Nomad/Consul polling frequency set to $pollingFrequencySeconds seconds")
 
+  private val scheduler = new ScheduledThreadPoolExecutor(1)
+  private val task = new Runnable {
+    def run() = {
+      nomadService.requestStatuses(instances.values.map(_.id).toSet)
+    }
+  }
+  private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0, pollingFrequencySeconds, TimeUnit.SECONDS)
+
+  sys.addShutdownHook{
+    scheduledTask.cancel(false)
+    scheduler.shutdown()
+  }
+
   private lazy val instanceStorage: InstanceStorage = {
     val instanceStorageType = {
       val storageType = configuration.getString(conf.INSTANCES_STORAGE_TYPE_KEY).getOrElse(conf.INSTANCES_STORAGE_TYPE_DEFAULT)
@@ -124,19 +137,6 @@ class InstanceService @Inject()(templateService: TemplateService,
     } else {
       initializeInstancesMap
     }
-  }
-
-  private val scheduler = new ScheduledThreadPoolExecutor(1)
-  private val task = new Runnable {
-    def run() = {
-      nomadService.requestStatuses(instances.values.map(_.id).toSet)
-    }
-  }
-  private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0, pollingFrequencySeconds, TimeUnit.SECONDS)
-
-  sys.addShutdownHook{
-    scheduledTask.cancel(false)
-    scheduler.shutdown()
   }
 
   private def addStatuses(instance: Instance): InstanceWithStatus = {
