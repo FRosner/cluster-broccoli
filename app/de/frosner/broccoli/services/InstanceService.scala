@@ -48,6 +48,11 @@ class InstanceService @Inject()(templateService: TemplateService,
   }
   private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0, pollingFrequencySeconds, TimeUnit.SECONDS)
 
+  sys.addShutdownHook{
+    scheduledTask.cancel(false)
+    scheduler.shutdown()
+  }
+
   @volatile
   private lazy val instanceStorage: InstanceStorage = {
     val instanceStorageType = {
