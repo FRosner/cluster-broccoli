@@ -30,11 +30,14 @@
         </div>
         <div ng-repeat="param in instCtrl.parameters | toArray | filter:{id:'!id'}:true | orderBy:'name'" class="input-group instance-input-group">
           <span class="input-group-addon" id="basic-addon1">{{param.name}}</span>
-          <input type="{{(param.secret && !param._isVisible) ? 'password' : 'text'}}" class="form-control" placeholder="{{param.default}}"
+          <input id="param-{{param.id}}" type="{{(param.secret && !param._isVisible) ? 'password' : 'text'}}" class="form-control" placeholder="{{param.default}}"
             aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param.id]"
             focus-field="false" ng-readonly ="instCtrl.deleteInstance != null" >
           <a href="#" title="Show password" ng-click="instCtrl.toggleShowSecret(param.id)" class="input-group-addon" id="basic-addon2" ng-if="param.secret">
             <span class="glyphicon glyphicon-eye-{{(param._isVisible) ? 'close' : 'open'}}" aria-hidden="true"></span>
+          </a>
+          <a href="#" title="Copy to clipboard" ng-click="instCtrl.copySecret(instCtrl.paramsToValue[param.id])" class="input-group-addon" id="basic-addon2" ng-if="param.secret">
+            <span class="glyphicon glyphicon-copy" aria-hidden="true"></span>
           </a>
         </div>
       </div>

@@ -45,6 +45,17 @@ angular.module('broccoli')
         vm.parameters[paramId]._isVisible = true
       }
     };
+
+    vm.copySecret = function(secret) {
+      console.log(secret)
+      var dummy = document.createElement("input");
+      document.body.appendChild(dummy);
+      dummy.setAttribute("id", "dummy_id");
+      document.getElementById("dummy_id").value=secret;
+      dummy.select();
+      document.execCommand("copy");
+      document.body.removeChild(dummy);
+    };
     
     function updateParameterForm(currentTemplate) {
       vm.parameters = {};
