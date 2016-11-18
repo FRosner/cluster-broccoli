@@ -99,11 +99,15 @@ class InstanceService @Inject()(templateService: TemplateService,
     }
     sys.addShutdownHook {
       Logger.info("Closing instanceStorage (shutdown hook)")
-      instanceStorage.close()
+      if (!instanceStorage.isClosed) {
+        instanceStorage.close()
+      }
     }
     applicationLifecycle.addStopHook(() => Future {
       Logger.info("Closing instanceStorage (stop hook)")
-      instanceStorage.close()
+      if (!instanceStorage.isClosed) {
+        instanceStorage.close()
+      }
     })
     instanceStorage
   }
