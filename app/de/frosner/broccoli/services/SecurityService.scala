@@ -51,6 +51,18 @@ case class SecurityService @Inject() (configuration: Configuration) extends Logg
     result
   }
 
+  lazy val cookieSecure: Boolean = {
+    val parsed = SecurityService.tryCookieSecure(configuration) match {
+      case Success(cookieSecure) => cookieSecure
+      case Failure(throwable) =>
+        Logger.error(s"Error parsing ${conf.AUTH_COOKIE_SECURE_KEY}: $throwable")
+        System.exit(1)
+        throw throwable
+    }
+    Logger.info(s"${conf.AUTH_COOKIE_SECURE_KEY}=$parsed")
+    parsed
+  }
+
   private lazy val accounts: Set[Account] = {
     val accounts = SecurityService.tryAccounts(configuration) match {
       case Success(userObjects) => userObjects.toSet
@@ -101,6 +113,10 @@ object SecurityService {
         }
       }
     }.getOrElse(conf.AUTH_MODE_CONF_ACCOUNTS_DEFAULT)
+  }
+
+  private[services] def tryCookieSecure(configuration: Configuration): Try[Boolean] = Try {
+    configuration.getBoolean(conf.AUTH_COOKIE_SECURE_KEY).getOrElse(conf.AUTH_COOKIE_SECURE_DEFAULT)
   }
 
 }

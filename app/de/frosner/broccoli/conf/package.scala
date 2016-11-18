@@ -41,6 +41,9 @@ package object conf {
   val AUTH_SESSION_TIMEOUT_KEY = "broccoli.auth.session.timeout"
   val AUTH_SESSION_TIMEOUT_DEFAULT = 3600
 
+  val AUTH_COOKIE_SECURE_KEY = "broccoli.auth.cookie.secure"
+  val AUTH_COOKIE_SECURE_DEFAULT = true
+
   val AUTH_MODE_KEY = "broccoli.auth.mode"
   val AUTH_MODE_NONE = "none"
   val AUTH_MODE_CONF = "conf"
