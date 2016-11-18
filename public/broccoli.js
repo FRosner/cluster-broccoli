@@ -23,32 +23,33 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
       if (response.status == -1) {
         $rootScope.broccoliReachable = false;
         $rootScope.isLoggedIn = false;
-      } else if (response.status == 403) {
-        $rootScope.isLoggedIn = false;
+      } else if (response.config.url == "/api/v1/about") {
+        $rootScope.broccoliReachable = true;
+        if (response.status == 403) {
+          $rootScope.isLoggedIn = false;
+        }
       } else if (response.config.url == "/api/v1/auth/login") {
         $rootScope.restangularError = "Login failed!"
       } else if (response.config.url == "/api/v1/auth/logout") {
         $rootScope.restangularError = "Logout failed!"
-      } else {
+      } else if ($scope.isLoggedIn) {
         $rootScope.restangularError = response.statusText + " (" + response.status + "): " + response.data;
+      } else {
+        // ignore error as it will anyway be logged by the browser in the console
       }
       return false;
     });
 
-    function askStatus() {
+    function refreshAbout() {
       AboutService.getStatus().then(function(about) {
         vm.about = about;
       });
-    }
-
-    function refreshStatus() {
-      Restangular.one("status").get();
-      $timeout(function() {
-        refreshStatus()
+      $timeout(function () {
+        refreshAbout()
       }, 1000);
     }
 
-    refreshStatus();
+    refreshAbout();
 
     $rootScope.$watch('isLoggedIn', function(val) {
       if(val) {
@@ -66,9 +67,6 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
           $scope.pageLoading = false;
           progressTo(0);
         }, 1100);
-        AboutService.getStatus().then(function(about) {
-          vm.about = about;
-        });
         refreshTemplates();
       } else {
         vm.about = {};
@@ -103,7 +101,6 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
         }
     }
 
-    refreshTemplates();
   }).directive('focusField', function() {
     return {
       restrict: 'A',
