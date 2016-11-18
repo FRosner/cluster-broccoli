@@ -23,7 +23,6 @@ case class InstanceController @Inject() (instanceService: InstanceService,
   extends Controller with Logging with BroccoliRoleAuthorization {
 
   def list(maybeTemplateId: Option[String]) = StackAction(AuthorityKey -> Role.NormalUser) { implicit request =>
-    Logger.info(s"list(${maybeTemplateId})")
     val user = loggedIn
     val instances = instanceService.getInstances
     val filteredInstances = maybeTemplateId.map(
@@ -38,12 +37,10 @@ case class InstanceController @Inject() (instanceService: InstanceService,
   }
 
   def show(id: String) = StackAction(AuthorityKey -> Role.NormalUser) { implicit request =>
-    Logger.info(s"show(${id})")
     val notFound = NotFound(s"Instance $id not found.")
     val user = loggedIn
     if (id.matches(user.instanceRegex)) {
       val maybeInstance = instanceService.getInstance(id)
-      Logger.info(s"Showing $maybeInstance")
       maybeInstance.map {
         instance => Ok(Json.toJson {
           if (user.role == Role.Administrator) {
