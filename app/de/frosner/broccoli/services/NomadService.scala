@@ -2,10 +2,11 @@ package de.frosner.broccoli.services
 
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Named, Singleton}
+import javax.xml.ws.http.HTTPException
 
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.InstanceStatus._
-import de.frosner.broccoli.models.InstanceStatus
+import de.frosner.broccoli.models.{Instance, InstanceStatus}
 import de.frosner.broccoli.util.Logging
 import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
 import play.api.libs.ws.WSClient
@@ -47,7 +48,7 @@ class NomadService @Inject()(configuration: Configuration,
     nomadReachable = true
   }
 
-  def requestStatuses() = {
+  def requestStatuses(instanceIds: Set[String]) = {
     val queryUrl = nomadBaseUrl + "/v1/jobs"
     val jobsRequest = ws.url(queryUrl)
     val jobsResponse = jobsRequest.get().map(_.json.as[JsArray])
@@ -65,11 +66,14 @@ class NomadService @Inject()(configuration: Configuration,
           case default => Logger.warn(s"Unmatched status received: $default")
             InstanceStatus.Unknown
         })
+        val filteredIdsAndStatuses = idsAndStatuses.filter {
+          case (id, status) => instanceIds.contains(id)
+        }
         setNomadReachable()
-        updateStatusesBasedOnNomad(idsAndStatuses.toMap)
+        updateStatusesBasedOnNomad(filteredIdsAndStatuses.toMap)
       }
       case Failure(throwable) => {
-        Logger.error(throwable.toString)
+        Logger.error(s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
         setNomadNotReachable()
       }
     }
@@ -87,7 +91,13 @@ class NomadService @Inject()(configuration: Configuration,
   def requestServices(id: String): Unit = {
     val queryUrl = nomadBaseUrl + s"/v1/job/$id"
     val jobRequest = ws.url(queryUrl)
-    val jobResponse = jobRequest.get().map(_.json.as[JsObject])
+    val jobResponse = jobRequest.get().map { response =>
+      if (response.status == 200) {
+        response.json.as[JsObject]
+      } else {
+        throw new Exception(s"Received ${response.statusText} (${response.status})")
+      }
+    }
     val eventuallyJobServiceIds = jobResponse.map{ jsObject =>
       val services = (jsObject \\ "Services").flatMap(_.as[JsArray].value.map(_.as[JsObject]))
       services.flatMap {
@@ -100,7 +110,7 @@ class NomadService @Inject()(configuration: Configuration,
         consulService.requestServiceStatus(id, jobServiceIds)
         setNomadReachable()
       case Failure(throwable) =>
-        Logger.error(throwable.toString)
+        Logger.error(s"Requesting services for $id failed: $throwable")
         setNomadNotReachable()
     }
   }

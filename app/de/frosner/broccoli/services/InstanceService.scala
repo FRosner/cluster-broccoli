@@ -43,7 +43,7 @@ class InstanceService @Inject()(templateService: TemplateService,
   private val scheduler = new ScheduledThreadPoolExecutor(1)
   private val task = new Runnable {
     def run() = {
-      nomadService.requestStatuses()
+      nomadService.requestStatuses(instances.values.map(_.id).toSet)
     }
   }
   private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0, pollingFrequencySeconds, TimeUnit.SECONDS)
@@ -53,6 +53,7 @@ class InstanceService @Inject()(templateService: TemplateService,
     scheduler.shutdown()
   }
 
+  @volatile
   private lazy val instanceStorage: InstanceStorage = {
     val instanceStorageType = {
       val storageType = configuration.getString(conf.INSTANCES_STORAGE_TYPE_KEY).getOrElse(conf.INSTANCES_STORAGE_TYPE_DEFAULT)
@@ -99,11 +100,15 @@ class InstanceService @Inject()(templateService: TemplateService,
     }
     sys.addShutdownHook {
       Logger.info("Closing instanceStorage (shutdown hook)")
-      instanceStorage.close()
+      if (!instanceStorage.isClosed) {
+        instanceStorage.close()
+      }
     }
     applicationLifecycle.addStopHook(() => Future {
       Logger.info("Closing instanceStorage (stop hook)")
-      instanceStorage.close()
+      if (!instanceStorage.isClosed) {
+        instanceStorage.close()
+      }
     })
     instanceStorage
   }
@@ -131,7 +136,7 @@ class InstanceService @Inject()(templateService: TemplateService,
     of dependency injected components.
    */
   @volatile
-  private def instances = {
+  private def instances = synchronized {
     if (instancesMapInitialized) {
       instancesMap
     } else {
@@ -158,8 +163,7 @@ class InstanceService @Inject()(templateService: TemplateService,
     instances.get(id).map(addStatuses)
   }
 
-  @volatile
-  def addInstance(instanceCreation: InstanceCreation): Try[InstanceWithStatus] = {
+  def addInstance(instanceCreation: InstanceCreation): Try[InstanceWithStatus] = synchronized {
     val maybeId = instanceCreation.parameters.get("id") // FIXME requires ID to be defined inside the parameter values
     val templateId = instanceCreation.templateId
     val maybeCreatedInstance = maybeId.map { id =>
@@ -183,7 +187,7 @@ class InstanceService @Inject()(templateService: TemplateService,
   def updateInstance(id: String,
                      statusUpdater: Option[StatusUpdater],
                      parameterValuesUpdater: Option[ParameterValuesUpdater],
-                     templateSelector: Option[TemplateSelector]): Try[InstanceWithStatus] = {
+                     templateSelector: Option[TemplateSelector]): Try[InstanceWithStatus] = synchronized {
     val updateInstanceId = id
     val maybeInstance = instances.get(id)
     val maybeUpdatedInstance = maybeInstance.map { instance =>
@@ -248,8 +252,7 @@ class InstanceService @Inject()(templateService: TemplateService,
     }
   }
 
-  @volatile
-  def deleteInstance(id: String): Try[InstanceWithStatus] = {
+  def deleteInstance(id: String): Try[InstanceWithStatus] = synchronized {
     val tryStopping = updateInstance(
       id = id,
       statusUpdater = Some(StatusUpdater(InstanceStatus.Stopped)),
