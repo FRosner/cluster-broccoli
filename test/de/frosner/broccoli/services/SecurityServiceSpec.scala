@@ -182,4 +182,29 @@ class SecurityServiceSpec extends Specification {
 
   }
 
+  "Parsing cookie secure from the configuration" should {
+
+    "work if the field is a boolean" in {
+      val config = ConfigFactory.empty().withValue(
+        conf.AUTH_COOKIE_SECURE_KEY,
+        ConfigValueFactory.fromAnyRef(false)
+      )
+      SecurityService.tryCookieSecure(Configuration(config)) === Success(false)
+    }
+
+    "fail if the field is not a boolean" in {
+      val config = ConfigFactory.empty().withValue(
+        conf.AUTH_COOKIE_SECURE_KEY,
+        ConfigValueFactory.fromAnyRef("bla")
+      )
+      SecurityService.tryCookieSecure(Configuration(config)).failed.get should beAnInstanceOf[Exception]
+    }
+
+    "take the default if the field is not defined" in {
+      val config = ConfigFactory.empty()
+      SecurityService.tryCookieSecure(Configuration(config)) === Success(conf.AUTH_COOKIE_SECURE_DEFAULT)
+    }
+
+  }
+
 }

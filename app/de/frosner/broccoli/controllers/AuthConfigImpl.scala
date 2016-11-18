@@ -27,6 +27,8 @@ trait AuthConfigImpl extends AuthConfig with Logging {
 
   val sessionTimeoutInSeconds = securityService.sessionTimeoutInSeconds
 
+  val cookieSecure = securityService.cookieSecure
+
   def resolveUser(id: Id)(implicit ctx: ExecutionContext): Future[Option[User]] = Future.successful(securityService.getAccount(id))
 
   def loginSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
@@ -52,7 +54,7 @@ trait AuthConfigImpl extends AuthConfig with Logging {
 
   override lazy val tokenAccessor = new CookieTokenAccessor(
     cookieName = AuthConfigImpl.CookieName,
-    cookieSecureOption = play.api.Play.maybeApplication.exists(app => play.api.Play.isProd(app)),
+    cookieSecureOption = play.api.Play.maybeApplication.exists(app => play.api.Play.isProd(app) && cookieSecure),
     cookieHttpOnlyOption = true,
     cookieDomainOption = None,
     cookiePathOption = "/",
