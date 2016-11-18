@@ -132,12 +132,12 @@ class InstanceService @Inject()(templateService: TemplateService,
   @volatile
   private def instances = {
     if (instancesMapInitialized) {
-      Logger.info(s"Returning instances: $instancesMap")
+      Logger.info(s"Returning instances: ${instancesMap.map(_._1)}")
       instancesMap
     } else {
       Logger.info(s"Initializing instances.")
       val x = initializeInstancesMap
-      Logger.info(s"Initializing instances: $x")
+      Logger.info(s"Initializing instances: ${x.map(_._1)}")
       x
     }
   }
