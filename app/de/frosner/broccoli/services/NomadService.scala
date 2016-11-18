@@ -2,6 +2,7 @@ package de.frosner.broccoli.services
 
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Named, Singleton}
+import javax.xml.ws.http.HTTPException
 
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.InstanceStatus._
@@ -90,7 +91,13 @@ class NomadService @Inject()(configuration: Configuration,
   def requestServices(id: String): Unit = {
     val queryUrl = nomadBaseUrl + s"/v1/job/$id"
     val jobRequest = ws.url(queryUrl)
-    val jobResponse = jobRequest.get().map(_.json.as[JsObject])
+    val jobResponse = jobRequest.get().map { response =>
+      if (response.status == 200) {
+        response.json.as[JsObject]
+      } else {
+        throw new Exception(s"Received ${response.statusText} (${response.status})")
+      }
+    }
     val eventuallyJobServiceIds = jobResponse.map{ jsObject =>
       val services = (jsObject \\ "Services").flatMap(_.as[JsArray].value.map(_.as[JsObject]))
       services.flatMap {
