@@ -97,6 +97,7 @@ The following configuration properties are supported. Please refer to the [Wiki]
 | -------- | ----------- | ------- |
 | `broccoli.auth.mode` | Authentication and authorization mode (`none` or `conf`). | `none` |
 | `broccoli.auth.conf.accounts` | User accounts when running in `conf` mode. | `[{username:administrator, password:broccoli, role:administrator, instanceRegex:".*"}]` |
+| `broccoli.auth.session.timeout` | HTTPS session timeout (in seconds). | `3600` |
 
 ### Web Server
 
