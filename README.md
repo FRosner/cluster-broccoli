@@ -64,12 +64,12 @@ If you only intend to develop Broccoli and want to quickly get started with the 
 
 1. Download or clone the source code
 2. Navigate into the project directory
-3. `activator dist`
+3. `sbt dist`
 
 ## Configuration
 
 In order to configure Cluster Broccoli, you can add key value pairs to your [configuration](https://www.playframework.com/documentation/2.4.x/Configuration).
-The following configuration properties are supported.
+The following configuration properties are supported. Please refer to the [Wiki](https://github.com/FRosner/cluster-broccoli/wiki) for more information about the individual topics.
 
 ### Nomad and Consul
 
@@ -80,7 +80,7 @@ The following configuration properties are supported.
 | `broccoli.consul.lookup` | Lookup method used for consul. Options: `ip` or `dns` (recommended).| `ip` |
 | `broccoli.polling.frequency` | Integer (seconds) to control the time between asking Nomad and Consul for job and service status. | `1` |
 
-### Templates and Instances
+### [Templates](https://github.com/FRosner/cluster-broccoli/wiki/Templates) and [Instances](https://github.com/FRosner/cluster-broccoli/wiki/Instances)
 
 | Property | Description | Default |
 | -------- | ----------- | ------- |
@@ -91,11 +91,10 @@ The following configuration properties are supported.
 | `broccoli.instances.storage.couchdb.url` | URL to CouchDB in `couchdb` mode. | `http://localhost:5984` |
 | `broccoli.instances.storage.couchdb.dbName` | Database name in `couchdb` mode. | `broccoli_instances` |
 
-### Security
+### [Security](https://github.com/FRosner/cluster-broccoli/wiki/Security)
 
 | Property | Description | Default |
 | -------- | ----------- | ------- |
-| `broccoli.permissions.mode` | Determines the actions that can be performed with the Broccoli instance. `administrator` (full functionality), `operator` (starting, stopping instances) or `user` (inspecting instance state) | `administrator` |
 | `broccoli.auth.mode` | Authentication and authorization mode (`none` or `conf`). | `none` |
 | `broccoli.auth.conf.accounts` | User accounts when running in `conf` mode. | `[{username:administrator, password:broccoli, role:administrator, instanceRegex:".*"}]` |
 
