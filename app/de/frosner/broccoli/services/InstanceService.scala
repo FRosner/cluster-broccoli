@@ -130,7 +130,7 @@ class InstanceService @Inject()(templateService: TemplateService,
     of dependency injected components.
    */
   @volatile
-  private def instances = {
+  private def instances = synchronized {
     if (instancesMapInitialized) {
       Logger.info(s"Returning instances: ${instancesMap.map(_._1)}")
       instancesMap
