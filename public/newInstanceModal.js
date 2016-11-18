@@ -38,7 +38,25 @@ angular.module('broccoli')
       }
     });
 
+    vm.toggleShowSecret = function(paramId) {
+      if (vm.parameters[paramId]._isVisible) {
+        vm.parameters[paramId]._isVisible = false
+      } else {
+        vm.parameters[paramId]._isVisible = true
+      }
+    };
 
+    vm.copySecret = function(secret) {
+      console.log(secret)
+      var dummy = document.createElement("input");
+      document.body.appendChild(dummy);
+      dummy.setAttribute("id", "dummy_id");
+      document.getElementById("dummy_id").value=secret;
+      dummy.select();
+      document.execCommand("copy");
+      document.body.removeChild(dummy);
+    };
+    
     function updateParameterForm(currentTemplate) {
       vm.parameters = {};
       currentTemplate.parameters.map(function(parameter) {
@@ -46,8 +64,13 @@ angular.module('broccoli')
           "id": parameter,
           "name": parameter
         };
-        if (currentTemplate.parameterInfos[parameter] && currentTemplate.parameterInfos[parameter].default) {
-          currentParameter.default = currentTemplate.parameterInfos[parameter].default;
+        if (currentTemplate.parameterInfos[parameter]) {
+          if (currentTemplate.parameterInfos[parameter].default) {
+            currentParameter.default = currentTemplate.parameterInfos[parameter].default;
+          }
+          if (currentTemplate.parameterInfos[parameter].secret) {
+            currentParameter.secret= currentTemplate.parameterInfos[parameter].secret;
+          }
         }
         vm.parameters[parameter] = currentParameter;
       });

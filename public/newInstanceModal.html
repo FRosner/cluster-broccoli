@@ -22,11 +22,23 @@
           Deleting {{instCtrl.instance.id}} will also stop its execution.
         </div>
         <h4> Parameters</h4>
-        <div ng-repeat="param in instCtrl.parameters" class="input-group instance-input-group">
+        <div class="input-group instance-input-group">
+          <span class="input-group-addon" id="basic-addon1">{{instCtrl.parameters.id.name}}</span>
+          <input type="text" class="form-control" placeholder="{{instCtrl.parameters.id.default}}"
+                 aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[instCtrl.parameters.id.id]"
+                 focus-field="true" ng-readonly ="instCtrl.deleteInstance != null" >
+        </div>
+        <div ng-repeat="param in instCtrl.parameters | toArray | filter:{id:'!id'}:true | orderBy:'name'" class="input-group instance-input-group">
           <span class="input-group-addon" id="basic-addon1">{{param.name}}</span>
-          <input type="text" class="form-control" placeholder="{{param.default}}"
+          <input id="param-{{param.id}}" type="{{(param.secret && !param._isVisible) ? 'password' : 'text'}}" class="form-control" placeholder="{{param.default}}"
             aria-describedby="basic-addon1" ng-model="instCtrl.paramsToValue[param.id]"
-            focus-field="$index == 0" ng-readonly ="instCtrl.deleteInstance != null" >
+            focus-field="false" ng-readonly ="instCtrl.deleteInstance != null" >
+          <a href="#" title="Show password" ng-click="instCtrl.toggleShowSecret(param.id)" class="input-group-addon" id="basic-addon2" ng-if="param.secret">
+            <span class="glyphicon glyphicon-eye-{{(param._isVisible) ? 'close' : 'open'}}" aria-hidden="true"></span>
+          </a>
+          <a href="#" title="Copy to clipboard" ng-click="instCtrl.copySecret(instCtrl.paramsToValue[param.id])" class="input-group-addon" id="basic-addon2" ng-if="param.secret">
+            <span class="glyphicon glyphicon-copy" aria-hidden="true"></span>
+          </a>
         </div>
       </div>
       <div class="modal-footer">
