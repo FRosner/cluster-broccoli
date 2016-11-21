@@ -1,34 +1,52 @@
 angular.module('broccoli')
-    .service('InstanceService', function(Restangular){
-      this.getInstances= function (template) {    
-      	if(!template){
-          return Restangular.all("instances").getList();
-      	}
-        else{
-          return Restangular.all("instances")
-          .getList({ "templateId" : template.id });
-          }
-        }   
+  .service('InstanceService', function(Restangular, $rootScope, $timeout) {
 
-        this.submitStatus=  function (instance, status) {
-          return Restangular.all("instances")
-            .customPOST({ "status": status }, instance.id, {}, {})        
-          }
+    function refreshInstancesOnce() {
+      Restangular.all("instances").getList().then(function(instances) {
+        $rootScope._instances = instances;
+      });
+    }
 
-        this.deleteInstance = function (template, instance) {
-          instance.remove();
-        }
-        
-        this.createInstance = function(template , paramsToValue) {
-          return Restangular.all("instances")
-          .post({
-              templateId: template.id,
-              parameters: paramsToValue
-            })      
-        };    
+    function refreshInstancesSoon() {
+      $timeout(function () {
+        refreshInstancesOnce();
+      }, 500);
+    }
+    
+    function refreshInstances() {
+      refreshInstancesOnce();
+      var pollingFrequency = ($rootScope._pollingFrequency > 1000) ? $rootScope._pollingFrequency : 1000;
+      if ($rootScope._isLoggedIn) {
+        $timeout(function () {
+          refreshInstances();
+        }, pollingFrequency);
+      }
+    }
+    this.refreshInstances = refreshInstances;
 
-        this.editInstance = function(postData, newInstance) {
-          return Restangular.all("instances")
-          .customPOST(postData, newInstance.id, {}, {});          
-          };
-        });
+    this.submitStatus=  function (instance, status) {
+      refreshInstancesSoon();
+      Restangular.all("instances")
+        .customPOST({ "status": status }, instance.id, {}, {});
+    };
+    
+
+    this.deleteInstance = function (template, instance) {
+      refreshInstancesSoon();
+      instance.remove();
+    };
+
+    this.createInstance = function(template , paramsToValue) {
+      refreshInstancesSoon();
+      Restangular.all("instances").post({
+        templateId: template.id,
+        parameters: paramsToValue
+      });
+    };
+
+    this.editInstance = function(postData, newInstance) {
+      refreshInstancesSoon();
+      Restangular.all("instances")
+        .customPOST(postData, newInstance.id, {}, {});
+    };
+  });

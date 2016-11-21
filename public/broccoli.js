@@ -2,7 +2,8 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
   .controller('MainController', function(Restangular, AboutService, TemplateService, InstanceService ,$scope, $rootScope, $timeout) {
     var vm = this;
     vm.templates = {};
-    vm.about = {};
+
+    AboutService.refreshAbout();
 
     $rootScope.broccoliReachable = true;
     $rootScope.dismissRestangularError = function() {
@@ -14,7 +15,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
     Restangular.addResponseInterceptor(function(data, operation, what, url, response, deferred) {
       $rootScope.broccoliReachable = true;
       if (url != "/api/v1/status") {
-        $rootScope.isLoggedIn = true;
+        $rootScope._isLoggedIn = true;
       }
       return data;
     });
@@ -22,17 +23,17 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
     Restangular.setErrorInterceptor(function(response, deferred, responseHandler) {
       if (response.status == -1) {
         $rootScope.broccoliReachable = false;
-        $rootScope.isLoggedIn = false;
+        $rootScope._isLoggedIn = false;
       } else if (response.config.url == "/api/v1/about") {
         $rootScope.broccoliReachable = true;
         if (response.status == 403) {
-          $rootScope.isLoggedIn = false;
+          $rootScope._isLoggedIn = false;
         }
       } else if (response.config.url == "/api/v1/auth/login") {
         $rootScope.restangularError = "Login failed!"
       } else if (response.config.url == "/api/v1/auth/logout") {
         $rootScope.restangularError = "Logout failed!"
-      } else if ($scope.isLoggedIn) {
+      } else if ($scope._isLoggedIn) {
         $rootScope.restangularError = response.statusText + " (" + response.status + "): " + response.data;
       } else {
         // ignore error as it will anyway be logged by the browser in the console
@@ -40,18 +41,9 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
       return false;
     });
 
-    function refreshAbout() {
-      AboutService.getStatus().then(function(about) {
-        vm.about = about;
-      });
-      $timeout(function () {
-        refreshAbout()
-      }, 1000);
-    }
+    $scope.allowedPollingFrequencies = [1000, 2000, 5000, 10000];
 
-    refreshAbout();
-
-    $rootScope.$watch('isLoggedIn', function(val) {
+    $rootScope.$watch('_isLoggedIn', function(val) {
       if(val) {
         $scope.pageLoading = true;
         function progressTo(i) {
@@ -69,26 +61,15 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
         }, 1100);
         refreshTemplates();
       } else {
-        vm.about = {};
+        $rootScope._about = {}
       }
     });
 
     function refreshTemplates() {
         TemplateService.getTemplates().then(function(templates) {
           $scope.templates = templates;
-          refreshInstances();
+          InstanceService.refreshInstances();
         });
-    }
-
-    function refreshInstances() {
-        InstanceService.getInstances().then(function(instances) {
-            $scope.instances = instances;
-        });
-        if ($scope.isLoggedIn) {
-          $timeout(function () {
-            refreshInstances();
-          }, 1000);
-        }
     }
 
   }).directive('focusField', function() {
