@@ -226,6 +226,31 @@ class SecurityServiceSpec extends Specification {
 
   }
 
+  "Parsing multi login from the configuration" should {
+
+    "work if the field is a boolean" in {
+      val config = ConfigFactory.empty().withValue(
+        conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_KEY,
+        ConfigValueFactory.fromAnyRef(false)
+      )
+      SecurityService.tryAllowMultiLogin(Configuration(config)) === Success(false)
+    }
+
+    "fail if the field is not a boolean" in {
+      val config = ConfigFactory.empty().withValue(
+        conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_KEY,
+        ConfigValueFactory.fromAnyRef("bla")
+      )
+      SecurityService.tryAllowMultiLogin(Configuration(config)).failed.get should beAnInstanceOf[Exception]
+    }
+
+    "take the default if the field is not defined" in {
+      val config = ConfigFactory.empty()
+      SecurityService.tryAllowMultiLogin(Configuration(config)) === Success(conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_DEFAULT)
+    }
+
+  }
+
   "Parsing allowed failed logins from the config" should {
 
     "work when the value is a positive integer" in {
