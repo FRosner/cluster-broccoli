@@ -18,17 +18,6 @@ describe('Test Suite for InstanceService', function() {
 
     describe('InstanceService test', function() {
 
-        it('should retrieve all created instances', function() {
-            var instance = {
-                "id": "id"
-            };
-            httpBackend.whenGET('/api/v1/instances').respond([instance]);
-            InstanceService.getInstances().then(function(data) {
-                expect(Restangular.stripRestangular(data)).toEqual([instance]);
-            });
-            httpBackend.flush();
-        });
-
         it('should create instances', function() {
             var instance = {
                 "id": "id"

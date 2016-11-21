@@ -15,7 +15,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
     Restangular.addResponseInterceptor(function(data, operation, what, url, response, deferred) {
       $rootScope.broccoliReachable = true;
       if (url != "/api/v1/status") {
-        $rootScope.isLoggedIn = true;
+        $rootScope._isLoggedIn = true;
       }
       return data;
     });
@@ -23,17 +23,17 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
     Restangular.setErrorInterceptor(function(response, deferred, responseHandler) {
       if (response.status == -1) {
         $rootScope.broccoliReachable = false;
-        $rootScope.isLoggedIn = false;
+        $rootScope._isLoggedIn = false;
       } else if (response.config.url == "/api/v1/about") {
         $rootScope.broccoliReachable = true;
         if (response.status == 403) {
-          $rootScope.isLoggedIn = false;
+          $rootScope._isLoggedIn = false;
         }
       } else if (response.config.url == "/api/v1/auth/login") {
         $rootScope.restangularError = "Login failed!"
       } else if (response.config.url == "/api/v1/auth/logout") {
         $rootScope.restangularError = "Logout failed!"
-      } else if ($scope.isLoggedIn) {
+      } else if ($scope._isLoggedIn) {
         $rootScope.restangularError = response.statusText + " (" + response.status + "): " + response.data;
       } else {
         // ignore error as it will anyway be logged by the browser in the console
@@ -43,7 +43,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
 
     $scope.allowedPollingFrequencies = [1000, 2000, 5000, 10000];
 
-    $rootScope.$watch('isLoggedIn', function(val) {
+    $rootScope.$watch('_isLoggedIn', function(val) {
       if(val) {
         $scope.pageLoading = true;
         function progressTo(i) {
@@ -68,20 +68,8 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
     function refreshTemplates() {
         TemplateService.getTemplates().then(function(templates) {
           $scope.templates = templates;
-          refreshInstances();
+          InstanceService.refreshInstances();
         });
-    }
-
-    function refreshInstances() {
-        InstanceService.getInstances().then(function(instances) {
-            $scope.instances = instances;
-        });
-        var pollingFrequency = (vm.pollingFrequency > 1000) ? vm.pollingFrequency : 1000;
-        if ($scope.isLoggedIn) {
-          $timeout(function () {
-            refreshInstances();
-          }, pollingFrequency);
-        }
     }
 
   }).directive('focusField', function() {
