@@ -2,7 +2,8 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
   .controller('MainController', function(Restangular, AboutService, TemplateService, InstanceService ,$scope, $rootScope, $timeout) {
     var vm = this;
     vm.templates = {};
-    vm.about = {};
+
+    AboutService.refreshAbout();
 
     $rootScope.broccoliReachable = true;
     $rootScope.dismissRestangularError = function() {
@@ -40,17 +41,6 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
       return false;
     });
 
-    function refreshAbout() {
-      AboutService.getStatus().then(function(about) {
-        vm.about = about;
-      });
-      $timeout(function () {
-        refreshAbout()
-      }, 1000);
-    }
-
-    refreshAbout();
-
     $scope.allowedPollingFrequencies = [1000, 2000, 5000, 10000];
 
     $rootScope.$watch('isLoggedIn', function(val) {
@@ -71,7 +61,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
         }, 1100);
         refreshTemplates();
       } else {
-        vm.about = {};
+        $rootScope._about = {}
       }
     });
 
