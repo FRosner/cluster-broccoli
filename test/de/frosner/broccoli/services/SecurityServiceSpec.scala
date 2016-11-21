@@ -3,6 +3,7 @@ package de.frosner.broccoli.services
 import com.google.common.collect.{ImmutableMap, Iterables, Lists, Maps}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import de.frosner.broccoli.conf
+import de.frosner.broccoli.conf.IllegalConfigException
 import de.frosner.broccoli.models.{Role, UserAccount}
 import org.specs2.mutable.Specification
 import play.api.Configuration
@@ -45,6 +46,24 @@ class SecurityServiceSpec extends Specification {
     "fail if the password does not matche" in {
       SecurityService(configWithAccounts(List(account)))
         .isAllowedToAuthenticate(account.copy(password = "new")) === false
+    }
+
+    "succeed if the number of failed logins is equal to the allowed ones" in {
+      val failedCredentials = account.copy(password = "new")
+      val service = SecurityService(configWithAccounts(List(account)))
+      val failedAttempts = for (attemptNo <- 1 to service.allowedFailedLogins) {
+        service.isAllowedToAuthenticate(failedCredentials)
+      }
+      service.isAllowedToAuthenticate(account) === true
+    }
+
+    "fail if the number of failed logins is greater than the allowed number" in {
+      val failedCredentials = account.copy(password = "new")
+      val service = SecurityService(configWithAccounts(List(account)))
+      val failedAttempts = for (attemptNo <- 0 to service.allowedFailedLogins) {
+        service.isAllowedToAuthenticate(failedCredentials)
+      }
+      service.isAllowedToAuthenticate(account) === false
     }
 
   }
@@ -203,6 +222,47 @@ class SecurityServiceSpec extends Specification {
     "take the default if the field is not defined" in {
       val config = ConfigFactory.empty()
       SecurityService.tryCookieSecure(Configuration(config)) === Success(conf.AUTH_COOKIE_SECURE_DEFAULT)
+    }
+
+  }
+
+  "Parsing allowed failed logins from the config" should {
+
+    "work when the value is a positive integer" in {
+      val config = ConfigFactory.empty().withValue(
+        conf.AUTH_ALLOWED_FAILED_LOGINS_KEY,
+        ConfigValueFactory.fromAnyRef(1)
+      )
+      SecurityService.tryAllowedFailedLogins(Configuration(config)) === Success(1)
+    }
+
+    "work when the value can be parsed as a positive integer" in {
+      val config = ConfigFactory.empty().withValue(
+        conf.AUTH_ALLOWED_FAILED_LOGINS_KEY,
+        ConfigValueFactory.fromAnyRef("1")
+      )
+      SecurityService.tryAllowedFailedLogins(Configuration(config)) === Success(1)
+    }
+
+    "take the default value if the property is not set" in {
+      val config = ConfigFactory.empty()
+      SecurityService.tryAllowedFailedLogins(Configuration(config)) === Success(conf.AUTH_ALLOWED_FAILED_LOGINS_DEFAULT)
+    }
+
+    "fail if the value is a non-positive integer" in {
+      val config = ConfigFactory.empty().withValue(
+        conf.AUTH_ALLOWED_FAILED_LOGINS_KEY,
+        ConfigValueFactory.fromAnyRef(-1)
+      )
+      SecurityService.tryAllowedFailedLogins(Configuration(config)).isFailure === true
+    }
+
+    "fail if the value is not an integer and cannot be parsed as one" in {
+      val config = ConfigFactory.empty().withValue(
+        conf.AUTH_ALLOWED_FAILED_LOGINS_KEY,
+        ConfigValueFactory.fromAnyRef(true)
+      )
+      SecurityService.tryAllowedFailedLogins(Configuration(config)).isFailure === true
     }
 
   }
