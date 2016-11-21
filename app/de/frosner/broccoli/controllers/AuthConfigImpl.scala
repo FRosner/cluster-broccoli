@@ -30,7 +30,7 @@ trait AuthConfigImpl extends AuthConfig with Logging {
   val cookieSecure = securityService.cookieSecure
 
   override lazy val idContainer: AsyncIdContainer[Id] = securityService.allowMultiLogin match {
-    case true => AsyncIdContainer(new TransparentIdContainer[Id])
+    case true => AsyncIdContainer(new MultiLoginCacheIdContainer[Id])
     case false => AsyncIdContainer(new CacheIdContainer[Id])
   }
 
