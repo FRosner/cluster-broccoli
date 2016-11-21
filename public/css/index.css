@@ -60,3 +60,12 @@ body {
 [x-ng-click] {
   cursor: pointer;
 }
+
+.nav > li > select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  position: relative;
+  display: block;
+  margin: 15px;
+}

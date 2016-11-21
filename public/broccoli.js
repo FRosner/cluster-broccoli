@@ -51,6 +51,8 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
 
     refreshAbout();
 
+    $scope.allowedPollingFrequencies = [1000, 2000, 5000, 10000];
+
     $rootScope.$watch('isLoggedIn', function(val) {
       if(val) {
         $scope.pageLoading = true;
@@ -84,10 +86,11 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
         InstanceService.getInstances().then(function(instances) {
             $scope.instances = instances;
         });
+        var pollingFrequency = (vm.pollingFrequency > 1000) ? vm.pollingFrequency : 1000;
         if ($scope.isLoggedIn) {
           $timeout(function () {
             refreshInstances();
-          }, 1000);
+          }, pollingFrequency);
         }
     }
 

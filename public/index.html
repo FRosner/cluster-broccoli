@@ -58,6 +58,16 @@
             </li>
           </ul>
           <ul class="nav navbar-nav navbar-right" ng-if="isLoggedIn">
+            <li ng-if="isLoggedIn && !pageLoading">
+              <a title="Back-end polling frequency">
+                <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>
+                <select ng-model="main.pollingFrequency" ng-init="main.pollingFrequency='5000'">
+                  <option ng-repeat="frequency in allowedPollingFrequencies" value="{{frequency}}">
+                    {{frequency/1000}}s
+                  </option>
+                </select>
+              </a>
+            </li>
             <li ng-show="!pageLoading">
               <a>{{main.about.auth.user.name}} ({{main.about.auth.user.role}}, {{main.about.auth.user.instanceRegex}})</a>
             </li>
