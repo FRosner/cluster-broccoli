@@ -65,13 +65,25 @@ case class SecurityService @Inject() (configuration: Configuration) extends Logg
 
   lazy val cookieSecure: Boolean = {
     val parsed = SecurityService.tryCookieSecure(configuration) match {
-      case Success(cookieSecure) => cookieSecure
+      case Success(value) => value
       case Failure(throwable) =>
         Logger.error(s"Error parsing ${conf.AUTH_COOKIE_SECURE_KEY}: $throwable")
         System.exit(1)
         throw throwable
     }
     Logger.info(s"${conf.AUTH_COOKIE_SECURE_KEY}=$parsed")
+    parsed
+  }
+
+  lazy val allowMultiLogin: Boolean = {
+    val parsed = SecurityService.tryAllowMultiLogin(configuration) match {
+      case Success(value) => value
+      case Failure(throwable) =>
+        Logger.error(s"Error parsing ${conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_KEY}: $throwable")
+        System.exit(1)
+        throw throwable
+    }
+    Logger.info(s"${conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_KEY}=$parsed")
     parsed
   }
 
@@ -115,6 +127,10 @@ case class SecurityService @Inject() (configuration: Configuration) extends Logg
 }
 
 object SecurityService {
+
+  private[services] def tryAllowMultiLogin(configuration: Configuration): Try[Boolean] = Try {
+    configuration.getBoolean(conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_KEY).getOrElse(conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_DEFAULT)
+  }
 
   private[services] def tryAccounts(configuration: Configuration): Try[Iterable[Account]] = Try {
     configuration.getList(conf.AUTH_MODE_CONF_ACCOUNTS_KEY).map { users =>

@@ -5,7 +5,7 @@ import de.frosner.broccoli.models.Role.Role
 import de.frosner.broccoli.models.{Account, Role}
 import de.frosner.broccoli.services.SecurityService
 import de.frosner.broccoli.util.Logging
-import jp.t2v.lab.play2.auth.{AuthConfig, CookieTokenAccessor}
+import jp.t2v.lab.play2.auth._
 import play.api.Configuration
 import play.api.mvc.{RequestHeader, Result, Results}
 
@@ -28,6 +28,11 @@ trait AuthConfigImpl extends AuthConfig with Logging {
   val sessionTimeoutInSeconds = securityService.sessionTimeoutInSeconds
 
   val cookieSecure = securityService.cookieSecure
+
+  override lazy val idContainer: AsyncIdContainer[Id] = securityService.allowMultiLogin match {
+    case true => AsyncIdContainer(new TransparentIdContainer[Id])
+    case false => AsyncIdContainer(new CacheIdContainer[Id])
+  }
 
   def resolveUser(id: Id)(implicit ctx: ExecutionContext): Future[Option[User]] = Future.successful(securityService.getAccount(id))
 
