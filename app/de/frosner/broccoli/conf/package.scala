@@ -44,6 +44,9 @@ package object conf {
   val AUTH_COOKIE_SECURE_KEY = "broccoli.auth.cookie.secure"
   val AUTH_COOKIE_SECURE_DEFAULT = true
 
+  val AUTH_ALLOWED_FAILED_LOGINS_KEY = "broccoli.auth.allowedFailedLogins"
+  val AUTH_ALLOWED_FAILED_LOGINS_DEFAULT = 3
+
   val AUTH_MODE_KEY = "broccoli.auth.mode"
   val AUTH_MODE_NONE = "none"
   val AUTH_MODE_CONF = "conf"

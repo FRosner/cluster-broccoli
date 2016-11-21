@@ -30,6 +30,18 @@ case class SecurityService @Inject() (configuration: Configuration) extends Logg
   lazy val sessionTimeoutInSeconds = sessionTimeOutTry.get
   Logger.info(s"${conf.AUTH_SESSION_TIMEOUT_KEY}=$sessionTimeoutInSeconds")
 
+  lazy val allowedFailedLogins = SecurityService.tryAllowedFailedLogins(configuration) match {
+    case Success(value) => {
+      Logger.info(s"${conf.AUTH_ALLOWED_FAILED_LOGINS_KEY}=$value")
+      value
+    }
+    case Failure(throwable) => {
+      Logger.error(throwable.toString)
+      System.exit(1)
+      throw throwable
+    }
+  }
+
   lazy val authMode: String = {
     val maybeAuthMode = configuration.getString(conf.AUTH_MODE_KEY)
     val result = maybeAuthMode match {
@@ -76,8 +88,26 @@ case class SecurityService @Inject() (configuration: Configuration) extends Logg
     accounts
   }
 
-  def isAllowedToAuthenticate(credentials: Credentials): Boolean = accounts.exists {
-    account => account.name == credentials.name && account.password == credentials.password
+  @volatile
+  private var failedLoginAttempts: Map[String, Int] = Map.empty
+
+  // TODO store failed logins (reset on successful login) and only allowToAuthenticate if not blocked
+
+  def isAllowedToAuthenticate(credentials: Credentials): Boolean = {
+    val credentialsFailedLoginAttempts = failedLoginAttempts.getOrElse(credentials.name, 0)
+    val allowed = if (credentialsFailedLoginAttempts <= allowedFailedLogins) {
+      accounts.exists {
+        account => account.name == credentials.name && account.password == credentials.password
+      }
+    } else {
+      Logger.warn(s"Credentials for '${credentials.name}' exceeded the allowed number of failed logins: " +
+        s"$allowedFailedLogins (has $credentialsFailedLoginAttempts)")
+      false
+    }
+    if (!allowed) {
+      failedLoginAttempts = failedLoginAttempts.updated(credentials.name, credentialsFailedLoginAttempts + 1)
+    }
+    allowed
   }
 
   def getAccount(id: String): Option[Account] = accounts.find(_.name == id)
@@ -117,6 +147,19 @@ object SecurityService {
 
   private[services] def tryCookieSecure(configuration: Configuration): Try[Boolean] = Try {
     configuration.getBoolean(conf.AUTH_COOKIE_SECURE_KEY).getOrElse(conf.AUTH_COOKIE_SECURE_DEFAULT)
+  }
+
+  private[services] def tryAllowedFailedLogins(configuration: Configuration): Try[Int] = Try {
+    val stringOption = configuration.getInt(conf.AUTH_ALLOWED_FAILED_LOGINS_KEY)
+    stringOption match {
+      case Some(int) => {
+        if (int >= 1)
+          int
+        else
+          throw new IllegalConfigException(conf.AUTH_ALLOWED_FAILED_LOGINS_KEY, "Must be a positive Integer.")
+      }
+      case None => conf.AUTH_ALLOWED_FAILED_LOGINS_DEFAULT
+    }
   }
 
 }
