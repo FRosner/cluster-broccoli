@@ -75,28 +75,18 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
 
     function refreshTemplates() {
         TemplateService.getTemplates().then(function(templates) {
-            var templates = templates;
-            templates.forEach(function(template) {
-                template.instances = {};
-                vm.templates[template.id] = template;
-                refreshInstances(template);
-                $scope.templates = templates;
-            });
+          $scope.templates = templates;
+          refreshInstances();
         });
     }
 
-    function refreshInstances(template) {
-        InstanceService.getInstances(template).then(function(instances) {
+    function refreshInstances() {
+        InstanceService.getInstances().then(function(instances) {
             $scope.instances = instances;
-            template.instances = {};
-            instances.forEach(function(instance) {
-                template.instances[instance.id] = instance;
-                return template.instances;
-            });
         });
         if ($scope.isLoggedIn) {
           $timeout(function () {
-            refreshInstances(template);
+            refreshInstances();
           }, 1000);
         }
     }
@@ -120,4 +110,11 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
     return _.map(obj, function(val, key) {
       return Object.defineProperty(val, '$key', {__proto__: null, value: key});
     });
-  }});
+  }}).filter('belongsToTemplate', function() {
+    return function(instances, template) {
+      var filteredInstances = instances.filter(function(instance) {
+        return instance.template.id == template.id;
+      });
+      return filteredInstances;
+    }
+  });

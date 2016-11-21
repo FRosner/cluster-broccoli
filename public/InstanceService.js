@@ -16,7 +16,6 @@ angular.module('broccoli')
           }
 
         this.deleteInstance = function (template, instance) {
-          delete template.instances[instance.id];
           instance.remove();
         }
         

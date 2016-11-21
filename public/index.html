@@ -81,7 +81,7 @@
         </div>
         <div class="alert alert-danger" role="alert" ng-if="!broccoliReachable">Cluster Broccoli server is not reachable!</div>
         <div ng-controller="LoginCntrl as login">
-        <div class="row" ng-repeat="template in main.templates"  ng-if="broccoliReachable && isLoggedIn">
+        <div class="row" ng-repeat="template in templates"  ng-if="broccoliReachable && isLoggedIn">
           <div ng-controller = "ModifyInstanceCntrl as modify_instance" class="col-md-12" style="margin-top: 0px;">
             <h2>
               <img ng-init="itemsrc='assets/images/plus.svg'"
@@ -102,7 +102,7 @@
           <div ng-controller = "ModifyInstanceCntrl as modify_instance" class="col-md-12" style="margin-top: 20px;">
             <table class="table table">
               <tbody>
-                <tr ng-repeat="instance in template.instances | toArray | orderBy:'id'">
+                <tr ng-repeat="instance in instances | belongsToTemplate:template | orderBy:'id'">
                   <td class="col-md-4" scope="row">
                     <img ng-src="assets/images/minus.svg"
                          ng-if="main.about.auth.user.role == 'administrator'"
@@ -111,7 +111,7 @@
                          data-holder-rendered="true">
                     <img ng-src="assets/images/edit.svg"
                          ng-if="main.about.auth.user.role == 'administrator'"
-                         ng-click="modify_instance.editInstance(template, instance, main.templates)"
+                         ng-click="modify_instance.editInstance(template, instance, templates)"
                          class="img-responsive instance-button"
                          data-holder-rendered="true">
                     {{instance.id}}
