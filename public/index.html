@@ -81,7 +81,8 @@
           </ul>
           <form class="navbar-form navbar-right" ng-if="_isLoggedIn && !pageLoading">
             <div class="form-group">
-              <input ng-model="$root._templateFilter" type="text" class="form-control" placeholder="Template Filter">
+              <input ng-model="$root._templateFilter" type="text" class="form-control" placeholder="Template Filter" title="Template Filter">
+              <input ng-model="$root._instanceFilter" type="text" class="form-control" placeholder="Instance Filter" title="Instance Filter">
             </div>
           </form>
         </div>
@@ -119,7 +120,7 @@
           <div ng-controller = "ModifyInstanceCntrl as modify_instance" class="col-md-12" style="margin-top: 20px;">
             <table class="table table">
               <tbody>
-                <tr ng-repeat="instance in _instances | belongsToTemplate:template | orderBy:'id'">
+                <tr ng-repeat="instance in _instances | belongsToTemplate:template | filter:_instanceFilter:false | orderBy:'id'">
                   <td class="col-md-4" scope="row">
                     <img ng-src="assets/images/minus.svg"
                          ng-if="_about.auth.user.role == 'administrator'"
