@@ -58,16 +58,6 @@
             </li>
           </ul>
           <ul class="nav navbar-nav navbar-right" ng-if="_isLoggedIn">
-            <li ng-if="_isLoggedIn && !pageLoading">
-              <a title="Back-end polling frequency">
-                <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>
-                <select ng-model="$root._pollingFrequency" ng-init="$root._pollingFrequency='5000'">
-                  <option ng-repeat="frequency in allowedPollingFrequencies" value="{{frequency}}">
-                    {{frequency/1000}}s
-                  </option>
-                </select>
-              </a>
-            </li>
             <li ng-show="!pageLoading">
               <a>{{_about.auth.user.name}} ({{_about.auth.user.role}}, {{_about.auth.user.instanceRegex}})</a>
             </li>
@@ -77,6 +67,23 @@
                    ng-click="login.logoutUser()">Logout</a>
             </li>
           </ul>
+          <ul class="nav navbar-nav navbar-right" ng-if="_isLoggedIn && !pageLoading">
+            <li>
+              <a title="Back-end polling frequency">
+                <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>
+                <select ng-model="$root._pollingFrequency" ng-init="$root._pollingFrequency='5000'">
+                  <option ng-repeat="frequency in allowedPollingFrequencies" value="{{frequency}}">
+                    {{frequency/1000}}s
+                  </option>
+                </select>
+              </a>
+            </li>
+          </ul>
+          <form class="navbar-form navbar-right" ng-if="_isLoggedIn && !pageLoading">
+            <div class="form-group">
+              <input ng-model="$root._templateFilter" type="text" class="form-control" placeholder="Template Filter">
+            </div>
+          </form>
         </div>
       </nav>
       <div class="progress" ng-show="pageLoading" style="margin: auto; position: absolute; top: 0; left: 0; bottom: 0; right: 0; width: 50%;">
@@ -91,7 +98,7 @@
         </div>
         <div class="alert alert-danger" role="alert" ng-if="!broccoliReachable">Cluster Broccoli server is not reachable!</div>
         <div ng-controller="LoginCntrl as login">
-        <div class="row" ng-repeat="template in templates"  ng-if="broccoliReachable && _isLoggedIn">
+        <div class="row" ng-repeat="template in templates | toArray | filter:_templateFilter:false"  ng-if="broccoliReachable && _isLoggedIn">
           <div ng-controller = "ModifyInstanceCntrl as modify_instance" class="col-md-12" style="margin-top: 0px;">
             <h2>
               <img ng-init="itemsrc='assets/images/plus.svg'"
