@@ -157,7 +157,16 @@
                          ng-click="modify_instance.editInstance(template, instance, templates)"
                          class="img-responsive instance-button"
                          data-holder-rendered="true">
-                    {{instance.id}}
+                    <a role="button" data-toggle="collapse" href="#collapse{{instance.id}}"
+                       aria-expanded="false" aria-controls="collapse{{instance.id}}"
+                       ng-click="expand">
+                      {{instance.id}}
+                    </a>
+                    <div class="collapse" id="collapse{{instance.id}}">
+                      <ul>
+                        <li ng-repeat="periodicRun in instance.periodicRuns">{{periodicRun}}</li>
+                      </ul>
+                    </div>
                   </td>
                   <td class="col-md-6">
                     <span ng-repeat="service in instance.services" class="service-link">
