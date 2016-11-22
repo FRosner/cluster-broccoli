@@ -37,7 +37,7 @@ class NomadService @Inject()(configuration: Configuration,
   }
 
   @volatile
-  private var nomadReachable: Boolean = true
+  private var nomadReachable: Boolean = false
 
   def setNomadNotReachable() = {
     nomadReachable = false
@@ -46,6 +46,10 @@ class NomadService @Inject()(configuration: Configuration,
 
   def setNomadReachable() = {
     nomadReachable = true
+  }
+
+  def isNomadReachable: Boolean = {
+    nomadReachable
   }
 
   def requestStatuses(instanceIds: Set[String]) = {

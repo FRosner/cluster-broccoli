@@ -1,15 +1,36 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.services.{BuildInfoService, InstanceService, SecurityService}
-import de.frosner.broccoli.models.{UserAccount, Role, Anonymous}
+import de.frosner.broccoli.services._
+import de.frosner.broccoli.models.{Anonymous, Role, UserAccount}
 import org.mockito.Mockito._
-import play.api.libs.json.{JsObject, JsString, JsBoolean}
+import play.api.libs.json.{JsBoolean, JsObject, JsString}
 import play.api.test._
 
 
 class AboutControllerSpec extends PlaySpecification with AuthUtils {
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
+
+  def baseJson(controller: AboutController) = Map(
+    "project" -> JsObject(Map(
+      "name" -> JsString(controller.buildInfoService.projectName),
+      "version" -> JsString(controller.buildInfoService.projectVersion)
+    )),
+    "scala" -> JsObject(Map(
+      "version" -> JsString(controller.buildInfoService.scalaVersion)
+    )),
+    "sbt" -> JsObject(Map(
+      "version" -> JsString(controller.buildInfoService.sbtVersion)
+    )),
+    "services" -> JsObject(Map(
+      "clusterManager" -> JsObject(Map(
+        "connected" -> JsBoolean(controller.nomadService.isNomadReachable)
+      )),
+      "serviceDiscovery" -> JsObject(Map(
+        "connected" -> JsBoolean(controller.consulService.isConsulReachable)
+      ))
+    ))
+  )
 
   "about" should {
 
@@ -20,7 +41,9 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
           AboutController(
             buildInfoService = withDummyValues(mock(classOf[BuildInfoService])),
             instanceService = mock(classOf[InstanceService]),
-            securityService = securityService
+            securityService = securityService,
+            nomadService = withNomadReachable(mock(classOf[NomadService])),
+            consulService = withConsulReachable(mock(classOf[ConsulService]))
           )
       } {
         controller => controller.about
@@ -28,17 +51,7 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
         identity
       } {
         (controller, result) => (status(result) must be equalTo 200) and {
-          contentAsJson(result) must be equalTo JsObject(Map(
-            "project" -> JsObject(Map(
-              "name" -> JsString(controller.buildInfoService.projectName),
-              "version" -> JsString(controller.buildInfoService.projectVersion)
-            )),
-            "scala" -> JsObject(Map(
-              "version" -> JsString(controller.buildInfoService.scalaVersion)
-            )),
-            "sbt" -> JsObject(Map(
-              "version" -> JsString(controller.buildInfoService.sbtVersion)
-            )),
+          contentAsJson(result) must be equalTo JsObject(baseJson(controller) ++ Map(
             "auth" -> JsObject(Map(
               "enabled" -> JsBoolean(true),
               "user" -> JsObject(Map(
@@ -56,21 +69,13 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
       val controller = AboutController(
         buildInfoService = withDummyValues(mock(classOf[BuildInfoService])),
         instanceService = mock(classOf[InstanceService]),
-        securityService = withAuthNone(mock(classOf[SecurityService]))
+        securityService = withAuthNone(mock(classOf[SecurityService])),
+        nomadService = withNomadReachable(mock(classOf[NomadService])),
+        consulService = withConsulReachable(mock(classOf[ConsulService]))
       )
       val result = controller.about(FakeRequest())
       (status(result) must be equalTo 200) and {
-        contentAsJson(result) must be equalTo JsObject(Map(
-          "project" -> JsObject(Map(
-            "name" -> JsString(controller.buildInfoService.projectName),
-            "version" -> JsString(controller.buildInfoService.projectVersion)
-          )),
-          "scala" -> JsObject(Map(
-            "version" -> JsString(controller.buildInfoService.scalaVersion)
-          )),
-          "sbt" -> JsObject(Map(
-            "version" -> JsString(controller.buildInfoService.sbtVersion)
-          )),
+        contentAsJson(result) must be equalTo JsObject(baseJson(controller) ++ Map(
           "auth" -> JsObject(Map(
             "enabled" -> JsBoolean(false),
             "user" -> JsObject(Map(
