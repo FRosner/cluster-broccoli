@@ -28,12 +28,12 @@ angular.module('broccoli')
       vm.paramsToValue = instance.parameterValues;
       realTemplate = instance.template;
     }
-
+    
     $scope.$watch('instCtrl.dropdown.selectedTemplate', function(newTemplateId, oldTemplateId) {
       if (newTemplateId == "unchanged") {
         updateParameterForm(realTemplate)
       } else {
-        var newTemplate = templates[newTemplateId];
+        var newTemplate = templates.find(function(t) {return t.id === newTemplateId});
         updateParameterForm(newTemplate);
       }
     });
