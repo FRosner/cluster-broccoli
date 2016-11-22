@@ -2,7 +2,7 @@ package de.frosner.broccoli.services
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
-import de.frosner.broccoli.models.{Instance, InstanceStatus, ParameterInfo, Template}
+import de.frosner.broccoli.models.{Instance, JobStatus, ParameterInfo, Template}
 import org.specs2.mutable.Specification
 
 class InstanceServiceSpec extends Specification {

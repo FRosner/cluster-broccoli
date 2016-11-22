@@ -57,7 +57,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         "secret" -> "thisshouldnotappearanywhere"
       )
     ),
-    status = InstanceStatus.Unknown,
+    status = JobStatus.Unknown,
     services = Map(
       "service" -> Service(
         name = "n",
@@ -66,7 +66,8 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         port = 8888,
         status = ServiceStatus.Unknown
       )
-    )
+    ),
+    periodicRuns = Iterable.empty
   )
   val instances = Seq(instanceWithStatus)
 
@@ -435,7 +436,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
       when(instanceService.updateInstance(
         id = instanceWithStatus.instance.id,
-        statusUpdater = Some(StatusUpdater(InstanceStatus.Running)),
+        statusUpdater = Some(StatusUpdater(JobStatus.Running)),
         parameterValuesUpdater = None,
         templateSelector = None
       )).thenReturn(Success(instanceWithStatus))
@@ -450,7 +451,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } {
         request => request.withJsonBody(
           JsObject(Map(
-            "status" -> Json.toJson(InstanceStatus.Running)
+            "status" -> Json.toJson(JobStatus.Running)
           ))
         )
       } {
@@ -550,7 +551,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
       when(instanceService.updateInstance(
         id = instanceWithStatus.instance.id,
-        statusUpdater = Some(StatusUpdater(InstanceStatus.Running)),
+        statusUpdater = Some(StatusUpdater(JobStatus.Running)),
         parameterValuesUpdater = None,
         templateSelector = None
       )).thenReturn(Success(instanceWithStatus))
@@ -567,7 +568,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } {
         request => request.withJsonBody(
           JsObject(Map(
-            "status" -> Json.toJson(InstanceStatus.Running)
+            "status" -> Json.toJson(JobStatus.Running)
           ))
         )
       } {
@@ -688,7 +689,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } {
         request => request.withJsonBody(
           JsObject(Map(
-            "status" -> Json.toJson(InstanceStatus.Running)
+            "status" -> Json.toJson(JobStatus.Running)
           ))
         )
       } {
@@ -912,8 +913,9 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
             "password" -> "noone knows"
           )
         ),
-        status = InstanceStatus.Unknown,
-        services = Map.empty
+        status = JobStatus.Unknown,
+        services = Map.empty,
+        periodicRuns = Iterable.empty
       )
       val expectedInstance = InstanceWithStatus(
         instance = Instance(
@@ -935,8 +937,9 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
             "password" -> null
           )
         ),
-        status = InstanceStatus.Unknown,
-        services = Map.empty
+        status = JobStatus.Unknown,
+        services = Map.empty,
+        periodicRuns = Iterable.empty
       )
       InstanceController.removeSecretVariables(originalInstance) === expectedInstance
     }
@@ -967,8 +970,9 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
             "password" -> "noone knows"
           )
         ),
-        status = InstanceStatus.Unknown,
-        services = Map.empty
+        status = JobStatus.Unknown,
+        services = Map.empty,
+        periodicRuns = Iterable.empty
       )
       val expectedInstance = InstanceWithStatus(
         instance = Instance(
@@ -995,8 +999,9 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
             "password" -> null
           )
         ),
-        status = InstanceStatus.Unknown,
-        services = Map.empty
+        status = JobStatus.Unknown,
+        services = Map.empty,
+        periodicRuns = Iterable.empty
       )
       InstanceController.removeSecretVariables(originalInstance) === expectedInstance
     }

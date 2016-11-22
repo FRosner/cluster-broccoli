@@ -6,7 +6,7 @@ import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import javax.inject.{Inject, Singleton}
 
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
+import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.util.Logging
 import play.api.Configuration
 import play.api.libs.ws.WSClient
@@ -149,7 +149,8 @@ class InstanceService @Inject()(templateService: TemplateService,
     InstanceWithStatus(
       instance = instance,
       status = nomadService.getJobStatusOrDefault(instanceId),
-      services = consulService.getServiceStatusesOrDefault(instanceId)
+      services = consulService.getServiceStatusesOrDefault(instanceId),
+      periodicRuns = nomadService.getPeriodicRunsOrDefault(instanceId)
     )
   }
 
@@ -222,9 +223,9 @@ class InstanceService @Inject()(templateService: TemplateService,
       val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
         statusUpdater.map {
           // Update the instance status
-          case StatusUpdater(InstanceStatus.Running) =>
+          case StatusUpdater(JobStatus.Running) =>
             nomadService.startJob(instance.templateJson).map(_ => instance)
-          case StatusUpdater(InstanceStatus.Stopped) =>
+          case StatusUpdater(JobStatus.Stopped) =>
             nomadService.deleteJob(instance.id).map(_ => instance)
           case other =>
             Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
@@ -255,7 +256,7 @@ class InstanceService @Inject()(templateService: TemplateService,
   def deleteInstance(id: String): Try[InstanceWithStatus] = synchronized {
     val tryStopping = updateInstance(
       id = id,
-      statusUpdater = Some(StatusUpdater(InstanceStatus.Stopped)),
+      statusUpdater = Some(StatusUpdater(JobStatus.Stopped)),
       parameterValuesUpdater = None,
       templateSelector = None
     )
@@ -277,7 +278,7 @@ class InstanceService @Inject()(templateService: TemplateService,
 
 object InstanceService {
 
-  case class StatusUpdater(newStatus: InstanceStatus)
+  case class StatusUpdater(newStatus: JobStatus)
 
   case class ParameterValuesUpdater(newParameterValues: Map[String, String])
 

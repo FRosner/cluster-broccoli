@@ -3,8 +3,8 @@ package de.frosner.broccoli.controllers
 import java.io.FileNotFoundException
 import javax.inject.Inject
 
-import de.frosner.broccoli.models.InstanceStatusJson._
-import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
+import de.frosner.broccoli.models.JobStatusJson._
+import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.conf
 import Instance.instanceApiWrites
@@ -89,7 +89,7 @@ case class InstanceController @Inject() (instanceService: InstanceService,
         // extract updates
         val fields = jsObject.value
         val maybeStatusUpdater = fields.get("status").flatMap { value =>
-          val maybeValidatedNewStatus = Try(value.as[InstanceStatus])
+          val maybeValidatedNewStatus = Try(value.as[JobStatus])
           maybeValidatedNewStatus.map(status => Some(StatusUpdater(status))).getOrElse(None)
         }
         val maybeParameterValuesUpdater = Try{

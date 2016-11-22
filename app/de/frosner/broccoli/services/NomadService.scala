@@ -5,8 +5,8 @@ import javax.inject.{Inject, Named, Singleton}
 import javax.xml.ws.http.HTTPException
 
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.InstanceStatus._
-import de.frosner.broccoli.models.{Instance, InstanceStatus}
+import de.frosner.broccoli.models.JobStatus._
+import de.frosner.broccoli.models.{Instance, JobStatus, PeriodicRun}
 import de.frosner.broccoli.util.Logging
 import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
 import play.api.libs.ws.WSClient
@@ -26,13 +26,22 @@ class NomadService @Inject()(configuration: Configuration,
   private lazy val nomadBaseUrl = configuration.getString(conf.NOMAD_URL_KEY).getOrElse(conf.NOMAD_URL_DEFAULT)
 
   @volatile
-  var jobStatuses: Map[String, InstanceStatus] = Map.empty
+  var jobStatuses: Map[String, (JobStatus, Iterable[PeriodicRun])] = Map.empty
 
-  def getJobStatusOrDefault(id: String): InstanceStatus = {
+  def getJobStatusOrDefault(id: String): JobStatus = {
     if (nomadReachable) {
-      jobStatuses.getOrElse(id, InstanceStatus.Stopped)
+      jobStatuses.get(id).map{ case (status, periodicStatuses) => status }.getOrElse(JobStatus.Stopped)
     } else {
-      InstanceStatus.Unknown
+      JobStatus.Unknown
+    }
+  }
+
+  def getPeriodicRunsOrDefault(id: String): Iterable[PeriodicRun] = {
+    val periodicRuns = jobStatuses.get(id).map{ case (status, periodic) => periodic }.getOrElse(Iterable.empty)
+    if (nomadReachable) {
+      periodicRuns
+    } else {
+      periodicRuns.map(_.copy(status = JobStatus.Unknown))
     }
   }
 
@@ -64,17 +73,39 @@ class NomadService @Inject()(configuration: Configuration,
       case Success((ids, statuses)) => {
         Logger.debug(s"${jobsRequest.uri} => ${ids.zip(statuses).mkString(", ")}")
         val idsAndStatuses = ids.zip(statuses.map {
-          case "running" => InstanceStatus.Running
-          case "pending" => InstanceStatus.Pending
-          case "dead" => InstanceStatus.Dead
+          case "running" => JobStatus.Running
+          case "pending" => JobStatus.Pending
+          case "dead" => JobStatus.Dead
           case default => Logger.warn(s"Unmatched status received: $default")
-            InstanceStatus.Unknown
+            JobStatus.Unknown
         })
+        val idsAndStatusesNotOnNomad = (instanceIds -- ids.toSet).map((_, JobStatus.Stopped))
         val filteredIdsAndStatuses = idsAndStatuses.filter {
           case (id, status) => instanceIds.contains(id)
         }
+        val filteredIdsAndStatusesAlsoWithoutNomad = idsAndStatusesNotOnNomad ++ idsAndStatuses
+        val periodicStatuses = filteredIdsAndStatusesAlsoWithoutNomad.flatMap {
+          case (id, status) =>
+            instanceIds.find(instanceId => id.startsWith(s"$instanceId/periodic-"))
+              .map(instanceId => (instanceId, (id, status)))
+        }.foldLeft(Map.empty[String, Map[String, JobStatus]]) {
+          case (mappedStatuses, (instanceId, (periodicJobId, periodicJobStatus))) =>
+            val instanceStatuses = mappedStatuses.get(instanceId)
+            val newInstanceStatuses = instanceStatuses.map(_.updated(periodicJobId, periodicJobStatus))
+              .getOrElse(Map(periodicJobId -> periodicJobStatus))
+            mappedStatuses.updated(instanceId, newInstanceStatuses)
+        }.map { case (instanceId, periodicRunStatuses) =>
+          val periodic = periodicRunStatuses.map { case (periodicJobName, periodicJobStatus) =>
+              PeriodicRun(instanceId, periodicJobStatus, NomadService.extractUtcSeconds(periodicJobName).getOrElse(0))
+          }
+          (instanceId, periodic)
+        }
+        val idsAndStatusesWithPeriodic = filteredIdsAndStatusesAlsoWithoutNomad.map {
+          case (instanceId, instanceStatus) => (instanceId, (instanceStatus, periodicStatuses.getOrElse(instanceId, Iterable.empty)))
+        }
         setNomadReachable()
-        updateStatusesBasedOnNomad(filteredIdsAndStatuses.toMap)
+        jobStatuses = idsAndStatusesWithPeriodic.toMap
+        filteredIdsAndStatuses.map { case (key, value) => key }.foreach(requestServices)
       }
       case Failure(throwable) => {
         Logger.error(s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
@@ -87,10 +118,6 @@ class NomadService @Inject()(configuration: Configuration,
   // TODO something is stopped (i.e. not present in Nomad). Or we use a cache that let's the stuff expire if you don't get an answer from Nomad
   // https://www.playframework.com/documentation/2.5.x/ScalaCache
 
-  private def updateStatusesBasedOnNomad(statuses: Map[String, InstanceStatus]): Unit = {
-    jobStatuses = statuses
-    statuses.keys.foreach(requestServices)
-  }
 
   def requestServices(id: String): Unit = {
     val queryUrl = nomadBaseUrl + s"/v1/job/$id"
@@ -147,6 +174,15 @@ class NomadService @Inject()(configuration: Configuration,
         Failure(NomadRequestFailed(request.uri.toString, result.status))
       }
     }.flatten
+  }
+
+}
+
+object NomadService {
+
+  def extractUtcSeconds(periodicJobName: String): Try[Long] = Try {
+    val Array(jobName, periodicSuffix) = periodicJobName.split("/")
+    periodicSuffix.stripPrefix("periodic-").toLong
   }
 
 }

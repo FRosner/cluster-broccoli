@@ -1,6 +1,6 @@
 package de.frosner.broccoli.models
 
-import de.frosner.broccoli.models.InstanceStatus.InstanceStatus
+import de.frosner.broccoli.models.JobStatus.JobStatus
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -66,20 +66,20 @@ case class Instance(id: String,
 object Instance {
 
   implicit val instanceApiWrites: Writes[Instance] = {
-    import InstanceStatusJson.instanceStatusWrites
+    import JobStatusJson.instanceStatusWrites
     import Template.templateApiWrites
     Json.writes[Instance]
   }
 
   implicit val instancePersistenceWrites: Writes[Instance] = {
-    import InstanceStatusJson.instanceStatusWrites
+    import JobStatusJson.instanceStatusWrites
     import Template.templatePersistenceWrites
     Json.writes[Instance]
   }
 
   implicit val instancePersistenceReads: Reads[Instance] = {
     import Template.templatePersistenceReads
-    import InstanceStatusJson.instanceStatusReads
+    import JobStatusJson.instanceStatusReads
     Json.reads[Instance]
   }
 
