@@ -11,6 +11,19 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
+  def baseJson(controller: AboutController) = Map(
+    "project" -> JsObject(Map(
+      "name" -> JsString(controller.buildInfoService.projectName),
+      "version" -> JsString(controller.buildInfoService.projectVersion)
+    )),
+    "scala" -> JsObject(Map(
+      "version" -> JsString(controller.buildInfoService.scalaVersion)
+    )),
+    "sbt" -> JsObject(Map(
+      "version" -> JsString(controller.buildInfoService.sbtVersion)
+    ))
+  )
+
   "about" should {
 
     "return the about object with authentication" in new WithApplication {
@@ -28,17 +41,7 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
         identity
       } {
         (controller, result) => (status(result) must be equalTo 200) and {
-          contentAsJson(result) must be equalTo JsObject(Map(
-            "project" -> JsObject(Map(
-              "name" -> JsString(controller.buildInfoService.projectName),
-              "version" -> JsString(controller.buildInfoService.projectVersion)
-            )),
-            "scala" -> JsObject(Map(
-              "version" -> JsString(controller.buildInfoService.scalaVersion)
-            )),
-            "sbt" -> JsObject(Map(
-              "version" -> JsString(controller.buildInfoService.sbtVersion)
-            )),
+          contentAsJson(result) must be equalTo JsObject(baseJson(controller) ++ Map(
             "auth" -> JsObject(Map(
               "enabled" -> JsBoolean(true),
               "user" -> JsObject(Map(
@@ -60,17 +63,7 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
       )
       val result = controller.about(FakeRequest())
       (status(result) must be equalTo 200) and {
-        contentAsJson(result) must be equalTo JsObject(Map(
-          "project" -> JsObject(Map(
-            "name" -> JsString(controller.buildInfoService.projectName),
-            "version" -> JsString(controller.buildInfoService.projectVersion)
-          )),
-          "scala" -> JsObject(Map(
-            "version" -> JsString(controller.buildInfoService.scalaVersion)
-          )),
-          "sbt" -> JsObject(Map(
-            "version" -> JsString(controller.buildInfoService.sbtVersion)
-          )),
+        contentAsJson(result) must be equalTo JsObject(baseJson(controller) ++ Map(
           "auth" -> JsObject(Map(
             "enabled" -> JsBoolean(false),
             "user" -> JsObject(Map(
