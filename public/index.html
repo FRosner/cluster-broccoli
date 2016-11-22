@@ -62,12 +62,18 @@
                   </a>
                 </li>
                 <li role="separator" class="divider"></li>
-                <li><a>Version: {{_about.project.version}}</a></li>
+                <li><a href="https://github.com/FRosner/cluster-broccoli">Source Code</a></li>
+                <li><a href="https://github.com/FRosner/cluster-broccoli/wiki">Documentation</a></li>
+                <li><a href="https://gitter.im/FRosner/cluster-broccoli">Get Help</a></li>
+
               </ul>
             </div>
           </li>
         </ul>
         <div class="navbar-collapse collapse" ng-controller="LoginCntrl as login">
+          <ul class="nav navbar-nav navbar-left" ng-if="_isLoggedIn && !pageLoading">
+            <li><a>{{_about.project.version}}</a></li>
+          </ul>
           <ul class="nav navbar-nav navbar-right" ng-if="!_isLoggedIn">
             <li>
               <a data-holder-rendered="true"
