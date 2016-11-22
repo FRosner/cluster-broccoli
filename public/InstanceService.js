@@ -46,7 +46,7 @@ angular.module('broccoli')
 
     this.editInstance = function(postData, newInstance) {
       refreshInstancesSoon();
-      Restangular.all("instances")
+      return Restangular.all("instances")
         .customPOST(postData, newInstance.id, {}, {});
     };
   });

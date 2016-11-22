@@ -64,7 +64,7 @@ angular.module('broccoli')
                 var postData = {};
                 if (result.selectedTemplate != null && result.selectedTemplate != "unchanged") {
                     postData['selectedTemplate'] = result.selectedTemplate;
-                    templates[result.selectedTemplate].parameters.forEach(function(parameter) {
+                    templates.find(function(t) {return t.id === result.selectedTemplate}).parameters.forEach(function(parameter) {
                         parameterValuesForSelectedTemplate[parameter] = newInstance.parameterValues[parameter];
                     });
                     newInstance.parameterValues = parameterValuesForSelectedTemplate;
