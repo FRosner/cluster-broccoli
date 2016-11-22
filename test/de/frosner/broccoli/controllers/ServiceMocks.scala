@@ -40,6 +40,18 @@ trait ServiceMocks {
     buildInfoService
   }
 
+  def withConsulReachable(consulService: ConsulService): ConsulService = {
+    requireMock(consulService)
+    when(consulService.isConsulReachable).thenReturn(true)
+    consulService
+  }
+
+  def withNomadReachable(nomadService: NomadService): NomadService = {
+    requireMock(nomadService)
+    when(nomadService.isNomadReachable).thenReturn(true)
+    nomadService
+  }
+
   def withTemplates(templateService: TemplateService, templates: Seq[Template]): TemplateService = {
     requireMock(templateService)
     when(templateService.getTemplates).thenReturn(templates)

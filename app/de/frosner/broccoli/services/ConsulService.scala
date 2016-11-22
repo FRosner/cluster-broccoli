@@ -57,6 +57,13 @@ class ConsulService @Inject()(configuration: Configuration,
     serviceStatuses.getOrElse(id, Map.empty)
   }
 
+  @volatile
+  private var consulReachable: Boolean = false
+
+  def isConsulReachable: Boolean = {
+    consulReachable
+  }
+
   def requestServiceStatus(jobId: String, serviceNames: Iterable[String]) = {
     val serviceResponses: Iterable[Future[Seq[Service]]] = serviceNames.map { name =>
       val catalogQueryUrl = consulBaseUrl + s"/v1/catalog/service/$name"
@@ -113,10 +120,12 @@ class ConsulService @Inject()(configuration: Configuration,
         val allServices = serviceNames.map { name =>
           (name, healthyOrUnhealthyServices.getOrElse(name, unknownService(name)))
         }.toMap
+        consulReachable = true
         serviceStatuses = serviceStatuses.updated(jobId, allServices)
       }
       case Failure(throwable) =>
-        Logger.error(throwable.toString)
+        consulReachable = false
+        Logger.error(s"Failed to get service statuses from Consul: ${throwable.toString}")
         val unknownServices = serviceNames.map(unknownService)
         serviceStatuses = serviceStatuses.updated(jobId, unknownServices.map(service => (service.name, service)).toMap)
     }

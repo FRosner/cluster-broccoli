@@ -24,6 +24,7 @@
     ================================================== -->
     <script data-require="jquery" data-semver="2.2.0" src="/assets/js/jquery.min.js"></script>
     <script src="/assets/js/angular.min.js"></script>
+    <script src="/assets/js/bootstrap.min.js"></script>
     <script src="/assets/js/ui-bootstrap-tpls.min.js"></script>
       <!-- restangular START -->
     <script src="/assets/js/lodash.min.js"></script>
@@ -43,13 +44,30 @@
 <body ng-controller="MainController as main">
     <div class="container">
       <nav class="navbar navbar-default">
-        <div class="navbar-header">
-          <span class="navbar-brand">Cluster Broccoli</span>
-        </div>
+        <ul class="nav navbar-nav navbar-left">
+          <li class="dropdown">
+            <div class="navbar-header">
+              <a class="navbar-brand" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Cluster Broccoli<span class="caret"></span></a>
+              <ul class="dropdown-menu" ng-if="!pageLoading">
+                <li>
+                  <a>
+                    Cluster Manager:
+                    <span class="glyphicon glyphicon-{{(_about.services.clusterManager.connected) ? 'ok' : 'remove'}}" aria-hidden="true"></span>
+                  </a>
+                </li>
+                <li>
+                  <a>
+                    Service Discovery: 
+                    <span class="glyphicon glyphicon-{{(_about.services.serviceDiscovery.connected) ? 'ok' : 'remove'}}" aria-hidden="true"></span>
+                  </a>
+                </li>
+                <li role="separator" class="divider"></li>
+                <li><a>Version: {{_about.project.version}}</a></li>
+              </ul>
+            </div>
+          </li>
+        </ul>
         <div class="navbar-collapse collapse" ng-controller="LoginCntrl as login">
-          <ul class="nav navbar-nav navbar-left" ng-if="!pageLoading">
-            <li><a>{{_about.project.version}}</a></li>
-          </ul>
           <ul class="nav navbar-nav navbar-right" ng-if="!_isLoggedIn">
             <li>
               <a data-holder-rendered="true"
