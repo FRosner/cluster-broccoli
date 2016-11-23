@@ -63,7 +63,7 @@ package object conf {
   val AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT = Role.Administrator
 
   val AUTH_MODE_CONF_ACCOUNTS_KEY = "broccoli.auth.conf.accounts"
-  val AUTH_MODE_CONF_ACCOUNTS_DEFAULT = Set(UserAccount(
+  val AUTH_MODE_CONF_ACCOUNTS_DEFAULT = Iterable(UserAccount(
     name = "administrator",
     password = "broccoli",
     instanceRegex = AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_DEFAULT,
