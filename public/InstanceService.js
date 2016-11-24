@@ -26,7 +26,7 @@ angular.module('broccoli')
 
     this.submitStatus=  function (instance, status) {
       refreshInstancesSoon();
-      Restangular.all("instances")
+      return Restangular.all("instances")
         .customPOST({ "status": status }, instance.id, {}, {});
     };
     
@@ -38,7 +38,7 @@ angular.module('broccoli')
 
     this.createInstance = function(template , paramsToValue) {
       refreshInstancesSoon();
-      Restangular.all("instances").post({
+      return Restangular.all("instances").post({
         templateId: template.id,
         parameters: paramsToValue
       });
