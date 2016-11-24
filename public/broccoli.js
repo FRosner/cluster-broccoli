@@ -2,6 +2,7 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
   .controller('MainController', function(Restangular, AboutService, TemplateService, InstanceService ,$scope, $rootScope, $timeout) {
     var vm = this;
     vm.templates = {};
+    $scope.isOpen = [];
 
     AboutService.refreshAbout();
 
@@ -71,6 +72,12 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
           InstanceService.refreshInstances();
         });
     }
+
+    function isCollapsed(instance) {
+      $scope.isOpen[instance.id] = !($scope.isOpen[instance.id]);
+      }
+
+    $scope.isCollapsed = isCollapsed;
 
   }).directive('focusField', function() {
     return {

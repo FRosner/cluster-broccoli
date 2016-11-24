@@ -146,7 +146,8 @@
             <table class="table table">
               <tbody>
                 <tr ng-repeat="instance in _instances | belongsToTemplate:template | filter:_instanceFilter:false | orderBy:'id'">
-                  <td class="col-md-4" scope="row">
+                <td>
+                  <div class="col-md-4">
                     <img ng-src="assets/images/minus.svg"
                          ng-if="_about.auth.user.role == 'administrator'"
                          ng-click="modify_instance.deleteInstance(template, instance)"
@@ -159,28 +160,23 @@
                          data-holder-rendered="true">
                     <a role="button" data-toggle="collapse" href="#collapse{{instance.id}}"
                        aria-expanded="false" aria-controls="collapse{{instance.id}}"
-                       ng-click="expand">
-                      {{instance.id}}
+                       ng-click="isCollapsed(instance)">
+                        {{instance.id}}
                     </a>
-                    <div class="collapse" id="collapse{{instance.id}}">
-                      <ul>
-                        <li ng-repeat="periodicRun in instance.periodicRuns">{{periodicRun}}</li>
-                      </ul>
-                    </div>
-                  </td>
-                  <td class="col-md-6">
+                  </div>
+                  <div class="col-md-6">
                     <span ng-repeat="service in instance.services" class="service-link">
                       <a ng-if="service.status != 'unknown'" ng-class="(service.status=='passing') ? 'service-status-passing' : 'service-status-failing'" target="_blank" href="{{service.protocol}}://{{service.address}}:{{service.port}}">{{service.name}}</a>
                       <span ng-if="service.status == 'unknown'" class="service-status-unknown">{{service.name}}</span>
                     </span>
-                  </td>
-                  <td class="col-md-1">
+                  </div>
+                  <div class="col-md-1">
                     <span class="label job-status-label"
                         ng-class="(instance.status=='stopped' || instance.status=='dead') ? 'label-default' : instance.status=='running' ? 'label-success' : 'label-warning'">
                       {{instance.status}}
                     </span>
-                  </td>
-                  <td class="col-md-1">
+                  </div>
+                  <div class="col-md-1">
                     <button type="button"
                             class="btn btn-xs"
                             ng-if="(instance.status == 'stopped' || instance.status == 'unknown') && (_about.auth.user.role == 'administrator' || _about.auth.user.role == 'operator')"
@@ -205,6 +201,12 @@
                             ng-click="submitStatus(instance, 'stopped')">
                       <span class="glyphicon glyphicon-stop" aria-hidden="true"></span>
                     </button>
+                  </div>
+                  <div class ="col-md-12">
+                    <ul ng-show="isOpen[instance.id]">
+                      <li ng-repeat="periodicRun in instance.periodicRuns| orderBy:'utcSeconds'">{{periodicRun}}</li>
+                    </ul>
+                  </div>
                   </td>
                 </tr>
               </tbody>
