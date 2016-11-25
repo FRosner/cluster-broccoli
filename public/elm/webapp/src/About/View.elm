@@ -11,7 +11,8 @@ projectName maybeAboutInfo =
   case maybeAboutInfo of
       Just aboutInfo ->
         div []
-            [text aboutInfo.projectInfo.name]
+            [ text aboutInfo.projectInfo.name
+            , text aboutInfo.projectInfo.version]
       Nothing ->
         div []
-            [text "nothing"]
+            [ text "nothing" ]
