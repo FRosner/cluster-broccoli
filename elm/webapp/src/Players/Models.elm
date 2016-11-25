@@ -4,7 +4,6 @@ module Players.Models exposing (..)
 type alias PlayerId =
     Int
 
-
 type alias Player =
     { id : PlayerId
     , name : String
