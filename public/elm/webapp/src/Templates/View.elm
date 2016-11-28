@@ -36,18 +36,26 @@ templateId template =
     [ style [ ("margin-left", "12px") ] ]
     [ text template.id ]
 
+addTemplateInstanceString template =
+    String.concat ["New ", template.id, " instance"]
+
 newInstanceButton template =
-  img
-    [ src "images/plus.svg"
-    , onClick (ShowNewInstanceForm template)
-    , class "img-responsive"
-    , alt (String.concat ["Add ", template.id, " Instance"])
-    , style
-      [ ("height", "20px")
-      , ("display", "inline-block")
-      ]
+  a
+    [ onClick (ShowNewInstanceForm template)
+    , title (addTemplateInstanceString template)
+    , attribute "role" "button"
     ]
-    []
+    [ img
+      [ src "images/plus.svg"
+      , class "img-responsive"
+      , alt (addTemplateInstanceString template)
+      , style
+        [ ("height", "20px")
+        , ("display", "inline-block")
+        ]
+      ]
+      []
+    ]
 
 templateVersion template =
   span
@@ -64,10 +72,12 @@ newInstanceForm maybeNewInstanceForm =
   case maybeNewInstanceForm of
     Just form ->
       div
-        [ class "panel panel-default animated bounce infinite" ]
+        [ class "panel panel-default" ]
         [ div
           [ class "panel-heading" ]
-          [ panelHeading form.selectedTemplate ]
+          [ strong []
+            [ text (addTemplateInstanceString form.selectedTemplate) ]
+          ]
         , div
           [ class "panel-body" ]
           [ text "bla" ]
@@ -89,10 +99,3 @@ newInstanceForm maybeNewInstanceForm =
       div
         [ class "hidden" ]
         []
-
-panelHeading template =
-  strong []
-    [ text "New '"
-    , text template.id
-    , text "' Instance"
-    ]
