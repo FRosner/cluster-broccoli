@@ -1,7 +1,7 @@
 module Templates.View exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (class, style)
+import Html.Attributes exposing (..)
 import Templates.Messages exposing (..)
 import Templates.Models exposing (..)
 import Color
@@ -16,36 +16,39 @@ templateRow template =
   div
     [ class "row" ]
     [ div
-      [ class "col-lg-8" ]
+      [ class "col-lg-12" ]
       [ h2 []
-        [ span
-          [ style [ ("padding-right", "12px") ] ]
-          [ text template.id ]
-        , templateVersion template
-        ]
-      ]
-    , div
-      [ class "col-lg-4" ]
-      [ h2 [ class "text-right" ]
         [ newInstanceButton
+        , templateId template
+        , templateVersion template
         ]
       ]
     ]
 
+templateId template =
+  span
+    [ style [ ("margin-left", "12px") ] ]
+    [ text template.id ]
+
 newInstanceButton =
-  button
-    [ class "btn btn-default" ]
-    [ span
-      [ class "fa fa-plus-circle" ]
-      []
-    , span
-      [ style [ ("padding-left", "6px") ] ]
-      [ text "New Instance" ]
+  img
+    [ src "images/plus.svg"
+    , class "img-responsive"
+    , alt "Add Instance"
+    , style
+      [ ("height", "20px")
+      , ("display", "inline-block")
+      ]
     ]
+    []
 
 templateVersion template =
   span
     [ class "badge"
-    , style [ ("font-family", "monospace") ]
+    , style
+      [ ("font-family", "monospace")
+      , ("margin-left", "10px")
+      ]
+    , title "Template Version"
     ]
     [ text (String.left 8 template.version) ]
