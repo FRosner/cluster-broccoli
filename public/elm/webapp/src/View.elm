@@ -5,6 +5,7 @@ import Messages exposing (Msg(..))
 import Models exposing (Model)
 import Players.List
 import About.View
+import Templates.View
 
 
 view : Model -> Html Msg
@@ -18,4 +19,5 @@ page model =
   div []
       [ Html.map PlayersMsg (Players.List.view model.players)
       , Html.map AboutMsg (About.View.projectName model.aboutInfo)
+      , Html.map TemplatesMsg (Templates.View.templateList model.templates)
       ]

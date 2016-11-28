@@ -4,6 +4,7 @@ import Messages exposing (Msg(..))
 import Models exposing (Model)
 import Players.Update
 import About.Update
+import Templates.Update
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -21,3 +22,9 @@ update msg model =
           About.Update.update subMsg model.aboutInfo
       in
         ( { model | aboutInfo = updatedAboutInfo }, Cmd.map AboutMsg cmd )
+    TemplatesMsg subMsg ->
+      let
+        ( updatedTemplates, cmd ) =
+          Templates.Update.update subMsg model.templates
+      in
+        ( { model | templates = updatedTemplates }, Cmd.map TemplatesMsg cmd )

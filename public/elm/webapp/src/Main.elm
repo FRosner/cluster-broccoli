@@ -5,20 +5,26 @@ import Messages exposing (Msg(..))
 import Models exposing (Model, initialModel)
 import Update exposing (update)
 import View exposing (view)
-import About.Commands exposing (fetch)
+import About.Commands
+import Templates.Commands
 
 init : ( Model, Cmd Msg )
 init =
-    ( initialModel, Cmd.map AboutMsg fetch )
+  ( initialModel
+  , Cmd.batch
+    [ Cmd.map AboutMsg About.Commands.fetch
+    , Cmd.map TemplatesMsg Templates.Commands.fetch
+    ]
+  )
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+  Sub.none
 
 main =
-    program
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions = subscriptions
-        }
+  program
+    { init = init
+    , view = view
+    , update = update
+    , subscriptions = subscriptions
+    }
