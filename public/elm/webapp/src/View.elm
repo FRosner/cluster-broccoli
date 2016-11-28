@@ -18,5 +18,5 @@ page : Model -> Html Msg
 page model =
   div []
       [ Html.map AboutMsg (About.View.projectName model.aboutInfo)
-      , Html.map TemplatesMsg (Templates.View.templateList model.templates)
+      , Html.map TemplatesMsg (Templates.View.view model.templatesModel)
       ]

@@ -4,4 +4,6 @@ import Http
 import Templates.Models exposing (..)
 
 type Msg
-    = FetchTemplates (Result Http.Error (Templates))
+    = FetchTemplates (Result Http.Error (List Template))
+    | ShowNewInstanceForm Template
+    | HideNewInstanceForm Template
