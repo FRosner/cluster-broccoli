@@ -15,7 +15,7 @@ fetchUrl : String
 fetchUrl =
     "http://localhost:9000/api/v1/templates"
 
-templatesDecoder : Decode.Decoder (Templates)
+templatesDecoder : Decode.Decoder (List Template)
 templatesDecoder =
     Decode.list templateDecoder
 

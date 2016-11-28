@@ -24,7 +24,7 @@ update msg model =
         ( { model | aboutInfo = updatedAboutInfo }, Cmd.map AboutMsg cmd )
     TemplatesMsg subMsg ->
       let
-        ( updatedTemplates, cmd ) =
-          Templates.Update.update subMsg model.templates
+        ( updatedTemplatesModel, cmd ) =
+          Templates.Update.update subMsg model.templatesModel
       in
-        ( { model | templates = updatedTemplates }, Cmd.map TemplatesMsg cmd )
+        ( { model | templatesModel = updatedTemplatesModel }, Cmd.map TemplatesMsg cmd )

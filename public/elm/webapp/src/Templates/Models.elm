@@ -1,9 +1,25 @@
 module Templates.Models exposing (..)
 
+import Dict exposing (..)
+
+type alias TemplateId = String
+
 type alias Template =
-  { id : String
+  { id : TemplateId
   , description : String
   , version : String
   }
 
-type alias Templates = List Template
+type alias NewInstanceForm =
+  { selectedTemplate : Template
+  }
+
+type alias TemplateWithForms =
+  { template : Template
+  , newInstanceForm : Maybe NewInstanceForm
+  }
+
+type alias Model = Dict TemplateId TemplateWithForms
+
+initialModel : Model
+initialModel = Dict.empty
