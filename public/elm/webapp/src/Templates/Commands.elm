@@ -20,6 +20,7 @@ templatesDecoder =
     Decode.list templateDecoder
 
 templateDecoder =
-  Decode.map2 Template
+  Decode.map3 Template
     (field "id" Decode.string)
     (field "description" Decode.string)
+    (field "version" Decode.string)

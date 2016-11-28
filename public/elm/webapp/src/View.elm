@@ -17,7 +17,6 @@ view model =
 page : Model -> Html Msg
 page model =
   div []
-      [ Html.map PlayersMsg (Players.List.view model.players)
-      , Html.map AboutMsg (About.View.projectName model.aboutInfo)
+      [ Html.map AboutMsg (About.View.projectName model.aboutInfo)
       , Html.map TemplatesMsg (Templates.View.templateList model.templates)
       ]
