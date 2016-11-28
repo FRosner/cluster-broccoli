@@ -68,34 +68,34 @@ templateVersion template =
     ]
     [ text (String.left 8 template.version) ]
 
-newInstanceForm maybeNewInstanceForm =
-  case maybeNewInstanceForm of
-    Just form ->
-      div
-        [ class "panel panel-default" ]
-        [ div
-          [ class "panel-heading" ]
-          [ strong []
-            [ text (addTemplateInstanceString form.selectedTemplate) ]
-          ]
-        , div
-          [ class "panel-body" ]
-          [ text "bla" ]
-        , div
-          [ class "modal-footer" ]
-          [ button
-            [ class "btn btn-warning"
-            , onClick (HideNewInstanceForm form.selectedTemplate)
-            ]
-            [ text "Cancel" ]
-          , button
-            [ class "btn btn-primary"
-            , onClick (HideNewInstanceForm form.selectedTemplate)
-            ]
-            [ text "Ok" ]
-          ]
+newInstanceForm form =
+  div
+    [ class
+      ( String.concat
+        [ "panel panel-default "
+        , if (form.visible) then "show" else "hidden"
         ]
-    Nothing ->
-      div
-        [ class "hidden" ]
-        []
+      )
+    ]
+    [ div
+      [ class "panel-heading" ]
+      [ strong []
+        [ text (addTemplateInstanceString form.selectedTemplate) ]
+      ]
+    , div
+      [ class "panel-body" ]
+      [ text "bla" ]
+    , div
+      [ class "modal-footer" ]
+      [ button
+        [ class "btn btn-warning"
+        , onClick (HideNewInstanceForm form.selectedTemplate)
+        ]
+        [ text "Cancel" ]
+      , button
+        [ class "btn btn-primary"
+        , onClick (HideNewInstanceForm form.selectedTemplate)
+        ]
+        [ text "Ok" ]
+      ]
+    ]

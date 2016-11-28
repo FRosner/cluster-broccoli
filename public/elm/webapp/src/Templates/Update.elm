@@ -9,7 +9,7 @@ update message oldModel =
   case message of
     FetchTemplates (Ok newTemplates) ->
       ( newTemplates
-        |> List.map (\t -> (t.id, (TemplateWithForms t Nothing)))
+        |> List.map (\t -> (t.id, (TemplateWithForms t (NewInstanceForm t False Dict.empty))))
         |> Dict.fromList
       , Cmd.none
       )
@@ -20,19 +20,20 @@ update message oldModel =
       )
 
     ShowNewInstanceForm template ->
-      ( Dict.update template.id (updateTemplateForm (Just (NewInstanceForm template))) oldModel
+      ( Dict.update template.id (showNewInstanceForm True) oldModel
       , Cmd.none
       )
 
     HideNewInstanceForm template ->
-      ( Dict.update template.id (updateTemplateForm Nothing) oldModel
+      ( Dict.update template.id (showNewInstanceForm False) oldModel
       , Cmd.none
       )
 
-updateTemplateForm : Maybe NewInstanceForm -> Maybe TemplateWithForms -> Maybe TemplateWithForms
-updateTemplateForm maybeNewForm maybeOldTemplateWithForms =
+showNewInstanceForm : Bool -> Maybe TemplateWithForms -> Maybe TemplateWithForms
+showNewInstanceForm visibility maybeOldTemplateWithForms =
   case maybeOldTemplateWithForms of
     Just templateWithForms ->
-      Just { templateWithForms | newInstanceForm = maybeNewForm }
+      Just
+        { templateWithForms | newInstanceForm = (setVisible templateWithForms.newInstanceForm visibility) }
     Nothing ->
       maybeOldTemplateWithForms
