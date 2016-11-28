@@ -202,10 +202,21 @@
                       <span class="glyphicon glyphicon-stop" aria-hidden="true"></span>
                     </button>
                   </div>
-                  <div class ="col-md-12">
-                    <ul ng-show="isOpen[instance.id]">
-                      <li ng-repeat="periodicRun in instance.periodicRuns| orderBy:'utcSeconds'">{{periodicRun}}</li>
-                    </ul>
+                  <div class ="col-md-10" ng-show="isOpen[instance.id]">
+                    <h4>Periodic Runs</h4>
+                  </div>
+                  <div  ng-show="isOpen[instance.id]" ng-repeat="periodicRun in instance.periodicRuns| orderBy:'utcSeconds'">
+                    <div class ="col-md-10">
+                      <ul >
+                        <li >{{periodicRun.utcSeconds * 1000 | date:'MMMM dd, yyyy HH:mm:ss'}}</li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <span class="label job-status-label"
+                          ng-class="(periodicRun.status=='stopped' || periodicRun.status=='dead') ? 'label-default' : periodicRun.status=='running' ? 'label-success' : 'label-warning'">
+                        {{periodicRun.status}}
+                      </span>
+                    </div>
                   </div>
                   </td>
                 </tr>
