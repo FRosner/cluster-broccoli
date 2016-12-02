@@ -7,11 +7,12 @@ import Models.Resources.Template exposing (TemplateId, Template)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Updates.UpdateAboutInfo exposing (updateAboutInfo)
 import Updates.UpdateErrors exposing (updateErrors)
-import Updates.UpdateLogin exposing (updateLogin)
+import Updates.UpdateLoginForm exposing (updateLoginForm)
 import Updates.Messages exposing (UpdateAboutInfoMsg)
 import Commands.FetchAbout
 import Messages exposing (AnyMsg(..))
 import Models.Ui.Notifications exposing (Errors)
+import Models.Ui.LoginForm exposing (LoginForm, emptyLoginForm)
 -- import Updates.UpdateTemplates exposing (updateTemplates)
 import Views.Header
 import Views.Body
@@ -27,7 +28,7 @@ type alias Model =
   { aboutInfo : Maybe AboutInfo
   -- , templates : List Template
   , errors : Errors
-  , loggedIn : Bool
+  , loginForm : LoginForm
   -- , expandedNewInstanceForms : Set TemplateId
   }
 
@@ -36,7 +37,7 @@ initialModel =
   { aboutInfo = Nothing
   -- , templates = []
   , errors = []
-  , loggedIn = False
+  , loginForm = emptyLoginForm
   -- , expandedNewInstanceForms = Set.empty
   }
 
@@ -73,11 +74,11 @@ update msg model =
         ({ model | errors = newErrors }
         , cmd
         )
-    UpdateLoginMsg subMsg ->
-      let (newLoggedIn, cmd) =
-        updateLogin subMsg model.loggedIn
+    UpdateLoginFormMsg subMsg ->
+      let (newLoginForm, cmd) =
+        updateLoginForm subMsg model.loginForm
       in
-        ({ model | loggedIn = newLoggedIn }
+        ({ model | loginForm = newLoginForm }
         , cmd
         )
     NoOp -> (model, Cmd.none)
