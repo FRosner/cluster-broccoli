@@ -3,6 +3,7 @@
 require('font-awesome/css/font-awesome.css');
 require('jquery/dist/jquery.min.js');
 require('bootstrap/dist/css/bootstrap.min.css');
+require('animate.css/animate.css');
 require('bootstrap/dist/js/bootstrap.min.js');
 
 // Require index.html so it gets copied to dist
