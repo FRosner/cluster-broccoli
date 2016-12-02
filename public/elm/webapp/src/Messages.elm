@@ -1,10 +1,12 @@
 module Messages exposing (..)
 
-import Players.Messages
-import About.Messages
-import Templates.Messages
+import Updates.Messages exposing (..)
 
-type Msg
-  = PlayersMsg Players.Messages.Msg
-  | AboutMsg About.Messages.Msg
-  | TemplatesMsg Templates.Messages.Msg
+type AnyMsg
+  = UpdateAboutInfoMsg Updates.Messages.UpdateAboutInfoMsg
+  | UpdateErrorsMsg Updates.Messages.UpdateErrorsMsg
+  | UpdateLoginMsg Updates.Messages.UpdateLoginMsg
+  | NoOp
+  -- | FetchTemplatesMsg Commands.FetchTemplates.Msg
+  -- | ViewsBodyMsg Views.Body.Msg
+  -- | ViewsNewInstanceFormMsg Views.NewInstanceForm.Msg

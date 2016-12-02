@@ -1,20 +1,17 @@
-module About.Commands exposing (..)
+module Commands.FetchAbout exposing (fetchAbout)
 
 import Http
+import Models.Resources.AboutInfo exposing (AuthInfo, AboutInfo, ProjectInfo, ScalaInfo, SbtInfo, UserInfo)
+import Commands.Fetch exposing (apiBaseUrl)
 import Json.Decode as Decode exposing (field)
-import About.Models exposing (..)
-import About.Messages exposing (..)
+import Updates.Messages exposing (UpdateAboutInfoMsg(..))
 
+fetchUrl = String.concat [ apiBaseUrl, "about" ]
 
-fetch : Cmd Msg
-fetch =
+fetchAbout : Cmd UpdateAboutInfoMsg
+fetchAbout =
     Http.get fetchUrl aboutInfoDecoder
         |> Http.send FetchAbout
-
-
-fetchUrl : String
-fetchUrl =
-    "http://localhost:9000/api/v1/about"
 
 projectInfoDecoder =
   Decode.map2 ProjectInfo

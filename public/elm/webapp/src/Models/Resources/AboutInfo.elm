@@ -1,6 +1,4 @@
-module About.Models exposing (..)
-
-import Maybe exposing (Maybe(..))
+module Models.Resources.AboutInfo exposing (..)
 
 type alias ProjectInfo =
   { name : String
@@ -32,5 +30,3 @@ type alias AboutInfo =
     , sbtInfo : SbtInfo
     , authInfo : AuthInfo
     }
-
--- TODO how to make the initial model? it needs to be empty because it is not yet retrieved
