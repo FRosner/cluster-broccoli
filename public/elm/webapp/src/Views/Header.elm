@@ -2,8 +2,10 @@ module Views.Header exposing (view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onInput, onSubmit)
 import Models.Resources.AboutInfo exposing (AboutInfo)
-import Messages exposing (AnyMsg)
+import Messages exposing (AnyMsg(..))
+import Updates.Messages exposing (UpdateLoginFormMsg(..))
 
 view : Maybe AboutInfo -> Html AnyMsg
 view maybeAboutInfo =
@@ -93,22 +95,26 @@ navbarCollapse =
     [ class "collapse navbar-collapse"
     , id "navbar-collapse"
     ]
-    [ loginForm
+    [ Html.map UpdateLoginFormMsg loginForm
     ]
 
 loginForm =
   Html.form
-    [ class "navbar-form navbar-right" ]
+    [ class "navbar-form navbar-right"
+    , onSubmit LoginAttempt
+    ]
     [ div [ class "form-group" ]
       [ input
         [ type_ "text"
         , class "form-control"
+        , onInput EnterUserName
         , placeholder "User"
         ]
         []
       , text " "
       , input
         [ type_ "password"
+        , onInput EnterPassword
         , class "form-control"
         , placeholder "Password"
         ]
@@ -117,7 +123,6 @@ loginForm =
     , text " "
     , button
       [ type_ "submit"
-      -- , onClick (LoginAttempt template.id)
       , class "btn btn-default"
       ]
       [ text "Login" ]
