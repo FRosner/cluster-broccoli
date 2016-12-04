@@ -1,5 +1,7 @@
 module Models.Resources.AboutInfo exposing (..)
 
+import Models.Resources.UserInfo exposing (UserInfo)
+
 type alias ProjectInfo =
   { name : String
   , version : String
@@ -11,12 +13,6 @@ type alias ScalaInfo =
 
 type alias SbtInfo =
   { version : String
-  }
-
-type alias UserInfo =
-  { name : String
-  , role : String
-  , instanceRegex : String
   }
 
 type alias AuthInfo =

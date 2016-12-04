@@ -2,6 +2,7 @@ package de.frosner.broccoli.controllers
 
 import javax.inject.Inject
 
+import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.{UserAccount, UserCredentials}
 import de.frosner.broccoli.services.SecurityService
 import de.frosner.broccoli.util.Logging
@@ -9,6 +10,7 @@ import jp.t2v.lab.play2.auth.{BroccoliSimpleAuthorization, LoginLogout}
 import play.api.Configuration
 import play.api.data._
 import play.api.data.Forms._
+import play.api.libs.json.{JsBoolean, JsObject, JsString}
 import play.api.mvc.{Action, Controller, Results}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,6 +35,17 @@ case class SecurityController @Inject() (override val securityService: SecurityS
         if (securityService.isAllowedToAuthenticate(account)) {
           Logger.info(s"Login successful for user '${account.name}'.")
           gotoLoginSucceeded(account.name)
+          val user = resolveUser(account.name)
+          user.map { maybeUser =>
+            val actualUser = maybeUser.get
+            Results.Ok(
+              JsObject(Map(
+                "name" -> JsString(actualUser.name),
+                "role" -> JsString(actualUser.role.toString),
+                "instanceRegex" -> JsString(actualUser.instanceRegex)
+              ))
+            )
+          }
         } else {
           Logger.info(s"Login failed for user '${account.name}'.")
           Future.successful(Results.Unauthorized)
