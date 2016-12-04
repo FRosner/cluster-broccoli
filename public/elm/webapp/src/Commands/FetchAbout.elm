@@ -1,12 +1,13 @@
 module Commands.FetchAbout exposing (fetchAbout)
 
 import Http
-import Models.Resources.AboutInfo exposing (AuthInfo, AboutInfo, ProjectInfo, ScalaInfo, SbtInfo, UserInfo)
+import Models.Resources.AboutInfo exposing (AuthInfo, AboutInfo, ProjectInfo, ScalaInfo, SbtInfo)
+import Models.Resources.UserInfo exposing (UserInfo, userInfoDecoder)
 import Commands.Fetch exposing (apiBaseUrl)
 import Json.Decode as Decode exposing (field)
 import Updates.Messages exposing (UpdateAboutInfoMsg(..))
 
-fetchUrl = String.concat [ apiBaseUrl, "about" ]
+fetchUrl = String.concat [ apiBaseUrl, "/about" ]
 
 fetchAbout : Cmd UpdateAboutInfoMsg
 fetchAbout =
@@ -25,12 +26,6 @@ scalaInfoDecoder =
 sbtInfoDecoder =
   Decode.map SbtInfo
     (field "version" Decode.string)
-
-userInfoDecoder =
-  Decode.map3 UserInfo
-    (field "name" Decode.string)
-    (field "role" Decode.string)
-    (field "instanceRegex" Decode.string)
 
 authInfoDecoder =
   Decode.map2 AuthInfo

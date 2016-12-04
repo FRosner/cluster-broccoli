@@ -7,7 +7,7 @@ import Json.Decode as Decode exposing (field)
 
 type Msg = FetchTemplates (Result Http.Error (List Template))
 
-fetchUrl = String.concat [ apiBaseUrl, "templates" ]
+fetchUrl = String.concat [ apiBaseUrl, "/templates" ]
 
 fetchTemplates : Cmd Msg
 fetchTemplates =

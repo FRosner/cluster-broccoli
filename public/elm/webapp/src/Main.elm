@@ -5,10 +5,12 @@ import Html.Attributes exposing (..)
 import Set exposing (Set)
 import Models.Resources.Template exposing (TemplateId, Template)
 import Models.Resources.AboutInfo exposing (AboutInfo)
+import Models.Resources.UserInfo exposing (UserInfo)
 import Updates.UpdateAboutInfo exposing (updateAboutInfo)
 import Updates.UpdateErrors exposing (updateErrors)
 import Updates.UpdateLoginForm exposing (updateLoginForm)
-import Updates.Messages exposing (UpdateAboutInfoMsg)
+import Updates.UpdateLoginStatus exposing (updateLoginStatus)
+import Updates.Messages exposing (UpdateAboutInfoMsg, UpdateLoginStatusMsg)
 import Commands.FetchAbout
 import Messages exposing (AnyMsg(..))
 import Models.Ui.Notifications exposing (Errors)
@@ -29,6 +31,7 @@ type alias Model =
   -- , templates : List Template
   , errors : Errors
   , loginForm : LoginForm
+  , loggedIn : Maybe UserInfo
   -- , expandedNewInstanceForms : Set TemplateId
   }
 
@@ -38,6 +41,7 @@ initialModel =
   -- , templates = []
   , errors = []
   , loginForm = emptyLoginForm
+  , loggedIn = Nothing
   -- , expandedNewInstanceForms = Set.empty
   }
 
@@ -67,6 +71,13 @@ update msg model =
         ({ model | aboutInfo = newAbout }
         , cmd
         )
+    UpdateLoginStatusMsg subMsg ->
+      let (newLoginStatus, cmd) =
+        updateLoginStatus subMsg model.loggedIn
+      in
+        ({ model | loggedIn = newLoginStatus }
+        , cmd
+        )
     UpdateErrorsMsg subMsg ->
       let (newErrors, cmd) =
         updateErrors subMsg model.errors
@@ -89,6 +100,7 @@ view model =
     [ class "container" ]
     [ Views.Header.view model.aboutInfo model.loginForm
     , Views.Notifications.view model.errors
+    , text (toString model.loggedIn)
     -- ,  Html.map ViewsBodyMsg Views.Body.view model.templatesModel
     ]
 

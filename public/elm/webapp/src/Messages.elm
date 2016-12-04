@@ -6,6 +6,7 @@ type AnyMsg
   = UpdateAboutInfoMsg Updates.Messages.UpdateAboutInfoMsg
   | UpdateErrorsMsg Updates.Messages.UpdateErrorsMsg
   | UpdateLoginFormMsg Updates.Messages.UpdateLoginFormMsg
+  | UpdateLoginStatusMsg Updates.Messages.UpdateLoginStatusMsg
   | NoOp
   -- | FetchTemplatesMsg Commands.FetchTemplates.Msg
   -- | ViewsBodyMsg Views.Body.Msg
