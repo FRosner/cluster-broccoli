@@ -4,17 +4,18 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onSubmit)
 import Models.Resources.AboutInfo exposing (AboutInfo)
+import Models.Ui.LoginForm exposing (LoginForm)
 import Messages exposing (AnyMsg(..))
 import Updates.Messages exposing (UpdateLoginFormMsg(..))
 
-view : Maybe AboutInfo -> Html AnyMsg
-view maybeAboutInfo =
+view : Maybe AboutInfo -> LoginForm -> Html AnyMsg
+view maybeAboutInfo loginFormModel =
   nav
     [ class "navbar navbar-default" ]
     [ div
       [ class "container-fluid" ]
       [ navbarHeader
-      , navbarCollapse
+      , navbarCollapse loginFormModel
       ]
     ]
   -- case maybeAboutInfo of
@@ -90,23 +91,36 @@ navbarToggleButton =
     , span [ class "icon-bar" ] []
     ]
 
-navbarCollapse =
+navbarCollapse loginFormModel =
   div
     [ class "collapse navbar-collapse"
     , id "navbar-collapse"
     ]
-    [ Html.map UpdateLoginFormMsg loginForm
+    [ Html.map UpdateLoginFormMsg (loginForm loginFormModel)
     ]
 
-loginForm =
+redIfLoginFailed loginFailed =
+  if (loginFailed) then "#fee" else "#fff"
+
+attentionIfLoginFailed loginFailed =
+  if (loginFailed) then "animated shake" else ""
+
+loginForm loginFormModel =
   Html.form
-    [ class "navbar-form navbar-right"
+    [ id "loginForm"
+    , class
+        ( String.concat
+            [ "navbar-form navbar-right "
+            , (attentionIfLoginFailed loginFormModel.loginIncorrect)
+            ]
+        )
     , onSubmit LoginAttempt
     ]
     [ div [ class "form-group" ]
       [ input
         [ type_ "text"
         , class "form-control"
+        , style [("background-color", (redIfLoginFailed loginFormModel.loginIncorrect))]
         , onInput EnterUserName
         , placeholder "User"
         ]
@@ -116,11 +130,12 @@ loginForm =
         [ type_ "password"
         , onInput EnterPassword
         , class "form-control"
+        , style [("background-color", (redIfLoginFailed loginFormModel.loginIncorrect))]
         , placeholder "Password"
         ]
         []
       ]
-    , text " "
+    , text " " -- otherwise Bootstrap layout breaks, doh
     , button
       [ type_ "submit"
       , class "btn btn-default"

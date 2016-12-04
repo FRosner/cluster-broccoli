@@ -87,7 +87,7 @@ view : Model -> Html AnyMsg
 view model =
   div
     [ class "container" ]
-    [ Views.Header.view model.aboutInfo
+    [ Views.Header.view model.aboutInfo model.loginForm
     , Views.Notifications.view model.errors
     -- ,  Html.map ViewsBodyMsg Views.Body.view model.templatesModel
     ]
