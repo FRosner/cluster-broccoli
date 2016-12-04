@@ -8,14 +8,14 @@ updateLoginForm : UpdateLoginFormMsg -> LoginForm -> (LoginForm, Cmd AnyMsg)
 updateLoginForm message oldLoginForm =
   case message of
     LoginAttempt ->
-      ( oldLoginForm
+      ( { oldLoginForm | loginIncorrect = True } -- TODO remove because only for dummy
       , Cmd.none -- TODO send request
       )
     EnterUserName newUsername ->
-      ( { oldLoginForm | username = newUsername }
+      ( { oldLoginForm | username = newUsername, loginIncorrect = False }
       , Cmd.none
       )
     EnterPassword newPassword ->
-      ( { oldLoginForm | password = newPassword }
+      ( { oldLoginForm | password = newPassword, loginIncorrect = False }
       , Cmd.none
       )
