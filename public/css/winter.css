@@ -1,0 +1,90 @@
+body {
+  background-color: #333;
+  font-family: Androgyne;
+  background-image: url('/assets/images/s1.png'), url('/assets/images/s2.png'), url('/assets/images/s3.png');
+  z-index: 1;
+  -webkit-animation: snow 20s linear infinite;
+  -moz-animation: snow 20s linear infinite;
+  -ms-animation: snow 20s linear infinite;
+  animation: snow 20s linear infinite;
+}
+.customText {
+  color: ghostwhite;
+}
+
+a,a:link,a:active {
+  color: ghostwhite;
+  text-decoration: inherit;
+}
+a:hover {
+  color: ghostwhite;
+  text-decoration: underline;
+}
+@keyframes snow {
+  0% {
+    background-position: 0px 0px, 0px 0px, 0px 0px;
+  }
+  50% {
+    background-position: 500px 500px, 100px 200px, -100px 150px;
+  }
+  100% {
+    background-position: 500px 1000px, 200px 400px, -100px 300px;
+  }
+}
+@-moz-keyframes snow {
+  0% {
+    background-position: 0px 0px, 0px 0px, 0px 0px;
+  }
+  50% {
+    background-position: 500px 500px, 100px 200px, -100px 150px;
+  }
+  100% {
+    background-position: 400px 1000px, 200px 400px, 100px 300px;
+  }
+}
+@-webkit-keyframes snow {
+  0% {
+    background-position: 0px 0px, 0px 0px, 0px 0px;
+  }
+  50% {
+    background-position: 500px 500px, 100px 200px, -100px 150px;
+  }
+  100% {
+    background-position: 500px 1000px, 200px 400px, -100px 300px;
+  }
+}
+@-ms-keyframes snow {
+  0% {
+    background-position: 0px 0px, 0px 0px, 0px 0px;
+  }
+  50% {
+    background-position: 500px 500px, 100px 200px, -100px 150px;
+  }
+  100% {
+    background-position: 500px 1000px, 200px 400px, -100px 300px;
+  }
+}
+.ribbon {
+  position: absolute;
+  padding: 0;
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  transform-origin: 0 100%;
+  box-shadow: 0 0px 100px 0 rgba(255, 255, 255, .12), 0 0px 100px 0 rgba(255, 255, 255, .12);
+  background-color: ghostwhite;
+  color: brown;
+  height: 40px;
+  width: 300px;
+  top: -50px;
+  transform: rotateZ(45deg);
+  padding-left: 30px;
+  padding-right: 30px;
+  line-height: 39px;
+  right: -100px;
+  font-size: 18px;
+  -webkit-transform: rotateZ(45deg);
+  -moz-transform: rotateZ(45deg);
+  -o-transform: rotateZ(45deg);
+}
