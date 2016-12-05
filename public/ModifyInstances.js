@@ -8,6 +8,7 @@ angular.module('broccoli')
                 controller: 'NewInstanceCtrl',
                 controllerAs: 'instCtrl',
                 size: undefined,
+                scope: $scope,
                 resolve: {
                     template: function() {
                       return template;
@@ -41,6 +42,7 @@ angular.module('broccoli')
                 controller: 'NewInstanceCtrl',
                 controllerAs: 'instCtrl',
                 size: undefined,
+                scope: $scope,
                 resolve: {
                     template: function() {
                       return template;
@@ -81,14 +83,7 @@ angular.module('broccoli')
         };
 
         function submitStatus(instance, status) {
-
-            InstanceService.submitStatus(instance, status)
-                .then(function(updatedInstance) {
-                    $rootScope.restangularError = null;
-                    for (i in updatedInstance) {
-                        instance[i] = updatedInstance[i];
-                    };
-                });
+            InstanceService.submitStatus(instance, status);
         }
 
         function deleteInstance(template, instance) {
@@ -99,6 +94,7 @@ angular.module('broccoli')
                 controller: 'NewInstanceCtrl',
                 controllerAs: 'instCtrl',
                 size: undefined,
+                scope: $scope,
                 resolve: {
                     template: function() {
                       return template;

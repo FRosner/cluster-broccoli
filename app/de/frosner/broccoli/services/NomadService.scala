@@ -96,7 +96,12 @@ class NomadService @Inject()(configuration: Configuration,
             mappedStatuses.updated(instanceId, newInstanceStatuses)
         }.map { case (instanceId, periodicRunStatuses) =>
           val periodic = periodicRunStatuses.map { case (periodicJobName, periodicJobStatus) =>
-              PeriodicRun(instanceId, periodicJobStatus, NomadService.extractUtcSeconds(periodicJobName).getOrElse(0))
+              PeriodicRun(
+                createdBy = instanceId,
+                status = periodicJobStatus,
+                utcSeconds = NomadService.extractUtcSeconds(periodicJobName).getOrElse(0),
+                jobName = periodicJobName
+              )
           }
           (instanceId, periodic)
         }
@@ -167,7 +172,8 @@ class NomadService @Inject()(configuration: Configuration,
     Try {
       val result = Await.result(request.delete(), Duration(5, TimeUnit.SECONDS))
       if (result.status == 200) {
-        jobStatuses -= id
+        // TODO doesn't work with periodic runs so we have to remove it, in order to avoid a memory leak we should use a cache with TTLs
+        // jobStatuses -= id
         consulService.serviceStatuses -= id
         Success()
       } else {

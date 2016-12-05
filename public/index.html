@@ -212,6 +212,7 @@
                       <ul>
                         <li>
                           {{periodicRun.utcSeconds * 1000 | date:'MMMM dd, yyyy HH:mm:ss'}}
+                          <a class="badge" ng-click="copyValue(periodicRun.jobName)">{{periodicRun.jobName}}</a>
                         </li>
                       </ul>
                     </div>

@@ -7,7 +7,7 @@ import de.frosner.broccoli.models.ServiceStatus.ServiceStatus
 import play.api.libs.json.Json
 import JobStatusJson._
 
-case class PeriodicRun(createdBy: String, status: JobStatus, utcSeconds: Long) extends Serializable
+case class PeriodicRun(createdBy: String, status: JobStatus, utcSeconds: Long, jobName: String) extends Serializable
 
 object PeriodicRun {
 

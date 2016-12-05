@@ -73,10 +73,21 @@ angular.module('broccoli', ['restangular', 'ui.bootstrap'])
         });
     }
 
+    function copyValue(secret){
+      var dummy = document.createElement("input");
+      document.body.appendChild(dummy);
+      dummy.setAttribute("id", "dummy_id");
+      document.getElementById("dummy_id").value=secret;
+      dummy.select();
+      document.execCommand("copy");
+      document.body.removeChild(dummy);
+    }
+
     function isCollapsed(instance) {
       $scope.isOpen[instance.id] = !($scope.isOpen[instance.id]);
       }
 
+    $scope.copyValue = copyValue;
     $scope.isCollapsed = isCollapsed;
 
   }).directive('focusField', function() {

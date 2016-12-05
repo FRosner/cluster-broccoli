@@ -36,7 +36,7 @@
           <a title="Show password" ng-click="instCtrl.toggleShowSecret(param.id)" class="input-group-addon" id="basic-addon2" ng-if="param.secret">
             <span class="glyphicon glyphicon-eye-{{(param._isVisible) ? 'close' : 'open'}}" aria-hidden="true"></span>
           </a>
-          <a title="Copy to clipboard" ng-click="instCtrl.copySecret(instCtrl.paramsToValue[param.id])" class="input-group-addon" id="basic-addon2" ng-if="param.secret">
+          <a title="Copy to clipboard" ng-click="copyValue(instCtrl.paramsToValue[param.id])" class="input-group-addon" id="basic-addon2" ng-if="param.secret">
             <span class="glyphicon glyphicon-copy" aria-hidden="true"></span>
           </a>
         </div>
