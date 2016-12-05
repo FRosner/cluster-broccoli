@@ -40,5 +40,6 @@
       "port": 8000,
       "status": "failing"
     }
-  }
+  },
+  "periodicRuns": []
 }

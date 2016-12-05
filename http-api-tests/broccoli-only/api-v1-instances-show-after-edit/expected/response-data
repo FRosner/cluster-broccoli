@@ -26,5 +26,6 @@
     "cpu": "50"
   },
   "status": "unknown",
-  "services": {}
+  "services": {},
+  "periodicRuns": []
 }
