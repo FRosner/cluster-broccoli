@@ -11,7 +11,7 @@ updateLoginStatus message oldLoginStatus =
   case message of
     FetchLogin (Ok loggedInUser) ->
       ( Just loggedInUser
-      , Cmd.none
+      , Cmd.none -- TODO request about again on successful login?
       )
     FetchLogin (Err error) ->
       ( oldLoginStatus

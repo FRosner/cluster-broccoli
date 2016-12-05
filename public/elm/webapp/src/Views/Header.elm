@@ -4,18 +4,19 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onSubmit)
 import Models.Resources.AboutInfo exposing (AboutInfo)
+import Models.Resources.UserInfo exposing (UserInfo)
 import Models.Ui.LoginForm exposing (LoginForm)
 import Messages exposing (AnyMsg(..))
 import Updates.Messages exposing (UpdateLoginFormMsg(..))
 
-view : Maybe AboutInfo -> LoginForm -> Html AnyMsg
-view maybeAboutInfo loginFormModel =
+view : Maybe AboutInfo -> LoginForm -> Maybe UserInfo -> Maybe Bool -> Html AnyMsg
+view maybeAboutInfo loginFormModel maybeUserInfo maybeAuthEnabled =
   nav
     [ class "navbar navbar-default" ]
     [ div
       [ class "container-fluid" ]
       [ navbarHeader
-      , navbarCollapse loginFormModel
+      , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled loginFormModel
       ]
     ]
   -- case maybeAboutInfo of
@@ -91,13 +92,52 @@ navbarToggleButton =
     , span [ class "icon-bar" ] []
     ]
 
-navbarCollapse loginFormModel =
+navbarCollapse : Maybe AboutInfo -> Maybe UserInfo -> Maybe Bool -> LoginForm -> Html AnyMsg
+navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled loginFormModel =
   div
     [ class "collapse navbar-collapse"
     , id "navbar-collapse"
     ]
-    [ Html.map UpdateLoginFormMsg (loginForm loginFormModel)
+    [ Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeUserInfo maybeAuthEnabled)
+    , userInfoView maybeUserInfo
     ]
+
+userInfoView maybeUserInfo =
+  case maybeUserInfo of
+    Just userInfo ->
+      ul
+        [ class "nav navbar-nav navbar-right" ]
+        [ li
+          [ class "dropdown" ]
+          [ a
+              [ class "dropdown-toggle"
+              , attribute "data-toggle" "dropdown"
+              , attribute "role" "button"
+              , attribute "aria-haspopup" "true"
+              , attribute "aria-expanded" "false"
+              ]
+              [ text userInfo.name
+              , span [ class "caret" ] []
+              ]
+          , ul
+              [ class "dropdown-menu" ]
+              [ li []
+                  [ a []
+                    [ text "Role: "
+                    , code [] [ text userInfo.role ]
+                    ]
+                  ]
+              , li []
+                  [ a []
+                    [ text "Instances: "
+                    , code [] [ text userInfo.instanceRegex ]
+                    ]
+                  ]
+              ]
+          ]
+        ]
+    _ ->
+      span [] []
 
 redIfLoginFailed loginFailed =
   if (loginFailed) then "#fee" else "#fff"
@@ -105,7 +145,20 @@ redIfLoginFailed loginFailed =
 attentionIfLoginFailed loginFailed =
   if (loginFailed) then "animated shake" else ""
 
-loginForm loginFormModel =
+loginLogoutView loginFormModel maybeUserInfo maybeAuthEnabled =
+  case maybeAuthEnabled of
+    Nothing ->
+      span [] []
+    Just True ->
+      case maybeUserInfo of
+        Nothing ->
+          loginFormView loginFormModel
+        Just userInfo ->
+          logoutFormView
+    Just False ->
+      span [] []
+
+loginFormView loginFormModel =
   Html.form
     [ id "loginForm"
     , class
@@ -141,4 +194,19 @@ loginForm loginFormModel =
       , class "btn btn-default"
       ]
       [ text "Login" ]
+    ]
+
+logoutFormView =
+  Html.form
+    [ id "logoutForm"
+    , class "navbar-form navbar-right"
+    , onSubmit LogoutAttempt
+    ]
+    [ div [ class "form-group" ]
+      [ button
+        [ type_ "submit"
+        , class "btn btn-default"
+        ]
+        [ text "Logout" ]
+      ]
     ]
