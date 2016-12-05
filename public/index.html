@@ -9,6 +9,7 @@
     <meta name="author" content="" />
     <!-- Le styles -->
     <link data-require="bootstrap-css" data-semver="3.3.6" rel="stylesheet" href="/assets/css/bootstrap.css" />
+    <link rel="stylesheet" href="/assets/css/winter.css" />
     <link rel="stylesheet" href="/assets/css/index.css" />
 
     <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
@@ -44,6 +45,7 @@
 
 <body ng-controller="MainController as main">
     <div class="container">
+      <div class="ribbon "><strong> Merry Christmas! </strong></div>
       <nav class="navbar navbar-default">
         <ul class="nav navbar-nav navbar-left">
           <li class="dropdown">
@@ -125,7 +127,7 @@
         <div class="alert alert-danger" role="alert" ng-if="!broccoliReachable">Cluster Broccoli server is not reachable!</div>
         <div ng-controller="LoginCntrl as login">
         <div class="row" ng-repeat="template in templates | toArray | filter:_templateFilter:false"  ng-if="broccoliReachable && _isLoggedIn">
-          <div ng-controller = "ModifyInstanceCntrl as modify_instance" class="col-md-12" style="margin-top: 0px;">
+          <div ng-controller = "ModifyInstanceCntrl as modify_instance" class="col-md-12 customText" style="margin-top: 0px;">
             <h2>
               <img ng-init="itemsrc='assets/images/plus.svg'"
                    ng-src="{{itemsrc}}"
@@ -138,7 +140,7 @@
               {{template.id}}
               <small>({{template.version | limitTo : 8 : 0}})</small>
             </h2>
-            <p>
+            <p class = "customText">
               {{template.description}}
             </p>
           </div>
@@ -160,7 +162,7 @@
                          data-holder-rendered="true">
                     <a role="button" data-toggle="collapse" href="#collapse{{instance.id}}"
                        aria-expanded="false" aria-controls="collapse{{instance.id}}"
-                       ng-click="isCollapsed(instance)">
+                       ng-click="isCollapsed(instance)" class= "customText">
                       <span class="glyphicon glyphicon-chevron-right " aria-hidden="true" ng-show="!(isOpen[instance.id])"></span>
                       <span class="glyphicon glyphicon-chevron-down " aria-hidden="true" ng-show="isOpen[instance.id]"></span>
                         {{instance.id}}
@@ -204,7 +206,7 @@
                       <span class="glyphicon glyphicon-stop" aria-hidden="true"></span>
                     </button>
                   </div>
-                  <div ng-show="isOpen[instance.id]" ng-repeat="periodicRun in instance.periodicRuns| orderBy:'utcSeconds'">
+                  <div ng-show="isOpen[instance.id]" ng-repeat="periodicRun in instance.periodicRuns| orderBy:'utcSeconds'" class = "customText">
                     <div class ="col-md-10" ng-show="isOpen[instance.id] && periodicRun && $first">
                       <h4>Periodic Runs</h4>
                     </div>
