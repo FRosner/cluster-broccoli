@@ -32,6 +32,7 @@ type alias Model =
   , errors : Errors
   , loginForm : LoginForm
   , loggedIn : Maybe UserInfo
+  , authEnabled : Maybe Bool
   -- , expandedNewInstanceForms : Set TemplateId
   }
 
@@ -42,6 +43,7 @@ initialModel =
   , errors = []
   , loginForm = emptyLoginForm
   , loggedIn = Nothing
+  , authEnabled = Nothing
   -- , expandedNewInstanceForms = Set.empty
   }
 
@@ -65,10 +67,13 @@ update msg model =
       --   , cmd
       --   )
     UpdateAboutInfoMsg subMsg ->
-      let (newAbout, cmd) =
+      let ((newAbout, newAuthEnabled), cmd) =
         updateAboutInfo subMsg model.aboutInfo
       in
-        ({ model | aboutInfo = newAbout }
+        ( { model
+          | aboutInfo = newAbout
+          , authEnabled = newAuthEnabled
+          }
         , cmd
         )
     UpdateLoginStatusMsg subMsg ->
@@ -98,7 +103,7 @@ view : Model -> Html AnyMsg
 view model =
   div
     [ class "container" ]
-    [ Views.Header.view model.aboutInfo model.loginForm
+    [ Views.Header.view model.aboutInfo model.loginForm model.loggedIn model.authEnabled
     , Views.Notifications.view model.errors
     , text (toString model)
     -- ,  Html.map ViewsBodyMsg Views.Body.view model.templatesModel

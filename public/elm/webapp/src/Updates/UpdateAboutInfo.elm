@@ -6,18 +6,53 @@ import Messages exposing (AnyMsg(..))
 import Utils.CmdUtils exposing (cmd)
 import Http exposing (Error(..))
 
-updateAboutInfo : UpdateAboutInfoMsg -> Maybe AboutInfo -> (Maybe AboutInfo, Cmd AnyMsg)
+updateAboutInfo : UpdateAboutInfoMsg -> Maybe AboutInfo -> ((Maybe AboutInfo, Maybe Bool), Cmd AnyMsg)
 updateAboutInfo message oldAboutInfo =
   case message of
     FetchAbout (Ok newAboutInfo) ->
-      ( Just newAboutInfo
+      (
+        ( Just newAboutInfo
+        , Just newAboutInfo.authInfo.enabled
+        )
       , Cmd.none
       )
     FetchAbout (Err error) ->
-      ( Nothing
-      , (cmd (UpdateErrorsMsg (AddError "Fetching 'about' failed.")))
-      )
-
+      case error of
+        BadStatus request ->
+          if (request.status.code == 403) then
+            (
+              ( Nothing
+              , Just True
+              )
+            , Cmd.none
+            )
+          else
+            (
+              ( Nothing
+              , Nothing
+              )
+            , ( cmd
+                ( UpdateErrorsMsg
+                  ( AddError
+                    ( String.concat
+                        [ "Cluster Broccoli not reachable: "
+                        , (toString request.status.code)
+                        , " ("
+                        , (toString request.status.message)
+                        , ")"
+                        ]
+                    )
+                  )
+                )
+              )
+            )
+        _ ->
+          (
+            ( Nothing
+            , Nothing
+            )
+          , (cmd (UpdateErrorsMsg (AddError "Fetching 'about' failed.")))
+          )
 -- errorToString : Http.Error -> String
 -- errorToString error =
 --   case error of

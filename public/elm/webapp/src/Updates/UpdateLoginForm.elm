@@ -17,6 +17,10 @@ updateLoginForm message oldLoginForm =
       ( { oldLoginForm | loginIncorrect = True }
       , Cmd.none
       )
+    LogoutAttempt ->
+      ( oldLoginForm
+      , Cmd.none -- TODO implement logout
+      )
     EnterUserName newUsername ->
       ( { oldLoginForm | username = newUsername, loginIncorrect = False }
       , Cmd.none
