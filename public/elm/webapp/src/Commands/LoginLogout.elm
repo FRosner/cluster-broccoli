@@ -19,4 +19,4 @@ requestBody username password =
 loginRequest : String -> String -> Cmd UpdateLoginStatusMsg
 loginRequest username password =
   Http.post loginUrl (requestBody username password) userInfoDecoder
-    |> Http.send FetchLogin
+    |> Http.send FetchLogin -- TODO why is the cookie not set?
