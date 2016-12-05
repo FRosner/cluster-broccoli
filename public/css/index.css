@@ -69,3 +69,7 @@ body {
   display: block;
   margin: 15px;
 }
+
+a,a:link,a:visited{
+  color: inherit;
+}
