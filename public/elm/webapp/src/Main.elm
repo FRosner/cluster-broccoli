@@ -100,7 +100,7 @@ view model =
     [ class "container" ]
     [ Views.Header.view model.aboutInfo model.loginForm
     , Views.Notifications.view model.errors
-    , text (toString model.loggedIn)
+    , text (toString model)
     -- ,  Html.map ViewsBodyMsg Views.Body.view model.templatesModel
     ]
 
