@@ -17,3 +17,7 @@ updateLoginStatus message oldLoginStatus =
       ( oldLoginStatus
       , (cmd (UpdateLoginFormMsg FailedLoginAttempt))
       )
+    ResumeExistingSession loggedInUser ->
+      ( Just loggedInUser
+      , Cmd.none
+      )
