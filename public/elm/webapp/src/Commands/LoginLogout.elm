@@ -1,4 +1,4 @@
-module Commands.LoginLogout exposing (loginRequest)
+module Commands.LoginLogout exposing (loginRequest, logoutRequest)
 
 import Commands.Fetch exposing (apiBaseUrl)
 import Json.Decode
@@ -19,4 +19,9 @@ requestBody username password =
 loginRequest : String -> String -> Cmd UpdateLoginStatusMsg
 loginRequest username password =
   Http.post loginUrl (requestBody username password) userInfoDecoder
-    |> Http.send FetchLogin -- TODO why is the cookie not set?
+    |> Http.send FetchLogin
+
+logoutRequest : Cmd UpdateLoginStatusMsg
+logoutRequest =
+  Http.post logoutUrl Http.emptyBody Json.Decode.string
+    |> Http.send FetchLogout
