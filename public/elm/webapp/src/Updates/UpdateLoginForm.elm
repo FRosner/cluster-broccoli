@@ -19,7 +19,7 @@ updateLoginForm message oldLoginForm =
       )
     LogoutAttempt ->
       ( oldLoginForm
-      , Cmd.none -- TODO implement logout
+      , Cmd.map UpdateLoginStatusMsg Commands.LoginLogout.logoutRequest
       )
     EnterUserName newUsername ->
       ( { oldLoginForm | username = newUsername, loginIncorrect = False }

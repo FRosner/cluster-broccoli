@@ -7,6 +7,7 @@ import de.frosner.broccoli.services.SecurityService
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth._
 import play.api.Configuration
+import play.api.libs.json.JsString
 import play.api.mvc.{RequestHeader, Result, Results}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,10 +38,10 @@ trait AuthConfigImpl extends AuthConfig with Logging {
   def resolveUser(id: Id)(implicit ctx: ExecutionContext): Future[Option[User]] = Future.successful(securityService.getAccount(id))
 
   def loginSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
-    Future.successful(Results.Ok("Login successful."))
+    Future.successful(Results.Ok(JsString("Login successful!"))) // the content is not used anyway as the controller replaces it
 
   def logoutSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
-    Future.successful(Results.Ok("Logout successful."))
+    Future.successful(Results.Ok(JsString("Logout successful!")))
 
   def authenticationFailed(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
     Future.successful(Results.Forbidden("Authentication failed."))
