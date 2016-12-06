@@ -9,7 +9,11 @@ updateLoginForm : UpdateLoginFormMsg -> LoginForm -> (LoginForm, Cmd AnyMsg)
 updateLoginForm message oldLoginForm =
   case message of
     LoginAttempt ->
-      ( { oldLoginForm | loginIncorrect = False }
+      ( { oldLoginForm
+        | loginIncorrect = False
+        , username = ""
+        , password = ""
+        }
       , Cmd.map UpdateLoginStatusMsg
           (Commands.LoginLogout.loginRequest oldLoginForm.username oldLoginForm.password)
       )
