@@ -34,17 +34,27 @@ case class SecurityController @Inject() (override val securityService: SecurityS
       account => {
         if (securityService.isAllowedToAuthenticate(account)) {
           Logger.info(s"Login successful for user '${account.name}'.")
-          gotoLoginSucceeded(account.name)
-          val user = resolveUser(account.name)
-          user.map { maybeUser =>
-            val actualUser = maybeUser.get
-            Results.Ok(
-              JsObject(Map(
-                "name" -> JsString(actualUser.name),
-                "role" -> JsString(actualUser.role.toString),
-                "instanceRegex" -> JsString(actualUser.instanceRegex)
-              ))
-            )
+          val eventuallyLoginSucceededResponse = gotoLoginSucceeded(account.name)
+          eventuallyLoginSucceededResponse.flatMap { result =>
+            val user = resolveUser(account.name)
+            user.map { maybeUser =>
+              val actualUser = maybeUser.get
+              val userResult = Results.Ok(
+                JsObject(Map(
+                  "name" -> JsString(actualUser.name),
+                  "role" -> JsString(actualUser.role.toString),
+                  "instanceRegex" -> JsString(actualUser.instanceRegex)
+                ))
+              )
+              result.copy(
+                header = result.header.copy(
+                  headers = userResult.header.headers.get("Content-Type").map { contentType =>
+                    result.header.headers.updated("Content-Type", contentType)
+                  }.getOrElse(result.header.headers)
+                ),
+                body = userResult.body
+              )
+            }
           }
         } else {
           Logger.info(s"Login failed for user '${account.name}'.")
