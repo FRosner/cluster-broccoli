@@ -9,6 +9,7 @@ type UpdateAboutInfoMsg
 
 type UpdateLoginStatusMsg
   = FetchLogin (Result Http.Error UserInfo)
+  | ResumeExistingSession UserInfo
 
 type UpdateErrorsMsg
   = AddError String

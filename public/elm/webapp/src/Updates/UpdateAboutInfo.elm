@@ -1,6 +1,6 @@
 module Updates.UpdateAboutInfo exposing (updateAboutInfo)
 
-import Updates.Messages exposing (UpdateAboutInfoMsg(..), UpdateErrorsMsg(..))
+import Updates.Messages exposing (UpdateAboutInfoMsg(..), UpdateErrorsMsg(..), UpdateLoginStatusMsg(..))
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Messages exposing (AnyMsg(..))
 import Utils.CmdUtils exposing (cmd)
@@ -14,7 +14,7 @@ updateAboutInfo message oldAboutInfo =
         ( Just newAboutInfo
         , Just newAboutInfo.authInfo.enabled
         )
-      , Cmd.none
+      , ( cmd ( UpdateLoginStatusMsg (ResumeExistingSession newAboutInfo.authInfo.userInfo) ) )
       )
     FetchAbout (Err error) ->
       case error of
