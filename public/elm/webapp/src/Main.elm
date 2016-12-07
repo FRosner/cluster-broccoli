@@ -10,7 +10,7 @@ import Updates.UpdateAboutInfo exposing (updateAboutInfo)
 import Updates.UpdateErrors exposing (updateErrors)
 import Updates.UpdateLoginForm exposing (updateLoginForm)
 import Updates.UpdateLoginStatus exposing (updateLoginStatus)
-import Updates.Messages exposing (UpdateAboutInfoMsg, UpdateLoginStatusMsg)
+import Updates.Messages exposing (UpdateAboutInfoMsg(..), UpdateLoginStatusMsg(..), UpdateErrorsMsg(..))
 import Commands.FetchAbout
 import Messages exposing (AnyMsg(..))
 import Models.Ui.Notifications exposing (Errors)
@@ -19,6 +19,7 @@ import Models.Ui.LoginForm exposing (LoginForm, emptyLoginForm)
 import Views.Header
 import Views.Body
 import Views.Notifications
+import WebSocket
 
 -- TODO what type of submessages do I want to have?
 -- - Messages changing resources
@@ -111,7 +112,9 @@ view model =
 
 subscriptions : Model -> Sub AnyMsg
 subscriptions model =
-  Sub.none
+  Sub.map
+    UpdateErrorsMsg
+    ( WebSocket.listen "ws://localhost:9000/ws" AddError )
 
 main =
   program
