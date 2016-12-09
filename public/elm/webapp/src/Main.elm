@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Set exposing (Set)
 import Models.Resources.Template exposing (..)
+import Models.Resources.Instance exposing (..)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
 import Updates.UpdateAboutInfo exposing (updateAboutInfo)
@@ -37,8 +38,37 @@ type alias Model =
   , authEnabled : Maybe Bool
   , templates : List Template
   , expandedTemplates : Set TemplateId
+  , instances : List Instance
   -- , expandedNewInstanceForms : Set TemplateId
   }
+
+template1 =
+  Template
+    "curl"
+    "This is a very curly template."
+    "chj3kc67"
+    [ "id"
+    , "url"
+    ]
+    ( Dict.fromList
+      [ ( "id", ParameterInfo "id" Nothing Nothing )
+      , ( "url", ParameterInfo "url" (Just "http://localhost:8000") Nothing )
+      ]
+    )
+
+template2 =
+  Template
+    "http-server"
+    "Use this one to serve awesome HTTP responses based on a directory. The directory will be the one you are currently working in and it is a lot of fun to use this template."
+    "dsadjda4"
+    [ "id"
+    , "password"
+    ]
+    ( Dict.fromList
+      [ ( "id", ParameterInfo "id" Nothing Nothing )
+      , ( "password", ParameterInfo "password" Nothing (Just True) )
+      ]
+    )
 
 initialModel : Model
 initialModel =
@@ -50,28 +80,32 @@ initialModel =
   , authEnabled = Nothing
   , expandedTemplates = Set.empty
   , templates =
-    [ Template
-        "curl"
-        "This is a very curly template."
-        "chj3kc67"
-        [ "id"
-        , "url"
-        ]
+    [ template1
+    , template2
+    ]
+  , instances =
+    [ Instance
+        "curl-1"
+        template1
         ( Dict.fromList
-          [ ( "id", ParameterInfo "id" Nothing Nothing )
-          , ( "url", ParameterInfo "url" (Just "http://localhost:8000") Nothing )
+          [ ("id", "curl-1")
+          , ("url", "http://localhost:9000")
           ]
         )
-    , Template
-        "http-server"
-        "Use this one to serve awesome HTTP responses based on a directory. The directory will be the one you are currently working in and it is a lot of fun to use this template."
-        "dsadjda4"
-        [ "id"
-        , "password"
-        ]
+    , Instance
+        "http-server-1"
+        template2
         ( Dict.fromList
-          [ ( "id", ParameterInfo "id" Nothing Nothing )
-          , ( "password", ParameterInfo "url" Nothing (Just True) )
+          [ ("id", "http-server-1")
+          , ("password", "secret")
+          ]
+        )
+    , Instance
+        "http-server-2"
+        template2
+        ( Dict.fromList
+          [ ("id", "http-server-2")
+          , ("password", "secret2")
           ]
         )
     ]
@@ -143,7 +177,7 @@ view model =
     []
     [ Views.Header.view model.aboutInfo model.loginForm model.loggedIn model.authEnabled
     , Views.Notifications.view model.errors
-    , Html.map UpdateBodyViewMsg (Views.Body.view model.templates model.expandedTemplates)
+    , Html.map UpdateBodyViewMsg (Views.Body.view model.templates model.expandedTemplates model.instances)
     , text (toString model)
     ]
 
