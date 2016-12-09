@@ -8,32 +8,38 @@ import Dict exposing (..)
 import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
 import Set exposing (Set)
 import Views.NewInstanceForm exposing (view)
+import Messages exposing (AnyMsg(..))
 
-type Msg
-  = NoOp
-
-type alias ExpandedNewInstanceForms = Set TemplateId
-type alias NewInstanceFormExpanded = Bool
-
-view : List Template -> ExpandedNewInstanceForms -> Html Msg
-view templates expandedNewInstanceForms =
+view : List Template -> Html AnyMsg
+view templates =
   div
     [ class "container" ]
-    (List.map (templateRow expandedNewInstanceForms) templates)
+    (List.map templateView templates)
 
-templateRow : ExpandedNewInstanceForms -> Template -> Html Msg
-templateRow expandedNewInstanceForms template =
+-- <div class="panel panel-default">
+--   <!-- Default panel contents -->
+--   <div class="panel-heading">Panel heading</div>
+--   <div class="panel-body">
+--     <p>...</p>
+--   </div>
+--
+--   <!-- Table -->
+--   <table class="table">
+--     ...
+--   </table>
+-- </div>
+
+templateView : Template -> Html AnyMsg
+templateView template =
   div
-    [ class "row" ]
+    [ class "panel panel-default" ]
     [ div
-      [ class "col-lg-12" ]
-      [ h2 []
-        [ newInstanceButton template
-        , templateId template
-        , templateVersion template
-        ]
-      -- , Views.NewInstanceForm.view template (Set.member template.id expandedNewInstanceForms)
-      ]
+      [ class "panel-heading" ]
+      [ text template.id ]
+    , div
+      [ class "panel-body" ]
+      [ text template.description ]
+    , p [] [ text "instances..."] -- instances view
     ]
 
 templateId template =

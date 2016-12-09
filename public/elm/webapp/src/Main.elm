@@ -59,6 +59,18 @@ initialModel =
           , ( "url", ParameterInfo "url" (Just "http://localhost:8000") Nothing )
           ]
         )
+    , Template
+        "http-server"
+        "Use this one to serve awesome HTTP responses based on a directory. The directory will be the one you are currently working in and it is a lot of fun to use this template."
+        "dsadjda4"
+        [ "id"
+        , "password"
+        ]
+        ( Dict.fromList
+          [ ( "id", ParameterInfo "id" Nothing Nothing )
+          , ( "password", ParameterInfo "url" Nothing (Just True) )
+          ]
+        )
     ]
   -- , expandedNewInstanceForms = Set.empty
   }
@@ -118,11 +130,11 @@ update msg model =
 view : Model -> Html AnyMsg
 view model =
   div
-    [ class "container" ]
+    []
     [ Views.Header.view model.aboutInfo model.loginForm model.loggedIn model.authEnabled
     , Views.Notifications.view model.errors
+    , Views.Body.view model.templates
     , text (toString model)
-    -- , Html.map ViewsBodyMsg Views.Body.view model.templatesModel
     ]
 
 subscriptions : Model -> Sub AnyMsg

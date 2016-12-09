@@ -8,7 +8,7 @@ import Messages exposing (AnyMsg)
 view : Errors -> Html AnyMsg
 view errors =
   div
-    []
+    [ class "container" ]
     (List.map errorAlert errors)
 
 errorAlert : Error -> Html AnyMsg

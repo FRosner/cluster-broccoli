@@ -11,12 +11,15 @@ import Updates.Messages exposing (UpdateLoginFormMsg(..))
 
 view : Maybe AboutInfo -> LoginForm -> Maybe UserInfo -> Maybe Bool -> Html AnyMsg
 view maybeAboutInfo loginFormModel maybeUserInfo maybeAuthEnabled =
-  nav
-    [ class "navbar navbar-default" ]
-    [ div
-      [ class "container-fluid" ]
-      [ navbarHeader
-      , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled loginFormModel
+  div
+    [ class "container" ]
+    [ nav
+      [ class "navbar navbar-default" ]
+      [ div
+        [ class "container-fluid" ]
+        [ navbarHeader
+        , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled loginFormModel
+        ]
       ]
     ]
   -- case maybeAboutInfo of
