@@ -3,7 +3,7 @@ module Main exposing (main)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Set exposing (Set)
-import Models.Resources.Template exposing (TemplateId, Template)
+import Models.Resources.Template exposing (..)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
 import Updates.UpdateAboutInfo exposing (updateAboutInfo)
@@ -15,11 +15,11 @@ import Commands.FetchAbout
 import Messages exposing (AnyMsg(..))
 import Models.Ui.Notifications exposing (Errors)
 import Models.Ui.LoginForm exposing (LoginForm, emptyLoginForm)
--- import Updates.UpdateTemplates exposing (updateTemplates)
 import Views.Header
 import Views.Body
 import Views.Notifications
 import WebSocket
+import Dict
 
 -- TODO what type of submessages do I want to have?
 -- - Messages changing resources
@@ -34,6 +34,7 @@ type alias Model =
   , loginForm : LoginForm
   , loggedIn : Maybe UserInfo
   , authEnabled : Maybe Bool
+  , templates : List Template
   -- , expandedNewInstanceForms : Set TemplateId
   }
 
@@ -45,6 +46,20 @@ initialModel =
   , loginForm = emptyLoginForm
   , loggedIn = Nothing
   , authEnabled = Nothing
+  , templates =
+    [ Template
+        "curl"
+        "This is a very curly template."
+        "chj3kc67"
+        [ "id"
+        , "url"
+        ]
+        ( Dict.fromList
+          [ ( "id", ParameterInfo "id" Nothing Nothing )
+          , ( "url", ParameterInfo "url" (Just "http://localhost:8000") Nothing )
+          ]
+        )
+    ]
   -- , expandedNewInstanceForms = Set.empty
   }
 
@@ -107,7 +122,7 @@ view model =
     [ Views.Header.view model.aboutInfo model.loginForm model.loggedIn model.authEnabled
     , Views.Notifications.view model.errors
     , text (toString model)
-    -- ,  Html.map ViewsBodyMsg Views.Body.view model.templatesModel
+    -- , Html.map ViewsBodyMsg Views.Body.view model.templatesModel
     ]
 
 subscriptions : Model -> Sub AnyMsg

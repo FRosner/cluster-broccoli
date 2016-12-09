@@ -17,10 +17,3 @@ fetchTemplates =
 templatesDecoder : Decode.Decoder (List Template)
 templatesDecoder =
   Decode.list templateDecoder
-
-templateDecoder =
-  Decode.map4 Template
-    (field "id" Decode.string)
-    (field "description" Decode.string)
-    (field "version" Decode.string)
-    (field "parameters" (Decode.list Decode.string))
