@@ -105,7 +105,7 @@ templateIdView template expandedTemplates =
     [ icon
       ( String.concat
         [ "glyphicon glyphicon-chevron-"
-        , if (Set.member template.id expandedTemplates) then "right" else "down"
+        , if (Set.member template.id expandedTemplates) then "down" else "right"
         ]
       )
       [ ("margin-right", "4px") ]
