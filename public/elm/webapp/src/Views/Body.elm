@@ -5,43 +5,80 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Views.NewInstanceForm
 import Dict exposing (..)
+import Models.Resources.Instance exposing (..)
 import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
 import Set exposing (Set)
 import Views.NewInstanceForm exposing (view)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon)
 
-view : List Template -> Set TemplateId -> Html UpdateBodyViewMsg
-view templates expandedTemplates =
+view : List Template -> Set TemplateId -> List Instance -> Html UpdateBodyViewMsg
+view templates expandedTemplates instances =
   div
     [ class "container" ]
-    (List.map (templateView expandedTemplates) templates)
+    (List.map (templateView expandedTemplates instances) templates)
 
-templateView expandedTemplates template =
-  div
-    [ class "panel panel-default" ]
-    [ div
-      [ class "panel-heading" ]
-      [ templatePanelHeadingView template expandedTemplates ]
-    , div
-      [ class
-          ( String.concat
-            [ "panel-body "
-            , if (Set.member template.id expandedTemplates) then "show" else "hidden"
+templateView expandedTemplates instances template =
+  let (templateInstances) =
+    List.filter (\i -> i.template.id == template.id) instances
+  in
+    div
+      [ class "panel panel-default" ]
+      [ div
+        [ class "panel-heading" ]
+        [ templatePanelHeadingView template expandedTemplates templateInstances ]
+      , div
+        [ class (if (Set.member template.id expandedTemplates) then "show" else "hidden") ]
+        [ div
+          [ class "panel-body" ]
+          [ text template.description ]
+        , table
+          [ class "table table-hover"
+          , style [ ("margin-bottom", "0px") ]
+          ]
+          [ thead []
+            [ tr []
+              [ th []
+                [ text "Actions" ]
+              , th []
+                [ text "ID" ]
+              , th []
+                [ text "Services" ]
+              , th []
+                [ text "Job Status" ]
+              , th []
+                [ text "" ]
+              ]
             ]
-          )
+          , tbody []
+            ( List.map instanceRowView templateInstances )
+          ]
+        ]
       ]
-      [ text template.description
-      , p [] [ text "instances..."] -- instances view
+
+instanceRowView instance =
+  tr []
+    [ td []
+      [ icon "fa fa-pencil-square-o" [] ]
+    , td []
+      [ text instance.id ]
+    , td []
+      [ text "..." ] -- TODO services
+    , td []
+      [ text "..." ] -- TODO job status
+    , td []
+      [ icon "glyphicon glyphicon-play" []
+      , icon "glyphicon glyphicon-stop" []
       ]
     ]
 
-templatePanelHeadingView template expandedTemplates =
+templatePanelHeadingView template expandedTemplates instances =
   span
     []
     [ templateIdView template expandedTemplates
     , text " "
     , templatePanelHeadingInfo "fa fa-code-fork" "Template Version" (templateVersion template)
+    , templatePanelHeadingInfo "fa fa-list" "Number of Instances" (text (toString (List.length instances)))
     ]
 
 templatePanelHeadingInfo clazz infoTitle info =
@@ -56,7 +93,7 @@ templatePanelHeadingInfo clazz infoTitle info =
     , title infoTitle
     , class "badge"
     ]
-    [ icon clazz [ ("margin-right", "2px") ]
+    [ icon clazz [ ("margin-right", "4px") ]
     , info
     ]
 
