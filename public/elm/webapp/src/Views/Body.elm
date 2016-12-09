@@ -16,62 +16,53 @@ view templates =
     [ class "container" ]
     (List.map templateView templates)
 
--- <div class="panel panel-default">
---   <!-- Default panel contents -->
---   <div class="panel-heading">Panel heading</div>
---   <div class="panel-body">
---     <p>...</p>
---   </div>
---
---   <!-- Table -->
---   <table class="table">
---     ...
---   </table>
--- </div>
-
 templateView : Template -> Html AnyMsg
 templateView template =
   div
     [ class "panel panel-default" ]
     [ div
       [ class "panel-heading" ]
-      [ text template.id ]
+      [ templatePanelHeadingView template ]
     , div
       [ class "panel-body" ]
       [ text template.description ]
     , p [] [ text "instances..."] -- instances view
     ]
 
-templateId template =
+templatePanelHeadingView template =
   span
-    [ style [ ("margin-left", "12px") ] ]
-    [ text template.id ]
-
-newInstanceButton template =
-  a
-    [ title (addTemplateInstanceString template)
-    -- , onClick (ShowNewInstanceForm template.id)
-    , attribute "role" "button"
+    []
+    [ templateIdView template
+    , text " "
+    , templatePanelHeadingInfo "fa fa-code-fork" "Template Version" (templateVersion template)
     ]
-    [ img
-      [ src "images/plus.svg"
-      , class "img-responsive"
-      , alt (addTemplateInstanceString template)
-      , style
-        [ ("height", "20px")
-        , ("display", "inline-block")
-        ]
+
+templatePanelHeadingInfo clazz infoTitle info =
+  span
+    [ style
+      [ ("margin-left", "10px")
+      , ("font-weight", "100")
+      , ("background-color", "#555")
+      , ("color", "#fff")
+      ]
+    , title infoTitle
+    , class "badge"
+    ]
+    [ span
+      [ class clazz
+      , attribute "aria-hidden" "true"
+      , style [ ("margin-right", "2px") ]
       ]
       []
+    , info
     ]
+
+templateIdView template =
+  span
+    [ style [ ("font-size", "125%"), ("margin-right", "10px") ] ]
+    [ text template.id ]
 
 templateVersion template =
   span
-    [ class "badge"
-    , style
-      [ ("font-family", "monospace")
-      , ("margin-left", "10px")
-      ]
-    , title "Template Version"
-    ]
+    [ style [ ("font-family", "monospace") ] ]
     [ text (String.left 8 template.version) ]
