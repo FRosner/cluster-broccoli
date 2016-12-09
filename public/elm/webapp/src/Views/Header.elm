@@ -8,6 +8,7 @@ import Models.Resources.UserInfo exposing (UserInfo)
 import Models.Ui.LoginForm exposing (LoginForm)
 import Messages exposing (AnyMsg(..))
 import Updates.Messages exposing (UpdateLoginFormMsg(..))
+import Utils.HtmlUtils exposing (icon)
 
 view : Maybe AboutInfo -> LoginForm -> Maybe UserInfo -> Maybe Bool -> Html AnyMsg
 view maybeAboutInfo loginFormModel maybeUserInfo maybeAuthEnabled =
@@ -197,12 +198,7 @@ loginFormView loginFormModel =
       , class "btn btn-default"
       , title "Login"
       ]
-      [ span
-          [ class "glyphicon glyphicon-arrow-right"
-          , attribute "aria-hidden" "true"
-          ]
-          []
-      ]
+      [ icon "glyphicon glyphicon-arrow-right" [] ]
     ]
 
 logoutFormView =
@@ -217,11 +213,6 @@ logoutFormView =
         , class "btn btn-default"
         , title "Logout"
         ]
-        [ span
-            [ class "glyphicon glyphicon-log-out"
-            , attribute "aria-hidden" "true"
-            ]
-            []
-        ]
+        [ icon "glyphicon glyphicon-log-out" [] ]
       ]
     ]

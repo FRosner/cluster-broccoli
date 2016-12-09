@@ -9,6 +9,7 @@ import Models.Resources.Template exposing (TemplateId, Template, addTemplateInst
 import Set exposing (Set)
 import Views.NewInstanceForm exposing (view)
 import Messages exposing (AnyMsg(..))
+import Utils.HtmlUtils exposing (icon)
 
 view : List Template -> Html AnyMsg
 view templates =
@@ -48,12 +49,7 @@ templatePanelHeadingInfo clazz infoTitle info =
     , title infoTitle
     , class "badge"
     ]
-    [ span
-      [ class clazz
-      , attribute "aria-hidden" "true"
-      , style [ ("margin-right", "2px") ]
-      ]
-      []
+    [ icon clazz [ ("margin-right", "2px") ]
     , info
     ]
 
