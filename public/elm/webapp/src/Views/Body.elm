@@ -26,8 +26,9 @@ templateView template =
       [ templatePanelHeadingView template ]
     , div
       [ class "panel-body" ]
-      [ text template.description ]
-    , p [] [ text "instances..."] -- instances view
+      [ text template.description
+      , p [] [ text "instances..."] -- instances view
+      ]
     ]
 
 templatePanelHeadingView template =
