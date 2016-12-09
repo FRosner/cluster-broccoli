@@ -114,6 +114,8 @@ subscriptions : Model -> Sub AnyMsg
 subscriptions model =
   Sub.map
     UpdateErrorsMsg
+    -- TODO I need a module to handle the websocket string messages and parse them into JSON somehow
+    -- TODO cut the websocket connection on logout
     ( WebSocket.listen "ws://localhost:9000/ws" AddError )
 
 main =
