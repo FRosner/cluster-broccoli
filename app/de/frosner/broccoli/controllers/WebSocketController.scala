@@ -13,14 +13,17 @@ class WebSocketController @Inject() (webSocketService: WebSocketService) extends
 
   // TODO close on logout
   // TODO authentication with WebSocket.tryAccept
-  // TODO authorization
+  // TODO authorization (how to manage that clients only receive updates they are allowed to)
 
   def socket = WebSocket.using[String] { request =>
     Logger.info(s"Opening websocket: $request")
     val in = Iteratee.foreach[String] {
+          // TODO call the controller methods
       msg =>
-        webSocketService.channel push(msg)
+        webSocketService.send(msg)
     }
+
+    // TODO send request to set all instances and templates initially, then the webSocketService.channel will be used for subsequent updates
 
     (in, webSocketService.out)
   }
