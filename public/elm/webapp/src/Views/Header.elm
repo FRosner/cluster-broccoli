@@ -195,11 +195,11 @@ loginFormView loginFormModel =
     , button
       [ type_ "submit"
       , class "btn btn-default"
+      , title "Login"
       ]
       [ span
           [ class "glyphicon glyphicon-arrow-right"
           , attribute "aria-hidden" "true"
-          , title "Login"
           ]
           []
       ]
@@ -215,11 +215,11 @@ logoutFormView =
       [ button
         [ type_ "submit"
         , class "btn btn-default"
+        , title "Logout"
         ]
         [ span
             [ class "glyphicon glyphicon-log-out"
             , attribute "aria-hidden" "true"
-            , title "Logout"
             ]
             []
         ]
