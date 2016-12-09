@@ -77,8 +77,8 @@ templatePanelHeadingView template expandedTemplates instances =
     []
     [ templateIdView template expandedTemplates
     , text " "
-    , templatePanelHeadingInfo "fa fa-code-fork" "Template Version" (templateVersion template)
     , templatePanelHeadingInfo "fa fa-list" "Number of Instances" (text (toString (List.length instances)))
+    , templatePanelHeadingInfo "fa fa-code-fork" "Template Version" (templateVersion template)
     ]
 
 templatePanelHeadingInfo clazz infoTitle info =
@@ -88,10 +88,10 @@ templatePanelHeadingInfo clazz infoTitle info =
       , ("font-weight", "100")
       , ("background-color", "#555")
       , ("color", "#fff")
-      , ("margin-bottom", "2px")
+      , ("margin-top", "4px")
       ]
     , title infoTitle
-    , class "badge"
+    , class "badge pull-right"
     ]
     [ icon clazz [ ("margin-right", "4px") ]
     , info
