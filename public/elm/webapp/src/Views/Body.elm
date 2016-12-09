@@ -55,9 +55,12 @@ templatePanelHeadingInfo clazz infoTitle info =
     ]
 
 templateIdView template =
-  span
-    [ style [ ("font-size", "125%"), ("margin-right", "10px") ] ]
-    [ text template.id ]
+  span [ attribute "role" "button" ]
+    [ icon "glyphicon glyphicon-chevron-down" [ ("margin-right", "4px") ]
+    , span
+      [ style [ ("font-size", "125%"), ("margin-right", "10px") ] ]
+      [ text template.id ]
+    ]
 
 templateVersion template =
   span
