@@ -3,6 +3,7 @@ module Updates.Messages exposing (..)
 import Http
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
+import Models.Resources.Template exposing (TemplateId)
 
 type UpdateAboutInfoMsg
   = FetchAbout (Result Http.Error AboutInfo)
@@ -21,3 +22,6 @@ type UpdateLoginFormMsg
   | LogoutAttempt
   | EnterUserName String
   | EnterPassword String
+
+type UpdateBodyViewMsg
+  = ToggleTemplate TemplateId

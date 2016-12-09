@@ -8,33 +8,38 @@ import Dict exposing (..)
 import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
 import Set exposing (Set)
 import Views.NewInstanceForm exposing (view)
-import Messages exposing (AnyMsg(..))
+import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon)
 
-view : List Template -> Html AnyMsg
-view templates =
+view : List Template -> Set TemplateId -> Html UpdateBodyViewMsg
+view templates expandedTemplates =
   div
     [ class "container" ]
-    (List.map templateView templates)
+    (List.map (templateView expandedTemplates) templates)
 
-templateView : Template -> Html AnyMsg
-templateView template =
+templateView expandedTemplates template =
   div
     [ class "panel panel-default" ]
     [ div
       [ class "panel-heading" ]
-      [ templatePanelHeadingView template ]
+      [ templatePanelHeadingView template expandedTemplates ]
     , div
-      [ class "panel-body" ]
+      [ class
+          ( String.concat
+            [ "panel-body "
+            , if (Set.member template.id expandedTemplates) then "show" else "hidden"
+            ]
+          )
+      ]
       [ text template.description
       , p [] [ text "instances..."] -- instances view
       ]
     ]
 
-templatePanelHeadingView template =
+templatePanelHeadingView template expandedTemplates =
   span
     []
-    [ templateIdView template
+    [ templateIdView template expandedTemplates
     , text " "
     , templatePanelHeadingInfo "fa fa-code-fork" "Template Version" (templateVersion template)
     ]
@@ -46,6 +51,7 @@ templatePanelHeadingInfo clazz infoTitle info =
       , ("font-weight", "100")
       , ("background-color", "#555")
       , ("color", "#fff")
+      , ("margin-bottom", "2px")
       ]
     , title infoTitle
     , class "badge"
@@ -54,9 +60,18 @@ templatePanelHeadingInfo clazz infoTitle info =
     , info
     ]
 
-templateIdView template =
-  span [ attribute "role" "button" ]
-    [ icon "glyphicon glyphicon-chevron-down" [ ("margin-right", "4px") ]
+templateIdView template expandedTemplates =
+  span
+    [ attribute "role" "button"
+    , onClick (ToggleTemplate template.id)
+    ]
+    [ icon
+      ( String.concat
+        [ "glyphicon glyphicon-chevron-"
+        , if (Set.member template.id expandedTemplates) then "right" else "down"
+        ]
+      )
+      [ ("margin-right", "4px") ]
     , span
       [ style [ ("font-size", "125%"), ("margin-right", "10px") ] ]
       [ text template.id ]
