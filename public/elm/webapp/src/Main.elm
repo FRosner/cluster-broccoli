@@ -10,6 +10,7 @@ import Updates.UpdateAboutInfo exposing (updateAboutInfo)
 import Updates.UpdateErrors exposing (updateErrors)
 import Updates.UpdateLoginForm exposing (updateLoginForm)
 import Updates.UpdateLoginStatus exposing (updateLoginStatus)
+import Updates.UpdateBodyView exposing (updateBodyView)
 import Updates.Messages exposing (UpdateAboutInfoMsg(..), UpdateLoginStatusMsg(..), UpdateErrorsMsg(..))
 import Commands.FetchAbout
 import Messages exposing (AnyMsg(..))
@@ -35,6 +36,7 @@ type alias Model =
   , loggedIn : Maybe UserInfo
   , authEnabled : Maybe Bool
   , templates : List Template
+  , expandedTemplates : Set TemplateId
   -- , expandedNewInstanceForms : Set TemplateId
   }
 
@@ -46,6 +48,7 @@ initialModel =
   , loginForm = emptyLoginForm
   , loggedIn = Nothing
   , authEnabled = Nothing
+  , expandedTemplates = Set.empty
   , templates =
     [ Template
         "curl"
@@ -118,6 +121,13 @@ update msg model =
         ({ model | errors = newErrors }
         , cmd
         )
+    UpdateBodyViewMsg subMsg ->
+      let (newExpandedTemplates, cmd) =
+        updateBodyView subMsg model.expandedTemplates
+      in
+        ({ model | expandedTemplates = newExpandedTemplates }
+        , cmd
+        )
     UpdateLoginFormMsg subMsg ->
       let (newLoginForm, cmd) =
         updateLoginForm subMsg model.loginForm
@@ -133,7 +143,7 @@ view model =
     []
     [ Views.Header.view model.aboutInfo model.loginForm model.loggedIn model.authEnabled
     , Views.Notifications.view model.errors
-    , Views.Body.view model.templates
+    , Html.map UpdateBodyViewMsg (Views.Body.view model.templates model.expandedTemplates)
     , text (toString model)
     ]
 
