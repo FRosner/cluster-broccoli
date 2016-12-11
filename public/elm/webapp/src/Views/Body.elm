@@ -42,16 +42,16 @@ templateView expandedTemplates instances services template =
                 "New"
             , text " "
             , iconButton
-                "fa fa-code-fork"
-                "Upgrade"
-            , text " "
-            , iconButton
                 "fa fa-play-circle"
                 "Start"
             , text " "
             , iconButton
                 "fa fa-stop-circle"
                 "Stop"
+            , text " "
+            , iconButton
+                "fa fa-code-fork"
+                "Upgrade"
             ]
           ]
         , table
