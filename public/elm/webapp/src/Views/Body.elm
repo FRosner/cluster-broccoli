@@ -73,13 +73,11 @@ templateView expandedTemplates instances services template =
                 ]
               , th []
                 [ icon "fa fa-hashtag" [ title "Instance ID" ] ]
-              , th []
+              , th [ class "text-center" ]
                 [ icon "fa fa-code-fork" [ title "Template Version" ] ]
-              , th []
+              , th [ class "text-center" ]
                 [ icon "fa fa-cubes" [ title "Services" ] ]
-              , th []
-                [ icon "fa fa-question-circle-o" [ title "Job Status" ] ]
-              , th []
+              , th [ class "text-center" ]
                 [ icon "fa fa-cogs" [ title "Job Controls" ] ]
               ]
             ]
@@ -99,21 +97,27 @@ instanceRowView services instance =
       , td []
         [ span
             [ style [ ("role", "button") ] ]
-            [ icon "fa fa-caret-right" []
-            , text instance.id
-            ]
+            [ text instance.id ]
         ]
-      , td []
+      , td [ class "text-center" ]
         [ span
           [ style [ ("font-family", "monospace") ] ]
           [ text (String.left 8 instance.template.version) ]
         ]
-      , td []
+      , td [ class "text-center" ]
         ( servicesView maybeInstanceServices )
-      , td []
-        [ text "running" ] -- TODO job status
-      , td []
-        [ iconButton "btn btn-default btn-xs" "glyphicon glyphicon-play" "Start Instance"
+      , td [ class "text-center" ]
+        [ span
+          [ class "label label-success"
+          , style
+            [ ("font-size", "90%")
+            , ("width", "80px")
+            , ("margin-right", "8px")
+            ]
+          ]
+          [ text "running" ]
+        , text " "
+        , iconButton "btn btn-default btn-xs" "glyphicon glyphicon-play" "Start Instance"
         , text " "
         , iconButton "btn btn-default btn-xs" "glyphicon glyphicon-stop" "Stop Instance"
         ]
