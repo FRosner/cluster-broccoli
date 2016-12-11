@@ -13,11 +13,18 @@ icon clazz attributes =
     )
     []
 
-iconButton iconClass buttonText =
+iconButtonText btnClass iconClass buttonText =
   button
-    [ class "btn btn-default"
+    [ class btnClass
     , title buttonText
     ]
     [ icon iconClass [ style [ ("margin-right", "4px")] ]
     , text buttonText
     ]
+
+iconButton btnClass iconClass buttonTitle =
+  button
+    [ class btnClass
+    , title buttonTitle
+    ]
+    [ icon iconClass [] ]
