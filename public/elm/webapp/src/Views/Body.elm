@@ -41,6 +41,8 @@ templateView expandedTemplates instances template =
               [ th []
                 [ icon "fa fa-hashtag" [ title "Instance ID" ] ]
               , th []
+                [ icon "fa fa-code-fork" [ title "Template Version" ] ]
+              , th []
                 [ icon "fa fa-cubes" [ title "Services" ] ]
               , th []
                 [ icon "fa fa-question-circle" [ title "Job Status" ] ]
@@ -62,6 +64,11 @@ instanceRowView instance =
           [ icon "fa fa-caret-right" []
           , text instance.id
           ]
+      ]
+    , td []
+      [ span
+        [ style [ ("font-family", "monospace") ] ]
+        [ text (String.left 8 instance.template.version) ] 
       ]
     , td []
       [ text "service1 service2 service3 service4 service5" ] -- TODO services
