@@ -5,6 +5,7 @@ import Html.Attributes exposing (..)
 import Set exposing (Set)
 import Models.Resources.Template exposing (..)
 import Models.Resources.Instance exposing (..)
+import Models.Resources.Service exposing (..)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
 import Updates.UpdateAboutInfo exposing (updateAboutInfo)
@@ -21,7 +22,7 @@ import Views.Header
 import Views.Body
 import Views.Notifications
 import WebSocket
-import Dict
+import Dict exposing (Dict)
 
 -- TODO what type of submessages do I want to have?
 -- - Messages changing resources
@@ -39,6 +40,7 @@ type alias Model =
   , templates : List Template
   , expandedTemplates : Set TemplateId
   , instances : List Instance
+  , services : Dict InstanceId (List Service)
   -- , expandedNewInstanceForms : Set TemplateId
   }
 
@@ -109,6 +111,21 @@ initialModel =
           ]
         )
     ]
+  , services =
+    ( Dict.fromList
+      [ ( "http-server-2"
+        , [ Service "http-server-2-ui" "http" "localhost" 9000 Passing
+          , Service "http-server-2-api" "https" "localhost" 9001 Failing
+          ]
+        )
+      , ( "http-server-1"
+        , [ Service "http-server-1-ui" "http" "localhost" 9000 Unknown
+          , Service "http-server-1-api" "https" "localhost" 9001 Unknown
+          ]
+        )
+      ]
+    )
+
   -- , expandedNewInstanceForms = Set.empty
   }
 
@@ -177,7 +194,14 @@ view model =
     []
     [ Views.Header.view model.aboutInfo model.loginForm model.loggedIn model.authEnabled
     , Views.Notifications.view model.errors
-    , Html.map UpdateBodyViewMsg (Views.Body.view model.templates model.expandedTemplates model.instances)
+    , Html.map
+        UpdateBodyViewMsg
+        ( Views.Body.view
+            model.templates
+            model.expandedTemplates
+            model.instances
+            model.services
+        )
     , text (toString model)
     ]
 
