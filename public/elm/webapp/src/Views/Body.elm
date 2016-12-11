@@ -42,15 +42,15 @@ templateView expandedTemplates instances template =
             , text " "
             , iconButton
                 "fa fa-code-fork"
-                "Upgrade all"
+                "Upgrade"
             , text " "
             , iconButton
                 "fa fa-play-circle"
-                "Start all"
+                "Start"
             , text " "
             , iconButton
                 "fa fa-stop-circle"
-                "Stop all"
+                "Stop"
             ]
           ]
         , table
@@ -60,6 +60,13 @@ templateView expandedTemplates instances template =
           [ thead []
             [ tr []
               [ th []
+                [ input
+                  [ type_ "checkbox"
+                  , title "Select All"
+                  ] 
+                  []
+                ]
+              , th []
                 [ icon "fa fa-hashtag" [ title "Instance ID" ] ]
               , th []
                 [ icon "fa fa-code-fork" [ title "Template Version" ] ]
@@ -80,6 +87,8 @@ templateView expandedTemplates instances template =
 instanceRowView instance =
   tr []
     [ td []
+      [ input [ type_ "checkbox" ] [] ]
+    , td []
       [ span
           [ style [ ("role", "button") ] ]
           [ icon "fa fa-caret-right" []
