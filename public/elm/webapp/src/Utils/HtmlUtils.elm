@@ -1,4 +1,4 @@
-module Utils.HtmlUtils exposing (icon)
+module Utils.HtmlUtils exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -12,3 +12,12 @@ icon clazz attributes =
       attributes
     )
     []
+
+iconButton iconClass buttonText =
+  button
+    [ class "btn btn-default"
+    , title buttonText
+    ]
+    [ icon iconClass [ style [ ("margin-right", "4px")] ]
+    , text buttonText
+    ]

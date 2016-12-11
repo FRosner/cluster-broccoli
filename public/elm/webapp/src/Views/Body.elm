@@ -10,7 +10,7 @@ import Models.Resources.Template exposing (TemplateId, Template, addTemplateInst
 import Set exposing (Set)
 import Views.NewInstanceForm exposing (view)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
-import Utils.HtmlUtils exposing (icon)
+import Utils.HtmlUtils exposing (icon, iconButton)
 
 view : List Template -> Set TemplateId -> List Instance -> Html UpdateBodyViewMsg
 view templates expandedTemplates instances =
@@ -30,8 +30,29 @@ templateView expandedTemplates instances template =
       , div
         [ class (if (Set.member template.id expandedTemplates) then "show" else "hidden") ]
         [ div
-          [ class "panel-body" ]
-          [ text template.description ]
+          [ class "panel-body"
+          , style [ ( "padding-bottom", "0px" ) ]
+          ]
+          [ p []
+            [ text template.description ]
+          , p []
+            [ iconButton
+                "fa fa-plus-circle"
+                "New"
+            , text " "
+            , iconButton
+                "fa fa-code-fork"
+                "Upgrade all"
+            , text " "
+            , iconButton
+                "fa fa-play-circle"
+                "Start all"
+            , text " "
+            , iconButton
+                "fa fa-stop-circle"
+                "Stop all"
+            ]
+          ]
         , table
           [ class "table table-hover"
           , style [ ("margin-bottom", "0px") ]
@@ -68,7 +89,7 @@ instanceRowView instance =
     , td []
       [ span
         [ style [ ("font-family", "monospace") ] ]
-        [ text (String.left 8 instance.template.version) ] 
+        [ text (String.left 8 instance.template.version) ]
       ]
     , td []
       [ text "service1 service2 service3 service4 service5" ] -- TODO services
@@ -86,6 +107,7 @@ templatePanelHeadingView template expandedTemplates instances =
     [ templateIdView template expandedTemplates
     , text " "
     , templatePanelHeadingInfo "fa fa-list" "Number of Instances" (text (toString (List.length instances)))
+    , text " "
     , templatePanelHeadingInfo "fa fa-code-fork" "Template Version" (templateVersion template)
     ]
 
