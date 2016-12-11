@@ -11,7 +11,7 @@ import Models.Resources.Template exposing (TemplateId, Template, addTemplateInst
 import Set exposing (Set)
 import Views.NewInstanceForm exposing (view)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
-import Utils.HtmlUtils exposing (icon, iconButton)
+import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
 view : List Template -> Set TemplateId -> List Instance -> Dict InstanceId (List Service) -> Html UpdateBodyViewMsg
 view templates expandedTemplates instances services =
@@ -37,19 +37,23 @@ templateView expandedTemplates instances services template =
           [ p []
             [ text template.description ]
           , p []
-            [ iconButton
+            [ iconButtonText
+                "btn btn-default"
                 "fa fa-plus-circle"
                 "New"
             , text " "
-            , iconButton
+            , iconButtonText
+                "btn btn-default"
                 "fa fa-play-circle"
                 "Start"
             , text " "
-            , iconButton
+            , iconButtonText
+                "btn btn-default"
                 "fa fa-stop-circle"
                 "Stop"
             , text " "
-            , iconButton
+            , iconButtonText
+                "btn btn-default"
                 "fa fa-code-fork"
                 "Upgrade"
             ]
@@ -109,8 +113,9 @@ instanceRowView services instance =
       , td []
         [ text "running" ] -- TODO job status
       , td []
-        [ icon "glyphicon glyphicon-play" []
-        , icon "glyphicon glyphicon-stop" []
+        [ iconButton "btn btn-default btn-xs" "glyphicon glyphicon-play" "Start Instance"
+        , text " "
+        , iconButton "btn btn-default btn-xs" "glyphicon glyphicon-stop" "Stop Instance"
         ]
       ]
 
