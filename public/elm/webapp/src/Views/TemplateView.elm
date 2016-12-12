@@ -36,20 +36,26 @@ view expandedTemplates instances services template =
                 "fa fa-plus-circle"
                 "New"
             , text " "
-            , iconButtonText
-                "btn btn-default"
-                "fa fa-play-circle"
-                "Start"
-            , text " "
-            , iconButtonText
-                "btn btn-default"
-                "fa fa-stop-circle"
-                "Stop"
-            , text " "
-            , iconButtonText
-                "btn btn-default"
-                "fa fa-code-fork"
-                "Upgrade"
+            , div
+              [ class "btn-group"
+              , attribute "role" "group"
+              , attribute "aria-label" "..."
+              ]
+              [ iconButtonText
+                  "btn btn-default"
+                  "fa fa-play-circle"
+                  "Start"
+              , text " "
+              , iconButtonText
+                  "btn btn-default"
+                  "fa fa-stop-circle"
+                  "Stop"
+              , text " "
+              , iconButtonText
+                  "btn btn-default"
+                  "fa fa-code-fork"
+                  "Upgrade"
+              ]
             ]
           ]
         , ( Views.InstanceView.view services templateInstances )
