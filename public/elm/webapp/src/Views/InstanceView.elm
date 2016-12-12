@@ -13,7 +13,35 @@ import Views.NewInstanceForm exposing (view)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
-view services instance =
+view services instances =
+  table
+    [ class "table table-hover"
+    , style [ ("margin-bottom", "0px") ]
+    ]
+    [ thead []
+      [ tr []
+        [ th []
+          [ input
+            [ type_ "checkbox"
+            , title "Select All"
+            ]
+            []
+          ]
+        , th []
+          [ icon "fa fa-hashtag" [ title "Instance ID" ] ]
+        , th [ class "text-center" ]
+          [ icon "fa fa-code-fork" [ title "Template Version" ] ]
+        , th [ class "text-center" ]
+          [ icon "fa fa-cubes" [ title "Services" ] ]
+        , th [ class "text-center" ]
+          [ icon "fa fa-cogs" [ title "Job Controls" ] ]
+        ]
+      ]
+    , tbody []
+      ( List.map (instanceRow services) instances )
+    ]
+
+instanceRow services instance =
   let (maybeInstanceServices) =
     Dict.get instance.id services
   in
