@@ -52,32 +52,7 @@ view expandedTemplates instances services template =
                 "Upgrade"
             ]
           ]
-        , table
-          [ class "table table-hover"
-          , style [ ("margin-bottom", "0px") ]
-          ]
-          [ thead []
-            [ tr []
-              [ th []
-                [ input
-                  [ type_ "checkbox"
-                  , title "Select All"
-                  ]
-                  []
-                ]
-              , th []
-                [ icon "fa fa-hashtag" [ title "Instance ID" ] ]
-              , th [ class "text-center" ]
-                [ icon "fa fa-code-fork" [ title "Template Version" ] ]
-              , th [ class "text-center" ]
-                [ icon "fa fa-cubes" [ title "Services" ] ]
-              , th [ class "text-center" ]
-                [ icon "fa fa-cogs" [ title "Job Controls" ] ]
-              ]
-            ]
-          , tbody []
-            ( List.map (Views.InstanceView.view services) templateInstances )
-          ]
+        , ( Views.InstanceView.view services templateInstances )
         ]
       ]
 
