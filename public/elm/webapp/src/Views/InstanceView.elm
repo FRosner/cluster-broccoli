@@ -79,7 +79,7 @@ jobStatusView jobStatus =
       JobRunning -> ("success", "running")
       JobPending -> ("warning", "pending")
       JobStopped -> ("default", "stopped")
-      JobDead    -> ("primary", "done")
+      JobDead    -> ("primary", "completed")
       JobUnknown -> ("warning", "unknown")
   in
     span
