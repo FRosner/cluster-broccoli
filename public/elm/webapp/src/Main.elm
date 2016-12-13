@@ -44,6 +44,7 @@ type alias Model =
   , instances : List Instance
   , services : Dict InstanceId (List Service)
   , jobStatuses : Dict InstanceId JobStatus
+  , selectedInstances : Set InstanceId
   -- , expandedNewInstanceForms : Set TemplateId
   }
 
@@ -84,6 +85,7 @@ initialModel =
   , loggedIn = Nothing
   , authEnabled = Nothing
   , expandedTemplates = Set.empty
+  , selectedInstances = Set.empty
   , templates =
     [ template1
     , template2
@@ -190,10 +192,13 @@ update msg model =
         , cmd
         )
     UpdateBodyViewMsg subMsg ->
-      let (newExpandedTemplates, cmd) =
-        updateBodyView subMsg model.expandedTemplates
+      let (newExpandedTemplates, newSelectedInstances, cmd) =
+        updateBodyView subMsg model.expandedTemplates model.selectedInstances
       in
-        ({ model | expandedTemplates = newExpandedTemplates }
+        ( { model
+          | expandedTemplates = newExpandedTemplates
+          , selectedInstances = newSelectedInstances
+          }
         , cmd
         )
     UpdateLoginFormMsg subMsg ->
@@ -219,6 +224,7 @@ view model =
             model.instances
             model.services
             model.jobStatuses
+            model.selectedInstances
         )
     , text (toString model)
     ]

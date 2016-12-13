@@ -2,7 +2,7 @@ module Views.InstanceView exposing (view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onCheck)
 import Views.NewInstanceForm
 import Dict exposing (..)
 import Models.Resources.Instance exposing (..)
@@ -15,35 +15,46 @@ import Views.NewInstanceForm exposing (view)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
-view services instances jobStatuses =
-  table
-    [ class "table table-hover"
-    , style [ ("margin-bottom", "0px") ]
-    ]
-    [ thead []
-      [ tr []
-        [ th []
-          [ input
-            [ type_ "checkbox"
-            , title "Select All"
-            ]
-            []
-          ]
-        , th []
-          [ icon "fa fa-hashtag" [ title "Instance ID" ] ]
-        , th [ class "text-center" ]
-          [ icon "fa fa-code-fork" [ title "Template Version" ] ]
-        , th [ class "text-center" ]
-          [ icon "fa fa-cubes" [ title "Services" ] ]
-        , th [ class "text-center" ]
-          [ icon "fa fa-cogs" [ title "Job Controls" ] ]
-        ]
+view services instances jobStatuses selectedInstances =
+  let (instancesIds) =
+    instances
+      |> List.map (\i -> i.id)
+      |> Set.fromList
+  in
+    table
+      [ class "table table-hover"
+      , style [ ("margin-bottom", "0px") ]
       ]
-    , tbody []
-      ( List.map (instanceRow services jobStatuses) instances )
-    ]
+      [ thead []
+        [ tr []
+          [ th []
+            [ input
+              [ type_ "checkbox"
+              , title "Select All"
+              , onCheck (AllInstancesSelected (List.map (\i -> i.id) instances))
+              , checked
+                  ( instancesIds
+                    |> Set.intersect selectedInstances
+                    |> (==) instancesIds
+                  )
+              ]
+              []
+            ]
+          , th []
+            [ icon "fa fa-hashtag" [ title "Instance ID" ] ]
+          , th [ class "text-center" ]
+            [ icon "fa fa-code-fork" [ title "Template Version" ] ]
+          , th [ class "text-center" ]
+            [ icon "fa fa-cubes" [ title "Services" ] ]
+          , th [ class "text-center" ]
+            [ icon "fa fa-cogs" [ title "Job Controls" ] ]
+          ]
+        ]
+      , tbody []
+        ( List.map (instanceRow services jobStatuses selectedInstances) instances )
+      ]
 
-instanceRow services jobStatuses instance =
+instanceRow services jobStatuses selectedInstances instance =
   let (maybeInstanceServices, jobStatus) =
     ( Dict.get instance.id services
     , Maybe.withDefault JobUnknown (Dict.get instance.id jobStatuses)
@@ -51,7 +62,13 @@ instanceRow services jobStatuses instance =
   in
     tr []
       [ td []
-        [ input [ type_ "checkbox" ] [] ]
+        [ input
+          [ type_ "checkbox"
+          , onCheck (InstanceSelected instance.id)
+          , checked (Set.member instance.id selectedInstances)
+          ]
+          []
+        ]
       , td []
         [ span
             [ style [ ("role", "button") ] ]

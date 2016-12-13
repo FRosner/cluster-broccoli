@@ -4,6 +4,7 @@ import Http
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
 import Models.Resources.Template exposing (TemplateId)
+import Models.Resources.Instance exposing (InstanceId)
 
 type UpdateAboutInfoMsg
   = FetchAbout (Result Http.Error AboutInfo)
@@ -25,3 +26,5 @@ type UpdateLoginFormMsg
 
 type UpdateBodyViewMsg
   = ToggleTemplate TemplateId
+  | InstanceSelected InstanceId Bool
+  | AllInstancesSelected (List InstanceId) Bool

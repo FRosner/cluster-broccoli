@@ -14,8 +14,8 @@ import Views.NewInstanceForm exposing (view)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
-view : List Template -> Set TemplateId -> List Instance -> Dict InstanceId (List Service) -> Dict InstanceId JobStatus -> Html UpdateBodyViewMsg
-view templates expandedTemplates instances services jobStatuses =
+view : List Template -> Set TemplateId -> List Instance -> Dict InstanceId (List Service) -> Dict InstanceId JobStatus -> Set InstanceId -> Html UpdateBodyViewMsg
+view templates expandedTemplates instances services jobStatuses selectedInstances =
   div
     [ class "container" ]
-    (List.map (Views.TemplateView.view expandedTemplates instances services jobStatuses) templates)
+    (List.map (Views.TemplateView.view expandedTemplates instances services jobStatuses selectedInstances) templates)
