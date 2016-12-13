@@ -7,6 +7,7 @@ import Models.Resources.Template exposing (..)
 import Models.Resources.Instance exposing (..)
 import Models.Resources.Service exposing (..)
 import Models.Resources.ServiceStatus exposing (..)
+import Models.Resources.JobStatus exposing (..)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
 import Updates.UpdateAboutInfo exposing (updateAboutInfo)
@@ -42,6 +43,7 @@ type alias Model =
   , expandedTemplates : Set TemplateId
   , instances : List Instance
   , services : Dict InstanceId (List Service)
+  , jobStatuses : Dict InstanceId JobStatus
   -- , expandedNewInstanceForms : Set TemplateId
   }
 
@@ -126,6 +128,13 @@ initialModel =
         )
       ]
     )
+  , jobStatuses =
+    ( Dict.fromList
+      [ ( "http-server-1", JobUnknown )
+      , ( "http-server-2", JobDead )
+      , ( "curl-1", JobStopped )
+      ]
+    )
 
   -- , expandedNewInstanceForms = Set.empty
   }
@@ -202,6 +211,7 @@ view model =
             model.expandedTemplates
             model.instances
             model.services
+            model.jobStatuses
         )
     , text (toString model)
     ]
