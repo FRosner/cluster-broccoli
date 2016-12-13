@@ -6,6 +6,7 @@ import Set exposing (Set)
 import Models.Resources.Template exposing (..)
 import Models.Resources.Instance exposing (..)
 import Models.Resources.Service exposing (..)
+import Models.Resources.ServiceStatus exposing (..)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
 import Updates.UpdateAboutInfo exposing (updateAboutInfo)
@@ -114,13 +115,13 @@ initialModel =
   , services =
     ( Dict.fromList
       [ ( "http-server-2"
-        , [ Service "http-server-2-ui" "http" "localhost" 9000 Passing
-          , Service "http-server-2-api" "https" "localhost" 9001 Failing
+        , [ Service "http-server-2-ui" "http" "localhost" 9000 ServicePassing
+          , Service "http-server-2-api" "https" "localhost" 9001 ServiceFailing
           ]
         )
       , ( "http-server-1"
-        , [ Service "http-server-1-ui" "http" "localhost" 9000 Unknown
-          , Service "http-server-1-api" "https" "localhost" 9001 Unknown
+        , [ Service "http-server-1-ui" "http" "localhost" 9000 ServiceUnknown
+          , Service "http-server-1-api" "https" "localhost" 9001 ServiceUnknown
           ]
         )
       ]
