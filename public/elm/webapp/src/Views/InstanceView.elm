@@ -7,13 +7,15 @@ import Views.NewInstanceForm
 import Dict exposing (..)
 import Models.Resources.Instance exposing (..)
 import Models.Resources.ServiceStatus exposing (..)
+import Models.Resources.JobStatus exposing (..)
 import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
 import Set exposing (Set)
+import Maybe
 import Views.NewInstanceForm exposing (view)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
-view services instances =
+view services instances jobStatuses =
   table
     [ class "table table-hover"
     , style [ ("margin-bottom", "0px") ]
@@ -38,12 +40,14 @@ view services instances =
         ]
       ]
     , tbody []
-      ( List.map (instanceRow services) instances )
+      ( List.map (instanceRow services jobStatuses) instances )
     ]
 
-instanceRow services instance =
-  let (maybeInstanceServices) =
-    Dict.get instance.id services
+instanceRow services jobStatuses instance =
+  let (maybeInstanceServices, jobStatus) =
+    ( Dict.get instance.id services
+    , Maybe.withDefault JobUnknown (Dict.get instance.id jobStatuses)
+    )
   in
     tr []
       [ td []
@@ -61,21 +65,33 @@ instanceRow services instance =
       , td [ class "text-center" ]
         ( servicesView maybeInstanceServices )
       , td [ class "text-center" ]
-        [ span
-          [ class "label label-success"
-          , style
-            [ ("font-size", "90%")
-            , ("width", "80px")
-            , ("margin-right", "8px")
-            ]
-          ]
-          [ text "running" ]
+        [ jobStatusView jobStatus
         , text " "
         , iconButton "btn btn-default btn-xs" "glyphicon glyphicon-play" "Start Instance"
         , text " "
         , iconButton "btn btn-default btn-xs" "glyphicon glyphicon-stop" "Stop Instance"
         ]
       ]
+
+jobStatusView jobStatus =
+  let (statusLabel, statusText) =
+    case jobStatus of
+      JobRunning -> ("success", "running")
+      JobPending -> ("warning", "pending")
+      JobStopped -> ("default", "stopped")
+      JobDead    -> ("primary", "done")
+      JobUnknown -> ("warning", "unknown")
+  in
+    span
+      [ class ( String.concat [ "label label-", statusLabel ] )
+      , style
+        [ ("font-size", "90%")
+        , ("width", "80px")
+        , ("display", "inline-block")
+        , ("margin-right", "8px")
+        ]
+      ]
+      [ text statusText ]
 
 servicesView maybeServices =
   case maybeServices of
