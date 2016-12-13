@@ -49,8 +49,8 @@ type alias Model =
 
 template1 =
   Template
-    "curl"
-    "This is a very curly template."
+    "Apache Spark Standalone Cluster"
+    "Apache Spark provides programmers with an application programming interface centered on a data structure called the resilient distributed dataset (RDD), a read-only multiset of data items distributed over a cluster of machines, that is maintained in a fault-tolerant way."
     "chj3kc67"
     [ "id"
     , "url"
@@ -63,8 +63,8 @@ template1 =
 
 template2 =
   Template
-    "http-server"
-    "Use this one to serve awesome HTTP responses based on a directory. The directory will be the one you are currently working in and it is a lot of fun to use this template."
+    "Apache Zeppelin"
+    "A web-based notebook that enables interactive data analytics. You can make beautiful data-driven, interactive and collaborative documents with SQL, Python, Scala and more."
     "dsadjda4"
     [ "id"
     , "password"
@@ -90,49 +90,56 @@ initialModel =
     ]
   , instances =
     [ Instance
-        "curl-1"
+        "dev-spark"
         template1
         ( Dict.fromList
-          [ ("id", "curl-1")
+          [ ("id", "dev-spark")
           , ("url", "http://localhost:9000")
           ]
         )
     , Instance
-        "http-server-1"
+        "dev-zeppelin"
         template2
         ( Dict.fromList
-          [ ("id", "http-server-1")
+          [ ("id", "dev-zeppelin")
           , ("password", "secret")
           ]
         )
     , Instance
-        "http-server-2"
+        "frank-zeppelin"
         template2
         ( Dict.fromList
-          [ ("id", "http-server-2")
+          [ ("id", "frank-zeppelin")
           , ("password", "secret2")
           ]
         )
     ]
   , services =
     ( Dict.fromList
-      [ ( "http-server-2"
-        , [ Service "http-server-2-ui" "http" "localhost" 9000 ServicePassing
-          , Service "http-server-2-api" "https" "localhost" 9001 ServiceFailing
+      [ ( "dev-zeppelin"
+        , [ Service "dev-zeppelin-ui" "http" "localhost" 9000 ServicePassing
+          , Service "dev-zeppelin-spark-ui" "https" "localhost" 9001 ServiceFailing
           ]
         )
-      , ( "http-server-1"
-        , [ Service "http-server-1-ui" "http" "localhost" 9000 ServiceUnknown
-          , Service "http-server-1-api" "https" "localhost" 9001 ServiceUnknown
+      , ( "frank-zeppelin"
+        , [ Service "frank-zeppelin-ui" "http" "localhost" 9000 ServiceUnknown
+          , Service "frank-zeppelin-spark-ui" "https" "localhost" 9001 ServiceUnknown
+          ]
+        )
+      , ( "dev-spark"
+        , [ Service "dev-spark-master" "http" "localhost" 9000 ServicePassing
+          , Service "dev-spark-master-ui" "https" "localhost" 9001 ServicePassing
+          , Service "dev-spark-worker" "https" "localhost" 9001 ServicePassing
+          , Service "dev-spark-worker-ui" "https" "localhost" 9001 ServicePassing
           ]
         )
       ]
     )
   , jobStatuses =
     ( Dict.fromList
-      [ ( "http-server-1", JobUnknown )
-      , ( "http-server-2", JobDead )
-      , ( "curl-1", JobStopped )
+      [ ( "dev-zeppelin", JobRunning )
+      , ( "frank-zeppelin", JobPending )
+      , ( "dev-spark", JobStopped )
       ]
     )
 
