@@ -13,11 +13,14 @@ icon clazz attributes =
     )
     []
 
-iconButtonText btnClass iconClass buttonText =
+iconButtonText btnClass iconClass buttonText attributes =
   button
-    [ class btnClass
-    , title buttonText
-    ]
+    ( List.append
+        attributes
+        [ class btnClass
+        , title buttonText
+        ]
+    )
     [ icon iconClass [ style [ ("margin-right", "4px")] ]
     , text buttonText
     ]

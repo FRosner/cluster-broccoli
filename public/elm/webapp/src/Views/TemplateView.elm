@@ -17,50 +17,66 @@ view expandedTemplates instances services jobStatuses selectedInstances template
   let (templateInstances) =
     List.filter (\i -> i.template.id == template.id) instances
   in
-    div
-      [ class "panel panel-default" ]
-      [ div
-        [ class "panel-heading" ]
-        [ templatePanelHeadingView template expandedTemplates templateInstances ]
-      , div
-        [ class (if (Set.member template.id expandedTemplates) then "show" else "hidden") ]
+    let (selectedTemplateInstances) =
+      templateInstances
+      |> List.map (\i -> i.id)
+      |> Set.fromList
+      |> Set.intersect selectedInstances
+    in
+      div
+        [ class "panel panel-default" ]
         [ div
-          [ class "panel-body"
-          , style [ ( "padding-bottom", "0px" ) ]
-          ]
-          [ p []
-            [ text template.description ]
-          , p []
-            [ iconButtonText
-                "btn btn-default"
-                "fa fa-plus-circle"
-                "New"
-            , text " "
-            , div
-              [ class "btn-group"
-              , attribute "role" "group"
-              , attribute "aria-label" "..."
-              ]
+          [ class "panel-heading" ]
+          [ templatePanelHeadingView template expandedTemplates templateInstances ]
+        , div
+          [ class (if (Set.member template.id expandedTemplates) then "show" else "hidden") ]
+          [ div
+            [ class "panel-body"
+            , style [ ( "padding-bottom", "0px" ) ]
+            ]
+            [ p []
+              [ text template.description ]
+            , p []
               [ iconButtonText
                   "btn btn-default"
-                  "fa fa-play-circle"
-                  "Start"
+                  "fa fa-plus-circle"
+                  "New"
+                  []
               , text " "
-              , iconButtonText
-                  "btn btn-default"
-                  "fa fa-stop-circle"
-                  "Stop"
-              , text " "
-              , iconButtonText
-                  "btn btn-default"
-                  "fa fa-code-fork"
-                  "Upgrade"
+              , div
+                [ class "btn-group"
+                , attribute "role" "group"
+                , attribute "aria-label" "..."
+                ]
+                [ iconButtonText
+                    "btn btn-default"
+                    "fa fa-play-circle"
+                    "Start"
+                    ( disabledIfNothingSelected selectedTemplateInstances )
+                , text " "
+                , iconButtonText
+                    "btn btn-default"
+                    "fa fa-stop-circle"
+                    "Stop"
+                    ( disabledIfNothingSelected selectedTemplateInstances )
+                , text " "
+                , iconButtonText
+                    "btn btn-default"
+                    "fa fa-code-fork"
+                    "Upgrade"
+                    ( disabledIfNothingSelected selectedTemplateInstances )
+                ]
               ]
             ]
+          , ( Views.InstanceView.view services templateInstances jobStatuses selectedTemplateInstances )
           ]
-        , ( Views.InstanceView.view services templateInstances jobStatuses selectedInstances )
         ]
-      ]
+
+disabledIfNothingSelected selectedInstances =
+  if (Set.isEmpty selectedInstances) then
+    [ attribute "disabled" "disabled" ]
+  else
+    []
 
 templatePanelHeadingView template expandedTemplates instances =
   span
