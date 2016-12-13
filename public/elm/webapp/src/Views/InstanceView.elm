@@ -6,7 +6,7 @@ import Html.Events exposing (onClick)
 import Views.NewInstanceForm
 import Dict exposing (..)
 import Models.Resources.Instance exposing (..)
-import Models.Resources.Service exposing (..)
+import Models.Resources.ServiceStatus exposing (..)
 import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
 import Set exposing (Set)
 import Views.NewInstanceForm exposing (view)
@@ -87,11 +87,11 @@ servicesView maybeServices =
 serviceView service =
   let (iconClass, textColor) =
     case service.status of
-      Passing ->
+      ServicePassing ->
         ("fa fa-check-circle", "#070")
-      Failing ->
+      ServiceFailing ->
         ("fa fa-times-circle", "#900")
-      Unknown ->
+      ServiceUnknown ->
         ("fa fa-question-circle", "grey")
   in
     [ a
