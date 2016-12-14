@@ -15,49 +15,69 @@ import Views.NewInstanceForm exposing (view)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
-view services instances jobStatuses selectedInstances =
+view services instances jobStatuses selectedInstances expandedInstances =
   let (instancesIds) =
     instances
       |> List.map (\i -> i.id)
       |> Set.fromList
   in
-    table
-      [ class "table table-hover"
-      , style [ ("margin-bottom", "0px") ]
-      ]
-      [ thead []
-        [ tr []
-          [ th []
-            [ input
-              [ type_ "checkbox"
-              , title "Select All"
-              , onCheck (AllInstancesSelected (List.map (\i -> i.id) instances))
-              , checked
-                  ( instancesIds
-                    |> Set.intersect selectedInstances
-                    |> (==) instancesIds
-                  )
-              ]
-              []
-            ]
-          , th []
-            [ icon "fa fa-hashtag" [ title "Instance ID" ] ]
-          , th [ class "text-center" ]
-            [ icon "fa fa-code-fork" [ title "Template Version" ] ]
-          , th [ class "text-center" ]
-            [ icon "fa fa-cubes" [ title "Services" ] ]
-          , th [ class "text-center" ]
-            [ icon "fa fa-cogs" [ title "Job Controls" ] ]
-          ]
+    let (allInstancesSelected, allInstancesExpanded) =
+      ( ( instancesIds
+          |> Set.intersect selectedInstances
+          |> (==) instancesIds
+        )
+      , (Set.intersect instancesIds expandedInstances) == instancesIds
+      )
+    in
+      table
+        [ class "table table-hover"
+        , style [ ("margin-bottom", "0px") ]
         ]
-      , tbody []
-        ( List.map (instanceRow services jobStatuses selectedInstances) instances )
-      ]
+        [ thead []
+          [ tr []
+            [ th []
+              [ input
+                [ type_ "checkbox"
+                , title "Select All"
+                , onCheck (AllInstancesSelected (List.map (\i -> i.id) instances))
+                , checked allInstancesSelected
+                ]
+                []
+              ]
+            , th []
+              [ icon
+                ( String.concat
+                  [ "fa fa-chevron-"
+                  , if (allInstancesExpanded) then "down" else "right"
+                  ]
+                )
+                [ attribute "role" "button"
+                , onClick
+                    ( AllInstancesExpanded
+                      (List.map (\i -> i.id) instances)
+                      (not allInstancesExpanded)
+                    )
+                ]
+              ]
+            , th []
+              [ icon "fa fa-hashtag" [ title "Instance ID" ] ]
+            , th [ class "text-center" ]
+              [ icon "fa fa-code-fork" [ title "Template Version" ] ]
+            , th [ class "text-center" ]
+              [ icon "fa fa-cubes" [ title "Services" ] ]
+            , th [ class "text-center" ]
+              [ icon "fa fa-cogs" [ title "Job Controls" ] ]
+            ]
+          ]
+        , tbody []
+          ( List.map (instanceRow services jobStatuses selectedInstances expandedInstances) instances )
+        ]
 
-instanceRow services jobStatuses selectedInstances instance =
-  let (maybeInstanceServices, jobStatus) =
+instanceRow services jobStatuses selectedInstances expandedInstances instance =
+  let (maybeInstanceServices, jobStatus, instanceExpanded) =
     ( Dict.get instance.id services
     , Maybe.withDefault JobUnknown (Dict.get instance.id jobStatuses)
+    , (Set.member instance.id expandedInstances)
     )
   in
     tr []
@@ -70,8 +90,21 @@ instanceRow services jobStatuses selectedInstances instance =
           []
         ]
       , td []
+        [ icon
+          ( String.concat
+            [ "fa fa-chevron-"
+            , if (Set.member instance.id expandedInstances) then "down" else "right"
+            ]
+          )
+          [ attribute "role" "button"
+          , onClick (InstanceExpanded instance.id (not instanceExpanded))
+          ]
+        ]
+      , td []
         [ span
-            [ style [ ("role", "button") ] ]
+            [ attribute "role" "button"
+            , onClick (InstanceExpanded instance.id (not instanceExpanded))
+            ]
             [ text instance.id ]
         ]
       , td [ class "text-center" ]
@@ -79,7 +112,7 @@ instanceRow services jobStatuses selectedInstances instance =
           [ style [ ("font-family", "monospace") ] ]
           [ text (String.left 8 instance.template.version) ]
         ]
-      , td [ class "text-center" ]
+      , td [ class "text-left" ]
         ( servicesView maybeInstanceServices )
       , td [ class "text-center" ]
         [ jobStatusView jobStatus

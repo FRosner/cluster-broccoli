@@ -13,7 +13,7 @@ import Views.NewInstanceForm exposing (view)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
-view expandedTemplates instances services jobStatuses selectedInstances template =
+view expandedTemplates instances services jobStatuses selectedInstances expandedInstances template =
   let (templateInstances) =
     List.filter (\i -> i.template.id == template.id) instances
   in
@@ -68,7 +68,7 @@ view expandedTemplates instances services jobStatuses selectedInstances template
                 ]
               ]
             ]
-          , ( Views.InstanceView.view services templateInstances jobStatuses selectedTemplateInstances )
+          , ( Views.InstanceView.view services templateInstances jobStatuses selectedTemplateInstances expandedInstances )
           ]
         ]
 
