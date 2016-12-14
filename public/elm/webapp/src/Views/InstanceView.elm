@@ -15,6 +15,11 @@ import Views.NewInstanceForm exposing (view)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
+checkboxColumnWidth = 1
+chevronColumnWidth = 30
+templateVersionColumnWidth = 1
+jobControlsColumnWidth = 170
+
 view services instances jobStatuses selectedInstances expandedInstances =
   let (instancesIds) =
     instances
@@ -35,7 +40,8 @@ view services instances jobStatuses selectedInstances expandedInstances =
         ]
         [ thead []
           [ tr []
-            [ th []
+            [ th
+              [ width checkboxColumnWidth ]
               [ input
                 [ type_ "checkbox"
                 , title "Select All"
@@ -44,7 +50,8 @@ view services instances jobStatuses selectedInstances expandedInstances =
                 ]
                 []
               ]
-            , th []
+            , th
+              [ width chevronColumnWidth ]
               [ icon
                 ( String.concat
                   [ "fa fa-chevron-"
@@ -61,11 +68,17 @@ view services instances jobStatuses selectedInstances expandedInstances =
               ]
             , th []
               [ icon "fa fa-hashtag" [ title "Instance ID" ] ]
-            , th [ class "text-center" ]
-              [ icon "fa fa-code-fork" [ title "Template Version" ] ]
-            , th [ class "text-center" ]
+            , th [ class "text-left" ]
               [ icon "fa fa-cubes" [ title "Services" ] ]
-            , th [ class "text-center" ]
+            , th
+              [ class "text-center"
+              , width templateVersionColumnWidth
+              ]
+              [ icon "fa fa-code-fork" [ title "Template Version" ] ]
+            , th
+              [ class "text-center"
+              , width jobControlsColumnWidth
+              ]
               [ icon "fa fa-cogs" [ title "Job Controls" ] ]
             ]
           ]
@@ -73,21 +86,24 @@ view services instances jobStatuses selectedInstances expandedInstances =
           ( List.concatMap (instanceRow services jobStatuses selectedInstances expandedInstances) instances )
         ]
 
+expandedTdStyle =
+  style
+    [ ("border-top", "0px")
+    , ("padding-top", "0px")
+    ]
+
 instanceRow services jobStatuses selectedInstances expandedInstances instance =
-  let (maybeInstanceServices, jobStatus, instanceExpanded, tdStyle) =
+  let
+    (maybeInstanceServices, jobStatus, instanceExpanded) =
     ( Dict.get instance.id services
     , Maybe.withDefault JobUnknown (Dict.get instance.id jobStatuses)
     , (Set.member instance.id expandedInstances)
-    , ( style
-        [ ("border-top", "0px")
-        , ("padding-top", "0px")
-        ]
-      )
     )
   in
     List.append
     [ tr []
-      [ td []
+      [ td
+        [ width checkboxColumnWidth ]
         [ input
           [ type_ "checkbox"
           , onCheck (InstanceSelected instance.id)
@@ -95,7 +111,8 @@ instanceRow services jobStatuses selectedInstances expandedInstances instance =
           ]
           []
         ]
-      , td []
+      , td
+        [ width chevronColumnWidth ]
         [ icon
           ( String.concat
             [ "fa fa-chevron-"
@@ -113,14 +130,20 @@ instanceRow services jobStatuses selectedInstances expandedInstances instance =
             ]
             [ text instance.id ]
         ]
-      , td [ class "text-center" ]
+      , td [ class "text-left" ]
+        ( servicesView maybeInstanceServices )
+      , td
+        [ class "text-center"
+        , width templateVersionColumnWidth
+        ]
         [ span
           [ style [ ("font-family", "monospace") ] ]
           [ text (String.left 8 instance.template.version) ]
         ]
-      , td [ class "text-left" ]
-        ( servicesView maybeInstanceServices )
-      , td [ class "text-center" ]
+      , td
+        [ class "text-center"
+        , width jobControlsColumnWidth
+        ]
         [ jobStatusView jobStatus
         , text " "
         , iconButton "btn btn-default btn-xs" "glyphicon glyphicon-play" "Start Instance"
@@ -131,10 +154,14 @@ instanceRow services jobStatuses selectedInstances expandedInstances instance =
     ]
     ( if (instanceExpanded) then
         [ tr []
-          [ td [ tdStyle ] []
+          [ td
+            [ expandedTdStyle
+            , width checkboxColumnWidth
+            ]
+            []
           , td
             [ colspan 5
-            , tdStyle
+            , expandedTdStyle
             ]
             [ h5 [] [ text "Template" ]
             , h5 [] [ text "Parameters" ]
