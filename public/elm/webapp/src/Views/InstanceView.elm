@@ -30,7 +30,7 @@ view services instances jobStatuses selectedInstances expandedInstances =
       )
     in
       table
-        [ class "table table-hover"
+        [ class "table"
         , style [ ("margin-bottom", "0px") ]
         ]
         [ thead []
@@ -70,17 +70,23 @@ view services instances jobStatuses selectedInstances expandedInstances =
             ]
           ]
         , tbody []
-          ( List.map (instanceRow services jobStatuses selectedInstances expandedInstances) instances )
+          ( List.concatMap (instanceRow services jobStatuses selectedInstances expandedInstances) instances )
         ]
 
 instanceRow services jobStatuses selectedInstances expandedInstances instance =
-  let (maybeInstanceServices, jobStatus, instanceExpanded) =
+  let (maybeInstanceServices, jobStatus, instanceExpanded, tdStyle) =
     ( Dict.get instance.id services
     , Maybe.withDefault JobUnknown (Dict.get instance.id jobStatuses)
     , (Set.member instance.id expandedInstances)
+    , ( style
+        [ ("border-top", "0px")
+        , ("padding-top", "0px")
+        ]
+      )
     )
   in
-    tr []
+    List.append
+    [ tr []
       [ td []
         [ input
           [ type_ "checkbox"
@@ -122,6 +128,23 @@ instanceRow services jobStatuses selectedInstances expandedInstances instance =
         , iconButton "btn btn-default btn-xs" "glyphicon glyphicon-stop" "Stop Instance"
         ]
       ]
+    ]
+    ( if (instanceExpanded) then
+        [ tr []
+          [ td [ tdStyle ] []
+          , td
+            [ colspan 5
+            , tdStyle
+            ]
+            [ h5 [] [ text "Template" ]
+            , h5 [] [ text "Parameters" ]
+            , h5 [] [ text "Periodic Runs" ]
+            ]
+          ]
+        ]
+      else
+        []
+    )
 
 jobStatusView jobStatus =
   let (statusLabel, statusText) =
