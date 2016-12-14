@@ -68,10 +68,10 @@ view services instances jobStatuses selectedInstances expandedInstances =
               ]
             , th []
               [ icon "fa fa-hashtag" [ title "Instance ID" ] ]
-            , th [ class "text-left" ]
+            , th [ class "text-left hidden-xs" ]
               [ icon "fa fa-cubes" [ title "Services" ] ]
             , th
-              [ class "text-center"
+              [ class "text-center hidden-xs"
               , width templateVersionColumnWidth
               ]
               [ icon "fa fa-code-fork" [ title "Template Version" ] ]
@@ -130,10 +130,10 @@ instanceRow services jobStatuses selectedInstances expandedInstances instance =
             ]
             [ text instance.id ]
         ]
-      , td [ class "text-left" ]
+      , td [ class "text-left hidden-xs" ]
         ( servicesView maybeInstanceServices )
       , td
-        [ class "text-center"
+        [ class "text-center hidden-xs"
         , width templateVersionColumnWidth
         ]
         [ span
