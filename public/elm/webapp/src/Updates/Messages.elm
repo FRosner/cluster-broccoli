@@ -28,3 +28,5 @@ type UpdateBodyViewMsg
   = ToggleTemplate TemplateId
   | InstanceSelected InstanceId Bool
   | AllInstancesSelected (List InstanceId) Bool
+  | InstanceExpanded InstanceId Bool
+  | AllInstancesExpanded (List InstanceId) Bool
