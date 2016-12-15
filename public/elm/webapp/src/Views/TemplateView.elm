@@ -98,7 +98,7 @@ templatePanelHeadingInfo clazz infoTitle info =
       , ("margin-top", "4px")
       ]
     , title infoTitle
-    , class "badge pull-right"
+    , class "badge pull-right hidden-xs"
     ]
     [ icon clazz [ style [ ("margin-right", "4px") ] ]
     , info
