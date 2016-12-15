@@ -153,25 +153,28 @@ instanceRow services jobStatuses selectedInstances expandedInstances instance =
       ]
     ]
     ( if (instanceExpanded) then
-        [ tr []
-          [ td
-            [ expandedTdStyle
-            , width checkboxColumnWidth
-            ]
-            []
-          , td
-            [ colspan 5
-            , expandedTdStyle
-            ]
-            [ h5 [] [ text "Template" ]
-            , h5 [] [ text "Parameters" ]
-            , h5 [] [ text "Periodic Runs" ]
-            ]
-          ]
+        [ instanceDetailView
         ]
       else
         []
     )
+
+instanceDetailView =
+  tr []
+    [ td
+      [ expandedTdStyle
+      , width checkboxColumnWidth
+      ]
+      []
+    , td
+      [ colspan 5
+      , expandedTdStyle
+      ]
+      [ h5 [] [ text "Template" ]
+      , h5 [] [ text "Parameters" ]
+      , h5 [] [ text "Periodic Runs" ]
+      ]
+    ]
 
 jobStatusView jobStatus =
   let (statusLabel, statusText) =
