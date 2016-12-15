@@ -21,8 +21,12 @@ iconButtonText btnClass iconClass buttonText attributes =
         , title buttonText
         ]
     )
-    [ icon iconClass [ style [ ("margin-right", "4px")] ]
-    , text buttonText
+    [ icon iconClass []
+    , span
+      [ class "hidden-xs"
+      , style [ ("margin-left", "4px")]
+      ]
+      [ text buttonText ]
     ]
 
 iconButton btnClass iconClass buttonTitle =
