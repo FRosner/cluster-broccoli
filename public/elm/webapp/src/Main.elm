@@ -56,10 +56,30 @@ template1 =
     "chj3kc67"
     [ "id"
     , "url"
+    , "param1"
+    , "param2"
+    , "param3param3"
+    , "p"
+    , "param5"
+    , "param6param6param6"
+    , "param7"
+    , "param8"
+    , "param9"
+    , "param10param10param10"
     ]
     ( Dict.fromList
       [ ( "id", ParameterInfo "id" Nothing Nothing )
       , ( "url", ParameterInfo "url" (Just "http://localhost:8000") Nothing )
+      , ( "param1", ParameterInfo "param1" (Just "default value") Nothing )
+      , ( "param2", ParameterInfo "param2" (Just "default value") Nothing )
+      , ( "param3param3", ParameterInfo "param3param3" (Just "default value") Nothing )
+      , ( "p", ParameterInfo "p" (Just "default value") Nothing )
+      , ( "param5", ParameterInfo "param5" (Just "default value") Nothing )
+      , ( "param6param6param6", ParameterInfo "param6param6param6" (Just "default value") Nothing )
+      , ( "param7", ParameterInfo "param7" (Just "default value") Nothing )
+      , ( "param8", ParameterInfo "param8" (Just "default value") Nothing )
+      , ( "param9", ParameterInfo "param9" (Just "default value") Nothing )
+      , ( "param10param10param10", ParameterInfo "param10param10param10" (Just "default value") Nothing )
       ]
     )
 
