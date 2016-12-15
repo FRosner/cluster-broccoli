@@ -66,6 +66,12 @@ view expandedTemplates instances services jobStatuses selectedInstances expanded
                     "Upgrade"
                     ( disabledIfNothingSelected selectedTemplateInstances )
                 ]
+              , text " "
+              , iconButtonText
+                  "btn btn-default"
+                  "fa fa-trash"
+                  "Delete"
+                  []
               ]
             ]
           , ( Views.InstanceView.view services templateInstances jobStatuses selectedTemplateInstances expandedInstances )
