@@ -8,12 +8,13 @@ import Dict exposing (..)
 import Models.Resources.Instance exposing (..)
 import Models.Resources.ServiceStatus exposing (..)
 import Models.Resources.JobStatus exposing (..)
-import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
+import Models.Resources.Template exposing (..)
 import Set exposing (Set)
 import Maybe
 import Views.NewInstanceForm exposing (view)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
+import Utils.MaybeUtils as MaybeUtils
 
 checkboxColumnWidth = 1
 chevronColumnWidth = 30
@@ -90,6 +91,7 @@ expandedTdStyle =
   style
     [ ("border-top", "0px")
     , ("padding-top", "0px")
+    , ("padding-right", "40px")
     ]
 
 instanceRow services jobStatuses selectedInstances expandedInstances instance =
@@ -154,12 +156,13 @@ instanceRow services jobStatuses selectedInstances expandedInstances instance =
     ]
     ( if (instanceExpanded) then
         [ instanceDetailView
+            instance
         ]
       else
         []
     )
 
-instanceDetailView =
+instanceDetailView instance =
   tr []
     [ td
       [ expandedTdStyle
@@ -172,9 +175,47 @@ instanceDetailView =
       ]
       [ h5 [] [ text "Template" ]
       , h5 [] [ text "Parameters" ]
+      , div
+        [ class "row" ]
+        ( parameterValuesView instance.template.parameters instance.parameterValues instance.template.parameterInfos )
       , h5 [] [ text "Periodic Runs" ]
       ]
     ]
+
+parameterValuesView parameters parameterValues parameterInfos =
+  parameters
+  |> List.map ( \p -> (p, Dict.get p parameterValues, Dict.get p parameterInfos) )
+  |> List.map parameterValueView
+
+parameterValueView (parameter, maybeParameterValue, maybeParameterInfo) =
+  let
+    ( placeholderValue
+    , parameterValue
+    ) =
+    ( maybeParameterInfo
+        |> MaybeUtils.concatMap (\i -> i.default)
+        |> Maybe.withDefault ""
+    , maybeParameterValue
+        |> Maybe.withDefault ""
+    )
+  in
+    div
+      [ class "col-sm-6" ]
+      [ div
+        [ class "input-group" ]
+        [ span
+          [ class "input-group-addon" ]
+          [ text parameter ]
+        , input
+          [ type_ "text"
+          , class "form-control"
+          , attribute "aria-label" parameter
+          , placeholder placeholderValue
+          , value parameterValue
+          ]
+          []
+        ]
+      ]
 
 jobStatusView jobStatus =
   let (statusLabel, statusText) =
