@@ -245,13 +245,17 @@ instanceDetailView instance maybeInstanceParameterForm =
                   "btn btn-default"
                   "fa fa-check"
                   "Apply"
-                  [ disabled (not formIsBeingEdited) ]
+                  [ disabled (not formIsBeingEdited)
+                  , onClick (ApplyParameterValueChanges instance)
+                  ]
               , text " "
               , iconButtonText
                   "btn btn-default"
                   "fa fa-ban"
                   "Discard"
-                  [ disabled (not formIsBeingEdited) ]
+                  [ disabled (not formIsBeingEdited)
+                  , onClick (DiscardParameterValueChanges instance)
+                  ]
               ]
             ]
           , h5 [] [ text "Periodic Runs" ]

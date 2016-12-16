@@ -31,3 +31,5 @@ type UpdateBodyViewMsg
   | InstanceExpanded InstanceId Bool
   | AllInstancesExpanded (List InstanceId) Bool
   | EnterParameterValue Instance String String
+  | ApplyParameterValueChanges Instance
+  | DiscardParameterValueChanges Instance
