@@ -189,7 +189,7 @@ instanceDetailView instance maybeInstanceParameterForm =
       , Dict.remove "id" instance.parameterValues
       , Dict.remove "id" instance.template.parameterInfos
       )
-    , InstanceParameterForm.isBeingEdited maybeInstanceParameterForm
+    , MaybeUtils.isDefined maybeInstanceParameterForm
     )
   in
     let (otherParametersLeft, otherParametersRight) =
@@ -224,16 +224,16 @@ instanceDetailView instance maybeInstanceParameterForm =
             [ class "row" ]
             [ div
               [ class "col-md-6" ]
-              [ ( parameterValueView (instance.id, idParameter, idParameterValue, idParameterInfo, Nothing, False) ) ]
+              [ ( parameterValueView (instance, idParameter, idParameterValue, idParameterInfo, Nothing, False) ) ]
             ]
           , div
             [ class "row" ]
             [ div
               [ class "col-md-6" ]
-              ( parameterValuesView instance.id otherParametersLeft otherParameterValues otherParameterInfos maybeInstanceParameterForm )
+              ( parameterValuesView instance otherParametersLeft otherParameterValues otherParameterInfos maybeInstanceParameterForm )
             , div
               [ class "col-md-6" ]
-              ( parameterValuesView instance.id otherParametersRight otherParameterValues otherParameterInfos maybeInstanceParameterForm )
+              ( parameterValuesView instance otherParametersRight otherParameterValues otherParameterInfos maybeInstanceParameterForm )
             ]
           , div
             [ class "row"
@@ -258,12 +258,12 @@ instanceDetailView instance maybeInstanceParameterForm =
           ]
         ]
 
-parameterValuesView instanceId parameters parameterValues parameterInfos instanceParameterForm =
+parameterValuesView instance parameters parameterValues parameterInfos maybeInstanceParameterForm =
   parameters
-  |> List.map ( \p -> (instanceId, p, Dict.get p parameterValues, Dict.get p parameterInfos, MaybeUtils.concatMap (\f -> (Dict.get p f.parameterValues)) instanceParameterForm, True) )
+  |> List.map ( \p -> (instance, p, Dict.get p parameterValues, Dict.get p parameterInfos, MaybeUtils.concatMap (\f -> (Dict.get p f.changedParameterValues)) maybeInstanceParameterForm, True) )
   |> List.map parameterValueView
 
-parameterValueView (instanceId, parameter, maybeParameterValue, maybeParameterInfo, maybeEditedValue, enabled) =
+parameterValueView (instance, parameter, maybeParameterValue, maybeParameterInfo, maybeEditedValue, enabled) =
   let
     ( placeholderValue
     , parameterValue
@@ -271,8 +271,8 @@ parameterValueView (instanceId, parameter, maybeParameterValue, maybeParameterIn
     ( maybeParameterInfo
         |> MaybeUtils.concatMap (\i -> i.default)
         |> Maybe.withDefault ""
-    , maybeParameterValue
-        |> Maybe.withDefault ""
+    , maybeEditedValue
+        |> Maybe.withDefault (Maybe.withDefault "" maybeParameterValue)
     )
   in
     p
@@ -293,7 +293,7 @@ parameterValueView (instanceId, parameter, maybeParameterValue, maybeParameterIn
           , placeholder placeholderValue
           , value parameterValue
           , disabled (not enabled)
-          , onInput (EnterParameterValue instanceId parameter)
+          , onInput (EnterParameterValue instance parameter)
           ]
           []
         ]
