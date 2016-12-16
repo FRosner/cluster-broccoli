@@ -160,6 +160,9 @@ expandedTdStyle =
   , ("padding-top", "0px")
   ]
 
+editingParamColor = "rgba(255, 177, 0, 0.46)"
+normalParamColor = "#eee"
+
 -- TODO as "id" is special we should treat it also special
 instanceDetailView instance =
   let
@@ -211,9 +214,7 @@ instanceDetailView instance =
           [ h5 [] [ text "Template" ]
           , h5 [] [ text "Parameters" ]
           , div
-            [ class "row"
-            , style [ ("margin-bottom", "15px") ]
-            ]
+            [ class "row" ]
             [ div
               [ class "col-md-6" ]
               [ ( parameterValueView (idParameter, idParameterValue, idParameterInfo, False) ) ]
@@ -226,6 +227,17 @@ instanceDetailView instance =
             , div
               [ class "col-md-6" ]
               ( parameterValuesView otherParametersRight otherParameterValues otherParameterInfos )
+            ]
+          , div
+            [ class "row"
+            , style [ ("margin-bottom", "15px") ]
+            ]
+            [ div
+              [ class "col-md-6" ]
+              [ iconButtonText "btn btn-default" "fa fa-check" "Apply" []
+              , text " "
+              , iconButtonText "btn btn-default" "fa fa-ban" "Discard" []
+              ]
             ]
           , h5 [] [ text "Periodic Runs" ]
           ]

@@ -8,12 +8,13 @@ import Dict exposing (..)
 import Models.Resources.Instance exposing (..)
 import Models.Resources.Service exposing (..)
 import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
+import Models.Ui.InstanceParameterForm exposing (..)
 import Set exposing (Set)
 import Views.NewInstanceForm exposing (view)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
-view expandedTemplates instances services jobStatuses selectedInstances expandedInstances template =
+view instances services jobStatuses bodyUiModel template =
   let (templateInstances) =
     List.filter (\i -> i.template.id == template.id) instances
   in
@@ -21,15 +22,15 @@ view expandedTemplates instances services jobStatuses selectedInstances expanded
       templateInstances
       |> List.map (\i -> i.id)
       |> Set.fromList
-      |> Set.intersect selectedInstances
+      |> Set.intersect bodyUiModel.selectedInstances
     in
       div
         [ class "panel panel-default" ]
         [ div
           [ class "panel-heading" ]
-          [ templatePanelHeadingView template expandedTemplates templateInstances ]
+          [ templatePanelHeadingView template bodyUiModel.expandedTemplates templateInstances ]
         , div
-          [ class (if (Set.member template.id expandedTemplates) then "show" else "hidden") ]
+          [ class (if (Set.member template.id bodyUiModel.expandedTemplates) then "show" else "hidden") ]
           [ div
             [ class "panel-body"
             , style [ ( "padding-bottom", "0px" ) ]
@@ -74,7 +75,7 @@ view expandedTemplates instances services jobStatuses selectedInstances expanded
                   []
               ]
             ]
-          , ( Views.InstanceView.view services templateInstances jobStatuses selectedTemplateInstances expandedInstances )
+          , ( Views.InstanceView.view services templateInstances jobStatuses selectedTemplateInstances bodyUiModel.expandedInstances )
           ]
         ]
 
