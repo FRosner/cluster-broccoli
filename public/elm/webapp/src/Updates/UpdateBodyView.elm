@@ -59,6 +59,27 @@ updateBodyView message oldBodyUiModel =
           ( { oldBodyUiModel | expandedInstances = newExpandedInstances }
           , Cmd.none
           )
+      EnterParameterValue instanceId parameter value ->
+        let newInstanceParameterForms =
+          ( Dict.update
+              instanceId
+              ( updateParameterForm parameter value )
+              oldInstanceParameterForms
+          )
+        in
+          ( { oldBodyUiModel | instanceParameterForms = newInstanceParameterForms }
+          , Cmd.none
+          )
+
+updateParameterForm parameter value maybeParameterForm =
+  case maybeParameterForm of
+    Just parameterForm ->
+      let oldParameterValues = parameterForm.parameterValues in
+        Just
+          ( { parameterForm | parameterValues = Dict.insert parameter value oldParameterValues } )
+    Nothing ->
+      Just
+        ( { parameterValues = Dict.fromList [ ( parameter, value ) ] } )
 
 insertOrRemove bool insert set =
   if (bool) then
