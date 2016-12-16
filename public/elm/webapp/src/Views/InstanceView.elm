@@ -160,36 +160,83 @@ expandedTdStyle =
   , ("padding-top", "0px")
   ]
 
+-- TODO as "id" is special we should treat it also special
 instanceDetailView instance =
-  tr []
-    [ td
-      [ style expandedTdStyle
-      , width checkboxColumnWidth
-      ]
-      []
-    , td
-      [ colspan 5
-      , style
-        ( List.append
-            expandedTdStyle
-            [ ("padding-right", "40px") ]
+  let
+    ( ( idParameter
+      , idParameterValue
+      , idParameterInfo
+      )
+    , ( otherParameters
+      , otherParameterValues
+      , otherParameterInfos
+      )
+    ) =
+    ( ( "id"
+      , Dict.get "id" instance.parameterValues
+      , Dict.get "id" instance.template.parameterInfos
+      )
+    , ( List.filter (\p -> p /= "id") instance.template.parameters
+      , Dict.remove "id" instance.parameterValues
+      , Dict.remove "id" instance.template.parameterInfos
+      )
+    )
+  in
+    let (otherParametersLeft, otherParametersRight) =
+      let firstHalf =
+        otherParameters
+          |> List.length
+          |> toFloat
+          |> (\l -> l / 2)
+          |> ceiling
+      in
+        ( List.take firstHalf otherParameters
+        , List.drop firstHalf otherParameters
         )
-      ]
-      [ h5 [] [ text "Template" ]
-      , h5 [] [ text "Parameters" ]
-      , div
-        [ class "row" ]
-        ( parameterValuesView instance.template.parameters instance.parameterValues instance.template.parameterInfos )
-      , h5 [] [ text "Periodic Runs" ]
-      ]
-    ]
+    in
+      tr []
+        [ td
+          [ style expandedTdStyle
+          , width checkboxColumnWidth
+          ]
+          []
+        , td
+          [ colspan 5
+          , style
+            ( List.append
+                expandedTdStyle
+                [ ("padding-right", "40px") ]
+            )
+          ]
+          [ h5 [] [ text "Template" ]
+          , h5 [] [ text "Parameters" ]
+          , div
+            [ class "row"
+            , style [ ("margin-bottom", "15px") ]
+            ]
+            [ div
+              [ class "col-md-6" ]
+              [ ( parameterValueView (idParameter, idParameterValue, idParameterInfo, False) ) ]
+            ]
+          , div
+            [ class "row" ]
+            [ div
+              [ class "col-md-6" ]
+              ( parameterValuesView otherParametersLeft otherParameterValues otherParameterInfos )
+            , div
+              [ class "col-md-6" ]
+              ( parameterValuesView otherParametersRight otherParameterValues otherParameterInfos )
+            ]
+          , h5 [] [ text "Periodic Runs" ]
+          ]
+        ]
 
 parameterValuesView parameters parameterValues parameterInfos =
   parameters
-  |> List.map ( \p -> (p, Dict.get p parameterValues, Dict.get p parameterInfos) )
+  |> List.map ( \p -> (p, Dict.get p parameterValues, Dict.get p parameterInfos, True) )
   |> List.map parameterValueView
 
-parameterValueView (parameter, maybeParameterValue, maybeParameterInfo) =
+parameterValueView (parameter, maybeParameterValue, maybeParameterInfo, enabled) =
   let
     ( placeholderValue
     , parameterValue
@@ -201,8 +248,8 @@ parameterValueView (parameter, maybeParameterValue, maybeParameterInfo) =
         |> Maybe.withDefault ""
     )
   in
-    div
-      [ class "col-sm-6" ]
+    p
+      []
       [ div
         [ class "input-group" ]
         [ span
@@ -214,6 +261,7 @@ parameterValueView (parameter, maybeParameterValue, maybeParameterInfo) =
           , attribute "aria-label" parameter
           , placeholder placeholderValue
           , value parameterValue
+          , disabled (not enabled)
           ]
           []
         ]
