@@ -2,16 +2,15 @@ module Views.InstanceView exposing (view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onCheck)
-import Views.NewInstanceForm
+import Html.Events exposing (onClick, onCheck, onInput)
 import Dict exposing (..)
 import Models.Resources.Instance exposing (..)
 import Models.Resources.ServiceStatus exposing (..)
 import Models.Resources.JobStatus exposing (..)
 import Models.Resources.Template exposing (..)
+import Models.Ui.InstanceParameterForm as InstanceParameterForm
 import Set exposing (Set)
 import Maybe
-import Views.NewInstanceForm exposing (view)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 import Utils.MaybeUtils as MaybeUtils
@@ -21,7 +20,7 @@ chevronColumnWidth = 30
 templateVersionColumnWidth = 1
 jobControlsColumnWidth = 170
 
-view services instances jobStatuses selectedInstances expandedInstances =
+view services instances jobStatuses selectedInstances expandedInstances instanceParameterForms =
   let (instancesIds) =
     instances
       |> List.map (\i -> i.id)
@@ -84,15 +83,20 @@ view services instances jobStatuses selectedInstances expandedInstances =
             ]
           ]
         , tbody []
-          ( List.concatMap (instanceRow services jobStatuses selectedInstances expandedInstances) instances )
+          ( List.concatMap (instanceRow services jobStatuses selectedInstances expandedInstances instanceParameterForms) instances )
         ]
 
-instanceRow services jobStatuses selectedInstances expandedInstances instance =
+instanceRow services jobStatuses selectedInstances expandedInstances instanceParameterForms instance =
   let
-    (maybeInstanceServices, jobStatus, instanceExpanded) =
+    ( maybeInstanceServices
+    , jobStatus
+    , instanceExpanded
+    , instanceParameterForm
+    ) =
     ( Dict.get instance.id services
     , Maybe.withDefault JobUnknown (Dict.get instance.id jobStatuses)
     , (Set.member instance.id expandedInstances)
+    , (Dict.get instance.id instanceParameterForms)
     )
   in
     List.append
@@ -150,6 +154,7 @@ instanceRow services jobStatuses selectedInstances expandedInstances instance =
     ( if (instanceExpanded) then
         [ instanceDetailView
             instance
+            instanceParameterForm
         ]
       else
         []
@@ -164,7 +169,7 @@ editingParamColor = "rgba(255, 177, 0, 0.46)"
 normalParamColor = "#eee"
 
 -- TODO as "id" is special we should treat it also special
-instanceDetailView instance =
+instanceDetailView instance maybeInstanceParameterForm =
   let
     ( ( idParameter
       , idParameterValue
@@ -174,6 +179,7 @@ instanceDetailView instance =
       , otherParameterValues
       , otherParameterInfos
       )
+    , formIsBeingEdited
     ) =
     ( ( "id"
       , Dict.get "id" instance.parameterValues
@@ -183,6 +189,7 @@ instanceDetailView instance =
       , Dict.remove "id" instance.parameterValues
       , Dict.remove "id" instance.template.parameterInfos
       )
+    , InstanceParameterForm.isBeingEdited maybeInstanceParameterForm
     )
   in
     let (otherParametersLeft, otherParametersRight) =
@@ -217,16 +224,16 @@ instanceDetailView instance =
             [ class "row" ]
             [ div
               [ class "col-md-6" ]
-              [ ( parameterValueView (idParameter, idParameterValue, idParameterInfo, False) ) ]
+              [ ( parameterValueView (instance.id, idParameter, idParameterValue, idParameterInfo, Nothing, False) ) ]
             ]
           , div
             [ class "row" ]
             [ div
               [ class "col-md-6" ]
-              ( parameterValuesView otherParametersLeft otherParameterValues otherParameterInfos )
+              ( parameterValuesView instance.id otherParametersLeft otherParameterValues otherParameterInfos maybeInstanceParameterForm )
             , div
               [ class "col-md-6" ]
-              ( parameterValuesView otherParametersRight otherParameterValues otherParameterInfos )
+              ( parameterValuesView instance.id otherParametersRight otherParameterValues otherParameterInfos maybeInstanceParameterForm )
             ]
           , div
             [ class "row"
@@ -234,21 +241,29 @@ instanceDetailView instance =
             ]
             [ div
               [ class "col-md-6" ]
-              [ iconButtonText "btn btn-default" "fa fa-check" "Apply" []
+              [ iconButtonText
+                  "btn btn-default"
+                  "fa fa-check"
+                  "Apply"
+                  [ disabled (not formIsBeingEdited) ]
               , text " "
-              , iconButtonText "btn btn-default" "fa fa-ban" "Discard" []
+              , iconButtonText
+                  "btn btn-default"
+                  "fa fa-ban"
+                  "Discard"
+                  [ disabled (not formIsBeingEdited) ]
               ]
             ]
           , h5 [] [ text "Periodic Runs" ]
           ]
         ]
 
-parameterValuesView parameters parameterValues parameterInfos =
+parameterValuesView instanceId parameters parameterValues parameterInfos instanceParameterForm =
   parameters
-  |> List.map ( \p -> (p, Dict.get p parameterValues, Dict.get p parameterInfos, True) )
+  |> List.map ( \p -> (instanceId, p, Dict.get p parameterValues, Dict.get p parameterInfos, MaybeUtils.concatMap (\f -> (Dict.get p f.parameterValues)) instanceParameterForm, True) )
   |> List.map parameterValueView
 
-parameterValueView (parameter, maybeParameterValue, maybeParameterInfo, enabled) =
+parameterValueView (instanceId, parameter, maybeParameterValue, maybeParameterInfo, maybeEditedValue, enabled) =
   let
     ( placeholderValue
     , parameterValue
@@ -265,7 +280,11 @@ parameterValueView (parameter, maybeParameterValue, maybeParameterInfo, enabled)
       [ div
         [ class "input-group" ]
         [ span
-          [ class "input-group-addon" ]
+          [ class "input-group-addon"
+          , style
+            [ ( "background-color", Maybe.withDefault normalParamColor (Maybe.map (\v -> editingParamColor) maybeEditedValue) )
+            ]
+          ]
           [ text parameter ]
         , input
           [ type_ "text"
@@ -274,6 +293,7 @@ parameterValueView (parameter, maybeParameterValue, maybeParameterInfo, enabled)
           , placeholder placeholderValue
           , value parameterValue
           , disabled (not enabled)
+          , onInput (EnterParameterValue instanceId parameter)
           ]
           []
         ]

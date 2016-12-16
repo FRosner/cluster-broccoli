@@ -10,7 +10,6 @@ import Models.Resources.Service exposing (..)
 import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
 import Models.Ui.InstanceParameterForm exposing (..)
 import Set exposing (Set)
-import Views.NewInstanceForm exposing (view)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
@@ -75,7 +74,14 @@ view instances services jobStatuses bodyUiModel template =
                   []
               ]
             ]
-          , ( Views.InstanceView.view services templateInstances jobStatuses selectedTemplateInstances bodyUiModel.expandedInstances )
+          , ( Views.InstanceView.view
+              services
+              templateInstances
+              jobStatuses
+              selectedTemplateInstances
+              bodyUiModel.expandedInstances
+              bodyUiModel.instanceParameterForms
+            )
           ]
         ]
 

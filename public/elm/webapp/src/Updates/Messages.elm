@@ -30,3 +30,4 @@ type UpdateBodyViewMsg
   | AllInstancesSelected (List InstanceId) Bool
   | InstanceExpanded InstanceId Bool
   | AllInstancesExpanded (List InstanceId) Bool
+  | EnterParameterValue InstanceId String String

@@ -12,7 +12,6 @@ import Models.Resources.Template exposing (TemplateId, Template, addTemplateInst
 import Models.Ui.InstanceParameterForm exposing (..)
 import Models.Ui.BodyUiModel exposing (BodyUiModel)
 import Set exposing (Set)
-import Views.NewInstanceForm exposing (view)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
