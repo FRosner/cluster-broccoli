@@ -4,7 +4,7 @@ import Http
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
 import Models.Resources.Template exposing (TemplateId)
-import Models.Resources.Instance exposing (InstanceId)
+import Models.Resources.Instance exposing (InstanceId, Instance)
 
 type UpdateAboutInfoMsg
   = FetchAbout (Result Http.Error AboutInfo)
@@ -30,4 +30,4 @@ type UpdateBodyViewMsg
   | AllInstancesSelected (List InstanceId) Bool
   | InstanceExpanded InstanceId Bool
   | AllInstancesExpanded (List InstanceId) Bool
-  | EnterParameterValue InstanceId String String
+  | EnterParameterValue Instance String String

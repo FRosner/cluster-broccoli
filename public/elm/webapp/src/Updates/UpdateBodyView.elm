@@ -8,6 +8,7 @@ import Models.Ui.InstanceParameterForm exposing (InstanceParameterForm)
 import Models.Ui.BodyUiModel exposing (BodyUiModel)
 import Dict exposing (Dict)
 import Messages exposing (AnyMsg)
+import Utils.MaybeUtils as MaybeUtils
 
 updateBodyView : UpdateBodyViewMsg -> BodyUiModel -> (BodyUiModel, Cmd AnyMsg)
 updateBodyView message oldBodyUiModel =
@@ -59,11 +60,11 @@ updateBodyView message oldBodyUiModel =
           ( { oldBodyUiModel | expandedInstances = newExpandedInstances }
           , Cmd.none
           )
-      EnterParameterValue instanceId parameter value ->
+      EnterParameterValue instance parameter value ->
         let newInstanceParameterForms =
           ( Dict.update
-              instanceId
-              ( updateParameterForm parameter value )
+              instance.id
+              ( updateParameterForm instance parameter value )
               oldInstanceParameterForms
           )
         in
@@ -71,15 +72,18 @@ updateBodyView message oldBodyUiModel =
           , Cmd.none
           )
 
-updateParameterForm parameter value maybeParameterForm =
+updateParameterForm instance parameter value maybeParameterForm =
   case maybeParameterForm of
     Just parameterForm ->
-      let oldParameterValues = parameterForm.parameterValues in
+      let oldParameterValues = parameterForm.changedParameterValues in
         Just
-          ( { parameterForm | parameterValues = Dict.insert parameter value oldParameterValues } )
+          ( { parameterForm | changedParameterValues = Dict.insert parameter value oldParameterValues } )
     Nothing ->
       Just
-        ( { parameterValues = Dict.fromList [ ( parameter, value ) ] } )
+        ( { changedParameterValues = Dict.fromList [ ( parameter, value ) ]
+          , originalParameterValues = instance.parameterValues
+          }
+        )
 
 insertOrRemove bool insert set =
   if (bool) then
