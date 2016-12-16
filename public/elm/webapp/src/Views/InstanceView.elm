@@ -2,7 +2,7 @@ module Views.InstanceView exposing (view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onCheck, onInput)
+import Html.Events exposing (onClick, onCheck, onInput, onSubmit)
 import Dict exposing (..)
 import Models.Resources.Instance exposing (..)
 import Models.Resources.ServiceStatus exposing (..)
@@ -220,42 +220,45 @@ instanceDetailView instance maybeInstanceParameterForm =
           ]
           [ h5 [] [ text "Template" ]
           , h5 [] [ text "Parameters" ]
-          , div
-            [ class "row" ]
+          , Html.form
+            [ onSubmit (ApplyParameterValueChanges instance) ]
             [ div
-              [ class "col-md-6" ]
-              [ ( parameterValueView (instance, idParameter, idParameterValue, idParameterInfo, Nothing, False) ) ]
-            ]
-          , div
-            [ class "row" ]
-            [ div
-              [ class "col-md-6" ]
-              ( parameterValuesView instance otherParametersLeft otherParameterValues otherParameterInfos maybeInstanceParameterForm )
+              [ class "row" ]
+              [ div
+                [ class "col-md-6" ]
+                [ ( parameterValueView (instance, idParameter, idParameterValue, idParameterInfo, Nothing, False) ) ]
+              ]
             , div
-              [ class "col-md-6" ]
-              ( parameterValuesView instance otherParametersRight otherParameterValues otherParameterInfos maybeInstanceParameterForm )
-            ]
-          , div
-            [ class "row"
-            , style [ ("margin-bottom", "15px") ]
-            ]
-            [ div
-              [ class "col-md-6" ]
-              [ iconButtonText
-                  "btn btn-default"
-                  "fa fa-check"
-                  "Apply"
-                  [ disabled (not formIsBeingEdited)
-                  , onClick (ApplyParameterValueChanges instance)
-                  ]
-              , text " "
-              , iconButtonText
-                  "btn btn-default"
-                  "fa fa-ban"
-                  "Discard"
-                  [ disabled (not formIsBeingEdited)
-                  , onClick (DiscardParameterValueChanges instance)
-                  ]
+              [ class "row" ]
+              [ div
+                [ class "col-md-6" ]
+                ( parameterValuesView instance otherParametersLeft otherParameterValues otherParameterInfos maybeInstanceParameterForm )
+              , div
+                [ class "col-md-6" ]
+                ( parameterValuesView instance otherParametersRight otherParameterValues otherParameterInfos maybeInstanceParameterForm )
+              ]
+            , div
+              [ class "row"
+              , style [ ("margin-bottom", "15px") ]
+              ]
+              [ div
+                [ class "col-md-6" ]
+                [ iconButtonText
+                    ( if (formIsBeingEdited) then "btn btn-success" else "btn btn-default" )
+                    "fa fa-check"
+                    "Apply"
+                    [ disabled (not formIsBeingEdited)
+                    , type_ "submit"
+                    ]
+                , text " "
+                , iconButtonText
+                    ( if (formIsBeingEdited) then "btn btn-warning" else "btn btn-default" )
+                    "fa fa-ban"
+                    "Discard"
+                    [ disabled (not formIsBeingEdited)
+                    , onClick (DiscardParameterValueChanges instance)
+                    ]
+                ]
               ]
             ]
           , h5 [] [ text "Periodic Runs" ]
