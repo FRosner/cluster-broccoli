@@ -10,6 +10,9 @@ import Models.Resources.ServiceStatus exposing (..)
 import Models.Resources.JobStatus exposing (..)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
+import Models.Ui.BodyUiModel as BodyUiModel exposing (BodyUiModel)
+import Models.Ui.LoginForm exposing (..)
+import Models.Ui.Notifications exposing (..)
 import Updates.UpdateAboutInfo exposing (updateAboutInfo)
 import Updates.UpdateErrors exposing (updateErrors)
 import Updates.UpdateLoginForm exposing (updateLoginForm)
@@ -18,8 +21,6 @@ import Updates.UpdateBodyView exposing (updateBodyView)
 import Updates.Messages exposing (UpdateAboutInfoMsg(..), UpdateLoginStatusMsg(..), UpdateErrorsMsg(..))
 import Commands.FetchAbout
 import Messages exposing (AnyMsg(..))
-import Models.Ui.Notifications exposing (Errors)
-import Models.Ui.LoginForm exposing (LoginForm, emptyLoginForm)
 import Views.Header
 import Views.Body
 import Views.Notifications
@@ -39,13 +40,11 @@ type alias Model =
   , loginForm : LoginForm
   , loggedIn : Maybe UserInfo
   , authEnabled : Maybe Bool
-  , templates : List Template
-  , expandedTemplates : Set TemplateId
   , instances : List Instance
   , services : Dict InstanceId (List Service)
   , jobStatuses : Dict InstanceId JobStatus
-  , selectedInstances : Set InstanceId
-  , expandedInstances : Set InstanceId
+  , templates : List Template
+  , bodyUiModel : BodyUiModel
   -- , expandedNewInstanceForms : Set TemplateId
   }
 
@@ -105,9 +104,7 @@ initialModel =
   , loginForm = emptyLoginForm
   , loggedIn = Nothing
   , authEnabled = Nothing
-  , expandedTemplates = Set.empty
-  , selectedInstances = Set.empty
-  , expandedInstances = Set.empty
+  , bodyUiModel = BodyUiModel.initialModel
   , templates =
     [ template1
     , template2
@@ -214,14 +211,10 @@ update msg model =
         , cmd
         )
     UpdateBodyViewMsg subMsg ->
-      let (newExpandedTemplates, newSelectedInstances, newExpandedInstances, cmd) =
-        updateBodyView subMsg model.expandedTemplates model.selectedInstances model.expandedInstances
+      let (newBodyUiModel, cmd) =
+        updateBodyView subMsg model.bodyUiModel
       in
-        ( { model
-          | expandedTemplates = newExpandedTemplates
-          , selectedInstances = newSelectedInstances
-          , expandedInstances = newExpandedInstances
-          }
+        ( { model | bodyUiModel = newBodyUiModel }
         , cmd
         )
     UpdateLoginFormMsg subMsg ->
@@ -243,12 +236,10 @@ view model =
         UpdateBodyViewMsg
         ( Views.Body.view
             model.templates
-            model.expandedTemplates
             model.instances
             model.services
             model.jobStatuses
-            model.selectedInstances
-            model.expandedInstances
+            model.bodyUiModel
         )
     , text (toString model)
     ]
