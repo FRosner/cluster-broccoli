@@ -71,6 +71,17 @@ updateBodyView message oldBodyUiModel =
           ( { oldBodyUiModel | instanceParameterForms = newInstanceParameterForms }
           , Cmd.none
           )
+      DiscardParameterValueChanges instance ->
+        ( { oldBodyUiModel | instanceParameterForms = resetParameterForm instance oldInstanceParameterForms }
+        , Cmd.none
+        )
+      ApplyParameterValueChanges instance ->
+        ( { oldBodyUiModel | instanceParameterForms = resetParameterForm instance oldInstanceParameterForms }
+        , Cmd.none
+        )
+
+resetParameterForm instance parameterForms =
+  Dict.remove instance.id parameterForms
 
 updateParameterForm instance parameter value maybeParameterForm =
   case maybeParameterForm of
