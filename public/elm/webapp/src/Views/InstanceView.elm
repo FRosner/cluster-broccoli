@@ -87,13 +87,6 @@ view services instances jobStatuses selectedInstances expandedInstances =
           ( List.concatMap (instanceRow services jobStatuses selectedInstances expandedInstances) instances )
         ]
 
-expandedTdStyle =
-  style
-    [ ("border-top", "0px")
-    , ("padding-top", "0px")
-    , ("padding-right", "40px")
-    ]
-
 instanceRow services jobStatuses selectedInstances expandedInstances instance =
   let
     (maybeInstanceServices, jobStatus, instanceExpanded) =
@@ -162,16 +155,25 @@ instanceRow services jobStatuses selectedInstances expandedInstances instance =
         []
     )
 
+expandedTdStyle =
+  [ ("border-top", "0px")
+  , ("padding-top", "0px")
+  ]
+
 instanceDetailView instance =
   tr []
     [ td
-      [ expandedTdStyle
+      [ style expandedTdStyle
       , width checkboxColumnWidth
       ]
       []
     , td
       [ colspan 5
-      , expandedTdStyle
+      , style
+        ( List.append
+            expandedTdStyle
+            [ ("padding-right", "40px") ]
+        )
       ]
       [ h5 [] [ text "Template" ]
       , h5 [] [ text "Parameters" ]
