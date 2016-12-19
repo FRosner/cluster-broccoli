@@ -23,7 +23,7 @@ type alias ParameterInfo =
 addTemplateInstanceString template =
     String.concat ["New ", template.id, " instance"]
 
-templateDecoder =
+decoder =
   Decode.map5 Template
     (field "id" Decode.string)
     (field "description" Decode.string)
