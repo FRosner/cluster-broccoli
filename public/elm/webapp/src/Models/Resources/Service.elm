@@ -1,4 +1,4 @@
-module Models.Resources.Service exposing (..)
+module Models.Resources.Service exposing (Service, decoder)
 
 import Json.Decode as Decode exposing (field)
 import Models.Resources.ServiceStatus as ServiceStatus exposing (ServiceStatus)
@@ -11,7 +11,7 @@ type alias Service =
   , status : ServiceStatus
   }
 
-instanceDecoder =
+decoder =
   Decode.map5 Service
     ( field "name" Decode.string )
     ( field "protocol" Decode.string )
