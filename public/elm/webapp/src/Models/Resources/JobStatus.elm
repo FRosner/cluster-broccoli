@@ -1,4 +1,4 @@
-module Models.Resources.JobStatus exposing (JobStatus(..), jobStatusDecoder)
+module Models.Resources.JobStatus exposing (JobStatus(..), decoder)
 
 import Json.Decode as Decode exposing (field, andThen)
 
@@ -9,7 +9,7 @@ type JobStatus
   | JobDead
   | JobUnknown
 
-jobStatusDecoder =
+decoder =
   Decode.andThen
     (\statusString -> Decode.succeed (stringToJobStatus statusString))
     Decode.string

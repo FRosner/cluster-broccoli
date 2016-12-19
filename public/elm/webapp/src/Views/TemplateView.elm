@@ -13,7 +13,7 @@ import Set exposing (Set)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
-view instances services jobStatuses bodyUiModel template =
+view instances services bodyUiModel template =
   let (templateInstances) =
     List.filter (\i -> i.template.id == template.id) instances
   in
@@ -77,7 +77,6 @@ view instances services jobStatuses bodyUiModel template =
           , ( Views.InstanceView.view
               services
               templateInstances
-              jobStatuses
               selectedTemplateInstances
               bodyUiModel.expandedInstances
               bodyUiModel.instanceParameterForms

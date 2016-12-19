@@ -20,7 +20,7 @@ chevronColumnWidth = 30
 templateVersionColumnWidth = 1
 jobControlsColumnWidth = 170
 
-view services instances jobStatuses selectedInstances expandedInstances instanceParameterForms =
+view services instances selectedInstances expandedInstances instanceParameterForms =
   let (instancesIds) =
     instances
       |> List.map (\i -> i.id)
@@ -83,10 +83,10 @@ view services instances jobStatuses selectedInstances expandedInstances instance
             ]
           ]
         , tbody []
-          ( List.concatMap (instanceRow services jobStatuses selectedInstances expandedInstances instanceParameterForms) instances )
+          ( List.concatMap (instanceRow services selectedInstances expandedInstances instanceParameterForms) instances )
         ]
 
-instanceRow services jobStatuses selectedInstances expandedInstances instanceParameterForms instance =
+instanceRow services selectedInstances expandedInstances instanceParameterForms instance =
   let
     ( maybeInstanceServices
     , jobStatus
@@ -94,7 +94,7 @@ instanceRow services jobStatuses selectedInstances expandedInstances instancePar
     , instanceParameterForm
     ) =
     ( Dict.get instance.id services
-    , Maybe.withDefault JobUnknown (Dict.get instance.id jobStatuses)
+    , instance.jobStatus
     , (Set.member instance.id expandedInstances)
     , (Dict.get instance.id instanceParameterForms)
     )

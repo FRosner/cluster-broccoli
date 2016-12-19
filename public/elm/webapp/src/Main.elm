@@ -42,7 +42,6 @@ type alias Model =
   , authEnabled : Maybe Bool
   , instances : List Instance
   , services : Dict InstanceId (List Service)
-  , jobStatuses : Dict InstanceId JobStatus
   , templates : List Template
   , bodyUiModel : BodyUiModel
   -- , expandedNewInstanceForms : Set TemplateId
@@ -118,6 +117,7 @@ initialModel =
           , ("url", "http://localhost:9000")
           ]
         )
+        JobUnknown
     , Instance
         "dev-zeppelin"
         template2
@@ -126,6 +126,7 @@ initialModel =
           , ("password", "secret")
           ]
         )
+        JobPending
     , Instance
         "frank-zeppelin"
         template2
@@ -134,6 +135,7 @@ initialModel =
           , ("password", "secret2")
           ]
         )
+        JobRunning
     ]
   , services =
     ( Dict.fromList
@@ -154,13 +156,6 @@ initialModel =
           , Service "dev-spark-worker-ui" "https" "localhost" 9001 ServicePassing
           ]
         )
-      ]
-    )
-  , jobStatuses =
-    ( Dict.fromList
-      [ ( "dev-zeppelin", JobRunning )
-      , ( "frank-zeppelin", JobPending )
-      , ( "dev-spark", JobStopped )
       ]
     )
 
@@ -238,7 +233,6 @@ view model =
             model.templates
             model.instances
             model.services
-            model.jobStatuses
             model.bodyUiModel
         )
     , text (toString model)
