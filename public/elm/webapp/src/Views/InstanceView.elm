@@ -20,7 +20,7 @@ chevronColumnWidth = 30
 templateVersionColumnWidth = 1
 jobControlsColumnWidth = 170
 
-view services instances selectedInstances expandedInstances instanceParameterForms =
+view instances selectedInstances expandedInstances instanceParameterForms =
   let (instancesIds) =
     instances
       |> List.map (\i -> i.id)
@@ -83,19 +83,15 @@ view services instances selectedInstances expandedInstances instanceParameterFor
             ]
           ]
         , tbody []
-          ( List.concatMap (instanceRow services selectedInstances expandedInstances instanceParameterForms) instances )
+          ( List.concatMap (instanceRow selectedInstances expandedInstances instanceParameterForms) instances )
         ]
 
-instanceRow services selectedInstances expandedInstances instanceParameterForms instance =
+instanceRow selectedInstances expandedInstances instanceParameterForms instance =
   let
-    ( maybeInstanceServices
-    , jobStatus
-    , instanceExpanded
+    ( instanceExpanded
     , instanceParameterForm
     ) =
-    ( Dict.get instance.id services
-    , instance.jobStatus
-    , (Set.member instance.id expandedInstances)
+    ( (Set.member instance.id expandedInstances)
     , (Dict.get instance.id instanceParameterForms)
     )
   in
@@ -130,7 +126,7 @@ instanceRow services selectedInstances expandedInstances instanceParameterForms 
             [ text instance.id ]
         ]
       , td [ class "text-left hidden-xs" ]
-        ( servicesView maybeInstanceServices )
+        ( servicesView instance.services )
       , td
         [ class "text-center hidden-xs"
         , width templateVersionColumnWidth
@@ -143,7 +139,7 @@ instanceRow services selectedInstances expandedInstances instanceParameterForms 
         [ class "text-center"
         , width jobControlsColumnWidth
         ]
-        [ jobStatusView jobStatus
+        [ jobStatusView instance.jobStatus
         , text " "
         , iconButton "btn btn-default btn-xs" "glyphicon glyphicon-play" "Start Instance"
         , text " "
@@ -326,12 +322,11 @@ jobStatusView jobStatus =
       ]
       [ text statusText ]
 
-servicesView maybeServices =
-  case maybeServices of
-    Just services ->
-      (List.concatMap serviceView services)
-    Nothing ->
-      [ text "-" ]
+servicesView services =
+  if (List.isEmpty services) then
+    [ text "-" ]
+  else
+    List.concatMap serviceView services
 
 serviceView service =
   let (iconClass, textColor) =

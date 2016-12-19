@@ -41,7 +41,6 @@ type alias Model =
   , loggedIn : Maybe UserInfo
   , authEnabled : Maybe Bool
   , instances : List Instance
-  , services : Dict InstanceId (List Service)
   , templates : List Template
   , bodyUiModel : BodyUiModel
   -- , expandedNewInstanceForms : Set TemplateId
@@ -118,6 +117,11 @@ initialModel =
           ]
         )
         JobUnknown
+        [ Service "dev-spark-master" "http" "localhost" 9000 ServicePassing
+        , Service "dev-spark-master-ui" "https" "localhost" 9001 ServicePassing
+        , Service "dev-spark-worker" "https" "localhost" 9001 ServicePassing
+        , Service "dev-spark-worker-ui" "https" "localhost" 9001 ServicePassing
+        ]
     , Instance
         "dev-zeppelin"
         template2
@@ -127,6 +131,9 @@ initialModel =
           ]
         )
         JobPending
+        [ Service "dev-zeppelin-ui" "http" "localhost" 9000 ServicePassing
+        , Service "dev-zeppelin-spark-ui" "https" "localhost" 9001 ServiceFailing
+        ]
     , Instance
         "frank-zeppelin"
         template2
@@ -136,30 +143,10 @@ initialModel =
           ]
         )
         JobRunning
+        [ Service "frank-zeppelin-ui" "http" "localhost" 9000 ServiceUnknown
+        , Service "frank-zeppelin-spark-ui" "https" "localhost" 9001 ServiceUnknown
+        ]
     ]
-  , services =
-    ( Dict.fromList
-      [ ( "dev-zeppelin"
-        , [ Service "dev-zeppelin-ui" "http" "localhost" 9000 ServicePassing
-          , Service "dev-zeppelin-spark-ui" "https" "localhost" 9001 ServiceFailing
-          ]
-        )
-      , ( "frank-zeppelin"
-        , [ Service "frank-zeppelin-ui" "http" "localhost" 9000 ServiceUnknown
-          , Service "frank-zeppelin-spark-ui" "https" "localhost" 9001 ServiceUnknown
-          ]
-        )
-      , ( "dev-spark"
-        , [ Service "dev-spark-master" "http" "localhost" 9000 ServicePassing
-          , Service "dev-spark-master-ui" "https" "localhost" 9001 ServicePassing
-          , Service "dev-spark-worker" "https" "localhost" 9001 ServicePassing
-          , Service "dev-spark-worker-ui" "https" "localhost" 9001 ServicePassing
-          ]
-        )
-      ]
-    )
-
-  -- , expandedNewInstanceForms = Set.empty
   }
 
 init : ( Model, Cmd AnyMsg )
@@ -232,7 +219,6 @@ view model =
         ( Views.Body.view
             model.templates
             model.instances
-            model.services
             model.bodyUiModel
         )
     , text (toString model)
