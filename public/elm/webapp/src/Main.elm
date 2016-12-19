@@ -10,6 +10,7 @@ import Models.Resources.ServiceStatus exposing (..)
 import Models.Resources.JobStatus exposing (..)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
+import Models.Resources.PeriodicRun as PeriodicRun exposing (PeriodicRun)
 import Models.Ui.BodyUiModel as BodyUiModel exposing (BodyUiModel)
 import Models.Ui.LoginForm exposing (..)
 import Models.Ui.Notifications exposing (..)
@@ -122,6 +123,7 @@ initialModel =
         , Service "dev-spark-worker" "https" "localhost" 9001 ServicePassing
         , Service "dev-spark-worker-ui" "https" "localhost" 9001 ServicePassing
         ]
+        []
     , Instance
         "dev-zeppelin"
         template2
@@ -134,6 +136,7 @@ initialModel =
         [ Service "dev-zeppelin-ui" "http" "localhost" 9000 ServicePassing
         , Service "dev-zeppelin-spark-ui" "https" "localhost" 9001 ServiceFailing
         ]
+        []
     , Instance
         "frank-zeppelin"
         template2
@@ -145,6 +148,10 @@ initialModel =
         JobRunning
         [ Service "frank-zeppelin-ui" "http" "localhost" 9000 ServiceUnknown
         , Service "frank-zeppelin-spark-ui" "https" "localhost" 9001 ServiceUnknown
+        ]
+        [ PeriodicRun JobRunning 1482164560652 "frank-zeppelin/periodic-1482164560652"
+        , PeriodicRun JobDead 1482164560500 "frank-zeppelin/periodic-1482164560500"
+        , PeriodicRun JobDead 1482164560600 "frank-zeppelin/periodic-1482164560600"
         ]
     ]
   }

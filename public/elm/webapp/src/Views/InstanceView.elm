@@ -11,6 +11,7 @@ import Models.Resources.Template exposing (..)
 import Models.Ui.InstanceParameterForm as InstanceParameterForm
 import Set exposing (Set)
 import Maybe
+import Date
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 import Utils.MaybeUtils as MaybeUtils
@@ -176,6 +177,7 @@ instanceDetailView instance maybeInstanceParameterForm =
       , otherParameterInfos
       )
     , formIsBeingEdited
+    , periodicRuns
     ) =
     ( ( "id"
       , Dict.get "id" instance.parameterValues
@@ -186,6 +188,7 @@ instanceDetailView instance maybeInstanceParameterForm =
       , Dict.remove "id" instance.template.parameterInfos
       )
     , MaybeUtils.isDefined maybeInstanceParameterForm
+    , List.reverse (List.sortBy .utcSeconds instance.periodicRuns)
     )
   in
     let (otherParametersLeft, otherParametersRight) =
@@ -214,52 +217,94 @@ instanceDetailView instance maybeInstanceParameterForm =
                 [ ("padding-right", "40px") ]
             )
           ]
-          [ h5 [] [ text "Template" ]
-          , h5 [] [ text "Parameters" ]
-          , Html.form
-            [ onSubmit (ApplyParameterValueChanges instance) ]
-            [ div
-              [ class "row" ]
+          ( List.append
+            [ h5 [] [ text "Template" ]
+            , h5 [] [ text "Parameters" ]
+            , Html.form
+              [ onSubmit (ApplyParameterValueChanges instance) ]
               [ div
-                [ class "col-md-6" ]
-                [ ( parameterValueView (instance, idParameter, idParameterValue, idParameterInfo, Nothing, False) ) ]
-              ]
-            , div
-              [ class "row" ]
-              [ div
-                [ class "col-md-6" ]
-                ( parameterValuesView instance otherParametersLeft otherParameterValues otherParameterInfos maybeInstanceParameterForm )
+                [ class "row" ]
+                [ div
+                  [ class "col-md-6" ]
+                  [ ( parameterValueView (instance, idParameter, idParameterValue, idParameterInfo, Nothing, False) ) ]
+                ]
               , div
-                [ class "col-md-6" ]
-                ( parameterValuesView instance otherParametersRight otherParameterValues otherParameterInfos maybeInstanceParameterForm )
-              ]
-            , div
-              [ class "row"
-              , style [ ("margin-bottom", "15px") ]
-              ]
-              [ div
-                [ class "col-md-6" ]
-                [ iconButtonText
-                    ( if (formIsBeingEdited) then "btn btn-success" else "btn btn-default" )
-                    "fa fa-check"
-                    "Apply"
-                    [ disabled (not formIsBeingEdited)
-                    , type_ "submit"
-                    ]
-                , text " "
-                , iconButtonText
-                    ( if (formIsBeingEdited) then "btn btn-warning" else "btn btn-default" )
-                    "fa fa-ban"
-                    "Discard"
-                    [ disabled (not formIsBeingEdited)
-                    , onClick (DiscardParameterValueChanges instance)
-                    ]
+                [ class "row" ]
+                [ div
+                  [ class "col-md-6" ]
+                  ( parameterValuesView instance otherParametersLeft otherParameterValues otherParameterInfos maybeInstanceParameterForm )
+                , div
+                  [ class "col-md-6" ]
+                  ( parameterValuesView instance otherParametersRight otherParameterValues otherParameterInfos maybeInstanceParameterForm )
+                ]
+              , div
+                [ class "row"
+                , style [ ("margin-bottom", "15px") ]
+                ]
+                [ div
+                  [ class "col-md-6" ]
+                  [ iconButtonText
+                      ( if (formIsBeingEdited) then "btn btn-success" else "btn btn-default" )
+                      "fa fa-check"
+                      "Apply"
+                      [ disabled (not formIsBeingEdited)
+                      , type_ "submit"
+                      ]
+                  , text " "
+                  , iconButtonText
+                      ( if (formIsBeingEdited) then "btn btn-warning" else "btn btn-default" )
+                      "fa fa-ban"
+                      "Discard"
+                      [ disabled (not formIsBeingEdited)
+                      , onClick (DiscardParameterValueChanges instance)
+                      ]
+                  ]
                 ]
               ]
             ]
-          , h5 [] [ text "Periodic Runs" ]
-          ]
+            ( if (List.isEmpty periodicRuns) then
+                []
+              else
+                [ h5 [] [ text "Periodic Runs" ]
+                , ul []
+                  (List.map periodicRunView periodicRuns)
+                ]
+            )
+          )
         ]
+
+periodicRunView periodicRun =
+  li []
+    [ code [ style [ ("margin-right", "12px" ) ] ] [ text periodicRun.jobName ]
+    , text " "
+    , span
+      [ class "hidden-xs"
+      , style [ ("margin-right", "12px" ) ]
+      ]
+      [ icon "fa fa-clock-o" []
+      , text " "
+      , text (periodicRunDateView (Date.fromTime (toFloat periodicRun.utcSeconds)))
+      ]
+    , text " "
+    , jobStatusView periodicRun.status
+    ]
+
+periodicRunDateView date =
+  String.concat
+    [ toString (Date.hour date)
+    , ":"
+    , toString (Date.minute date)
+    , ":"
+    , toString (Date.second date)
+    , ":"
+    , toString (Date.millisecond date)
+    , ", "
+    , toString (Date.day date)
+    , ". "
+    , toString (Date.month date)
+    , " "
+    , toString (Date.year date)
+    ]
 
 parameterValuesView instance parameters parameterValues parameterInfos maybeInstanceParameterForm =
   parameters
