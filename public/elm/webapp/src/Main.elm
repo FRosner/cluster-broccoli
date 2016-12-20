@@ -139,7 +139,7 @@ initialModel =
         []
     , Instance
         "frank-zeppelin"
-        template2
+        { template2 | version = "abcdefgh" }
         ( Dict.fromList
           [ ("id", "frank-zeppelin")
           , ("password", "secret2")

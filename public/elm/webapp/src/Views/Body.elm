@@ -19,4 +19,4 @@ view : List Template -> List Instance -> BodyUiModel -> Html UpdateBodyViewMsg
 view templates instances bodyUiModel =
   div
     [ class "container" ]
-    (List.map (Views.TemplateView.view instances bodyUiModel) templates)
+    (List.map (Views.TemplateView.view instances templates bodyUiModel) templates)

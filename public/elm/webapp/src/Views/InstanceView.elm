@@ -21,7 +21,7 @@ chevronColumnWidth = 30
 templateVersionColumnWidth = 1
 jobControlsColumnWidth = 170
 
-view instances selectedInstances expandedInstances instanceParameterForms =
+view instances selectedInstances expandedInstances instanceParameterForms templates =
   let (instancesIds) =
     instances
       |> List.map (\i -> i.id)
@@ -84,10 +84,10 @@ view instances selectedInstances expandedInstances instanceParameterForms =
             ]
           ]
         , tbody []
-          ( List.concatMap (instanceRow selectedInstances expandedInstances instanceParameterForms) instances )
+          ( List.concatMap (instanceRow selectedInstances expandedInstances instanceParameterForms templates) instances )
         ]
 
-instanceRow selectedInstances expandedInstances instanceParameterForms instance =
+instanceRow selectedInstances expandedInstances instanceParameterForms templates instance =
   let
     ( instanceExpanded
     , instanceParameterForm
@@ -152,6 +152,7 @@ instanceRow selectedInstances expandedInstances instanceParameterForms instance 
         [ instanceDetailView
             instance
             instanceParameterForm
+            templates
         ]
       else
         []
@@ -166,7 +167,7 @@ editingParamColor = "rgba(255, 177, 0, 0.46)"
 normalParamColor = "#eee"
 
 -- TODO as "id" is special we should treat it also special
-instanceDetailView instance maybeInstanceParameterForm =
+instanceDetailView instance maybeInstanceParameterForm templates =
   let
     ( ( idParameter
       , idParameterValue
@@ -218,11 +219,12 @@ instanceDetailView instance maybeInstanceParameterForm =
             )
           ]
           ( List.append
-            [ h5 [] [ text "Template" ]
-            , h5 [] [ text "Parameters" ]
-            , Html.form
+            [ Html.form
               [ onSubmit (ApplyParameterValueChanges instance) ]
-              [ div
+              [ h5 [] [ text "Template" ]
+              , templateSelectionView instance.template templates
+              , h5 [] [ text "Parameters" ]
+              , div
                 [ class "row" ]
                 [ div
                   [ class "col-md-6" ]
@@ -272,6 +274,35 @@ instanceDetailView instance maybeInstanceParameterForm =
             )
           )
         ]
+
+templateSelectionView currentTemplate templates =
+  let templatesWithoutCurrentTemplate =
+    List.filter (\t -> t /= currentTemplate) templates
+  in
+    select
+      [ class "form-control" ]
+      ( List.append
+        [ templateOption currentTemplate currentTemplate ]
+        ( List.map (templateOption currentTemplate) templatesWithoutCurrentTemplate )
+      )
+
+templateOption currentTemplate template =
+  let templateOption =
+    if (currentTemplate == template) then
+      "Unchanged"
+    else if (currentTemplate.id == template.id) then
+      "Upgrade to"
+    else
+      "Migrate to"
+  in
+    option []
+      [ text templateOption
+      , text ": "
+      , text template.id
+      , text " ("
+      , text template.version
+      , text ")"
+      ]
 
 periodicRunView periodicRun =
   li []

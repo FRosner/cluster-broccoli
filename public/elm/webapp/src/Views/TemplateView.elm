@@ -13,7 +13,7 @@ import Set exposing (Set)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
-view instances bodyUiModel template =
+view instances templates bodyUiModel template =
   let (templateInstances) =
     List.filter (\i -> i.template.id == template.id) instances
   in
@@ -79,6 +79,7 @@ view instances bodyUiModel template =
               selectedTemplateInstances
               bodyUiModel.expandedInstances
               bodyUiModel.instanceParameterForms
+              templates
             )
           ]
         ]
