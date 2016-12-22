@@ -390,6 +390,14 @@ parameterValueView (instance, parameter, maybeParameterValue, maybeParameterInfo
               , a
                 [ class "input-group-addon"
                 , attribute "role" "button"
+              , attribute
+                  "onclick"
+                  ( String.concat
+                    [ "copy('"
+                    , parameterValue
+                    , "')"
+                    ]
+                  )
                 ]
                 [ icon "glyphicon glyphicon-copy" [] ]
               ]

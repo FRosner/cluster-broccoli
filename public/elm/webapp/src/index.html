@@ -8,5 +8,18 @@
   <body style="padding-top:20px">
     <div id="main"></div>
     <script src="/app.js"></script>
+    <script>
+    function copy(text) {
+      // I was not able to do this in Elm so I had to use the JS function here
+      // Elm ports also don't work because at least Chrome needs a proper onclick function for execCommand('copy') to work
+      var dummy = document.createElement("input");
+      document.body.appendChild(dummy);
+      dummy.setAttribute("id", "dummy_id");
+      document.getElementById("dummy_id").value=text;
+      dummy.select();
+      document.execCommand("copy");
+      document.body.removeChild(dummy);
+    }
+    </script>
   </body>
 </html>
