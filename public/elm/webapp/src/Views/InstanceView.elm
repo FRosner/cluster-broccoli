@@ -346,36 +346,57 @@ parameterValueView (instance, parameter, maybeParameterValue, maybeParameterInfo
   let
     ( placeholderValue
     , parameterValue
+    , isSecret
     ) =
     ( maybeParameterInfo
         |> MaybeUtils.concatMap (\i -> i.default)
         |> Maybe.withDefault ""
     , maybeEditedValue
         |> Maybe.withDefault (Maybe.withDefault "" maybeParameterValue)
+    , maybeParameterInfo
+        |> MaybeUtils.concatMap (\i -> i.secret)
+        |> Maybe.withDefault False
     )
   in
     p
       []
       [ div
         [ class "input-group" ]
-        [ span
-          [ class "input-group-addon"
-          , style
-            [ ( "background-color", Maybe.withDefault normalParamColor (Maybe.map (\v -> editingParamColor) maybeEditedValue) )
+        ( List.append
+          [ span
+            [ class "input-group-addon"
+            , style
+              [ ( "background-color", Maybe.withDefault normalParamColor (Maybe.map (\v -> editingParamColor) maybeEditedValue) )
+              ]
             ]
+            [ text parameter ]
+          , input
+            [ type_ ( if isSecret then "password" else "text" )
+            , class "form-control"
+            , attribute "aria-label" parameter
+            , placeholder placeholderValue
+            , value parameterValue
+            , disabled (not enabled)
+            , onInput (EnterParameterValue instance parameter)
+            ]
+            []
           ]
-          [ text parameter ]
-        , input
-          [ type_ "text"
-          , class "form-control"
-          , attribute "aria-label" parameter
-          , placeholder placeholderValue
-          , value parameterValue
-          , disabled (not enabled)
-          , onInput (EnterParameterValue instance parameter)
-          ]
-          []
-        ]
+          ( if (isSecret) then
+              [ a
+                [ class "input-group-addon"
+                , attribute "role" "button"
+                ]
+                [ icon "glyphicon glyphicon-eye-open" [] ]
+              , a
+                [ class "input-group-addon"
+                , attribute "role" "button"
+                ]
+                [ icon "glyphicon glyphicon-copy" [] ]
+              ]
+            else
+              []
+          )
+        )
       ]
 
 jobStatusView jobStatus =
