@@ -17,11 +17,13 @@ updateBodyView message oldBodyUiModel =
     , oldSelectedInstances
     , oldExpandedInstances
     , oldInstanceParameterForms
+    , oldVisibleSecrets
     ) =
     ( oldBodyUiModel.expandedTemplates
     , oldBodyUiModel.selectedInstances
     , oldBodyUiModel.expandedInstances
     , oldBodyUiModel.instanceParameterForms
+    , oldBodyUiModel.visibleSecrets
     )
   in
     case message of
@@ -79,6 +81,17 @@ updateBodyView message oldBodyUiModel =
         ( { oldBodyUiModel | instanceParameterForms = resetParameterForm instance oldInstanceParameterForms }
         , Cmd.none
         )
+      ToggleSecretVisibility instanceId parameter ->
+        let newVisibleSecrets =
+          ( insertOrRemove
+              ( not (Set.member (instanceId, parameter) oldVisibleSecrets) )
+              (instanceId, parameter)
+              oldVisibleSecrets
+          )
+        in
+          ( { oldBodyUiModel | visibleSecrets = newVisibleSecrets }
+          , Cmd.none
+          )
 
 resetParameterForm instance parameterForms =
   Dict.remove instance.id parameterForms

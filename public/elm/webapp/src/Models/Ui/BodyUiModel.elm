@@ -12,6 +12,7 @@ type alias BodyUiModel =
   , selectedInstances : Set InstanceId
   , expandedInstances : Set InstanceId
   , instanceParameterForms : Dict InstanceId InstanceParameterForm
+  , visibleSecrets : Set (InstanceId, String)
   }
 
 initialModel =
@@ -19,4 +20,5 @@ initialModel =
   , selectedInstances = Set.empty
   , expandedInstances = Set.empty
   , instanceParameterForms = Dict.empty
+  , visibleSecrets = Set.empty
   }

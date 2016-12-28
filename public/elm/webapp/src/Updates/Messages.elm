@@ -33,3 +33,4 @@ type UpdateBodyViewMsg
   | EnterParameterValue Instance String String
   | ApplyParameterValueChanges Instance
   | DiscardParameterValueChanges Instance
+  | ToggleSecretVisibility InstanceId String

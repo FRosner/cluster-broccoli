@@ -79,6 +79,7 @@ view instances templates bodyUiModel template =
               selectedTemplateInstances
               bodyUiModel.expandedInstances
               bodyUiModel.instanceParameterForms
+              bodyUiModel.visibleSecrets
               templates
             )
           ]

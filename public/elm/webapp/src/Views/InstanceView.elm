@@ -8,7 +8,7 @@ import Models.Resources.Instance exposing (..)
 import Models.Resources.ServiceStatus exposing (..)
 import Models.Resources.JobStatus exposing (..)
 import Models.Resources.Template exposing (..)
-import Models.Ui.InstanceParameterForm as InstanceParameterForm
+import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (InstanceParameterForm)
 import Set exposing (Set)
 import Maybe
 import Date
@@ -21,7 +21,7 @@ chevronColumnWidth = 30
 templateVersionColumnWidth = 1
 jobControlsColumnWidth = 170
 
-view instances selectedInstances expandedInstances instanceParameterForms templates =
+view instances selectedInstances expandedInstances instanceParameterForms visibleSecrets templates =
   let (instancesIds) =
     instances
       |> List.map (\i -> i.id)
@@ -84,10 +84,10 @@ view instances selectedInstances expandedInstances instanceParameterForms templa
             ]
           ]
         , tbody []
-          ( List.concatMap (instanceRow selectedInstances expandedInstances instanceParameterForms templates) instances )
+          ( List.concatMap (instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates) instances )
         ]
 
-instanceRow selectedInstances expandedInstances instanceParameterForms templates instance =
+instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates instance =
   let
     ( instanceExpanded
     , instanceParameterForm
@@ -152,6 +152,7 @@ instanceRow selectedInstances expandedInstances instanceParameterForms templates
         [ instanceDetailView
             instance
             instanceParameterForm
+            visibleSecrets
             templates
         ]
       else
@@ -167,24 +168,16 @@ editingParamColor = "rgba(255, 177, 0, 0.46)"
 normalParamColor = "#eee"
 
 -- TODO as "id" is special we should treat it also special
-instanceDetailView instance maybeInstanceParameterForm templates =
+instanceDetailView instance maybeInstanceParameterForm visibleSecrets templates =
   let
-    ( ( idParameter
-      , idParameterValue
-      , idParameterInfo
-      )
-    , ( otherParameters
+    ( ( otherParameters
       , otherParameterValues
       , otherParameterInfos
       )
     , formIsBeingEdited
     , periodicRuns
     ) =
-    ( ( "id"
-      , Dict.get "id" instance.parameterValues
-      , Dict.get "id" instance.template.parameterInfos
-      )
-    , ( List.filter (\p -> p /= "id") instance.template.parameters
+    ( ( List.filter (\p -> p /= "id") instance.template.parameters
       , Dict.remove "id" instance.parameterValues
       , Dict.remove "id" instance.template.parameterInfos
       )
@@ -228,16 +221,16 @@ instanceDetailView instance maybeInstanceParameterForm templates =
                 [ class "row" ]
                 [ div
                   [ class "col-md-6" ]
-                  [ ( parameterValueView (instance, idParameter, idParameterValue, idParameterInfo, Nothing, False) ) ]
+                  [ ( parameterValueView instance instance.parameterValues instance.template.parameterInfos maybeInstanceParameterForm False visibleSecrets "id" ) ]
                 ]
               , div
                 [ class "row" ]
                 [ div
                   [ class "col-md-6" ]
-                  ( parameterValuesView instance otherParametersLeft otherParameterValues otherParameterInfos maybeInstanceParameterForm )
+                  ( parameterValuesView instance otherParametersLeft otherParameterValues otherParameterInfos maybeInstanceParameterForm visibleSecrets )
                 , div
                   [ class "col-md-6" ]
-                  ( parameterValuesView instance otherParametersRight otherParameterValues otherParameterInfos maybeInstanceParameterForm )
+                  ( parameterValuesView instance otherParametersRight otherParameterValues otherParameterInfos maybeInstanceParameterForm visibleSecrets )
                 ]
               , div
                 [ class "row"
@@ -337,75 +330,97 @@ periodicRunDateView date =
     , toString (Date.year date)
     ]
 
-parameterValuesView instance parameters parameterValues parameterInfos maybeInstanceParameterForm =
-  parameters
-  |> List.map ( \p -> (instance, p, Dict.get p parameterValues, Dict.get p parameterInfos, MaybeUtils.concatMap (\f -> (Dict.get p f.changedParameterValues)) maybeInstanceParameterForm, True) )
-  |> List.map parameterValueView
+parameterValuesView instance parameters parameterValues parameterInfos maybeInstanceParameterForm visibleSecrets =
+  List.map
+    ( parameterValueView instance parameterValues parameterInfos maybeInstanceParameterForm True visibleSecrets )
+    parameters
 
-parameterValueView (instance, parameter, maybeParameterValue, maybeParameterInfo, maybeEditedValue, enabled) =
+
+parameterValueView : Instance -> Dict String String -> Dict String ParameterInfo -> Maybe InstanceParameterForm -> Bool -> Set (InstanceId, String) -> String -> Html UpdateBodyViewMsg
+parameterValueView instance parameterValues parameterInfos maybeInstanceParameterForm enabled visibleSecrets parameter =
   let
-    ( placeholderValue
-    , parameterValue
-    , isSecret
-    ) =
-    ( maybeParameterInfo
-        |> MaybeUtils.concatMap (\i -> i.default)
-        |> Maybe.withDefault ""
-    , maybeEditedValue
-        |> Maybe.withDefault (Maybe.withDefault "" maybeParameterValue)
+    ( maybeParameterValue
     , maybeParameterInfo
-        |> MaybeUtils.concatMap (\i -> i.secret)
-        |> Maybe.withDefault False
+    , maybeEditedValue
+    ) =
+    ( Dict.get parameter parameterValues
+    , Dict.get parameter parameterInfos
+    , MaybeUtils.concatMap (\f -> (Dict.get parameter f.changedParameterValues)) maybeInstanceParameterForm
     )
   in
-    p
-      []
-      [ div
-        [ class "input-group" ]
-        ( List.append
-          [ span
-            [ class "input-group-addon"
-            , style
-              [ ( "background-color", Maybe.withDefault normalParamColor (Maybe.map (\v -> editingParamColor) maybeEditedValue) )
-              ]
-            ]
-            [ text parameter ]
-          , input
-            [ type_ ( if isSecret then "password" else "text" )
-            , class "form-control"
-            , attribute "aria-label" parameter
-            , placeholder placeholderValue
-            , value parameterValue
-            , disabled (not enabled)
-            , onInput (EnterParameterValue instance parameter)
-            ]
-            []
-          ]
-          ( if (isSecret) then
-              [ a
-                [ class "input-group-addon"
-                , attribute "role" "button"
+    let
+      ( placeholderValue
+      , parameterValue
+      , isSecret
+      , secretVisible
+      ) =
+      ( maybeParameterInfo
+          |> MaybeUtils.concatMap (\i -> i.default)
+          |> Maybe.withDefault ""
+      , maybeEditedValue
+          |> Maybe.withDefault (Maybe.withDefault "" maybeParameterValue)
+      , maybeParameterInfo
+          |> MaybeUtils.concatMap (\i -> i.secret)
+          |> Maybe.withDefault False
+      , Set.member (instance.id, parameter) visibleSecrets
+      )
+    in
+      p
+        []
+        [ div
+          [ class "input-group" ]
+          ( List.append
+            [ span
+              [ class "input-group-addon"
+              , style
+                [ ( "background-color", Maybe.withDefault normalParamColor (Maybe.map (\v -> editingParamColor) maybeEditedValue) )
                 ]
-                [ icon "glyphicon glyphicon-eye-open" [] ]
-              , a
-                [ class "input-group-addon"
-                , attribute "role" "button"
-              , attribute
-                  "onclick"
-                  ( String.concat
-                    [ "copy('"
-                    , parameterValue
-                    , "')"
-                    ]
-                  )
-                ]
-                [ icon "glyphicon glyphicon-copy" [] ]
               ]
-            else
+              [ text parameter ]
+            , input
+              [ type_ ( if ( isSecret && ( not secretVisible ) ) then "password" else "text" )
+              , class "form-control"
+              , attribute "aria-label" parameter
+              , placeholder placeholderValue
+              , value parameterValue
+              , disabled (not enabled)
+              , onInput (EnterParameterValue instance parameter)
+              ]
               []
+            ]
+            ( if (isSecret) then
+                [ a
+                  [ class "input-group-addon"
+                  , attribute "role" "button"
+                  , onClick ( ToggleSecretVisibility instance.id parameter )
+                  ]
+                  [ icon
+                    ( String.concat
+                      [ "glyphicon glyphicon-eye-"
+                      , ( if secretVisible then "close" else "open" )
+                      ]
+                    )
+                    []
+                  ]
+                , a
+                  [ class "input-group-addon"
+                  , attribute "role" "button"
+                , attribute
+                    "onclick"
+                    ( String.concat
+                      [ "copy('"
+                      , parameterValue
+                      , "')"
+                      ]
+                    )
+                  ]
+                  [ icon "glyphicon glyphicon-copy" [] ]
+                ]
+              else
+                []
+            )
           )
-        )
-      ]
+        ]
 
 jobStatusView jobStatus =
   let (statusLabel, statusText) =
