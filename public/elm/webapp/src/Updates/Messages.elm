@@ -1,9 +1,10 @@
 module Updates.Messages exposing (..)
 
 import Http
+import Dict exposing (Dict)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
-import Models.Resources.Template exposing (TemplateId)
+import Models.Resources.Template exposing (TemplateId, Template)
 import Models.Resources.Instance exposing (InstanceId, Instance)
 
 type UpdateAboutInfoMsg
@@ -30,7 +31,12 @@ type UpdateBodyViewMsg
   | AllInstancesSelected (List InstanceId) Bool
   | InstanceExpanded InstanceId Bool
   | AllInstancesExpanded (List InstanceId) Bool
-  | EnterParameterValue Instance String String
+  | EnterEditInstanceParameterValue Instance String String
+  | EnterNewInstanceParameterValue Template String String
   | ApplyParameterValueChanges Instance
   | DiscardParameterValueChanges Instance
-  | ToggleSecretVisibility InstanceId String
+  | ToggleEditInstanceSecretVisibility InstanceId String
+  | ToggleNewInstanceSecretVisibility TemplateId String
+  | ExpandNewInstanceForm Bool TemplateId
+  | SubmitNewInstanceCreation TemplateId (Dict String String)
+  | DiscardNewInstanceCreation TemplateId

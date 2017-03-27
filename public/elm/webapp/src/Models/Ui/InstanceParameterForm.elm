@@ -6,3 +6,5 @@ type alias InstanceParameterForm =
   { originalParameterValues : Dict String String
   , changedParameterValues : Dict String String
   }
+
+empty = InstanceParameterForm Dict.empty Dict.empty

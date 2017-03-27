@@ -36,7 +36,6 @@ import Dict exposing (Dict)
 
 type alias Model =
   { aboutInfo : Maybe AboutInfo
-  -- , templates : List Template
   , errors : Errors
   , loginForm : LoginForm
   , loggedIn : Maybe UserInfo
@@ -235,7 +234,7 @@ subscriptions : Model -> Sub AnyMsg
 subscriptions model =
   Sub.map
     UpdateErrorsMsg
-    -- TODO I need a module to handle the websocket string messages and parse them into JSON somehow
+    -- TODO I need a module to handle the websocket string messages and parse them: https://github.com/Husterknupp/fxck/tree/master/client/src
     -- TODO cut the websocket connection on logout
     ( WebSocket.listen "ws://localhost:9000/ws" AddError )
 

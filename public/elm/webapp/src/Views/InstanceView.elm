@@ -15,6 +15,7 @@ import Date
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 import Utils.MaybeUtils as MaybeUtils
+import Views.ParameterFormView as ParameterFormView
 
 checkboxColumnWidth = 1
 chevronColumnWidth = 30
@@ -164,137 +165,37 @@ expandedTdStyle =
   , ("padding-top", "0px")
   ]
 
-editingParamColor = "rgba(255, 177, 0, 0.46)"
-normalParamColor = "#eee"
-
 -- TODO as "id" is special we should treat it also special
 instanceDetailView instance maybeInstanceParameterForm visibleSecrets templates =
-  let
-    ( ( otherParameters
-      , otherParameterValues
-      , otherParameterInfos
-      )
-    , formIsBeingEdited
-    , periodicRuns
-    ) =
-    ( ( List.filter (\p -> p /= "id") instance.template.parameters
-      , Dict.remove "id" instance.parameterValues
-      , Dict.remove "id" instance.template.parameterInfos
-      )
-    , MaybeUtils.isDefined maybeInstanceParameterForm
-    , List.reverse (List.sortBy .utcSeconds instance.periodicRuns)
-    )
+  let periodicRuns =
+    List.reverse (List.sortBy .utcSeconds instance.periodicRuns)
   in
-    let (otherParametersLeft, otherParametersRight) =
-      let firstHalf =
-        otherParameters
-          |> List.length
-          |> toFloat
-          |> (\l -> l / 2)
-          |> ceiling
-      in
-        ( List.take firstHalf otherParameters
-        , List.drop firstHalf otherParameters
-        )
-    in
-      tr []
-        [ td
-          [ style expandedTdStyle
-          , width checkboxColumnWidth
-          ]
-          []
-        , td
-          [ colspan 5
-          , style
-            ( List.append
-                expandedTdStyle
-                [ ("padding-right", "40px") ]
-            )
-          ]
+    tr []
+      [ td
+        [ style expandedTdStyle
+        , width checkboxColumnWidth
+        ]
+        []
+      , td
+        [ colspan 5
+        , style
           ( List.append
-            [ Html.form
-              [ onSubmit (ApplyParameterValueChanges instance) ]
-              [ h5 [] [ text "Template" ]
-              , templateSelectionView instance.template templates
-              , h5 [] [ text "Parameters" ]
-              , div
-                [ class "row" ]
-                [ div
-                  [ class "col-md-6" ]
-                  [ ( parameterValueView instance instance.parameterValues instance.template.parameterInfos maybeInstanceParameterForm False visibleSecrets "id" ) ]
-                ]
-              , div
-                [ class "row" ]
-                [ div
-                  [ class "col-md-6" ]
-                  ( parameterValuesView instance otherParametersLeft otherParameterValues otherParameterInfos maybeInstanceParameterForm visibleSecrets )
-                , div
-                  [ class "col-md-6" ]
-                  ( parameterValuesView instance otherParametersRight otherParameterValues otherParameterInfos maybeInstanceParameterForm visibleSecrets )
-                ]
-              , div
-                [ class "row"
-                , style [ ("margin-bottom", "15px") ]
-                ]
-                [ div
-                  [ class "col-md-6" ]
-                  [ iconButtonText
-                      ( if (formIsBeingEdited) then "btn btn-success" else "btn btn-default" )
-                      "fa fa-check"
-                      "Apply"
-                      [ disabled (not formIsBeingEdited)
-                      , type_ "submit"
-                      ]
-                  , text " "
-                  , iconButtonText
-                      ( if (formIsBeingEdited) then "btn btn-warning" else "btn btn-default" )
-                      "fa fa-ban"
-                      "Discard"
-                      [ disabled (not formIsBeingEdited)
-                      , onClick (DiscardParameterValueChanges instance)
-                      ]
-                  ]
-                ]
-              ]
-            ]
-            ( if (List.isEmpty periodicRuns) then
-                []
-              else
-                [ h5 [] [ text "Periodic Runs" ]
-                , ul []
-                  (List.map periodicRunView periodicRuns)
-                ]
-            )
+              expandedTdStyle
+              [ ("padding-right", "40px") ]
           )
         ]
-
-templateSelectionView currentTemplate templates =
-  let templatesWithoutCurrentTemplate =
-    List.filter (\t -> t /= currentTemplate) templates
-  in
-    select
-      [ class "form-control" ]
-      ( List.append
-        [ templateOption currentTemplate currentTemplate ]
-        ( List.map (templateOption currentTemplate) templatesWithoutCurrentTemplate )
-      )
-
-templateOption currentTemplate template =
-  let templateOption =
-    if (currentTemplate == template) then
-      "Unchanged"
-    else if (currentTemplate.id == template.id) then
-      "Upgrade to"
-    else
-      "Migrate to"
-  in
-    option []
-      [ text templateOption
-      , text ": "
-      , text template.id
-      , text " ("
-      , text template.version
-      , text ")"
+        ( List.append
+          [ ParameterFormView.editView instance templates maybeInstanceParameterForm visibleSecrets
+          ]
+          ( if (List.isEmpty periodicRuns) then
+              []
+            else
+              [ h5 [] [ text "Periodic Runs" ]
+              , ul []
+                (List.map periodicRunView periodicRuns)
+              ]
+          )
+        )
       ]
 
 periodicRunView periodicRun =
@@ -329,98 +230,6 @@ periodicRunDateView date =
     , " "
     , toString (Date.year date)
     ]
-
-parameterValuesView instance parameters parameterValues parameterInfos maybeInstanceParameterForm visibleSecrets =
-  List.map
-    ( parameterValueView instance parameterValues parameterInfos maybeInstanceParameterForm True visibleSecrets )
-    parameters
-
-
-parameterValueView : Instance -> Dict String String -> Dict String ParameterInfo -> Maybe InstanceParameterForm -> Bool -> Set (InstanceId, String) -> String -> Html UpdateBodyViewMsg
-parameterValueView instance parameterValues parameterInfos maybeInstanceParameterForm enabled visibleSecrets parameter =
-  let
-    ( maybeParameterValue
-    , maybeParameterInfo
-    , maybeEditedValue
-    ) =
-    ( Dict.get parameter parameterValues
-    , Dict.get parameter parameterInfos
-    , MaybeUtils.concatMap (\f -> (Dict.get parameter f.changedParameterValues)) maybeInstanceParameterForm
-    )
-  in
-    let
-      ( placeholderValue
-      , parameterValue
-      , isSecret
-      , secretVisible
-      ) =
-      ( maybeParameterInfo
-          |> MaybeUtils.concatMap (\i -> i.default)
-          |> Maybe.withDefault ""
-      , maybeEditedValue
-          |> Maybe.withDefault (Maybe.withDefault "" maybeParameterValue)
-      , maybeParameterInfo
-          |> MaybeUtils.concatMap (\i -> i.secret)
-          |> Maybe.withDefault False
-      , Set.member (instance.id, parameter) visibleSecrets
-      )
-    in
-      p
-        []
-        [ div
-          [ class "input-group" ]
-          ( List.append
-            [ span
-              [ class "input-group-addon"
-              , style
-                [ ( "background-color", Maybe.withDefault normalParamColor (Maybe.map (\v -> editingParamColor) maybeEditedValue) )
-                ]
-              ]
-              [ text parameter ]
-            , input
-              [ type_ ( if ( isSecret && ( not secretVisible ) ) then "password" else "text" )
-              , class "form-control"
-              , attribute "aria-label" parameter
-              , placeholder placeholderValue
-              , value parameterValue
-              , disabled (not enabled)
-              , onInput (EnterParameterValue instance parameter)
-              ]
-              []
-            ]
-            ( if (isSecret) then
-                [ a
-                  [ class "input-group-addon"
-                  , attribute "role" "button"
-                  , onClick ( ToggleSecretVisibility instance.id parameter )
-                  ]
-                  [ icon
-                    ( String.concat
-                      [ "glyphicon glyphicon-eye-"
-                      , ( if secretVisible then "close" else "open" )
-                      ]
-                    )
-                    []
-                  ]
-                , a
-                  [ class "input-group-addon"
-                  , attribute "role" "button"
-                , attribute
-                    "onclick"
-                    ( String.concat
-                      [ "copy('"
-                      , parameterValue
-                      , "')"
-                      ]
-                    )
-                  ]
-                  [ icon "glyphicon glyphicon-copy" [] ]
-                ]
-              else
-                []
-            )
-          )
-        ]
 
 jobStatusView jobStatus =
   let (statusLabel, statusText) =

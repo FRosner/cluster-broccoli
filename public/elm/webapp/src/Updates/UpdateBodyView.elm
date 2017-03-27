@@ -4,7 +4,7 @@ import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Set exposing (Set)
 import Models.Resources.Template exposing (TemplateId)
 import Models.Resources.Instance exposing (InstanceId)
-import Models.Ui.InstanceParameterForm exposing (InstanceParameterForm)
+import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (InstanceParameterForm)
 import Models.Ui.BodyUiModel exposing (BodyUiModel)
 import Dict exposing (Dict)
 import Messages exposing (AnyMsg)
@@ -17,13 +17,17 @@ updateBodyView message oldBodyUiModel =
     , oldSelectedInstances
     , oldExpandedInstances
     , oldInstanceParameterForms
-    , oldVisibleSecrets
+    , oldEditInstanceVisibleSecrets
+    , oldNewTemplateVisibleSecrets
+    , oldExpandedNewInstanceForms
     ) =
     ( oldBodyUiModel.expandedTemplates
     , oldBodyUiModel.selectedInstances
     , oldBodyUiModel.expandedInstances
     , oldBodyUiModel.instanceParameterForms
-    , oldBodyUiModel.visibleSecrets
+    , oldBodyUiModel.visibleEditInstanceSecrets
+    , oldBodyUiModel.visibleNewTemplateSecrets
+    , oldBodyUiModel.expandedNewInstanceForms
     )
   in
     case message of
@@ -62,15 +66,26 @@ updateBodyView message oldBodyUiModel =
           ( { oldBodyUiModel | expandedInstances = newExpandedInstances }
           , Cmd.none
           )
-      EnterParameterValue instance parameter value ->
+      EnterEditInstanceParameterValue instance parameter value ->
         let newInstanceParameterForms =
           ( Dict.update
               instance.id
-              ( updateParameterForm instance parameter value )
+              ( updateEditInstanceParameterForm instance parameter value )
               oldInstanceParameterForms
           )
         in
           ( { oldBodyUiModel | instanceParameterForms = newInstanceParameterForms }
+          , Cmd.none
+          )
+      EnterNewInstanceParameterValue template parameter value ->
+        let newExpandedNewInstanceForms =
+          ( Dict.update
+              template.id
+              ( updateNewInstanceParameterForm parameter value )
+              oldExpandedNewInstanceForms
+          )
+        in
+          ( { oldBodyUiModel | expandedNewInstanceForms = newExpandedNewInstanceForms }
           , Cmd.none
           )
       DiscardParameterValueChanges instance ->
@@ -81,22 +96,60 @@ updateBodyView message oldBodyUiModel =
         ( { oldBodyUiModel | instanceParameterForms = resetParameterForm instance oldInstanceParameterForms }
         , Cmd.none
         )
-      ToggleSecretVisibility instanceId parameter ->
+      ToggleEditInstanceSecretVisibility instanceId parameter ->
         let newVisibleSecrets =
           ( insertOrRemove
-              ( not (Set.member (instanceId, parameter) oldVisibleSecrets) )
+              ( not (Set.member (instanceId, parameter) oldEditInstanceVisibleSecrets) )
               (instanceId, parameter)
-              oldVisibleSecrets
+              oldEditInstanceVisibleSecrets
           )
         in
-          ( { oldBodyUiModel | visibleSecrets = newVisibleSecrets }
+          ( { oldBodyUiModel | visibleEditInstanceSecrets = newVisibleSecrets }
           , Cmd.none
           )
+      ToggleNewInstanceSecretVisibility templateId parameter ->
+        let newVisibleSecrets =
+          ( insertOrRemove
+              ( not (Set.member (templateId, parameter) oldNewTemplateVisibleSecrets) )
+              (templateId, parameter)
+              oldNewTemplateVisibleSecrets
+          )
+        in
+          ( { oldBodyUiModel | visibleNewTemplateSecrets = newVisibleSecrets }
+          , Cmd.none
+          )
+      ExpandNewInstanceForm expanded templateId ->
+        let newExpandedNewInstanceForms =
+          if (expanded) then
+            ( Dict.update
+                templateId
+                ( expandParameterForm templateId oldExpandedNewInstanceForms )
+                oldExpandedNewInstanceForms
+            )
+            else
+              Dict.remove templateId oldExpandedNewInstanceForms
+        in
+          ( { oldBodyUiModel | expandedNewInstanceForms = newExpandedNewInstanceForms }
+          , Cmd.none
+          )
+      SubmitNewInstanceCreation templateId parameterValues ->
+        ( oldBodyUiModel
+        , Cmd.none
+        )
+      DiscardNewInstanceCreation templateId ->
+        ( oldBodyUiModel
+        , Cmd.none
+        )
+
+expandParameterForm templateId oldExpandedNewInstanceForms maybeParameterForm =
+  case maybeParameterForm of
+    Just parameterForm -> Just parameterForm
+    Nothing -> Just InstanceParameterForm.empty
 
 resetParameterForm instance parameterForms =
   Dict.remove instance.id parameterForms
 
-updateParameterForm instance parameter value maybeParameterForm =
+updateEditInstanceParameterForm instance parameter value maybeParameterForm =
   case maybeParameterForm of
     Just parameterForm ->
       let oldParameterValues = parameterForm.changedParameterValues in
@@ -108,6 +161,20 @@ updateParameterForm instance parameter value maybeParameterForm =
           , originalParameterValues = instance.parameterValues
           }
         )
+
+updateNewInstanceParameterForm parameter value maybeParameterForm =
+  case maybeParameterForm of
+    Just parameterForm ->
+      let oldParameterValues = parameterForm.changedParameterValues in
+        Just
+          ( { parameterForm | changedParameterValues = Dict.insert parameter value oldParameterValues } )
+    Nothing ->
+      Just
+        ( { changedParameterValues = Dict.fromList [ ( parameter, value ) ]
+          , originalParameterValues = Dict.empty
+          }
+        )
+
 
 insertOrRemove bool insert set =
   if (bool) then

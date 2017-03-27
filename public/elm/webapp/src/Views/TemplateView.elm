@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Views.InstanceView
+import Views.ParameterFormView as ParameterFormView
 import Dict exposing (..)
 import Models.Resources.Instance exposing (..)
 import Models.Resources.Service exposing (..)
@@ -41,7 +42,8 @@ view instances templates bodyUiModel template =
                   "btn btn-default"
                   "fa fa-plus-circle"
                   "New"
-                  []
+                  [ onClick (ExpandNewInstanceForm True template.id)
+                  ]
               , text " "
               , div
                 [ class "btn-group"
@@ -74,12 +76,20 @@ view instances templates bodyUiModel template =
                   []
               ]
             ]
+          , div
+            [ class (if (Dict.member template.id bodyUiModel.expandedNewInstanceForms) then "show" else "hidden") ]
+            [ ( ParameterFormView.newView
+                template
+                (Dict.get template.id bodyUiModel.expandedNewInstanceForms)
+                bodyUiModel.visibleNewTemplateSecrets
+              )
+            ]
           , ( Views.InstanceView.view
               templateInstances
               selectedTemplateInstances
               bodyUiModel.expandedInstances
               bodyUiModel.instanceParameterForms
-              bodyUiModel.visibleSecrets
+              bodyUiModel.visibleEditInstanceSecrets
               templates
             )
           ]
