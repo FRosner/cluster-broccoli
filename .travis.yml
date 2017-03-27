@@ -6,8 +6,7 @@ jdk:
   - oraclejdk8
 
 before_script:
-  - sudo apt-get install nodejs
-  - sudo apt-get install npm
+  - npm update npm -g
   - . prepare-karma-tests
 
 script:
