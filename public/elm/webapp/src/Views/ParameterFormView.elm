@@ -242,7 +242,12 @@ newView template maybeInstanceParameterForm visibleSecrets =
         )
     in
       Html.form
-        [ onSubmit (SubmitNewInstanceCreation template.id instanceParameterForms.changedParameterValues) ]
+        [ onSubmit (SubmitNewInstanceCreation template.id instanceParameterForms.changedParameterValues)
+        , style
+          [ ("padding-left", "40px")
+          , ("padding-right", "40px")
+          ]
+        ]
         [ h5 [] [ text "Parameters" ]
         , div
           [ class "row" ]
