@@ -89,11 +89,11 @@ updateBodyView message oldBodyUiModel =
           , Cmd.none
           )
       DiscardParameterValueChanges instance ->
-        ( { oldBodyUiModel | instanceParameterForms = resetParameterForm instance oldInstanceParameterForms }
+        ( { oldBodyUiModel | instanceParameterForms = resetEditParameterForm instance oldInstanceParameterForms }
         , Cmd.none
         )
       ApplyParameterValueChanges instance ->
-        ( { oldBodyUiModel | instanceParameterForms = resetParameterForm instance oldInstanceParameterForms }
+        ( { oldBodyUiModel | instanceParameterForms = resetEditParameterForm instance oldInstanceParameterForms }
         , Cmd.none
         )
       ToggleEditInstanceSecretVisibility instanceId parameter ->
@@ -133,11 +133,11 @@ updateBodyView message oldBodyUiModel =
           , Cmd.none
           )
       SubmitNewInstanceCreation templateId parameterValues ->
-        ( oldBodyUiModel
+        ( { oldBodyUiModel | expandedNewInstanceForms = resetNewParameterForm templateId oldExpandedNewInstanceForms }
         , Cmd.none
         )
       DiscardNewInstanceCreation templateId ->
-        ( oldBodyUiModel
+        ( { oldBodyUiModel | expandedNewInstanceForms = resetNewParameterForm templateId oldExpandedNewInstanceForms }
         , Cmd.none
         )
 
@@ -146,8 +146,11 @@ expandParameterForm templateId oldExpandedNewInstanceForms maybeParameterForm =
     Just parameterForm -> Just parameterForm
     Nothing -> Just InstanceParameterForm.empty
 
-resetParameterForm instance parameterForms =
+resetEditParameterForm instance parameterForms =
   Dict.remove instance.id parameterForms
+
+resetNewParameterForm templateId parameterForms =
+  Dict.remove templateId parameterForms
 
 updateEditInstanceParameterForm instance parameter value maybeParameterForm =
   case maybeParameterForm of
