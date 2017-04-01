@@ -253,7 +253,7 @@ newView template maybeInstanceParameterForm visibleSecrets =
           [ class "row" ]
           [ div
             [ class "col-md-6" ]
-            [ ( newParameterValueView template template.parameterInfos maybeInstanceParameterForm False visibleSecrets "id" ) ]
+            [ ( newParameterValueView template template.parameterInfos maybeInstanceParameterForm True visibleSecrets "id" ) ]
           ]
         , div
           [ class "row" ]
