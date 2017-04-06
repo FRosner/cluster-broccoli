@@ -43,7 +43,6 @@ type alias Model =
   , instances : List Instance
   , templates : List Template
   , bodyUiModel : BodyUiModel
-  -- , expandedNewInstanceForms : Set TemplateId
   }
 
 template1 =
