@@ -25,6 +25,8 @@ import Messages exposing (AnyMsg(..))
 import Views.Header
 import Views.Body
 import Views.Notifications
+import Utils.CmdUtils as CmdUtils
+
 import WebSocket
 import Dict exposing (Dict)
 
@@ -173,6 +175,10 @@ update msg model =
       --   ({ model | templates = newTemplates }
       --   , cmd
       --   )
+    ProcessWsMsg wsMsg ->
+      ( model
+      , CmdUtils.cmd ( UpdateErrorsMsg ( AddError wsMsg ) )
+      )
     UpdateAboutInfoMsg subMsg ->
       let ((newAbout, newAuthEnabled), cmd) =
         updateAboutInfo subMsg model.aboutInfo
@@ -229,13 +235,12 @@ view model =
     , text (toString model)
     ]
 
+-- Sub.map UpdateErrorsMsg ( WebSocket.listen "ws://localhost:9000/ws" AddError ) when AddError is an UpdateErrorsMsg
 subscriptions : Model -> Sub AnyMsg
 subscriptions model =
-  Sub.map
-    UpdateErrorsMsg
-    -- TODO I need a module to handle the websocket string messages and parse them: https://github.com/Husterknupp/fxck/tree/master/client/src
-    -- TODO cut the websocket connection on logout
-    ( WebSocket.listen "ws://localhost:9000/ws" AddError )
+  -- TODO I need a module to handle the websocket string messages and parse them: https://github.com/Husterknupp/fxck/tree/master/client/src
+  -- TODO cut the websocket connection on logout
+  WebSocket.listen "ws://localhost:9000/ws" ProcessWsMsg
 
 main =
   program
