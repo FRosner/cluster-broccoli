@@ -20,7 +20,10 @@ class WebSocketController @Inject() (webSocketService: WebSocketService) extends
     val in = Iteratee.foreach[String] {
           // TODO call the controller methods
       msg =>
-        webSocketService.send(msg)
+          println(s"Received msg: $msg")
+//        webSocketService.send(msg)
+    }.map { _ =>
+      println(s"WS closed: $request")
     }
 
     // TODO send request to set all instances and templates initially, then the webSocketService.channel will be used for subsequent updates

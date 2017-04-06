@@ -6,6 +6,7 @@ import de.frosner.broccoli.util.Logging
 import play.api.Configuration
 import play.api.libs.iteratee.Concurrent
 
+//http://stackoverflow.com/questions/24576405/broadcasting-messages-in-play-framework-websockets
 @Singleton
 class WebSocketService @Inject() () extends Logging {
 
