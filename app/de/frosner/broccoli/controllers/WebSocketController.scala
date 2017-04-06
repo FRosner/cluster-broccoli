@@ -16,19 +16,23 @@ class WebSocketController @Inject() (webSocketService: WebSocketService) extends
   // TODO authorization (how to manage that clients only receive updates they are allowed to)
 
   def socket = WebSocket.using[String] { request =>
-    Logger.info(s"Opening websocket: $request")
+
+    // TODO create web socket with id and store it here so we can delete it later
+    val (connectionId, enumerator) = webSocketService.newConnection()
+    val connectionLogString = s"$connectionId ($request) from ${request.remoteAddress}"
+    Logger.info(s"New connection $connectionLogString")
+
     val in = Iteratee.foreach[String] {
-          // TODO call the controller methods
+        // TODO call the controller methods
       msg =>
-          println(s"Received msg: $msg")
-//        webSocketService.send(msg)
+        println(s"$connectionId Received msg: $msg")
     }.map { _ =>
-      println(s"WS closed: $request")
+      webSocketService.closeConnection(connectionId)
+      Logger.info(s"Closed connection $connectionLogString")
     }
 
     // TODO send request to set all instances and templates initially, then the webSocketService.channel will be used for subsequent updates
-
-    (in, webSocketService.out)
+    (in, enumerator)
   }
 
 }
