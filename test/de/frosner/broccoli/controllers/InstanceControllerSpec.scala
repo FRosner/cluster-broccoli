@@ -1,7 +1,7 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.services.{BuildInfoService, InstanceNotFoundException, InstanceService}
+import de.frosner.broccoli.services.{AboutInfoService, InstanceNotFoundException, InstanceService}
 import org.mockito.Mockito._
 import play.api.libs.json._
 import play.api.test._
