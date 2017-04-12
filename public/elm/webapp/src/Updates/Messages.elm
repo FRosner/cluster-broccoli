@@ -40,3 +40,6 @@ type UpdateBodyViewMsg
   | ExpandNewInstanceForm Bool TemplateId
   | SubmitNewInstanceCreation TemplateId (Dict String String)
   | DiscardNewInstanceCreation TemplateId
+
+type UpdateTemplatesMsg
+  = ListTemplates (List Template)

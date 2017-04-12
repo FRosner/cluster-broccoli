@@ -9,6 +9,7 @@ type AnyMsg
   | UpdateLoginFormMsg Updates.Messages.UpdateLoginFormMsg
   | UpdateLoginStatusMsg Updates.Messages.UpdateLoginStatusMsg
   | UpdateBodyViewMsg Updates.Messages.UpdateBodyViewMsg
+  | UpdateTemplatesMsg Updates.Messages.UpdateTemplatesMsg
   | NoOp
   -- | FetchTemplatesMsg Commands.FetchTemplates.Msg
   -- | ViewsBodyMsg Views.Body.Msg
