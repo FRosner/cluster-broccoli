@@ -30,7 +30,7 @@ class WebSocketController @Inject() ( webSocketService: WebSocketService
   // TODO authorization (how to manage that clients only receive updates they are allowed to)
 
   def socket = WebSocket.using[Msg] { request =>
-    val (connectionId, connectionEnumerator) = webSocketService.newConnection()
+    val (connectionId, connectionEnumerator) = webSocketService.newConnection() // TODO save also the user of this connection
     val connectionLogString = s"$connectionId ($request) from ${request.remoteAddress}"
     Logger.info(s"New connection $connectionLogString")
     // webSocketService.send(connectionId, "New templates and instances gogo.") only works after the enumerator and in has been passed
