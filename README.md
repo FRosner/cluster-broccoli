@@ -5,6 +5,8 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/frosner/cluster-broccoli.svg?maxAge=2592000)](https://hub.docker.com/r/frosner/cluster-broccoli/)
 [![Gitter](https://badges.gitter.im/FRosner/cluster-broccoli.svg)](https://gitter.im/FRosner/cluster-broccoli?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
+[![Join the chat at https://gitter.im/FRosner/cluster-broccoli](https://badges.gitter.im/FRosner/cluster-broccoli.svg)](https://gitter.im/FRosner/cluster-broccoli?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ## Description
 
 Cluster Broccoli is a RESTful web service + UI to manage [Nomad](https://www.nomadproject.io) jobs through a self service application. Jobs are defined based on [templates](https://github.com/FRosner/cluster-broccoli/wiki/Templates), allowing for a selectable amount of customization.
