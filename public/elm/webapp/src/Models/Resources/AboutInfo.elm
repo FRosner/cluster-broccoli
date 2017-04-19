@@ -21,19 +21,34 @@ type alias AuthInfo =
   , userInfo : UserInfo
   }
 
+type alias ServicesInfo =
+  { clusterManagerInfo : ClusterManagerInfo
+  , serviceDiscoveryInfo : ServiceDiscoveryInfo
+  }
+
+type alias ClusterManagerInfo =
+  { connected : Bool
+  }
+
+type alias ServiceDiscoveryInfo =
+  { connected : Bool
+  }
+
 type alias AboutInfo =
   { projectInfo : ProjectInfo
   , scalaInfo : ScalaInfo
   , sbtInfo : SbtInfo
   , authInfo : AuthInfo
+  , services : ServicesInfo
   }
 
 decoder =
-  Decode.map4 AboutInfo
+  Decode.map5 AboutInfo
     (field "project" projectInfoDecoder)
     (field "scala" scalaInfoDecoder)
     (field "sbt" sbtInfoDecoder)
     (field "auth" authInfoDecoder)
+    (field "services" servicesInfoDecoder)
 
 projectInfoDecoder =
   Decode.map2 ProjectInfo
@@ -52,3 +67,16 @@ authInfoDecoder =
   Decode.map2 AuthInfo
     (field "enabled" Decode.bool)
     (field "user" userInfoDecoder)
+
+servicesInfoDecoder =
+  Decode.map2 ServicesInfo
+    (field "clusterManager" clusterManagerInfoDecoder)
+    (field "serviceDiscovery" serviceDiscoveryInfoDecoder)
+
+clusterManagerInfoDecoder =
+  Decode.map ClusterManagerInfo
+    (field "connected" Decode.bool)
+
+serviceDiscoveryInfoDecoder =
+  Decode.map ServiceDiscoveryInfo
+    (field "connected" Decode.bool)

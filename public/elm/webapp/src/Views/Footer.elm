@@ -20,7 +20,7 @@ view maybeAboutInfo =
                 |> Maybe.map (\i -> i.projectInfo.name)
                 |> Maybe.withDefault "<Project Name>"
               )
-            , text " "
+            , text ": "
             , text
               ( maybeAboutInfo
                 |> Maybe.map (\i -> i.projectInfo.version)
@@ -38,9 +38,26 @@ view maybeAboutInfo =
                 |> Maybe.map (\i -> i.sbtInfo.version)
                 |> Maybe.withDefault "<SBT Version>"
               )
-            , text ")"
+            , text "), Cluster Manager: "
+            , statusToIcon maybeAboutInfo (\i -> i.services.clusterManagerInfo.connected)
+            , text ", Service Discovery: "
+            , statusToIcon maybeAboutInfo (\i -> i.services.serviceDiscoveryInfo.connected)
             ]
           ]
         ]
       ]
     ]
+
+statusToIcon maybeAboutInfo statusFunction =
+  let (iconClass, textColor) =
+      case (Maybe.map statusFunction maybeAboutInfo) of
+        Just True ->
+          ("fa fa-check-circle", "#070")
+        Just False ->
+          ("fa fa-times-circle", "#900")
+        Nothing ->
+          ("fa fa-question-circle", "grey")
+    in
+      span
+        [ style [ ("color", textColor) ] ]
+        [ icon iconClass [] ]

@@ -48,20 +48,7 @@ navbarBrand =
 navbarBrandDropdown maybeAboutInfo =
   ul
     [ class "dropdown-menu" ]
-    [ li []
-      [ a []
-        [ text "Cluster Manager" ]
-      ]
-    , li []
-      [ a []
-        [ text "Service Discovery" ]
-      ]
-    , li
-      [ attribute "role" "separator"
-      , class "divider"
-      ]
-      []
-    , lia "https://github.com/FRosner/cluster-broccoli" "Source Code"
+    [ lia "https://github.com/FRosner/cluster-broccoli" "Source Code"
     , lia "https://github.com/FRosner/cluster-broccoli/wiki" "Documentation"
     , lia "https://github.com/FRosner/cluster-broccoli/issues/new" "Report a Bug"
     , lia "https://gitter.im/FRosner/cluster-broccoli" "Get Help"
