@@ -1,17 +1,44 @@
 package de.frosner.broccoli.services
 
 import java.util.UUID
+import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import javax.inject.{Inject, Singleton}
 
+import de.frosner.broccoli.controllers.{WebSocketMessage, WebSocketMessageType}
+import de.frosner.broccoli.models.Anonymous
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.util.Logging
 import play.api.Configuration
 import play.api.libs.iteratee.{Concurrent, Enumerator}
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Json}
 
 // http://stackoverflow.com/questions/24576405/broadcasting-messages-in-play-framework-websockets
 @Singleton
-class WebSocketService @Inject() () extends Logging {
+class WebSocketService @Inject() (templateService: TemplateService,
+                                  instanceService: InstanceService,
+                                  aboutInfoService: AboutInfoService) extends Logging {
+
+  private val scheduler = new ScheduledThreadPoolExecutor(1)
+  private val task = new Runnable {
+    def run() = {
+      // TODO reuse functionality of AboutController
+      val user = Anonymous
+      broadcast(Json.toJson(
+        WebSocketMessage(WebSocketMessageType.AboutInfoMsg, aboutInfoService.aboutInfo(user))
+      ))
+
+      // TODO send request to set all instances and templates initially, then the webSocketService.channel will be used for subsequent updates
+      broadcast(Json.toJson(
+        WebSocketMessage(WebSocketMessageType.ListTemplatesMsg, templateService.getTemplates)
+      ))
+
+      // TODO reuse functionality in InstanceController
+      broadcast(Json.toJson(
+        WebSocketMessage(WebSocketMessageType.ListInstancesMsg, instanceService.getInstances)
+      ))
+    }
+  }
+  private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS)
 
   @volatile
   private var connections: Map[String, Concurrent.Channel[Msg]] = Map.empty
