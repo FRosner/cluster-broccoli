@@ -19,7 +19,7 @@ type alias Instance =
   , periodicRuns : List PeriodicRun
   }
 
-instanceDecoder =
+decoder =
   Decode.map6 Instance
     (field "id" Decode.string)
     (field "template" Template.decoder)

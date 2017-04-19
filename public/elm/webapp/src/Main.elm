@@ -21,13 +21,12 @@ import Updates.UpdateLoginStatus exposing (updateLoginStatus)
 import Updates.UpdateBodyView exposing (updateBodyView)
 import Updates.UpdateTemplates exposing (updateTemplates)
 import Updates.Messages exposing (UpdateAboutInfoMsg(..), UpdateLoginStatusMsg(..), UpdateErrorsMsg(..), UpdateTemplatesMsg(..))
-import Commands.FetchAbout
 import Messages exposing (AnyMsg(..))
 import Views.Header
 import Views.Body
 import Views.Notifications
-import Utils.CmdUtils as CmdUtils
 
+import Ws
 import WebSocket
 import Dict exposing (Dict)
 
@@ -160,34 +159,19 @@ initialModel =
 init : ( Model, Cmd AnyMsg )
 init =
   ( initialModel
-  , Cmd.batch
-    [ Cmd.map UpdateAboutInfoMsg Commands.FetchAbout.fetchAbout
-    -- , Cmd.map FetchTemplatesMsg Commands.FetchTemplates.fetchTemplates
-    ]
+  , Cmd.none
   )
 
 update : AnyMsg -> Model -> ( Model, Cmd AnyMsg )
 update msg model =
   case msg of
-    -- FetchTemplatesMsg subMsg ->
-      -- let (newTemplates, cmd) =
-      --   updateTemplates subMsg model.templates
-      -- in
-      --   ({ model | templates = newTemplates }
-      --   , cmd
-      --   )
     ProcessWsMsg wsMsg ->
-      ( model
-      , CmdUtils.cmd ( UpdateErrorsMsg ( AddError wsMsg ) )
-      )
+      Ws.update wsMsg model
     UpdateAboutInfoMsg subMsg ->
-      let ((newAbout, newAuthEnabled), cmd) =
+      let (newAbout, cmd) =
         updateAboutInfo subMsg model.aboutInfo
       in
-        ( { model
-          | aboutInfo = newAbout
-          , authEnabled = newAuthEnabled
-          }
+        ( { model | aboutInfo = newAbout }
         , cmd
         )
     UpdateLoginStatusMsg subMsg ->

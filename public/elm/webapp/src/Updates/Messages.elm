@@ -8,7 +8,7 @@ import Models.Resources.Template exposing (TemplateId, Template)
 import Models.Resources.Instance exposing (InstanceId, Instance)
 
 type UpdateAboutInfoMsg
-  = FetchAbout (Result Http.Error AboutInfo)
+  = SetAbout AboutInfo
 
 type UpdateLoginStatusMsg
   = FetchLogin (Result Http.Error UserInfo)
