@@ -48,53 +48,6 @@ type alias Model =
   , bodyUiModel : BodyUiModel
   }
 
-template1 =
-  Template
-    "Apache Spark Standalone Cluster"
-    "Apache Spark provides programmers with an application programming interface centered on a data structure called the resilient distributed dataset (RDD), a read-only multiset of data items distributed over a cluster of machines, that is maintained in a fault-tolerant way."
-    "chj3kc67"
-    [ "id"
-    , "url"
-    , "param1"
-    , "param2"
-    , "param3param3"
-    , "p"
-    , "param5"
-    , "param6param6param6"
-    , "param7"
-    , "param8"
-    , "param9"
-    , "param10param10param10"
-    ]
-    ( Dict.fromList
-      [ ( "id", ParameterInfo "id" Nothing Nothing )
-      , ( "url", ParameterInfo "url" (Just "http://localhost:8000") Nothing )
-      , ( "param1", ParameterInfo "param1" (Just "default value") Nothing )
-      , ( "param2", ParameterInfo "param2" (Just "default value") Nothing )
-      , ( "param3param3", ParameterInfo "param3param3" (Just "default value") Nothing )
-      , ( "p", ParameterInfo "p" (Just "default value") Nothing )
-      , ( "param5", ParameterInfo "param5" (Just "default value") Nothing )
-      , ( "param6param6param6", ParameterInfo "param6param6param6" (Just "default value") Nothing )
-      , ( "param7", ParameterInfo "param7" (Just "default value") Nothing )
-      , ( "param8", ParameterInfo "param8" (Just "default value") Nothing )
-      , ( "param9", ParameterInfo "param9" (Just "default value") Nothing )
-      , ( "param10param10param10", ParameterInfo "param10param10param10" (Just "default value") Nothing )
-      ]
-    )
-
-template2 =
-  Template
-    "Apache Zeppelin"
-    "A web-based notebook that enables interactive data analytics. You can make beautiful data-driven, interactive and collaborative documents with SQL, Python, Scala and more."
-    "dsadjda4"
-    [ "id"
-    , "password"
-    ]
-    ( Dict.fromList
-      [ ( "id", ParameterInfo "id" Nothing Nothing )
-      , ( "password", ParameterInfo "password" Nothing (Just True) )
-      ]
-    )
 
 initialModel : Model
 initialModel =
@@ -105,56 +58,8 @@ initialModel =
   , loggedIn = Nothing
   , authEnabled = Nothing
   , bodyUiModel = BodyUiModel.initialModel
-  , templates =
-    [ template1
-    , template2
-    ]
-  , instances =
-    [ Instance
-        "dev-spark"
-        template1
-        ( Dict.fromList
-          [ ("id", "dev-spark")
-          , ("url", "http://localhost:9000")
-          ]
-        )
-        JobUnknown
-        [ Service "dev-spark-master" "http" "localhost" 9000 ServicePassing
-        , Service "dev-spark-master-ui" "https" "localhost" 9001 ServicePassing
-        , Service "dev-spark-worker" "https" "localhost" 9001 ServicePassing
-        , Service "dev-spark-worker-ui" "https" "localhost" 9001 ServicePassing
-        ]
-        []
-    , Instance
-        "dev-zeppelin"
-        template2
-        ( Dict.fromList
-          [ ("id", "dev-zeppelin")
-          , ("password", "secret")
-          ]
-        )
-        JobPending
-        [ Service "dev-zeppelin-ui" "http" "localhost" 9000 ServicePassing
-        , Service "dev-zeppelin-spark-ui" "https" "localhost" 9001 ServiceFailing
-        ]
-        []
-    , Instance
-        "frank-zeppelin"
-        { template2 | version = "abcdefgh" }
-        ( Dict.fromList
-          [ ("id", "frank-zeppelin")
-          , ("password", "secret2")
-          ]
-        )
-        JobRunning
-        [ Service "frank-zeppelin-ui" "http" "localhost" 9000 ServiceUnknown
-        , Service "frank-zeppelin-spark-ui" "https" "localhost" 9001 ServiceUnknown
-        ]
-        [ PeriodicRun JobRunning 1482164560652 "frank-zeppelin/periodic-1482164560652"
-        , PeriodicRun JobDead 1482164560500 "frank-zeppelin/periodic-1482164560500"
-        , PeriodicRun JobDead 1482164560600 "frank-zeppelin/periodic-1482164560600"
-        ]
-    ]
+  , templates = []
+  , instances = []
   }
 
 init : ( Model, Cmd AnyMsg )
