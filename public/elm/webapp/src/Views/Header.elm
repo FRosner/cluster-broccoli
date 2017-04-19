@@ -18,26 +18,18 @@ view maybeAboutInfo loginFormModel maybeUserInfo maybeAuthEnabled =
       [ class "navbar navbar-default" ]
       [ div
         [ class "container-fluid" ]
-        [ navbarHeader
+        [ navbarHeader maybeAboutInfo
         , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled loginFormModel
         ]
       ]
     ]
-  -- case maybeAboutInfo of
-  --     Just aboutInfo ->
-  --       div []
-  --           [ text aboutInfo.projectInfo.name
-  --           , text aboutInfo.projectInfo.version]
-  --     Nothing ->
-  --       div []
-  --           [ text "nothing" ]
 
-navbarHeader =
+navbarHeader maybeAboutInfo =
   div
     [ class "navbar-header" ]
     [ navbarToggleButton
     , navbarBrand
-    , navbarBrandDropdown
+    , navbarBrandDropdown maybeAboutInfo
     ]
 
 navbarBrand =
@@ -53,7 +45,7 @@ navbarBrand =
     , span [ class "caret" ] []
     ]
 
-navbarBrandDropdown =
+navbarBrandDropdown maybeAboutInfo =
   ul
     [ class "dropdown-menu" ]
     [ li []
@@ -74,6 +66,7 @@ navbarBrandDropdown =
     , lia "https://github.com/FRosner/cluster-broccoli/issues/new" "Report a Bug"
     , lia "https://gitter.im/FRosner/cluster-broccoli" "Get Help"
     ]
+
 
 lia aHref content =
   li []

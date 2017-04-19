@@ -24,6 +24,7 @@ import Updates.Messages exposing (UpdateAboutInfoMsg(..), UpdateLoginStatusMsg(.
 import Messages exposing (AnyMsg(..))
 import Views.Header
 import Views.Body
+import Views.Footer
 import Views.Notifications
 
 import Ws
@@ -225,6 +226,7 @@ view model =
             model.bodyUiModel
         )
     , text (toString model)
+    , Views.Footer.view model.aboutInfo
     ]
 
 -- Sub.map UpdateErrorsMsg ( WebSocket.listen "ws://localhost:9000/ws" AddError ) when AddError is an UpdateErrorsMsg

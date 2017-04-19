@@ -46,6 +46,12 @@ class WebSocketController @Inject() ( webSocketService: WebSocketService
       Logger.info(s"Closed connection $connectionLogString")
     }
 
+    // TODO reuse functionality of AboutController
+    val user = Anonymous
+    val aboutEnumerator = Enumerator[Msg](Json.toJson(
+      WebSocketMessage(WebSocketMessageType.AboutInfoMsg, aboutService.aboutInfo(user))
+    ))
+
     // TODO send request to set all instances and templates initially, then the webSocketService.channel will be used for subsequent updates
     val templateEnumerator = Enumerator[Msg](Json.toJson(
       WebSocketMessage(WebSocketMessageType.ListTemplatesMsg, templateService.getTemplates)
@@ -54,12 +60,6 @@ class WebSocketController @Inject() ( webSocketService: WebSocketService
     // TODO reuse functionality in InstanceController
     val instanceEnumerator = Enumerator[Msg](Json.toJson(
       WebSocketMessage(WebSocketMessageType.ListInstancesMsg, instanceService.getInstances)
-    ))
-
-    // TODO reuse functionality of AboutController
-    val user = Anonymous
-    val aboutEnumerator = Enumerator[Msg](Json.toJson(
-      WebSocketMessage(WebSocketMessageType.AboutInfoMsg, aboutService.aboutInfo(user))
     ))
     (in, aboutEnumerator.andThen(templateEnumerator).andThen(instanceEnumerator).andThen(connectionEnumerator))
   }
