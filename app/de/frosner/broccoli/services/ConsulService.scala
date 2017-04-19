@@ -22,7 +22,7 @@ class ConsulService @Inject()(configuration: Configuration,
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   @volatile
-  var serviceStatuses: Map[String, Map[String, Service]] = Map.empty
+  var serviceStatuses: Map[String, Iterable[Service]] = Map.empty
 
   private lazy val consulBaseUrl = configuration.getString(conf.CONSUL_URL_KEY).getOrElse(conf.CONSUL_URL_DEFAULT)
   private lazy val consulDomain: Option[String] = {
@@ -53,8 +53,8 @@ class ConsulService @Inject()(configuration: Configuration,
     }
   }
 
-  def getServiceStatusesOrDefault(id: String): Map[String, Service] = {
-    serviceStatuses.getOrElse(id, Map.empty)
+  def getServiceStatusesOrDefault(id: String): Iterable[Service] = {
+    serviceStatuses.getOrElse(id, Iterable.empty)
   }
 
   @volatile
@@ -118,8 +118,8 @@ class ConsulService @Inject()(configuration: Configuration,
       case Success(services: Iterable[Seq[Service]]) => {
         val healthyOrUnhealthyServices = services.flatten.map(service => (service.name, service)).toMap
         val allServices = serviceNames.map { name =>
-          (name, healthyOrUnhealthyServices.getOrElse(name, unknownService(name)))
-        }.toMap
+          healthyOrUnhealthyServices.getOrElse(name, unknownService(name))
+        }
         consulReachable = true
         serviceStatuses = serviceStatuses.updated(jobId, allServices)
       }
@@ -127,7 +127,7 @@ class ConsulService @Inject()(configuration: Configuration,
         consulReachable = false
         Logger.error(s"Failed to get service statuses from Consul: ${throwable.toString}")
         val unknownServices = serviceNames.map(unknownService)
-        serviceStatuses = serviceStatuses.updated(jobId, unknownServices.map(service => (service.name, service)).toMap)
+        serviceStatuses = serviceStatuses.updated(jobId, unknownServices)
     }
   }
 

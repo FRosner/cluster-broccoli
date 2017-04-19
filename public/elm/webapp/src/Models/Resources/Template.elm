@@ -34,5 +34,5 @@ decoder =
 parameterInfoDecoder =
   Decode.map3 ParameterInfo
     (field "name" Decode.string)
-    (field "default" (DecodeUtils.maybe Decode.string))
-    (field "secret" (DecodeUtils.maybe Decode.bool))
+    (Decode.maybe (field "default" Decode.string))
+    (Decode.maybe (field "secret" Decode.bool))

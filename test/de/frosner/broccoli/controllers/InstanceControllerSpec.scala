@@ -58,8 +58,8 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       )
     ),
     status = JobStatus.Unknown,
-    services = Map(
-      "service" -> Service(
+    services = List(
+      Service(
         name = "n",
         protocol = "http",
         address = "localhost",
@@ -914,7 +914,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           )
         ),
         status = JobStatus.Unknown,
-        services = Map.empty,
+        services = Iterable.empty,
         periodicRuns = Iterable.empty
       )
       val expectedInstance = InstanceWithStatus(
@@ -938,7 +938,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           )
         ),
         status = JobStatus.Unknown,
-        services = Map.empty,
+        services = Iterable.empty,
         periodicRuns = Iterable.empty
       )
       InstanceController.removeSecretVariables(originalInstance) === expectedInstance
@@ -971,7 +971,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           )
         ),
         status = JobStatus.Unknown,
-        services = Map.empty,
+        services = Iterable.empty,
         periodicRuns = Iterable.empty
       )
       val expectedInstance = InstanceWithStatus(
@@ -1000,7 +1000,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           )
         ),
         status = JobStatus.Unknown,
-        services = Map.empty,
+        services = Iterable.empty,
         periodicRuns = Iterable.empty
       )
       InstanceController.removeSecretVariables(originalInstance) === expectedInstance

@@ -1,8 +1,8 @@
-module Utils.DecodeUtils exposing (maybe)
+module Utils.DecodeUtils exposing (maybeNull)
 
 import Json.Decode as Decode
 
-maybe decoder =
+maybeNull decoder =
   Decode.oneOf
     [ Decode.null Nothing
     , Decode.map Just decoder
