@@ -6,6 +6,7 @@ type AnyMsg
   = UpdateAboutInfoMsg Updates.Messages.UpdateAboutInfoMsg
   | UpdateErrorsMsg Updates.Messages.UpdateErrorsMsg
   | ProcessWsMsg String
+  | SendWsMsg String
   | UpdateLoginFormMsg Updates.Messages.UpdateLoginFormMsg
   | UpdateLoginStatusMsg Updates.Messages.UpdateLoginStatusMsg
   | UpdateBodyViewMsg Updates.Messages.UpdateBodyViewMsg

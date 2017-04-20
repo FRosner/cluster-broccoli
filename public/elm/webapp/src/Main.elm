@@ -73,6 +73,10 @@ update msg model =
   case msg of
     ProcessWsMsg wsMsg ->
       Ws.update wsMsg model
+    SendWsMsg wsMsg ->
+      ( model
+      , Ws.send wsMsg
+      )
     UpdateAboutInfoMsg subMsg ->
       let (newAbout, cmd) =
         updateAboutInfo subMsg model.aboutInfo
@@ -137,9 +141,8 @@ view model =
 -- Sub.map UpdateErrorsMsg ( WebSocket.listen "ws://localhost:9000/ws" AddError ) when AddError is an UpdateErrorsMsg
 subscriptions : Model -> Sub AnyMsg
 subscriptions model =
-  -- TODO I need a module to handle the websocket string messages and parse them: https://github.com/Husterknupp/fxck/tree/master/client/src
   -- TODO cut the websocket connection on logout
-  WebSocket.listen "ws://localhost:9000/ws" ProcessWsMsg
+  Ws.listen
 
 main =
   program

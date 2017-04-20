@@ -40,7 +40,7 @@ class WebSocketController @Inject() ( webSocketService: WebSocketService
     val in = Iteratee.foreach[Msg] {
         // TODO call the controller methods
       msg =>
-        Logger.debug(s"Received message through $connectionId: $msg")
+        Logger.info(s"Received message through $connectionId: $msg")
     }.map { _ =>
       webSocketService.closeConnection(connectionId)
       Logger.info(s"Closed connection $connectionLogString")

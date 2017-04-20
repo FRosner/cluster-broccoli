@@ -6,9 +6,11 @@ import Models.Resources.Template exposing (TemplateId)
 import Models.Resources.Instance exposing (InstanceId)
 import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (InstanceParameterForm)
 import Models.Ui.BodyUiModel exposing (BodyUiModel)
+import Models.Resources.InstanceCreation as InstanceCreation exposing (InstanceCreation)
 import Dict exposing (Dict)
-import Messages exposing (AnyMsg)
+import Messages exposing (AnyMsg(..))
 import Utils.MaybeUtils as MaybeUtils
+import Utils.CmdUtils as CmdUtils
 
 updateBodyView : UpdateBodyViewMsg -> BodyUiModel -> (BodyUiModel, Cmd AnyMsg)
 updateBodyView message oldBodyUiModel =
@@ -133,9 +135,13 @@ updateBodyView message oldBodyUiModel =
           , Cmd.none
           )
       SubmitNewInstanceCreation templateId parameterValues ->
-        ( { oldBodyUiModel | expandedNewInstanceForms = resetNewParameterForm templateId oldExpandedNewInstanceForms }
-        , Cmd.none
-        )
+        let instanceCreationJsonString =
+          ( InstanceCreation templateId parameterValues )
+          |> InstanceCreation.encoder
+        in
+          ( { oldBodyUiModel | expandedNewInstanceForms = resetNewParameterForm templateId oldExpandedNewInstanceForms }
+          , CmdUtils.cmd (SendWsMsg instanceCreationJsonString)
+          )
       DiscardNewInstanceCreation templateId ->
         ( { oldBodyUiModel | expandedNewInstanceForms = resetNewParameterForm templateId oldExpandedNewInstanceForms }
         , Cmd.none

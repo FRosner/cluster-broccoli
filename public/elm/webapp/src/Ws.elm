@@ -1,4 +1,4 @@
-module Ws exposing (update)
+module Ws exposing (update, listen, send)
 
 import Json.Decode as Decode exposing (field)
 
@@ -10,6 +10,8 @@ import Updates.Messages exposing (UpdateAboutInfoMsg(..), UpdateLoginStatusMsg(.
 import Messages exposing (AnyMsg(..))
 
 import Array
+
+import WebSocket
 
 import Utils.CmdUtils as CmdUtils
 import Utils.StringUtils as StringUtils
@@ -114,3 +116,9 @@ showError prefix error =
         )
       )
     )
+
+listen =
+  WebSocket.listen "ws://localhost:9000/ws" ProcessWsMsg -- TODO relative URL
+
+send msg =
+  WebSocket.send "ws://localhost:9000/ws" msg -- TODO relative URL

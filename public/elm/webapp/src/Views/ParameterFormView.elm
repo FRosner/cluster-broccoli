@@ -210,8 +210,6 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
           )
         ]
 
--- TODO visibleSecrets for the new instance form things need to be saved not only as Set (InstanceId, String) but also Set (TemplateId, String)
--- TODO parameterValues need to go away as we don't have any coming from the instance
 -- TODO editParameterValueView needs to be adapted (probably copy paste for now?) so it can work without an instance as we don't have one here
 newView template maybeInstanceParameterForm visibleSecrets =
   let
