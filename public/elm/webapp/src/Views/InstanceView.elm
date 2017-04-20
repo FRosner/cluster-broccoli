@@ -32,8 +32,13 @@ view instances selectedInstances expandedInstances instanceParameterForms visibl
       ( ( instancesIds
           |> Set.intersect selectedInstances
           |> (==) instancesIds
+          |> (&&) (not (Set.isEmpty instancesIds))
         )
-      , (Set.intersect instancesIds expandedInstances) == instancesIds
+      , ( instancesIds
+          |> Set.intersect expandedInstances
+          |> (==) instancesIds
+          |> (&&) (not (Set.isEmpty instancesIds))
+        )
       )
     in
       table
