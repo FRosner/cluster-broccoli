@@ -20,6 +20,7 @@ type WsMsgType
   = SetAboutInfoMsgType
   | ListTemplatesMsgType
   | ListInstancesMsgType
+  | ErrorMsgType
   | UnknownMsgType String
 
 -- TODO return also a Cmd
@@ -67,6 +68,19 @@ update msg model =
               ( { model | instances = [] } -- TODO shall we just use the old templates instead?
               , showError "Failed to decode instances: " error
               )
+      Ok ErrorMsgType ->
+        let errorResult =
+          Decode.decodeString (field payloadFieldName (Decode.string)) msg
+        in
+          case errorResult of
+            Ok error ->
+              ( model
+              , showError "An error occured: " error
+              )
+            Err error ->
+              ( model
+              , showError "Failed to decode an error message: " error
+              )
       Err error ->
         ( model
         , showError "Failed to decode web socket message: " error
@@ -89,6 +103,7 @@ stringToType s =
     "aboutInfo" -> SetAboutInfoMsgType
     "listTemplates" -> ListTemplatesMsgType
     "listInstances" -> ListInstancesMsgType
+    "error" -> ErrorMsgType
     anything -> UnknownMsgType anything
 
 showError prefix error =

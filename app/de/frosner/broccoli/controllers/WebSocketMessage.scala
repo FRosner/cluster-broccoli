@@ -17,6 +17,8 @@ object WebSocketMessage {
       wrap(ListInstancesMsg, Json.toJson(payload))
     case WebSocketMessage(AboutInfoMsg, payload: AboutInfo) =>
       wrap(AboutInfoMsg, Json.toJson(payload))
+    case WebSocketMessage(ErrorMsg, payload: String) =>
+      wrap(ErrorMsg, Json.toJson(payload))
   }
 
   implicit val webSocketMessageReads: Reads[WebSocketMessage] = Reads { message =>
@@ -28,6 +30,7 @@ object WebSocketMessage {
       case ListTemplatesMsg => throw new UnsupportedOperationException() // TODO proper error message
       case ListInstancesMsg => throw new UnsupportedOperationException() // TODO proper error message
       case AboutInfoMsg => throw new UnsupportedOperationException() // TODO proper error message
+      case ErrorMsg => throw new UnsupportedOperationException() // TODO proper error message
     }
     payloadObject.map(o => WebSocketMessage(messageType, payloadObject))
   }

@@ -10,6 +10,7 @@ object WebSocketMessageType extends Enumeration {
   val ListTemplatesMsg = Value("listTemplates")
   val ListInstancesMsg = Value("listInstances")
   val AboutInfoMsg = Value("aboutInfo")
+  val ErrorMsg = Value("error")
   //  val AddInstance = Value("addInstance")
   //  val DeleteInstance = Value("deleteInstance")
   //  val UpdateInstance = Value("updateInstance")
