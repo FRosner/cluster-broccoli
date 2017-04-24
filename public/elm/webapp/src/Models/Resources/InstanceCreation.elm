@@ -11,9 +11,6 @@ type alias InstanceCreation =
   }
 
 encoder instanceCreation =
-  Encode.encode 0 (instanceCreationToObject instanceCreation)
-
-instanceCreationToObject instanceCreation =
   Encode.object
     [ ("templateId", Encode.string instanceCreation.templateId)
     , ("parameters", (parametersToObject instanceCreation.parameters))

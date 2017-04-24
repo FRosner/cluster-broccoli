@@ -73,9 +73,9 @@ update msg model =
   case msg of
     ProcessWsMsg wsMsg ->
       Ws.update wsMsg model
-    SendWsMsg wsMsg ->
+    SendWsMsg jsonObject wsMsgType ->
       ( model
-      , Ws.send wsMsg
+      , Ws.send jsonObject wsMsgType
       )
     UpdateAboutInfoMsg subMsg ->
       let (newAbout, cmd) =

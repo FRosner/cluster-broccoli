@@ -7,23 +7,18 @@ import Models.Resources.Template as Template
 import Models.Resources.Instance as Instance
 
 import Updates.Messages exposing (UpdateAboutInfoMsg(..), UpdateLoginStatusMsg(..), UpdateErrorsMsg(..), UpdateTemplatesMsg(..))
-import Messages exposing (AnyMsg(..))
+import Messages exposing (..)
 
 import Array
 
 import WebSocket
 
+import Json.Encode as Encode
+
 import Utils.CmdUtils as CmdUtils
 import Utils.StringUtils as StringUtils
 
 payloadFieldName = "payload"
-
-type WsMsgType
-  = SetAboutInfoMsgType
-  | ListTemplatesMsgType
-  | ListInstancesMsgType
-  | ErrorMsgType
-  | UnknownMsgType String
 
 -- TODO return also a Cmd
 update msg model =
@@ -97,10 +92,10 @@ typeDecoder =
 
 typeDecoderDecoder =
   Decode.andThen
-    (\typeString -> Decode.succeed (stringToType typeString))
+    (\typeString -> Decode.succeed (stringToIncomingType typeString))
     Decode.string
 
-stringToType s =
+stringToIncomingType s =
   case s of
     "aboutInfo" -> SetAboutInfoMsgType
     "listTemplates" -> ListTemplatesMsgType
@@ -120,5 +115,14 @@ showError prefix error =
 listen =
   WebSocket.listen "ws://localhost:9000/ws" ProcessWsMsg -- TODO relative URL
 
-send msg =
-  WebSocket.send "ws://localhost:9000/ws" msg -- TODO relative URL
+send object messageType =
+  let wrappedMessage =
+    Encode.object [ ("messageType", Encode.string (outgoingTypeToString messageType)), ("payload", object) ] -- putting a line break here fucks up the compiler???
+  in
+    WebSocket.send
+      "ws://localhost:9000/ws" -- TODO relative URL
+      ( Encode.encode 0 wrappedMessage )
+
+outgoingTypeToString t =
+  case t of
+    CreateInstanceMsgType -> "addInstance"

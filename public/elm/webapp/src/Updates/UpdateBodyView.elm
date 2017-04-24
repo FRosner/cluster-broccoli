@@ -8,7 +8,7 @@ import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (Instan
 import Models.Ui.BodyUiModel exposing (BodyUiModel)
 import Models.Resources.InstanceCreation as InstanceCreation exposing (InstanceCreation)
 import Dict exposing (Dict)
-import Messages exposing (AnyMsg(..))
+import Messages exposing (..)
 import Utils.MaybeUtils as MaybeUtils
 import Utils.CmdUtils as CmdUtils
 
@@ -135,12 +135,12 @@ updateBodyView message oldBodyUiModel =
           , Cmd.none
           )
       SubmitNewInstanceCreation templateId parameterValues ->
-        let instanceCreationJsonString =
+        let instanceCreationJson =
           ( InstanceCreation templateId parameterValues )
           |> InstanceCreation.encoder
         in
-          ( { oldBodyUiModel | expandedNewInstanceForms = resetNewParameterForm templateId oldExpandedNewInstanceForms }
-          , CmdUtils.cmd (SendWsMsg instanceCreationJsonString)
+          ( oldBodyUiModel -- TODO reset the form when receiving a success message { oldBodyUiModel | expandedNewInstanceForms = resetNewParameterForm templateId oldExpandedNewInstanceForms }
+          , CmdUtils.cmd (SendWsMsg instanceCreationJson CreateInstanceMsgType) -- TODO avoid this by wrapping directly based on the message type
           )
       DiscardNewInstanceCreation templateId ->
         ( { oldBodyUiModel | expandedNewInstanceForms = resetNewParameterForm templateId oldExpandedNewInstanceForms }

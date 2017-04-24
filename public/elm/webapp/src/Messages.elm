@@ -2,11 +2,13 @@ module Messages exposing (..)
 
 import Updates.Messages exposing (..)
 
+import Json.Decode
+
 type AnyMsg
   = UpdateAboutInfoMsg Updates.Messages.UpdateAboutInfoMsg
   | UpdateErrorsMsg Updates.Messages.UpdateErrorsMsg
   | ProcessWsMsg String
-  | SendWsMsg String
+  | SendWsMsg Json.Decode.Value OutgoingWsMsgType
   | UpdateLoginFormMsg Updates.Messages.UpdateLoginFormMsg
   | UpdateLoginStatusMsg Updates.Messages.UpdateLoginStatusMsg
   | UpdateBodyViewMsg Updates.Messages.UpdateBodyViewMsg
@@ -15,3 +17,13 @@ type AnyMsg
   -- | FetchTemplatesMsg Commands.FetchTemplates.Msg
   -- | ViewsBodyMsg Views.Body.Msg
   -- | ViewsNewInstanceFormMsg Views.NewInstanceForm.Msg
+
+type IncomingWsMsgType
+  = SetAboutInfoMsgType
+  | ListTemplatesMsgType
+  | ListInstancesMsgType
+  | ErrorMsgType
+  | UnknownMsgType String
+
+type OutgoingWsMsgType
+  = CreateInstanceMsgType
