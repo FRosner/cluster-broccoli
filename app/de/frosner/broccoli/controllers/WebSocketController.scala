@@ -29,6 +29,7 @@ class WebSocketController @Inject() ( webSocketService: WebSocketService
   // TODO close on logout
   // TODO authentication with WebSocket.tryAccept
   // TODO authorization (how to manage that clients only receive updates they are allowed to)
+  val user = Anonymous
 
   def socket = WebSocket.using[Msg] { request =>
     val (connectionId, connectionEnumerator) = webSocketService.newConnection() // TODO save also the user of this connection
@@ -48,9 +49,10 @@ class WebSocketController @Inject() ( webSocketService: WebSocketService
             println(message)
           }
         }
+        // TODO authentication and interpret response
         msg.foreach(_.foreach {
           case IncomingWsMessage(IncomingWsMessageType.AddInstance, instanceCreation: InstanceCreation) =>
-            InstanceController.create(instanceCreation, Anonymous, instanceService) // TODO authentication and interpret response
+            InstanceController.create(instanceCreation, user, instanceService)
         })
     }.map { _ =>
       webSocketService.closeConnection(connectionId)
@@ -58,7 +60,6 @@ class WebSocketController @Inject() ( webSocketService: WebSocketService
     }
 
     // TODO reuse functionality of AboutController
-    val user = Anonymous
     val aboutEnumerator = Enumerator[Msg](Json.toJson(
       OutgoingWsMessage(OutgoingWsMessageType.AboutInfoMsg, aboutService.aboutInfo(user))
     ))
@@ -70,7 +71,10 @@ class WebSocketController @Inject() ( webSocketService: WebSocketService
 
     // TODO reuse functionality in InstanceController
     val instanceEnumerator = Enumerator[Msg](Json.toJson(
-      OutgoingWsMessage(OutgoingWsMessageType.ListInstancesMsg, instanceService.getInstances)
+      OutgoingWsMessage(
+        OutgoingWsMessageType.ListInstancesMsg,
+        InstanceController.list(None, user, instanceService)
+      )
     ))
     (in, aboutEnumerator.andThen(templateEnumerator).andThen(instanceEnumerator).andThen(connectionEnumerator))
   }

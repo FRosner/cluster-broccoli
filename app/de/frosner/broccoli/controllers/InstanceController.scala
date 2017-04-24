@@ -25,17 +25,8 @@ case class InstanceController @Inject() (instanceService: InstanceService,
   extends Controller with Logging with BroccoliRoleAuthorization {
 
   def list(maybeTemplateId: Option[String]) = StackAction(AuthorityKey -> Role.NormalUser) { implicit request =>
-    val user = loggedIn
-    val instances = instanceService.getInstances
-    val filteredInstances = maybeTemplateId.map(
-      id => instances.filter(_.instance.template.id == id)
-    ).getOrElse(instances).filter(_.instance.id.matches(user.instanceRegex))
-    val anonymizedInstances = if (user.role != Role.Administrator) {
-      filteredInstances.map(InstanceController.removeSecretVariables)
-    } else {
-      filteredInstances
-    }
-    Ok(Json.toJson(anonymizedInstances))
+    val instances = InstanceController.list(maybeTemplateId, loggedIn, instanceService)
+    Results.Ok(Json.toJson(instances))
   }
 
   def show(id: String) = StackAction(AuthorityKey -> Role.NormalUser) { implicit request =>
@@ -174,6 +165,19 @@ object InstanceController {
       case Some(id) => Results.Status(403)(s"Only allowed to create instances matching $instanceRegex")
       case None => Results.Status(400)(s"Instance ID missing")
     }
+  }
+
+  def list(maybeTemplateId: Option[String], loggedIn: Account, instanceService: InstanceService) = {
+    val instances = instanceService.getInstances
+    val filteredInstances = maybeTemplateId.map(
+      id => instances.filter(_.instance.template.id == id)
+    ).getOrElse(instances).filter(_.instance.id.matches(loggedIn.instanceRegex))
+    val anonymizedInstances = if (loggedIn.role != Role.Administrator) {
+      filteredInstances.map(removeSecretVariables)
+    } else {
+      filteredInstances
+    }
+    anonymizedInstances
   }
 
 }
