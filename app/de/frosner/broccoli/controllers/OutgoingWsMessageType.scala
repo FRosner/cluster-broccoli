@@ -1,26 +1,17 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.controllers.OutgoingWsMessageType.WebSocketMessageType
+import de.frosner.broccoli.controllers.OutgoingWsMessageType.OutgoingWsMessageType
 import play.api.libs.json.{JsString, Reads, Writes}
 
 object OutgoingWsMessageType extends Enumeration {
 
-  type WebSocketMessageType = Value
+  type OutgoingWsMessageType = Value
 
   val ListTemplatesMsg = Value("listTemplates")
   val ListInstancesMsg = Value("listInstances")
   val AboutInfoMsg = Value("aboutInfo")
   val ErrorMsg = Value("error")
-//  val AddInstance = Value("addInstance")
-  //  val DeleteInstance = Value("deleteInstance")
-  //  val UpdateInstance = Value("updateInstance")
-  //  val SetInstanceStatuses = Value("setInstanceStatuses")
-  //  val SetServiceStatuses = Value("setServiceStatuses")
-//  val SetClusterManagerStatus = Value("setClusterManagerStatus")
-//  val SetServiceDiscoveryStatus = Value("setServiceDiscoveryStatus")
 
-  implicit val webSocketMessageTypeWrites: Writes[WebSocketMessageType] = Writes(value => JsString(value.toString))
-
-  implicit val webSocketMessageTypeReads: Reads[WebSocketMessageType] = Reads(_.validate[String].map(OutgoingWsMessageType.withName))
+  implicit val webSocketMessageTypeWrites: Writes[OutgoingWsMessageType] = Writes(value => JsString(value.toString))
 
 }
