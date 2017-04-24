@@ -50,7 +50,7 @@ class WebSocketController @Inject() ( webSocketService: WebSocketService
         }
         msg.foreach(_.foreach {
           case IncomingWsMessage(IncomingWsMessageType.AddInstance, instanceCreation: InstanceCreation) =>
-            instanceService.addInstance(instanceCreation) // TODO use controller method
+            InstanceController.create(instanceCreation, Anonymous, instanceService) // TODO authentication and interpret response
         })
     }.map { _ =>
       webSocketService.closeConnection(connectionId)

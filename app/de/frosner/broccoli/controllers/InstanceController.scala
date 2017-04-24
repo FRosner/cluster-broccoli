@@ -13,8 +13,10 @@ import de.frosner.broccoli.services._
 import de.frosner.broccoli.services.InstanceService._
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.{BroccoliRoleAuthorization, BroccoliSimpleAuthorization}
-import play.api.libs.json.{JsObject, JsString, Json}
-import play.api.mvc.{Action, Controller}
+import play.api.http.ContentTypes
+import play.api.libs.json.{JsObject, JsString, JsValue, Json}
+import play.api.mvc.{Action, Controller, Results}
+import play.mvc.Http.HeaderNames
 
 import scala.util.{Failure, Success, Try}
 
@@ -59,23 +61,9 @@ case class InstanceController @Inject() (instanceService: InstanceService,
     val maybeValidatedInstanceCreation = request.body.asJson.map(_.validate[InstanceCreation])
     maybeValidatedInstanceCreation.map { validatedInstanceCreation =>
       validatedInstanceCreation.map { instanceCreation =>
-        val maybeId = instanceCreation.parameters.get("id")
-        val instanceRegex = loggedIn.instanceRegex
-        maybeId match {
-          case Some(id) if id.matches(instanceRegex) =>
-            val tryNewInstance = instanceService.addInstance(instanceCreation)
-            tryNewInstance.map { instanceWithStatus =>
-              Status(201)(Json.toJson(instanceWithStatus)).withHeaders(
-                LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
-              )
-            }.recover { case error =>
-              Status(400)(error.toString)
-            }.get
-          case Some(id) => Status(403)(s"Only allowed to create instances matching $instanceRegex")
-          case None => Status(400)(s"Instance ID missing")
-        }
-      }.getOrElse(Status(400)("Expected JSON data"))
-    }.getOrElse(Status(400)("Expected JSON data"))
+        InstanceController.create(instanceCreation, loggedIn, instanceService)
+      }.getOrElse(Results.Status(400)("Expected JSON data"))
+    }.getOrElse(Results.Status(400)("Expected JSON data"))
   }
 
   def update(id: String) = StackAction(AuthorityKey -> Role.Operator) { implicit request =>
@@ -168,6 +156,24 @@ object InstanceController {
         parameterValues = newParameterValues
       )
     )
+  }
+
+  def create(instanceCreation: InstanceCreation, loggedIn: Account, instanceService: InstanceService) = {
+    val maybeId = instanceCreation.parameters.get("id")
+    val instanceRegex = loggedIn.instanceRegex
+    maybeId match {
+      case Some(id) if id.matches(instanceRegex) =>
+        val tryNewInstance = instanceService.addInstance(instanceCreation)
+        tryNewInstance.map { instanceWithStatus =>
+          Results.Status(201)(Json.toJson(instanceWithStatus)).withHeaders(
+            HeaderNames.LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
+          )
+        }.recover { case error =>
+          Results.Status(400)(error.toString)
+        }.get
+      case Some(id) => Results.Status(403)(s"Only allowed to create instances matching $instanceRegex")
+      case None => Results.Status(400)(s"Instance ID missing")
+    }
   }
 
 }
