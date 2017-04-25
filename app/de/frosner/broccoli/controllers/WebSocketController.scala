@@ -66,7 +66,10 @@ class WebSocketController @Inject() ( webSocketService: WebSocketService
 
     // TODO send request to set all instances and templates initially, then the webSocketService.channel will be used for subsequent updates
     val templateEnumerator = Enumerator[Msg](Json.toJson(
-      OutgoingWsMessage(OutgoingWsMessageType.ListTemplatesMsg, templateService.getTemplates)
+      OutgoingWsMessage(
+        OutgoingWsMessageType.ListTemplatesMsg,
+        TemplateController.list(templateService)
+      )
     ))
 
     // TODO reuse functionality in InstanceController
