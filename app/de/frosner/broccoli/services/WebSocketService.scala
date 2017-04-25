@@ -4,7 +4,7 @@ import java.util.UUID
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import javax.inject.{Inject, Singleton}
 
-import de.frosner.broccoli.controllers.{OutgoingWsMessage, OutgoingWsMessage$, OutgoingWsMessageType}
+import de.frosner.broccoli.controllers._
 import de.frosner.broccoli.models.Anonymous
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.util.Logging
@@ -24,17 +24,26 @@ class WebSocketService @Inject() (templateService: TemplateService,
       // TODO reuse functionality of AboutController
       val user = Anonymous
       broadcast(Json.toJson(
-        OutgoingWsMessage(OutgoingWsMessageType.AboutInfoMsg, aboutInfoService.aboutInfo(user))
+        OutgoingWsMessage(
+          OutgoingWsMessageType.AboutInfoMsg,
+          AboutController.about(aboutInfoService, user)
+        )
       ))
 
       // TODO send request to set all instances and templates initially, then the webSocketService.channel will be used for subsequent updates
       broadcast(Json.toJson(
-        OutgoingWsMessage(OutgoingWsMessageType.ListTemplatesMsg, templateService.getTemplates)
+        OutgoingWsMessage(
+          OutgoingWsMessageType.ListTemplatesMsg,
+          TemplateController.list(templateService)
+        )
       ))
 
       // TODO reuse functionality in InstanceController
       broadcast(Json.toJson(
-        OutgoingWsMessage(OutgoingWsMessageType.ListInstancesMsg, instanceService.getInstances)
+        OutgoingWsMessage(
+          OutgoingWsMessageType.ListInstancesMsg,
+          InstanceController.list(None, user, instanceService)
+        )
       ))
     }
   }
