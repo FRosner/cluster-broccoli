@@ -21,7 +21,6 @@ class WebSocketService @Inject() (templateService: TemplateService,
   private val scheduler = new ScheduledThreadPoolExecutor(1)
   private val task = new Runnable {
     def run() = {
-      // TODO reuse functionality of AboutController
       val user = Anonymous
       broadcast(Json.toJson(
         OutgoingWsMessage(
@@ -30,7 +29,6 @@ class WebSocketService @Inject() (templateService: TemplateService,
         )
       ))
 
-      // TODO send request to set all instances and templates initially, then the webSocketService.channel will be used for subsequent updates
       broadcast(Json.toJson(
         OutgoingWsMessage(
           OutgoingWsMessageType.ListTemplatesMsg,
@@ -38,7 +36,6 @@ class WebSocketService @Inject() (templateService: TemplateService,
         )
       ))
 
-      // TODO reuse functionality in InstanceController
       broadcast(Json.toJson(
         OutgoingWsMessage(
           OutgoingWsMessageType.ListInstancesMsg,
