@@ -52,7 +52,14 @@ case class InstanceController @Inject() (instanceService: InstanceService,
     val maybeValidatedInstanceCreation = request.body.asJson.map(_.validate[InstanceCreation])
     maybeValidatedInstanceCreation.map { validatedInstanceCreation =>
       validatedInstanceCreation.map { instanceCreation =>
-        InstanceController.create(instanceCreation, loggedIn, instanceService)
+        InstanceController.create(instanceCreation, loggedIn, instanceService) match {
+          case InstanceCreationSuccess(creation, instanceWithStatus) =>
+            Results.Status(201)(Json.toJson(instanceWithStatus)).withHeaders(
+              HeaderNames.LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
+            )
+          case InstanceCreationFailure(creation, reason) =>
+            Results.Status(400)(s"Creating $instanceCreation failed: $reason")
+        }
       }.getOrElse(Results.Status(400)("Expected JSON data"))
     }.getOrElse(Results.Status(400)("Expected JSON data"))
   }
@@ -149,21 +156,27 @@ object InstanceController {
     )
   }
 
-  def create(instanceCreation: InstanceCreation, loggedIn: Account, instanceService: InstanceService) = {
+  def create(instanceCreation: InstanceCreation, loggedIn: Account, instanceService: InstanceService): InstanceCreationResult = {
     val maybeId = instanceCreation.parameters.get("id")
     val instanceRegex = loggedIn.instanceRegex
     maybeId match {
       case Some(id) if id.matches(instanceRegex) =>
         val tryNewInstance = instanceService.addInstance(instanceCreation)
         tryNewInstance.map { instanceWithStatus =>
-          Results.Status(201)(Json.toJson(instanceWithStatus)).withHeaders(
-            HeaderNames.LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
-          )
+          InstanceCreationSuccess(instanceCreation, instanceWithStatus)
         }.recover { case error =>
-          Results.Status(400)(error.toString)
+          InstanceCreationFailure(instanceCreation, error.toString)
         }.get
-      case Some(id) => Results.Status(403)(s"Only allowed to create instances matching $instanceRegex")
-      case None => Results.Status(400)(s"Instance ID missing")
+      case Some(id) =>
+        InstanceCreationFailure(
+          instanceCreation,
+          s"Only allowed to create instances matching $instanceRegex"
+        )
+      case None =>
+        InstanceCreationFailure(
+          instanceCreation,
+          s"Instance ID missing"
+        )
     }
   }
 

@@ -11,6 +11,9 @@ object OutgoingWsMessageType extends Enumeration {
   val ListInstancesMsg = Value("listInstances")
   val AboutInfoMsg = Value("aboutInfo")
   val ErrorMsg = Value("error")
+  val NotificationMsg = Value("notification")
+  val InstanceCreationSuccessMsg = Value("addInstanceSuccess")
+  val InstanceCreationFailureMsg = Value("addInstanceError")
 
   implicit val webSocketMessageTypeWrites: Writes[OutgoingWsMessageType] = Writes(value => JsString(value.toString))
 

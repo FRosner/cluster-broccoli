@@ -1,7 +1,7 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.controllers.OutgoingWsMessageType._
-import de.frosner.broccoli.models.{AboutInfo, InstanceWithStatus, Template}
+import de.frosner.broccoli.models._
 import Template.templateApiWrites
 import InstanceWithStatus.instanceWithStatusWrites
 import play.api.libs.json._
@@ -19,6 +19,12 @@ object OutgoingWsMessage {
       wrap(AboutInfoMsg, Json.toJson(payload))
     case OutgoingWsMessage(ErrorMsg, payload: String) =>
       wrap(ErrorMsg, Json.toJson(payload))
+    case OutgoingWsMessage(NotificationMsg, payload: String) =>
+      wrap(NotificationMsg, Json.toJson(payload))
+    case OutgoingWsMessage(InstanceCreationSuccessMsg, instanceCreationResult: InstanceCreationSuccess) =>
+      wrap(InstanceCreationSuccessMsg, Json.toJson(instanceCreationResult))
+    case OutgoingWsMessage(InstanceCreationFailureMsg, instanceCreationResult: InstanceCreationFailure) =>
+      wrap(InstanceCreationFailureMsg, Json.toJson(instanceCreationResult))
   }
 
   private def wrap(messageType: OutgoingWsMessageType, payload: JsValue): JsValue = JsObject(Map(

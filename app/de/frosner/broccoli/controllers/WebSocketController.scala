@@ -9,7 +9,7 @@ import de.frosner.broccoli.controllers.OutgoingWsMessageType._
 import de.frosner.broccoli.util.Logging
 import de.frosner.broccoli.models.Template.templateApiWrites
 import de.frosner.broccoli.models.Instance.instanceApiWrites
-import de.frosner.broccoli.models.{Anonymous, InstanceCreation, UserAccount}
+import de.frosner.broccoli.models._
 import play.api.mvc._
 import play.api.libs.iteratee._
 import play.api.libs.json.{JsBoolean, JsObject, JsString, Json}
@@ -43,17 +43,21 @@ class WebSocketController @Inject() ( webSocketService: WebSocketService
         // TODO call the controller methods
       jsMsg =>
         Logger.info(s"Received message through $connectionId: $jsMsg")
-        val msg = Try(Json.fromJson(jsMsg)(IncomingWsMessage.incomingWsMessageReads))
-        msg.foreach { jsResult =>
-          jsResult.foreach { message =>
-            println(message)
-          }
-        }
-        // TODO authentication and interpret response
-        msg.foreach(_.foreach {
+        val msg = Json.fromJson(jsMsg)(IncomingWsMessage.incomingWsMessageReads)
+        // TODO authentication
+        val result = msg.map {
           case IncomingWsMessage(IncomingWsMessageType.AddInstance, instanceCreation: InstanceCreation) =>
-            InstanceController.create(instanceCreation, user, instanceService)
-        })
+            InstanceController.create(instanceCreation, user, instanceService) match {
+              case success: InstanceCreationSuccess =>
+                OutgoingWsMessage(OutgoingWsMessageType.InstanceCreationSuccessMsg, success)
+              case failure: InstanceCreationFailure =>
+                OutgoingWsMessage(OutgoingWsMessageType.InstanceCreationFailureMsg, failure)
+            }
+        }.getOrElse {
+          Logger.warn(s"Can't parse a message from $connectionId: $msg")
+          OutgoingWsMessage(OutgoingWsMessageType.ErrorMsg, "Received unparsable message")
+        }
+        webSocketService.send(connectionId, Json.toJson(result))
     }.map { _ =>
       webSocketService.closeConnection(connectionId)
       Logger.info(s"Closed connection $connectionLogString")

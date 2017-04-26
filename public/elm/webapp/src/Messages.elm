@@ -23,6 +23,8 @@ type IncomingWsMsgType
   | ListTemplatesMsgType
   | ListInstancesMsgType
   | ErrorMsgType
+  | InstanceCreationSuccessMsgType
+  | InstanceCreationFailureMsgType
   | UnknownMsgType String
 
 type OutgoingWsMsgType

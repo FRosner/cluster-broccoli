@@ -5,6 +5,8 @@ import Json.Decode as Decode exposing (field)
 import Models.Resources.AboutInfo as AboutInfo
 import Models.Resources.Template as Template
 import Models.Resources.Instance as Instance
+import Models.Resources.InstanceCreationSuccess as InstanceCreationSuccess
+import Models.Resources.InstanceCreationFailure as InstanceCreationFailure
 
 import Updates.Messages exposing (UpdateAboutInfoMsg(..), UpdateLoginStatusMsg(..), UpdateErrorsMsg(..), UpdateTemplatesMsg(..))
 import Messages exposing (..)
@@ -65,6 +67,32 @@ update msg model =
               ( { model | instances = [] } -- TODO shall we just use the old templates instead?
               , showError "Failed to decode instances: " error
               )
+      Ok InstanceCreationSuccessMsgType ->
+        let instanceCreationSuccessResult =
+          Decode.decodeString (field payloadFieldName InstanceCreationSuccess.decoder) msg
+        in
+          case instanceCreationSuccessResult of
+            Ok instanceCreationSuccess ->
+              ( model
+              , showError (toString instanceCreationSuccess) ""
+              )
+            Err error ->
+              ( model
+              , showError "Failed to decode instances: " error
+              )
+      Ok InstanceCreationFailureMsgType ->
+        let instanceCreationFailureResult =
+          Decode.decodeString (field payloadFieldName InstanceCreationFailure.decoder) msg
+        in
+          case instanceCreationFailureResult of
+            Ok instanceCreationFailure ->
+              ( model
+              , showError (toString instanceCreationFailure) ""
+              )
+            Err error ->
+              ( model
+              , showError "Failed to decode instances: " error
+              )
       Ok ErrorMsgType ->
         let errorResult =
           Decode.decodeString (field payloadFieldName (Decode.string)) msg
@@ -101,6 +129,8 @@ stringToIncomingType s =
     "listTemplates" -> ListTemplatesMsgType
     "listInstances" -> ListInstancesMsgType
     "error" -> ErrorMsgType
+    "addInstanceSuccess" -> InstanceCreationSuccessMsgType
+    "addInstanceError" -> InstanceCreationFailureMsgType
     anything -> UnknownMsgType anything
 
 showError prefix error =
