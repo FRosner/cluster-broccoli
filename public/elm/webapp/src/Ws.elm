@@ -8,7 +8,7 @@ import Models.Resources.Instance as Instance
 import Models.Resources.InstanceCreationSuccess as InstanceCreationSuccess
 import Models.Resources.InstanceCreationFailure as InstanceCreationFailure
 
-import Updates.Messages exposing (UpdateAboutInfoMsg(..), UpdateLoginStatusMsg(..), UpdateErrorsMsg(..), UpdateTemplatesMsg(..))
+import Updates.Messages exposing (..)
 import Messages exposing (..)
 
 import Array
@@ -74,7 +74,10 @@ update msg model =
           case instanceCreationSuccessResult of
             Ok instanceCreationSuccess ->
               ( model
-              , showError (toString instanceCreationSuccess) ""
+              , CmdUtils.cmd
+                ( UpdateBodyViewMsg
+                  ( ExpandNewInstanceForm False instanceCreationSuccess.instanceCreation.templateId )
+                )
               )
             Err error ->
               ( model
@@ -87,7 +90,7 @@ update msg model =
           case instanceCreationFailureResult of
             Ok instanceCreationFailure ->
               ( model
-              , showError (toString instanceCreationFailure) ""
+              , showError "Failed to create instance: " (toString instanceCreationFailure.reason)
               )
             Err error ->
               ( model

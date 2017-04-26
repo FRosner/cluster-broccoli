@@ -95,7 +95,7 @@ updateBodyView message oldBodyUiModel =
         , Cmd.none
         )
       ApplyParameterValueChanges instance ->
-        ( { oldBodyUiModel | instanceParameterForms = resetEditParameterForm instance oldInstanceParameterForms }
+        ( oldBodyUiModel
         , Cmd.none
         )
       ToggleEditInstanceSecretVisibility instanceId parameter ->
