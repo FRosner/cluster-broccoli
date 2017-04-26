@@ -17,6 +17,7 @@ type UpdateLoginStatusMsg
 
 type UpdateErrorsMsg
   = AddError String
+  | CloseError Int
 
 type UpdateLoginFormMsg
   = LoginAttempt

@@ -1,18 +1,32 @@
 module Views.Notifications exposing (view)
 
 import Html exposing (..)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
+
 import Models.Ui.Notifications exposing (Error, Errors)
-import Messages exposing (AnyMsg)
+import Utils.HtmlUtils exposing (..)
+import Messages exposing (..)
+import Updates.Messages exposing (..)
 
 view : Errors -> Html AnyMsg
 view errors =
-  div
-    [ class "container" ]
-    (List.map errorAlert errors)
+  let indexedErrors =
+    List.indexedMap (,) errors
+  in
+    div
+      [ class "container" ]
+      (List.map errorAlert indexedErrors)
 
-errorAlert : Error -> Html AnyMsg
-errorAlert error =
+errorAlert : (Int, Error) -> Html AnyMsg
+errorAlert (index, error) =
   div
     [ class "alert alert-danger animated fadeIn" ]
-    [ text error ]
+    [ button
+      [ type_ "button"
+      , class "close"
+      , onClick ( UpdateErrorsMsg ( CloseError index ) )
+      ]
+      [ icon "fa fa-times" [] ]
+    , text error
+    ]
