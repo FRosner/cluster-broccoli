@@ -278,7 +278,9 @@ newView template maybeInstanceParameterForm visibleSecrets =
                 "btn btn-warning"
                 "fa fa-ban"
                 "Discard"
-                [ onClick (DiscardNewInstanceCreation template.id) ]
+                [ onClick (DiscardNewInstanceCreation template.id)
+                , type_ "button"
+                ]
             ]
           ]
         ]
