@@ -25,7 +25,10 @@ type IncomingWsMsgType
   | ErrorMsgType
   | InstanceCreationSuccessMsgType
   | InstanceCreationFailureMsgType
+  | InstanceDeletionSuccessMsgType
+  | InstanceDeletionFailureMsgType
   | UnknownMsgType String
 
 type OutgoingWsMsgType
   = CreateInstanceMsgType
+  | DeleteInstanceMsgType

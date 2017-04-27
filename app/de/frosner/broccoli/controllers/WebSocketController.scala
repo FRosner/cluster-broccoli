@@ -53,6 +53,13 @@ class WebSocketController @Inject() ( webSocketService: WebSocketService
               case failure: InstanceCreationFailure =>
                 OutgoingWsMessage(OutgoingWsMessageType.InstanceCreationFailureMsg, failure)
             }
+          case IncomingWsMessage(IncomingWsMessageType.DeleteInstance, instanceId: String) =>
+            InstanceController.delete(instanceId, user, instanceService) match {
+              case success: InstanceDeletionSuccess =>
+                OutgoingWsMessage(OutgoingWsMessageType.InstanceDeletionSuccessMsg, success)
+              case failure: InstanceDeletionFailure =>
+                OutgoingWsMessage(OutgoingWsMessageType.InstanceDeletionFailureMsg, failure)
+            }
         }.getOrElse {
           Logger.warn(s"Can't parse a message from $connectionId: $msg")
           OutgoingWsMessage(OutgoingWsMessageType.ErrorMsg, "Received unparsable message")

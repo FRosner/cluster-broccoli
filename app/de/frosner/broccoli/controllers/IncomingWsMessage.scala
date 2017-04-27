@@ -15,6 +15,7 @@ object IncomingWsMessage {
     val payloadJson = messageJson.value("payload")
     val payloadObject: JsResult[Object] = messageType match {
       case AddInstance => Json.fromJson(payloadJson)(InstanceCreation.instanceCreationReads)
+      case DeleteInstance => payloadJson.validate[String]
     }
     payloadObject.map(o => IncomingWsMessage(messageType, payloadObject.get))
   }

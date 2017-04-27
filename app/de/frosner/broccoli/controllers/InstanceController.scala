@@ -118,17 +118,11 @@ case class InstanceController @Inject() (instanceService: InstanceService,
   }
 
   def delete(id: String) = StackAction(AuthorityKey -> Role.Administrator) { implicit request =>
-    val instanceRegex = loggedIn.instanceRegex
-    if (id.matches(instanceRegex)) {
-      val maybeDeletedInstance = instanceService.deleteInstance(id)
-      maybeDeletedInstance.map {
-        instance => Ok(Json.toJson(instance))
-      }.recover {
-        case throwable: InstanceNotFoundException => NotFound(throwable.toString)
-        case throwable => Status(400)(throwable.toString)
-      }.get
-    } else {
-      Status(403)(s"Only allowed to delete instances matching $instanceRegex")
+    InstanceController.delete(id, loggedIn, instanceService) match {
+      case InstanceDeletionSuccess(id, instanceWithStatus) =>
+        Results.Ok(Json.toJson(instanceWithStatus))
+      case InstanceDeletionFailure(id, reason) =>
+        Results.BadRequest(s"Deleting $id failed: $reason")
     }
   }
 
@@ -177,6 +171,20 @@ object InstanceController {
           instanceCreation,
           s"Instance ID missing"
         )
+    }
+  }
+
+  def delete(id: String, loggedIn: Account, instanceService: InstanceService): InstanceDeletionResult = {
+    val instanceRegex = loggedIn.instanceRegex
+    if (id.matches(instanceRegex)) {
+      val maybeDeletedInstance = instanceService.deleteInstance(id)
+      maybeDeletedInstance.map {
+        instance => InstanceDeletionSuccess(id, instance)
+      }.recover {
+        case throwable => InstanceDeletionFailure(id, throwable.toString)
+      }.get
+    } else {
+      InstanceDeletionFailure(id, s"Only allowed to delete instances matching $instanceRegex")
     }
   }
 

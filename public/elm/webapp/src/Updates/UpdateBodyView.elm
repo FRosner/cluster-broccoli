@@ -12,6 +12,8 @@ import Messages exposing (..)
 import Utils.MaybeUtils as MaybeUtils
 import Utils.CmdUtils as CmdUtils
 
+import Json.Encode as Encode
+
 updateBodyView : UpdateBodyViewMsg -> BodyUiModel -> (BodyUiModel, Cmd AnyMsg)
 updateBodyView message oldBodyUiModel =
   let
@@ -145,6 +147,13 @@ updateBodyView message oldBodyUiModel =
       DiscardNewInstanceCreation templateId ->
         ( { oldBodyUiModel | expandedNewInstanceForms = resetNewParameterForm templateId oldExpandedNewInstanceForms }
         , Cmd.none
+        )
+      DeleteSelectedInstances selectedInstances ->
+        ( oldBodyUiModel
+        , selectedInstances
+          |> Set.toList
+          |> List.map (\id -> CmdUtils.cmd (SendWsMsg (Encode.string id) DeleteInstanceMsgType))
+          |> Cmd.batch
         )
 
 expandParameterForm templateId oldExpandedNewInstanceForms maybeParameterForm =

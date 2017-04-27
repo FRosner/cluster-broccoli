@@ -7,11 +7,15 @@ import Models.Resources.Template as Template
 import Models.Resources.Instance as Instance
 import Models.Resources.InstanceCreationSuccess as InstanceCreationSuccess
 import Models.Resources.InstanceCreationFailure as InstanceCreationFailure
+import Models.Resources.InstanceDeletionSuccess as InstanceDeletionSuccess
+import Models.Resources.InstanceDeletionFailure as InstanceDeletionFailure
 
 import Updates.Messages exposing (..)
 import Messages exposing (..)
 
 import Array
+
+import Set
 
 import WebSocket
 
@@ -81,7 +85,7 @@ update msg model =
               )
             Err error ->
               ( model
-              , showError "Failed to decode instances: " error
+              , showError "Failed to decode the instance creation result: " error
               )
       Ok InstanceCreationFailureMsgType ->
         let instanceCreationFailureResult =
@@ -94,8 +98,40 @@ update msg model =
               )
             Err error ->
               ( model
-              , showError "Failed to decode instances: " error
+              , showError "Failed to decode the instance creation result: " error
               )
+      Ok InstanceDeletionSuccessMsgType ->
+        let instanceDeletionSuccessResult =
+          Decode.decodeString (field payloadFieldName InstanceDeletionSuccess.decoder) msg
+        in
+          case instanceDeletionSuccessResult of
+            Ok instanceDeletionSuccess ->
+              let bodyUiModel = model.bodyUiModel
+              in
+                let newBodyUiModel =
+                  { bodyUiModel | selectedInstances = (Set.remove instanceDeletionSuccess.instanceId model.bodyUiModel.selectedInstances) }
+                in
+                  ( { model | bodyUiModel = newBodyUiModel }
+                  , Cmd.none
+                  )
+            Err error ->
+              ( model
+              , showError "Failed to decode the instance deletion result: " error
+              )
+      Ok InstanceDeletionFailureMsgType ->
+        let instanceDeletionFailureResult =
+          Decode.decodeString (field payloadFieldName InstanceDeletionFailure.decoder) msg
+        in
+          case instanceDeletionFailureResult of
+            Ok instanceDeletionFailure ->
+              ( model
+              , showError "Failed to delete instance: " (toString instanceDeletionFailure.reason)
+              )
+            Err error ->
+              ( model
+              , showError "Failed to decode the instance deletion result: " error
+              )
+              -- TODO we need this? { oldBodyUiModel | selectedInstances = (Set.diff oldBodyUiModel.selectedInstances selectedInstances) }
       Ok ErrorMsgType ->
         let errorResult =
           Decode.decodeString (field payloadFieldName (Decode.string)) msg
@@ -134,6 +170,8 @@ stringToIncomingType s =
     "error" -> ErrorMsgType
     "addInstanceSuccess" -> InstanceCreationSuccessMsgType
     "addInstanceError" -> InstanceCreationFailureMsgType
+    "deleteInstanceSuccess" -> InstanceDeletionSuccessMsgType
+    "deleteInstanceError" -> InstanceDeletionFailureMsgType
     anything -> UnknownMsgType anything
 
 showError prefix error =
@@ -159,3 +197,4 @@ send object messageType =
 outgoingTypeToString t =
   case t of
     CreateInstanceMsgType -> "addInstance"
+    DeleteInstanceMsgType -> "deleteInstance"

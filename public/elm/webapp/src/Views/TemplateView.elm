@@ -6,6 +6,9 @@ import Html.Events exposing (onClick)
 import Views.InstanceView
 import Views.ParameterFormView as ParameterFormView
 import Dict exposing (..)
+
+import Updates.Messages exposing (..)
+
 import Models.Resources.Instance exposing (..)
 import Models.Resources.Service exposing (..)
 import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
@@ -73,7 +76,7 @@ view instances templates bodyUiModel template =
                   "btn btn-default"
                   "fa fa-trash"
                   "Delete"
-                  []
+                  [ onClick (DeleteSelectedInstances selectedTemplateInstances) ]
               ]
             ]
           , div

@@ -1,7 +1,11 @@
 module Updates.Messages exposing (..)
 
 import Http
+
 import Dict exposing (Dict)
+
+import Set exposing (Set)
+
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
 import Models.Resources.Template exposing (TemplateId, Template)
@@ -41,6 +45,7 @@ type UpdateBodyViewMsg
   | ExpandNewInstanceForm Bool TemplateId
   | SubmitNewInstanceCreation TemplateId (Dict String String)
   | DiscardNewInstanceCreation TemplateId
+  | DeleteSelectedInstances (Set String)
 
 type UpdateTemplatesMsg
   = ListTemplates (List Template)
