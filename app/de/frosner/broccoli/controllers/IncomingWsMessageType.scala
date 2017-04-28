@@ -9,7 +9,7 @@ object IncomingWsMessageType extends Enumeration {
 
   val AddInstance = Value("addInstance")
   val DeleteInstance = Value("deleteInstance")
-  //  val UpdateInstance = Value("updateInstance")
+    val UpdateInstance = Value("updateInstance")
   //  val SetInstanceStatuses = Value("setInstanceStatuses")
   //  val SetServiceStatuses = Value("setServiceStatuses")
 //  val SetClusterManagerStatus = Value("setClusterManagerStatus")

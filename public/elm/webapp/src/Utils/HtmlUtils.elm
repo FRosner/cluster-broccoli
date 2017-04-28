@@ -29,9 +29,12 @@ iconButtonText btnClass iconClass buttonText attributes =
       [ text buttonText ]
     ]
 
-iconButton btnClass iconClass buttonTitle =
+iconButton btnClass iconClass buttonTitle attributes =
   button
-    [ class btnClass
-    , title buttonTitle
-    ]
+    ( List.append
+      [ class btnClass
+      , title buttonTitle
+      ]
+      attributes
+    )
     [ icon iconClass [] ]

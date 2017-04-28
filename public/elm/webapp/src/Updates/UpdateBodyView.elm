@@ -1,16 +1,23 @@
 module Updates.UpdateBodyView exposing (updateBodyView)
 
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
-import Set exposing (Set)
+
 import Models.Resources.Template exposing (TemplateId)
 import Models.Resources.Instance exposing (InstanceId)
+import Models.Resources.JobStatus as JobStatus exposing (JobStatus)
 import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (InstanceParameterForm)
 import Models.Ui.BodyUiModel exposing (BodyUiModel)
 import Models.Resources.InstanceCreation as InstanceCreation exposing (InstanceCreation)
-import Dict exposing (Dict)
-import Messages exposing (..)
+import Models.Resources.InstanceUpdate as InstanceUpdate exposing (InstanceUpdate)
+
 import Utils.MaybeUtils as MaybeUtils
 import Utils.CmdUtils as CmdUtils
+
+import Messages exposing (..)
+
+import Dict exposing (Dict)
+
+import Set exposing (Set)
 
 import Json.Encode as Encode
 
@@ -143,6 +150,22 @@ updateBodyView message oldBodyUiModel =
         in
           ( oldBodyUiModel -- TODO reset the form when receiving a success message { oldBodyUiModel | expandedNewInstanceForms = resetNewParameterForm templateId oldExpandedNewInstanceForms }
           , CmdUtils.cmd (SendWsMsg instanceCreationJson CreateInstanceMsgType) -- TODO avoid this by wrapping directly based on the message type
+          )
+      StartInstance instanceId ->
+        let instanceUpdateJson =
+          ( InstanceUpdate instanceId (Just JobStatus.JobRunning) Nothing Nothing )
+          |> InstanceUpdate.encoder
+        in
+          ( oldBodyUiModel -- TODO reset the form when receiving a success message?
+          , CmdUtils.cmd (SendWsMsg instanceUpdateJson UpdateInstanceMsgType) -- TODO avoid this by wrapping directly based on the message type
+          )
+      StopInstance instanceId ->
+        let instanceUpdateJson =
+          ( InstanceUpdate instanceId (Just JobStatus.JobStopped) Nothing Nothing )
+          |> InstanceUpdate.encoder
+        in
+          ( oldBodyUiModel -- TODO reset the form when receiving a success message?
+          , CmdUtils.cmd (SendWsMsg instanceUpdateJson UpdateInstanceMsgType) -- TODO avoid this by wrapping directly based on the message type
           )
       DiscardNewInstanceCreation templateId ->
         ( { oldBodyUiModel | expandedNewInstanceForms = resetNewParameterForm templateId oldExpandedNewInstanceForms }

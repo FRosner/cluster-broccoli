@@ -35,6 +35,8 @@ type UpdateBodyViewMsg
   | InstanceSelected InstanceId Bool
   | AllInstancesSelected (List InstanceId) Bool
   | InstanceExpanded InstanceId Bool
+  | StartInstance InstanceId
+  | StopInstance InstanceId
   | AllInstancesExpanded (List InstanceId) Bool
   | EnterEditInstanceParameterValue Instance String String
   | EnterNewInstanceParameterValue Template String String

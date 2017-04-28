@@ -9,6 +9,8 @@ import Models.Resources.InstanceCreationSuccess as InstanceCreationSuccess
 import Models.Resources.InstanceCreationFailure as InstanceCreationFailure
 import Models.Resources.InstanceDeletionSuccess as InstanceDeletionSuccess
 import Models.Resources.InstanceDeletionFailure as InstanceDeletionFailure
+import Models.Resources.InstanceUpdateSuccess as InstanceUpdateSuccess
+import Models.Resources.InstanceUpdateFailure as InstanceUpdateFailure
 
 import Updates.Messages exposing (..)
 import Messages exposing (..)
@@ -131,7 +133,32 @@ update msg model =
               ( model
               , showError "Failed to decode the instance deletion result: " error
               )
-              -- TODO we need this? { oldBodyUiModel | selectedInstances = (Set.diff oldBodyUiModel.selectedInstances selectedInstances) }
+      Ok InstanceUpdateSuccessMsgType ->
+        let instanceUpdateSuccessResult =
+          Decode.decodeString (field payloadFieldName InstanceUpdateSuccess.decoder) msg
+        in
+          case instanceUpdateSuccessResult of
+            Ok instanceUpdateSuccess ->
+              ( model
+              , Cmd.none
+              )
+            Err error ->
+              ( model
+              , showError "Failed to decode the instance update result: " error
+              )
+      Ok InstanceUpdateFailureMsgType ->
+        let instanceUpdateFailureResult =
+          Decode.decodeString (field payloadFieldName InstanceUpdateFailure.decoder) msg
+        in
+          case instanceUpdateFailureResult of
+            Ok instanceUpdateFailure ->
+              ( model
+              , showError "Failed to update instance: " (toString instanceUpdateFailure.reason)
+              )
+            Err error ->
+              ( model
+              , showError "Failed to decode the instance update result: " error
+              )
       Ok ErrorMsgType ->
         let errorResult =
           Decode.decodeString (field payloadFieldName (Decode.string)) msg
@@ -172,6 +199,8 @@ stringToIncomingType s =
     "addInstanceError" -> InstanceCreationFailureMsgType
     "deleteInstanceSuccess" -> InstanceDeletionSuccessMsgType
     "deleteInstanceError" -> InstanceDeletionFailureMsgType
+    "updateInstanceSuccess" -> InstanceUpdateSuccessMsgType
+    "updateInstanceError" -> InstanceUpdateFailureMsgType
     anything -> UnknownMsgType anything
 
 showError prefix error =
@@ -198,3 +227,4 @@ outgoingTypeToString t =
   case t of
     CreateInstanceMsgType -> "addInstance"
     DeleteInstanceMsgType -> "deleteInstance"
+    UpdateInstanceMsgType -> "updateInstance"

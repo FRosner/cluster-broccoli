@@ -542,7 +542,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           ))
         )
       } {
-        (controller, result) => status(result) must be equalTo 404
+        (controller, result) => status(result) must be equalTo 400
       }
     }
 
@@ -571,7 +571,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           ))
         )
       } {
-        (controller, result) => status(result) must be equalTo 403
+        (controller, result) => status(result) must be equalTo 400
       }
     }
 
@@ -715,7 +715,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           ))
         )
       } {
-        (controller, result) => status(result) must be equalTo 403
+        (controller, result) => status(result) must be equalTo 400
       }
       val userMatchers = testWithAllAuths(user) {
         securityService => InstanceController(
@@ -755,7 +755,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           ))
         )
       } {
-        (controller, result) => status(result) must be equalTo 403
+        (controller, result) => status(result) must be equalTo 400
       }
       val userMatchers = testWithAllAuths(user) {
         securityService => InstanceController(

@@ -148,9 +148,17 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
         ]
         [ jobStatusView instance.jobStatus
         , text " "
-        , iconButton "btn btn-default btn-xs" "glyphicon glyphicon-play" "Start Instance"
+        , iconButton
+            "btn btn-default btn-xs"
+            "glyphicon glyphicon-play"
+            "Start Instance"
+            [ onClick (StartInstance instance.id) ]
         , text " "
-        , iconButton "btn btn-default btn-xs" "glyphicon glyphicon-stop" "Stop Instance"
+        , iconButton
+            "btn btn-default btn-xs"
+            "glyphicon glyphicon-stop"
+            "Stop Instance"
+            [ onClick (StopInstance instance.id) ]
         ]
       ]
     ]

@@ -29,6 +29,10 @@ object OutgoingWsMessage {
       wrap(InstanceDeletionSuccessMsg, Json.toJson(instanceDeletionResult))
     case OutgoingWsMessage(InstanceDeletionFailureMsg, instanceDeletionResult: InstanceDeletionFailure) =>
       wrap(InstanceDeletionFailureMsg, Json.toJson(instanceDeletionResult))
+    case OutgoingWsMessage(InstanceUpdateSuccessMsg, instanceUpdateResult: InstanceUpdateSuccess) =>
+      wrap(InstanceUpdateSuccessMsg, Json.toJson(instanceUpdateResult))
+    case OutgoingWsMessage(InstanceUpdateFailureMsg, instanceUpdateResult: InstanceUpdateFailure) =>
+      wrap(InstanceUpdateFailureMsg, Json.toJson(instanceUpdateResult))
   }
 
   private def wrap(messageType: OutgoingWsMessageType, payload: JsValue): JsValue = JsObject(Map(

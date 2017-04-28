@@ -65,41 +65,18 @@ case class InstanceController @Inject() (instanceService: InstanceService,
   }
 
   def update(id: String) = StackAction(AuthorityKey -> Role.Operator) { implicit request =>
-    val user = loggedIn
-    val instanceRegex = user.instanceRegex
-    if (!id.matches(instanceRegex)) {
-      Status(403)(s"Only allowed to update instances matching $instanceRegex")
-    } else {
-      val maybeJsObject = request.body.asJson.map(_.as[JsObject])
-      val maybeInstanceUpdate = request.body.asJson.map(_.validate[InstanceUpdate])
-      maybeInstanceUpdate.map { instanceUpdateResult =>
-        instanceUpdateResult.map { instanceUpdate =>
-          val maybeStatusUpdater = instanceUpdate.status
-          val maybeParameterValuesUpdater = instanceUpdate.parameterValues
-          val maybeTemplateSelector = instanceUpdate.selectedTemplate
-          if (maybeStatusUpdater.isEmpty && maybeParameterValuesUpdater.isEmpty && maybeTemplateSelector.isEmpty) {
-            Status(400)("Invalid request to update an instance. Please refer to the API documentation.")
-          } else if ((maybeParameterValuesUpdater.isDefined || maybeTemplateSelector.isDefined) && user.role != Role.Administrator) {
-            Status(403)(s"Updating parameter values or templates only allowed for administrators.")
-          } else {
-            val maybeExistingAndChangedInstance = instanceService.updateInstance(
-              id = id,
-              statusUpdater = maybeStatusUpdater,
-              parameterValuesUpdater = maybeParameterValuesUpdater,
-              templateSelector = maybeTemplateSelector
-            )
-            maybeExistingAndChangedInstance match {
-              case Success(changedInstance) => Ok(Json.toJson(changedInstance))
-              case Failure(throwable: FileNotFoundException) => Status(404)(s"Instance not found: $throwable")
-              case Failure(throwable: InstanceNotFoundException) => Status(404)(s"Instance not found: $throwable")
-              case Failure(throwable: IllegalArgumentException) => Status(400)(s"Invalid request to update an instance: $throwable")
-              case Failure(throwable: TemplateNotFoundException) => Status(400)(s"Invalid request to update an instance: $throwable")
-              case Failure(throwable) => Status(500)(s"Something went wrong when updating the instance: $throwable")
-            }
-          }
-        }.getOrElse(Status(400)("Expected JSON data"))
+    val maybeJsObject = request.body.asJson.map(_.as[JsObject])
+    val maybeInstanceUpdate = request.body.asJson.map(_.validate[InstanceUpdate])
+    maybeInstanceUpdate.map { instanceUpdateResult =>
+      instanceUpdateResult.map { instanceUpdate =>
+        InstanceController.update(id, instanceUpdate, loggedIn, instanceService) match {
+          case InstanceUpdateSuccess(update, updatedInstance) =>
+            Results.Ok(Json.toJson(updatedInstance))
+          case InstanceUpdateFailure(update, reason) =>
+            Results.Status(400)(s"Updating instance $id failed: $reason")
+        }
       }.getOrElse(Status(400)("Expected JSON data"))
-    }
+    }.getOrElse(Status(400)("Expected JSON data"))
   }
 
   def delete(id: String) = StackAction(AuthorityKey -> Role.Administrator) { implicit request =>
@@ -184,6 +161,38 @@ object InstanceController {
       filteredInstances
     }
     anonymizedInstances
+  }
+
+  def update(id: String, instanceUpdate: InstanceUpdate, loggedIn: Account, instanceService: InstanceService): InstanceUpdateResult = {
+    val user = loggedIn
+    val instanceRegex = user.instanceRegex
+    if (!id.matches(instanceRegex)) {
+      InstanceUpdateFailure(instanceUpdate, s"Only allowed to update instances matching $instanceRegex")
+    } else {
+      val maybeStatusUpdater = instanceUpdate.status
+      val maybeParameterValuesUpdater = instanceUpdate.parameterValues
+      val maybeTemplateSelector = instanceUpdate.selectedTemplate
+      if (maybeStatusUpdater.isEmpty && maybeParameterValuesUpdater.isEmpty && maybeTemplateSelector.isEmpty) {
+        InstanceUpdateFailure(instanceUpdate, "Invalid request to update an instance. Please refer to the API documentation.")
+      } else if ((maybeParameterValuesUpdater.isDefined || maybeTemplateSelector.isDefined) && user.role != Role.Administrator) {
+        InstanceUpdateFailure(instanceUpdate, s"Updating parameter values or templates only allowed for administrators.")
+      } else {
+        val maybeExistingAndChangedInstance = instanceService.updateInstance(
+          id = id,
+          statusUpdater = maybeStatusUpdater,
+          parameterValuesUpdater = maybeParameterValuesUpdater,
+          templateSelector = maybeTemplateSelector
+        )
+        maybeExistingAndChangedInstance match {
+          case Success(changedInstance) => InstanceUpdateSuccess(instanceUpdate, changedInstance)
+          case Failure(throwable: FileNotFoundException) => InstanceUpdateFailure(instanceUpdate, s"Instance not found: $throwable")
+          case Failure(throwable: InstanceNotFoundException) => InstanceUpdateFailure(instanceUpdate, s"Instance not found: $throwable")
+          case Failure(throwable: IllegalArgumentException) => InstanceUpdateFailure(instanceUpdate, s"Invalid request to update an instance: $throwable")
+          case Failure(throwable: TemplateNotFoundException) => InstanceUpdateFailure(instanceUpdate, s"Invalid request to update an instance: $throwable")
+          case Failure(throwable) => InstanceUpdateFailure(instanceUpdate, s"Something went wrong when updating the instance: $throwable")
+        }
+      }
+    }
   }
 
 }

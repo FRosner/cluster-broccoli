@@ -1,7 +1,8 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.controllers.IncomingWsMessageType._
-import de.frosner.broccoli.models.{AboutInfo, InstanceCreation, InstanceWithStatus, Template}
+import de.frosner.broccoli.models._
+import de.frosner.broccoli.models.InstanceUpdate.{instanceUpdateReads, instanceUpdateWrites}
 import de.frosner.broccoli.controllers.IncomingWsMessageType.IncomingWsMessageType
 import play.api.libs.json._
 
@@ -16,6 +17,7 @@ object IncomingWsMessage {
     val payloadObject: JsResult[Object] = messageType match {
       case AddInstance => Json.fromJson(payloadJson)(InstanceCreation.instanceCreationReads)
       case DeleteInstance => payloadJson.validate[String]
+      case UpdateInstance => Json.fromJson(payloadJson)(InstanceUpdate.instanceUpdateReads)
     }
     payloadObject.map(o => IncomingWsMessage(messageType, payloadObject.get))
   }
