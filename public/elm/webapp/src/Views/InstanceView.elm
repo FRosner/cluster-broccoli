@@ -6,7 +6,7 @@ import Html.Events exposing (onClick, onCheck, onInput, onSubmit)
 import Dict exposing (..)
 import Models.Resources.Instance exposing (..)
 import Models.Resources.ServiceStatus exposing (..)
-import Models.Resources.JobStatus exposing (..)
+import Models.Resources.JobStatus as JobStatus exposing (..)
 import Models.Resources.Template exposing (..)
 import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (InstanceParameterForm)
 import Set exposing (Set)
@@ -150,15 +150,38 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
         , text " "
         , iconButton
             "btn btn-default btn-xs"
-            "glyphicon glyphicon-play"
+            ( String.append
+              "glyphicon glyphicon-"
+              ( if ( instance.jobStatus == JobStatus.JobRunning
+                    || instance.jobStatus == JobStatus.JobPending
+                    || instance.jobStatus == JobStatus.JobDead) then
+                  "refresh"
+                else
+                  "play"
+              )
+            )
             "Start Instance"
-            [ onClick (StartInstance instance.id) ]
+            ( List.append
+              [ onClick (StartInstance instance.id) ]
+              ( if (instance.jobStatus == JobStatus.JobUnknown) then
+                  [ attribute "disabled" "disabled" ]
+                else
+                  []
+              )
+            )
         , text " "
         , iconButton
             "btn btn-default btn-xs"
             "glyphicon glyphicon-stop"
             "Stop Instance"
-            [ onClick (StopInstance instance.id) ]
+            ( List.append
+              [ onClick (StopInstance instance.id) ]
+              ( if (instance.jobStatus == JobStatus.JobStopped || instance.jobStatus == JobStatus.JobUnknown) then
+                  [ attribute "disabled" "disabled" ]
+                else
+                  []
+              )
+            )
         ]
       ]
     ]
