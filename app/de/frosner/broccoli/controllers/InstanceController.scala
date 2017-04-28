@@ -9,8 +9,8 @@ import de.frosner.broccoli.models._
 import de.frosner.broccoli.conf
 import Instance.instanceApiWrites
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
+import InstanceUpdate.{instanceUpdateReads, instanceUpdateWrites}
 import de.frosner.broccoli.services._
-import de.frosner.broccoli.services.InstanceService._
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.{BroccoliRoleAuthorization, BroccoliSimpleAuthorization}
 import play.api.http.ContentTypes
@@ -71,48 +71,33 @@ case class InstanceController @Inject() (instanceService: InstanceService,
       Status(403)(s"Only allowed to update instances matching $instanceRegex")
     } else {
       val maybeJsObject = request.body.asJson.map(_.as[JsObject])
-      maybeJsObject.map { jsObject =>
-        // extract updates
-        val fields = jsObject.value
-        val maybeStatusUpdater = fields.get("status").flatMap { value =>
-          val maybeValidatedNewStatus = Try(value.as[JobStatus])
-          maybeValidatedNewStatus.map(status => Some(StatusUpdater(status))).getOrElse(None)
-        }
-        val maybeParameterValuesUpdater = Try{
-          fields.get("parameterValues").map { value =>
-            val parameterValues = value.as[JsObject].value
-            ParameterValuesUpdater(parameterValues.map { case (k, v) => (k, v.as[JsString].value) }.toMap)
+      val maybeInstanceUpdate = request.body.asJson.map(_.validate[InstanceUpdate])
+      maybeInstanceUpdate.map { instanceUpdateResult =>
+        instanceUpdateResult.map { instanceUpdate =>
+          val maybeStatusUpdater = instanceUpdate.status
+          val maybeParameterValuesUpdater = instanceUpdate.parameterValues
+          val maybeTemplateSelector = instanceUpdate.selectedTemplate
+          if (maybeStatusUpdater.isEmpty && maybeParameterValuesUpdater.isEmpty && maybeTemplateSelector.isEmpty) {
+            Status(400)("Invalid request to update an instance. Please refer to the API documentation.")
+          } else if ((maybeParameterValuesUpdater.isDefined || maybeTemplateSelector.isDefined) && user.role != Role.Administrator) {
+            Status(403)(s"Updating parameter values or templates only allowed for administrators.")
+          } else {
+            val maybeExistingAndChangedInstance = instanceService.updateInstance(
+              id = id,
+              statusUpdater = maybeStatusUpdater,
+              parameterValuesUpdater = maybeParameterValuesUpdater,
+              templateSelector = maybeTemplateSelector
+            )
+            maybeExistingAndChangedInstance match {
+              case Success(changedInstance) => Ok(Json.toJson(changedInstance))
+              case Failure(throwable: FileNotFoundException) => Status(404)(s"Instance not found: $throwable")
+              case Failure(throwable: InstanceNotFoundException) => Status(404)(s"Instance not found: $throwable")
+              case Failure(throwable: IllegalArgumentException) => Status(400)(s"Invalid request to update an instance: $throwable")
+              case Failure(throwable: TemplateNotFoundException) => Status(400)(s"Invalid request to update an instance: $throwable")
+              case Failure(throwable) => Status(500)(s"Something went wrong when updating the instance: $throwable")
+            }
           }
-        }.toOption.getOrElse(None)
-        val maybeTemplateSelector = Try(fields.get("selectedTemplate").map { value =>
-          TemplateSelector(value.as[JsString].value)
-        }).toOption.getOrElse(None)
-
-        // warn for unrecognized updates
-        fields.foreach { case (key, _) =>
-          if (!Set("status", "parameterValues", "selectedTemplate").contains(key))
-            Logger.warn(s"Received unrecognized instance update field: $key")
-        }
-        if (maybeStatusUpdater.isEmpty && maybeParameterValuesUpdater.isEmpty && maybeTemplateSelector.isEmpty) {
-          Status(400)("Invalid request to update an instance. Please refer to the API documentation.")
-        } else if ((maybeParameterValuesUpdater.isDefined || maybeTemplateSelector.isDefined) && user.role != Role.Administrator) {
-          Status(403)(s"Updating parameter values or templates only allowed for administrators.")
-        } else {
-          val maybeExistingAndChangedInstance = instanceService.updateInstance(
-            id = id,
-            statusUpdater = maybeStatusUpdater,
-            parameterValuesUpdater = maybeParameterValuesUpdater,
-            templateSelector = maybeTemplateSelector
-          )
-          maybeExistingAndChangedInstance match {
-            case Success(changedInstance) => Ok(Json.toJson(changedInstance))
-            case Failure(throwable: FileNotFoundException) => Status(404)(s"Instance not found: $throwable")
-            case Failure(throwable: InstanceNotFoundException) => Status(404)(s"Instance not found: $throwable")
-            case Failure(throwable: IllegalArgumentException) => Status(400)(s"Invalid request to update an instance: $throwable")
-            case Failure(throwable: TemplateNotFoundException) => Status(400)(s"Invalid request to update an instance: $throwable")
-            case Failure(throwable) => Status(500)(s"Something went wrong when updating the instance: $throwable")
-          }
-        }
+        }.getOrElse(Status(400)("Expected JSON data"))
       }.getOrElse(Status(400)("Expected JSON data"))
     }
   }

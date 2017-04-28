@@ -2,7 +2,7 @@ package de.frosner.broccoli.models
 
 import org.specs2.mutable.Specification
 import play.api.libs.json.Json
-import JobStatusJson.{instanceStatusReads, instanceStatusWrites}
+import JobStatusJson.{jobStatusReads, jobStatusWrites}
 
 class InstanceStatusSpec extends Specification {
 

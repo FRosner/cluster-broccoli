@@ -12,7 +12,6 @@ import play.api.Configuration
 import play.api.libs.ws.WSClient
 
 import scala.util.{Failure, Success, Try}
-import InstanceService._
 import de.frosner.broccoli.conf
 import play.api.inject.ApplicationLifecycle
 
@@ -186,20 +185,20 @@ class InstanceService @Inject()(templateService: TemplateService,
   }
 
   def updateInstance(id: String,
-                     statusUpdater: Option[StatusUpdater],
-                     parameterValuesUpdater: Option[ParameterValuesUpdater],
-                     templateSelector: Option[TemplateSelector]): Try[InstanceWithStatus] = synchronized {
+                     statusUpdater: Option[JobStatus],
+                     parameterValuesUpdater: Option[Map[String, String]],
+                     templateSelector: Option[String]): Try[InstanceWithStatus] = synchronized {
     val updateInstanceId = id
     val maybeInstance = instances.get(id)
     val maybeUpdatedInstance = maybeInstance.map { instance =>
       val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (templateSelector.isDefined) {
-        val newTemplateId = templateSelector.get.newTemplateId
+        val newTemplateId = templateSelector.get
         val newTemplate = templateService.template(newTemplateId)
         newTemplate.map { template =>
           // Requested template exists, update the template
           if (parameterValuesUpdater.isDefined) {
             // New parameter values are specified
-            val newParameterValues = parameterValuesUpdater.get.newParameterValues
+            val newParameterValues = parameterValuesUpdater.get
             instance.updateTemplate(template, newParameterValues)
           } else {
             // Just use the old parameter values
@@ -213,7 +212,7 @@ class InstanceService @Inject()(templateService: TemplateService,
         // No template update required
         if (parameterValuesUpdater.isDefined) {
           // Just update the parameter values
-          val newParameterValues = parameterValuesUpdater.get.newParameterValues
+          val newParameterValues = parameterValuesUpdater.get
           instance.updateParameterValues(newParameterValues)
         } else {
           // Neither template update nor parameter value update required
@@ -223,9 +222,9 @@ class InstanceService @Inject()(templateService: TemplateService,
       val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
         statusUpdater.map {
           // Update the instance status
-          case StatusUpdater(JobStatus.Running) =>
+          case JobStatus.Running =>
             nomadService.startJob(instance.templateJson).map(_ => instance)
-          case StatusUpdater(JobStatus.Stopped) =>
+          case JobStatus.Stopped =>
             nomadService.deleteJob(instance.id).map(_ => instance)
           case other =>
             Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
@@ -256,7 +255,7 @@ class InstanceService @Inject()(templateService: TemplateService,
   def deleteInstance(id: String): Try[InstanceWithStatus] = synchronized {
     val tryStopping = updateInstance(
       id = id,
-      statusUpdater = Some(StatusUpdater(JobStatus.Stopped)),
+      statusUpdater = Some(JobStatus.Stopped),
       parameterValuesUpdater = None,
       templateSelector = None
     )
@@ -273,15 +272,5 @@ class InstanceService @Inject()(templateService: TemplateService,
     }
     tryDelete.map(addStatuses)
   }
-
-}
-
-object InstanceService {
-
-  case class StatusUpdater(newStatus: JobStatus)
-
-  case class ParameterValuesUpdater(newParameterValues: Map[String, String])
-
-  case class TemplateSelector(newTemplateId: String)
 
 }

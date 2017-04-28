@@ -7,7 +7,6 @@ import play.api.libs.json._
 import play.api.test._
 import Instance.instanceApiWrites
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
-import de.frosner.broccoli.services.InstanceService.{ParameterValuesUpdater, StatusUpdater, TemplateSelector}
 import play.api.http.HeaderNames
 
 import scala.util.{Failure, Success}
@@ -436,7 +435,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
       when(instanceService.updateInstance(
         id = instanceWithStatus.instance.id,
-        statusUpdater = Some(StatusUpdater(JobStatus.Running)),
+        statusUpdater = Some(JobStatus.Running),
         parameterValuesUpdater = None,
         templateSelector = None
       )).thenReturn(Success(instanceWithStatus))
@@ -465,9 +464,9 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       when(instanceService.updateInstance(
         id = instanceWithStatus.instance.id,
         statusUpdater = None,
-        parameterValuesUpdater = Some(ParameterValuesUpdater(Map(
+        parameterValuesUpdater = Some(Map(
           "id" -> "new"
-        ))),
+        )),
         templateSelector = None
       )).thenReturn(Success(instanceWithStatus))
 
@@ -498,7 +497,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         id = instanceWithStatus.instance.id,
         statusUpdater = None,
         parameterValuesUpdater = None,
-        templateSelector = Some(TemplateSelector("newTemplate"))
+        templateSelector = Some("newTemplate")
       )).thenReturn(Success(instanceWithStatus))
 
       testWithAllAuths {
@@ -526,7 +525,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         id = instanceWithStatus.instance.id,
         statusUpdater = None,
         parameterValuesUpdater = None,
-        templateSelector = Some(TemplateSelector("newTemplate"))
+        templateSelector = Some("newTemplate")
       )).thenReturn(Failure(InstanceNotFoundException(instanceWithStatus.instance.id)))
 
       testWithAllAuths {
@@ -551,7 +550,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
       when(instanceService.updateInstance(
         id = instanceWithStatus.instance.id,
-        statusUpdater = Some(StatusUpdater(JobStatus.Running)),
+        statusUpdater = Some(JobStatus.Running),
         parameterValuesUpdater = None,
         templateSelector = None
       )).thenReturn(Success(instanceWithStatus))

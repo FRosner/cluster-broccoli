@@ -17,8 +17,8 @@ object JobStatus extends Enumeration {
 
 object JobStatusJson {
 
-  implicit val instanceStatusWrites: Writes[JobStatus] = Writes(value => JsString(value.toString))
+  implicit val jobStatusWrites: Writes[JobStatus] = Writes(value => JsString(value.toString))
 
-  implicit val instanceStatusReads: Reads[JobStatus] = Reads(_.validate[String].map(JobStatus.withName))
+  implicit val jobStatusReads: Reads[JobStatus] = Reads(_.validate[String].map(JobStatus.withName))
 
 }
