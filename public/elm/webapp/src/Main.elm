@@ -64,7 +64,7 @@ update msg model =
     WsConnectionLost url -> -- TODO reconnect?
       let l = Debug.log "ConnectionLost" url
       in
-        ( { model | wsConnected = False }
+        ( { model | wsConnected = False } -- TODO what do I have to set here? all stuff should be unknown and disabled or so?
         , Cmd.none
         )
     WsMessage ( url, message ) ->
