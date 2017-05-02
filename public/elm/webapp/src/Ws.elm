@@ -28,6 +28,8 @@ import Utils.StringUtils as StringUtils
 
 payloadFieldName = "payload"
 
+webSocketBaseUrl = "ws://localhost:9000/ws"
+
 -- TODO return also a Cmd
 update msg model =
   let msgType =
@@ -212,9 +214,12 @@ showError prefix error =
       )
     )
 
+connect =
+  Websocket.connect WsConnectError WsConnect webSocketBaseUrl
+
 listen =
   -- WebSocket.listen "ws://localhost:9000/ws" ProcessWsMsg -- TODO relative URL
-  Websocket.listen WsListenError WsMessage WsConnectionLost "ws://localhost:9000/ws" -- TODO relative URL
+  Websocket.listen WsListenError WsMessage WsConnectionLost webSocketBaseUrl
 
 send object messageType =
   let wrappedMessage =
@@ -223,7 +228,7 @@ send object messageType =
     Websocket.send
       WsSendError
       WsSent
-      "ws://localhost:9000/ws" -- TODO relative URL
+      webSocketBaseUrl
       ( Encode.encode 0 wrappedMessage )
 
 outgoingTypeToString t =

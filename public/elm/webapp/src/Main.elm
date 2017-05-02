@@ -31,7 +31,7 @@ import Dict exposing (Dict)
 init : ( Model, Cmd AnyMsg )
 init =
   ( Model.initial
-  , Websocket.connect WsConnectError WsConnect "ws://localhost:9000/ws"
+  , Ws.connect
   )
 
 update : AnyMsg -> Model -> ( Model, Cmd AnyMsg )
