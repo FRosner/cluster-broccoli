@@ -29,7 +29,7 @@ case class WebSocketController @Inject()
   , override val securityService: SecurityService
   ) extends Controller with Logging with BroccoliWebsocketSecurity {
 
-  // TODO close on logout
+  // TODO should the socket be closed after some time to avoid keeping it open forever and maybe losing rights in the meantime?
   def socket = WebSocket.tryAccept[Msg] { request =>
     withSecurity(request) { (maybeToken, user, request) =>
       val (connectionId, connectionEnumerator) = maybeToken match {
@@ -43,11 +43,9 @@ case class WebSocketController @Inject()
 
       // TODO receive string and try json decoding here because I can handle the error better
       val in = Iteratee.foreach[Msg] {
-        // TODO call the controller methods
         jsMsg =>
           Logger.info(s"Received message through $connectionId: $jsMsg")
           val msg = Json.fromJson(jsMsg)(IncomingWsMessage.incomingWsMessageReads)
-          // TODO authentication
           val result = msg.map {
             case IncomingWsMessage(IncomingWsMessageType.AddInstance, instanceCreation: InstanceCreation) =>
               InstanceController.create(instanceCreation, user, instanceService) match {
