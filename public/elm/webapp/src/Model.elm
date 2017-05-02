@@ -1,4 +1,4 @@
-module Model exposing (Model, initial)
+module Model exposing (Model, Route(..), initial)
 
 import Models.Resources.Template exposing (Template)
 import Models.Resources.Instance exposing (Instance)
@@ -7,6 +7,9 @@ import Models.Resources.UserInfo exposing (UserInfo)
 import Models.Ui.BodyUiModel as BodyUiModel exposing (BodyUiModel)
 import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
 import Models.Ui.Notifications exposing (Errors)
+
+type Route
+  = MainRoute
 
 type alias Model =
   { aboutInfo : Maybe AboutInfo
@@ -18,10 +21,11 @@ type alias Model =
   , templates : List Template
   , bodyUiModel : BodyUiModel
   , wsConnected : Bool
+  , route : Route
   }
 
-initial : Model
-initial =
+initial : Route -> Model
+initial route =
   { aboutInfo = Nothing
   , errors = []
   , loginForm = LoginForm.empty
@@ -31,4 +35,5 @@ initial =
   , templates = []
   , instances = []
   , wsConnected = False
+  , route = route
   }

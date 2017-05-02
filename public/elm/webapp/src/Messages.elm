@@ -3,6 +3,9 @@ module Messages exposing (..)
 import Updates.Messages exposing (..)
 
 import Json.Decode
+
+import Navigation exposing (Location)
+
 import Websocket exposing (..)
 
 type AnyMsg
@@ -21,6 +24,7 @@ type AnyMsg
   | UpdateLoginStatusMsg Updates.Messages.UpdateLoginStatusMsg
   | UpdateBodyViewMsg Updates.Messages.UpdateBodyViewMsg
   | UpdateTemplatesMsg Updates.Messages.UpdateTemplatesMsg
+  | OnLocationChange Location
   | NoOp
 
 type IncomingWsMsgType

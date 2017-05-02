@@ -1,8 +1,5 @@
 module Main exposing (main)
 
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Set exposing (Set)
 import Updates.UpdateAboutInfo exposing (updateAboutInfo)
 import Updates.UpdateErrors exposing (updateErrors)
 import Updates.UpdateLoginForm exposing (updateLoginForm)
@@ -10,16 +7,29 @@ import Updates.UpdateLoginStatus exposing (updateLoginStatus)
 import Updates.UpdateBodyView exposing (updateBodyView)
 import Updates.UpdateTemplates exposing (updateTemplates)
 import Updates.Messages exposing (UpdateAboutInfoMsg(..), UpdateLoginStatusMsg(..), UpdateErrorsMsg(..), UpdateTemplatesMsg(..))
-import Messages exposing (AnyMsg(..))
+
+import Messages exposing (..)
+
 import Views.Header
 import Views.Body
 import Views.Footer
 import Views.Notifications
 
+import Routing
+
 import Model exposing (Model)
 
 import Ws
+
 import Websocket
+
+import Html exposing (..)
+import Html.Attributes exposing (..)
+
+import Navigation exposing (Location)
+
+import Set exposing (Set)
+
 import Dict exposing (Dict)
 
 -- TODO what type of submessages do I want to have?
@@ -28,9 +38,9 @@ import Dict exposing (Dict)
 -- - Messages changing the view
 -- so one message per entry in my model? that means that not every single thing should define its own Msg type otherwise it will get crazy
 
-init : ( Model, Cmd AnyMsg )
-init =
-  ( Model.initial
+init : Location -> ( Model, Cmd AnyMsg )
+init location =
+  ( Model.initial (Routing.parseLocation location)
   , Ws.connect
   )
 
@@ -123,6 +133,11 @@ update msg model =
         ({ model | loginForm = newLoginForm }
         , cmd
         )
+    OnLocationChange location ->
+      let newRoute =
+        Routing.parseLocation location
+      in
+        ( { model | route = newRoute }, Cmd.none )
     NoOp -> (model, Cmd.none)
 
 view : Model -> Html AnyMsg
@@ -148,7 +163,7 @@ subscriptions model =
   Ws.listen
 
 main =
-  program
+  Navigation.program OnLocationChange
     { init = init
     , view = view
     , update = update
