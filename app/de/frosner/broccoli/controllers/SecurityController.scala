@@ -33,6 +33,10 @@ case class SecurityController @Inject()
 
   // TODO remove old websocket connections
   def login = Action.async { implicit request =>
+    getSessionId(request).map(id => (id, webSocketService.closeConnection(id))) match {
+      case Some((id, true)) => Logger.info(s"Removing websocket connection of $id due to another login")
+      case _ =>
+    }
     loginForm.bindFromRequest().fold(
       formWithErrors => Future.successful(Results.BadRequest),
       account => {
