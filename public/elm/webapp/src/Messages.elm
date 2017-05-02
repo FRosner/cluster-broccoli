@@ -11,7 +11,6 @@ import Websocket exposing (..)
 type AnyMsg
   = UpdateAboutInfoMsg Updates.Messages.UpdateAboutInfoMsg
   | UpdateErrorsMsg Updates.Messages.UpdateErrorsMsg
-  | ProcessWsMsg String
   | SendWsMsg Json.Decode.Value OutgoingWsMsgType
   | WsMessage ( Url, Message )
   | WsListenError ( Url, ErrorMessage )

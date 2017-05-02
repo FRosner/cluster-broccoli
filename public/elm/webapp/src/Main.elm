@@ -47,8 +47,6 @@ init location =
 update : AnyMsg -> Model -> ( Model, Cmd AnyMsg )
 update msg model =
   case msg of
-    ProcessWsMsg wsMsg ->
-      Ws.update wsMsg model
     SendWsMsg jsonObject wsMsgType ->
       ( model
       , Ws.send model.location jsonObject wsMsgType
