@@ -83,7 +83,6 @@ case class SecurityController @Inject()
 
   def verify = StackAction { implicit request =>
     val user = loggedIn
-    val title = "message main"
     Ok(user.name)
   }
 
