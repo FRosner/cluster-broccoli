@@ -37,8 +37,6 @@ case class WebSocketController @Inject()
       }
       val connectionLogString = s"$connectionId by $user from ${request.remoteAddress} at $request"
       Logger.info(s"New connection $connectionLogString")
-      // webSocketService.send(connectionId, "New templates and instances gogo.") only works after the enumerator and in has been passed
-      // so when / where do we send the initial update?
 
       // TODO receive string and try json decoding here because I can handle the error better
       val in = Iteratee.foreach[Msg] {
