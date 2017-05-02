@@ -22,16 +22,16 @@ trait BroccoliWebsocketSecurity extends AsyncAuth with AuthConfigImpl with Loggi
 
   private[auth] case object AuthKey extends RequestAttributeKey[User]
 
-  def withSecurity[A](req: RequestHeader)(f: RequestHeader => (Iteratee[A, _], Enumerator[A])): Future[Either[Result, (Iteratee[A, _], Enumerator[A])]] = {
+  def withSecurity[A](req: RequestHeader)(f: (User, RequestHeader) => (Iteratee[A, _], Enumerator[A])): Future[Either[Result, (Iteratee[A, _], Enumerator[A])]] = {
     securityService.authMode match {
       case conf.AUTH_MODE_CONF =>
         val maybeUser = restoreUser(req, scala.concurrent.ExecutionContext.Implicits.global)
         maybeUser.flatMap {
-          case (Some(user), updater) => Future.successful(Right(f(req)))
+          case (Some(user), updater) => Future.successful(Right(f(user, req)))
           case (None, _) => authenticationFailed(req).map(result => Left(result))
         }
       case conf.AUTH_MODE_NONE =>
-        Future.successful(Right(f(req)))
+        Future.successful(Right(f(Anonymous, req)))
       case other => throw new IllegalStateException(s"Unrecognized auth mode: ${securityService.authMode}")
     }
   }

@@ -30,13 +30,10 @@ case class WebSocketController @Inject()
   ) extends Controller with Logging with BroccoliWebsocketSecurity {
 
   // TODO close on logout
-  // TODO authorization (how to manage that clients only receive updates they are allowed to)
-  val user = Anonymous
-
   def socket = WebSocket.tryAccept[Msg] { request =>
-    withSecurity(request) { request =>
+    withSecurity(request) { (user, request) =>
       val (connectionId, connectionEnumerator) = webSocketService.newConnection() // TODO save also the user of this connection
-      val connectionLogString = s"$connectionId ($request) from ${request.remoteAddress}"
+      val connectionLogString = s"$connectionId by $user from ${request.remoteAddress} at $request"
       Logger.info(s"New connection $connectionLogString")
       // webSocketService.send(connectionId, "New templates and instances gogo.") only works after the enumerator and in has been passed
       // so when / where do we send the initial update?
