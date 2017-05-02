@@ -1,4 +1,4 @@
-module Ws exposing (update, listen, send)
+module Ws exposing (update, listen, send, connect)
 
 import Json.Decode as Decode exposing (field)
 
