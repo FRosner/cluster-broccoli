@@ -29,7 +29,6 @@ case class WebSocketController @Inject()
   , override val securityService: SecurityService
   ) extends Controller with Logging with BroccoliWebsocketSecurity {
 
-  // TODO should the socket be closed after some time to avoid keeping it open forever and maybe losing rights in the meantime?
   def socket = WebSocket.tryAccept[Msg] { request =>
     withSecurity(request) { (maybeToken, user, request) =>
       val (connectionId, connectionEnumerator) = maybeToken match {
