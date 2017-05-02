@@ -28,7 +28,7 @@ import Utils.StringUtils as StringUtils
 
 payloadFieldName = "payload"
 
-webSocketBaseUrl = "ws://localhost:9000/ws"
+wsRelativePath = "/ws"
 
 -- TODO return also a Cmd
 update msg model =
@@ -214,21 +214,21 @@ showError prefix error =
       )
     )
 
-connect =
-  Websocket.connect WsConnectError WsConnect webSocketBaseUrl
+connect location =
+  Websocket.connect WsConnectError WsConnect (locationToWsUrl location)
 
-listen =
+listen location =
   -- WebSocket.listen "ws://localhost:9000/ws" ProcessWsMsg -- TODO relative URL
-  Websocket.listen WsListenError WsMessage WsConnectionLost webSocketBaseUrl
+  Websocket.listen WsListenError WsMessage WsConnectionLost (locationToWsUrl location)
 
-send object messageType =
+send location object messageType =
   let wrappedMessage =
     Encode.object [ ("messageType", Encode.string (outgoingTypeToString messageType)), ("payload", object) ] -- putting a line break here fucks up the compiler???
   in
     Websocket.send
       WsSendError
       WsSent
-      webSocketBaseUrl
+      (locationToWsUrl location)
       ( Encode.encode 0 wrappedMessage )
 
 outgoingTypeToString t =
@@ -236,3 +236,13 @@ outgoingTypeToString t =
     CreateInstanceMsgType -> "addInstance"
     DeleteInstanceMsgType -> "deleteInstance"
     UpdateInstanceMsgType -> "updateInstance"
+
+locationToWsUrl location =
+  let wsProtocol = if (String.contains "https" location.protocol) then "wss" else "ws"
+  in
+    String.concat
+      [ wsProtocol
+      , "://"
+      , location.host
+      , wsRelativePath
+      ]

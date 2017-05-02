@@ -40,8 +40,8 @@ import Dict exposing (Dict)
 
 init : Location -> ( Model, Cmd AnyMsg )
 init location =
-  ( Model.initial (Routing.parseLocation location)
-  , Ws.connect
+  ( Model.initial location (Routing.parseLocation location)
+  , Ws.connect location
   )
 
 update : AnyMsg -> Model -> ( Model, Cmd AnyMsg )
@@ -51,7 +51,7 @@ update msg model =
       Ws.update wsMsg model
     SendWsMsg jsonObject wsMsgType ->
       ( model
-      , Ws.send jsonObject wsMsgType
+      , Ws.send model.location jsonObject wsMsgType
       )
     WsConnectError ( url, error ) ->
       let l = Debug.log "ConnectError" ( url, error )
@@ -137,7 +137,12 @@ update msg model =
       let newRoute =
         Routing.parseLocation location
       in
-        ( { model | route = newRoute }, Cmd.none )
+        ( { model
+          | route = newRoute
+          , location = location
+          }
+        , Cmd.none
+        )
     NoOp -> (model, Cmd.none)
 
 view : Model -> Html AnyMsg
@@ -160,7 +165,7 @@ view model =
 -- Sub.map UpdateErrorsMsg ( WebSocket.listen "ws://localhost:9000/ws" AddError ) when AddError is an UpdateErrorsMsg
 subscriptions : Model -> Sub AnyMsg
 subscriptions model =
-  Ws.listen
+  Ws.listen model.location
 
 main =
   Navigation.program OnLocationChange

@@ -8,6 +8,8 @@ import Models.Ui.BodyUiModel as BodyUiModel exposing (BodyUiModel)
 import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
 import Models.Ui.Notifications exposing (Errors)
 
+import Navigation exposing (Location)
+
 type Route
   = MainRoute
 
@@ -22,10 +24,11 @@ type alias Model =
   , bodyUiModel : BodyUiModel
   , wsConnected : Bool
   , route : Route
+  , location : Location
   }
 
-initial : Route -> Model
-initial route =
+initial : Location -> Route -> Model
+initial location route =
   { aboutInfo = Nothing
   , errors = []
   , loginForm = LoginForm.empty
@@ -36,4 +39,5 @@ initial route =
   , instances = []
   , wsConnected = False
   , route = route
+  , location = location
   }
