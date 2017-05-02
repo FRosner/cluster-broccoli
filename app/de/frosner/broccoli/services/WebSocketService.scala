@@ -50,18 +50,29 @@ class WebSocketService @Inject() (templateService: TemplateService,
   private var connections: Map[String, Concurrent.Channel[Msg]] = Map.empty
 
   def newConnection(): (String, Enumerator[Msg]) = {
-    val (enumerator, channel) = Concurrent.broadcast[Msg]
-    val uuid = UUID.randomUUID().toString
-    connections = connections.updated(uuid, channel)
-    (uuid, enumerator)
+    val id = UUID.randomUUID().toString
+    (id, newConnection(id))
   }
 
-  def closeConnection(id: String): Unit = {
-    connections.get(id) match {
-      case Some(channel) =>
+  def newConnection(id: String): Enumerator[Msg] = {
+    val (enumerator, channel) = Concurrent.broadcast[Msg]
+    if (connections.contains(id)) {
+      val error = s"ID $id is already an open web socket connection"
+      Logger.warn(error)
+      throw new IllegalArgumentException(error)
+    } else {
+      val (enumerator, channel) = Concurrent.broadcast[Msg]
+      connections = connections.updated(id, channel)
+      enumerator
+    }
+  }
+
+  def closeConnection(id: String): Boolean = {
+    connections.get(id).exists {
+      channel =>
         channel.eofAndEnd()
         connections = connections - id
-      case None => throw InvalidWebsocketConnectionException(id, connections.keys)
+        true
     }
   }
 

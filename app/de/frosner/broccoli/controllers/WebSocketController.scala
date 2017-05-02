@@ -31,8 +31,11 @@ case class WebSocketController @Inject()
 
   // TODO close on logout
   def socket = WebSocket.tryAccept[Msg] { request =>
-    withSecurity(request) { (user, request) =>
-      val (connectionId, connectionEnumerator) = webSocketService.newConnection() // TODO save also the user of this connection
+    withSecurity(request) { (maybeToken, user, request) =>
+      val (connectionId, connectionEnumerator) = maybeToken match {
+        case Some(token) => (token, webSocketService.newConnection(token)) // auth is enabled and we can use the session ID
+        case None => webSocketService.newConnection() // no session ID available so we generate one
+      }
       val connectionLogString = s"$connectionId by $user from ${request.remoteAddress} at $request"
       Logger.info(s"New connection $connectionLogString")
       // webSocketService.send(connectionId, "New templates and instances gogo.") only works after the enumerator and in has been passed

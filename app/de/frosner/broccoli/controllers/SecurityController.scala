@@ -4,7 +4,7 @@ import javax.inject.Inject
 
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.{UserAccount, UserCredentials}
-import de.frosner.broccoli.services.SecurityService
+import de.frosner.broccoli.services.{SecurityService, WebSocketService}
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.{BroccoliSimpleAuthorization, LoginLogout}
 import play.api.Configuration
@@ -15,7 +15,10 @@ import play.api.mvc.{Action, Controller, Results}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class SecurityController @Inject() (override val securityService: SecurityService)
+case class SecurityController @Inject()
+  ( override val securityService: SecurityService
+  , webSocketService: WebSocketService
+  )
   extends Controller with Logging with LoginLogout with BroccoliSimpleAuthorization {
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -28,6 +31,7 @@ case class SecurityController @Inject() (override val securityService: SecurityS
     )(UserCredentials.apply)(UserCredentials.unapply)
   }
 
+  // TODO remove old websocket connections
   def login = Action.async { implicit request =>
     loginForm.bindFromRequest().fold(
       formWithErrors => Future.successful(Results.BadRequest),
@@ -65,6 +69,11 @@ case class SecurityController @Inject() (override val securityService: SecurityS
   }
 
   def logout = Action.async { implicit request =>
+    getSessionId(request).map(id => (id, webSocketService.closeConnection(id))) match {
+      case Some((id, true)) => Logger.info(s"Removing websocket connection of $id due to logout")
+      case Some((id, false)) => Logger.info(s"There was no websocket connection for session $id")
+      case None => Logger.info(s"No session available to logout from")
+    }
     gotoLogoutSucceeded
   }
 

@@ -5,7 +5,7 @@ import de.frosner.broccoli.controllers.AuthConfigImpl
 import de.frosner.broccoli.models.Anonymous
 import de.frosner.broccoli.services.SecurityService
 import jp.t2v.lab.play2.stackc.{RequestAttributeKey, RequestWithAttributes, StackableController}
-import play.api.mvc.{Controller, Result}
+import play.api.mvc.{Controller, RequestHeader, Result}
 
 import scala.concurrent.Future
 
@@ -40,5 +40,7 @@ trait BroccoliSimpleAuthorization extends StackableController with AsyncAuth wit
     case conf.AUTH_MODE_NONE => Anonymous.asInstanceOf[User]
     case other => throw new IllegalStateException(s"Unrecognized auth mode: ${securityService.authMode}")
   }
+
+  def getSessionId(request: RequestHeader): Option[AuthenticityToken] = extractToken(request)
 
 }
