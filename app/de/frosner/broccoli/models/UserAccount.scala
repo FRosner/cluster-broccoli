@@ -22,6 +22,8 @@ sealed trait Account extends Credentials {
 
   val role: Role
 
+  override def toString: String = s"$name ($role)"
+
 }
 
 case class UserAccount(name: String,
@@ -29,7 +31,7 @@ case class UserAccount(name: String,
                        instanceRegex: String,
                        role: Role) extends Account
 
-object Anonymous extends Account {
+case object Anonymous extends Account {
 
   val name = "anonymous"
 
