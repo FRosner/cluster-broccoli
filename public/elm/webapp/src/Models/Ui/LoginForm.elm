@@ -1,4 +1,4 @@
-module Models.Ui.LoginForm exposing (..)
+module Models.Ui.LoginForm exposing (LoginForm, empty)
 
 type alias LoginForm =
   { username : String
@@ -6,4 +6,4 @@ type alias LoginForm =
   , loginIncorrect : Bool
   }
 
-emptyLoginForm = LoginForm "" "" False
+empty = LoginForm "" "" False

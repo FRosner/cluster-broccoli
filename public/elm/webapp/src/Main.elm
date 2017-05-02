@@ -3,17 +3,6 @@ module Main exposing (main)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Set exposing (Set)
-import Models.Resources.Template exposing (..)
-import Models.Resources.Instance exposing (..)
-import Models.Resources.Service exposing (..)
-import Models.Resources.ServiceStatus exposing (..)
-import Models.Resources.JobStatus exposing (..)
-import Models.Resources.AboutInfo exposing (AboutInfo)
-import Models.Resources.UserInfo exposing (UserInfo)
-import Models.Resources.PeriodicRun as PeriodicRun exposing (PeriodicRun)
-import Models.Ui.BodyUiModel as BodyUiModel exposing (BodyUiModel)
-import Models.Ui.LoginForm exposing (..)
-import Models.Ui.Notifications exposing (..)
 import Updates.UpdateAboutInfo exposing (updateAboutInfo)
 import Updates.UpdateErrors exposing (updateErrors)
 import Updates.UpdateLoginForm exposing (updateLoginForm)
@@ -27,6 +16,8 @@ import Views.Body
 import Views.Footer
 import Views.Notifications
 
+import Model exposing (Model)
+
 import Ws
 import Websocket
 import Dict exposing (Dict)
@@ -37,32 +28,9 @@ import Dict exposing (Dict)
 -- - Messages changing the view
 -- so one message per entry in my model? that means that not every single thing should define its own Msg type otherwise it will get crazy
 
-type alias Model =
-  { aboutInfo : Maybe AboutInfo
-  , errors : Errors
-  , loginForm : LoginForm
-  , loggedIn : Maybe UserInfo
-  , authEnabled : Maybe Bool
-  , instances : List Instance
-  , templates : List Template
-  , bodyUiModel : BodyUiModel
-  }
-
-initialModel : Model
-initialModel =
-  { aboutInfo = Nothing
-  , errors = []
-  , loginForm = emptyLoginForm
-  , loggedIn = Nothing
-  , authEnabled = Nothing
-  , bodyUiModel = BodyUiModel.initialModel
-  , templates = []
-  , instances = []
-  }
-
 init : ( Model, Cmd AnyMsg )
 init =
-  ( initialModel
+  ( Model.initial
   , Websocket.connect WsConnectError WsConnect "ws://localhost:9000/ws"
   )
 
@@ -84,7 +52,7 @@ update msg model =
     WsConnect url ->
       let l = Debug.log "Connect" url
       in
-        ( model
+        ( { model | wsConnected = True }
         , Cmd.none
         )
     WsListenError ( url, error ) ->
@@ -96,7 +64,7 @@ update msg model =
     WsConnectionLost url -> -- TODO reconnect?
       let l = Debug.log "ConnectionLost" url
       in
-        ( model
+        ( { model | wsConnected = False }
         , Cmd.none
         )
     WsMessage ( url, message ) ->
@@ -171,7 +139,7 @@ view model =
             model.bodyUiModel
         )
     , text (toString model)
-    , Views.Footer.view model.aboutInfo
+    , Views.Footer.view model
     ]
 
 -- Sub.map UpdateErrorsMsg ( WebSocket.listen "ws://localhost:9000/ws" AddError ) when AddError is an UpdateErrorsMsg
