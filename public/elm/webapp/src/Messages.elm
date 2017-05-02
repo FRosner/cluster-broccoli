@@ -3,20 +3,25 @@ module Messages exposing (..)
 import Updates.Messages exposing (..)
 
 import Json.Decode
+import Websocket exposing (..)
 
 type AnyMsg
   = UpdateAboutInfoMsg Updates.Messages.UpdateAboutInfoMsg
   | UpdateErrorsMsg Updates.Messages.UpdateErrorsMsg
   | ProcessWsMsg String
   | SendWsMsg Json.Decode.Value OutgoingWsMsgType
+  | WsMessage ( Url, Message )
+  | WsListenError ( Url, ErrorMessage )
+  | WsConnectionLost Url
+  | WsConnectError ( Url, ErrorMessage )
+  | WsConnect Url
+  | WsSendError ( Url, Message, ErrorMessage )
+  | WsSent ( Url, Message )
   | UpdateLoginFormMsg Updates.Messages.UpdateLoginFormMsg
   | UpdateLoginStatusMsg Updates.Messages.UpdateLoginStatusMsg
   | UpdateBodyViewMsg Updates.Messages.UpdateBodyViewMsg
   | UpdateTemplatesMsg Updates.Messages.UpdateTemplatesMsg
   | NoOp
-  -- | FetchTemplatesMsg Commands.FetchTemplates.Msg
-  -- | ViewsBodyMsg Views.Body.Msg
-  -- | ViewsNewInstanceFormMsg Views.NewInstanceForm.Msg
 
 type IncomingWsMsgType
   = SetAboutInfoMsgType

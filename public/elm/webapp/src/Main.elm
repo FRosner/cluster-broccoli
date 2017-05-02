@@ -28,7 +28,7 @@ import Views.Footer
 import Views.Notifications
 
 import Ws
-import WebSocket
+import Websocket
 import Dict exposing (Dict)
 
 -- TODO what type of submessages do I want to have?
@@ -48,11 +48,9 @@ type alias Model =
   , bodyUiModel : BodyUiModel
   }
 
-
 initialModel : Model
 initialModel =
   { aboutInfo = Nothing
-  -- , templates = []
   , errors = []
   , loginForm = emptyLoginForm
   , loggedIn = Nothing
@@ -65,7 +63,7 @@ initialModel =
 init : ( Model, Cmd AnyMsg )
 init =
   ( initialModel
-  , Cmd.none
+  , Websocket.connect WsConnectError WsConnect "ws://localhost:9000/ws"
   )
 
 update : AnyMsg -> Model -> ( Model, Cmd AnyMsg )
@@ -77,6 +75,44 @@ update msg model =
       ( model
       , Ws.send jsonObject wsMsgType
       )
+    WsConnectError ( url, error ) ->
+      let l = Debug.log "ConnectError" ( url, error )
+      in
+        ( model
+        , Cmd.none
+        )
+    WsConnect url ->
+      let l = Debug.log "Connect" url
+      in
+        ( model
+        , Cmd.none
+        )
+    WsListenError ( url, error ) ->
+      let l = Debug.log "ListenError" ( url, error )
+      in
+        ( model
+        , Cmd.none
+        )
+    WsConnectionLost url -> -- TODO reconnect?
+      let l = Debug.log "ConnectionLost" url
+      in
+        ( model
+        , Cmd.none
+        )
+    WsMessage ( url, message ) ->
+      Ws.update message model
+    WsSendError ( url, message, error ) ->
+      let l = Debug.log "SendError" ( url, message, error )
+      in
+        ( model
+        , Cmd.none
+        )
+    WsSent ( url, message ) ->
+      let l = Debug.log "Sent" ( url, message )
+      in
+        ( model
+        , Cmd.none
+        )
     UpdateAboutInfoMsg subMsg ->
       let (newAbout, cmd) =
         updateAboutInfo subMsg model.aboutInfo
@@ -141,7 +177,6 @@ view model =
 -- Sub.map UpdateErrorsMsg ( WebSocket.listen "ws://localhost:9000/ws" AddError ) when AddError is an UpdateErrorsMsg
 subscriptions : Model -> Sub AnyMsg
 subscriptions model =
-  -- TODO cut the websocket connection on logout
   Ws.listen
 
 main =

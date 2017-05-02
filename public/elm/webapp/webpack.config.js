@@ -16,8 +16,13 @@ module.exports = {
 
   plugins: [
     new webpack.ProvidePlugin({
-        $: "jquery",
-        jQuery: "jquery"
+      $: "jquery",
+      jQuery: "jquery"
+    }),
+    new webpack.DefinePlugin({
+      "process.env": {
+        BROWSER: JSON.stringify(true)
+      }
     })
   ],
 
@@ -50,7 +55,6 @@ module.exports = {
       },
     ],
 
-    noParse: /\.elm$/,
   },
 
   devServer: {

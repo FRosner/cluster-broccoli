@@ -19,7 +19,7 @@ import Array
 
 import Set
 
-import WebSocket
+import Websocket
 
 import Json.Encode as Encode
 
@@ -213,13 +213,16 @@ showError prefix error =
     )
 
 listen =
-  WebSocket.listen "ws://localhost:9000/ws" ProcessWsMsg -- TODO relative URL
+  -- WebSocket.listen "ws://localhost:9000/ws" ProcessWsMsg -- TODO relative URL
+  Websocket.listen WsListenError WsMessage WsConnectionLost "ws://localhost:9000/ws" -- TODO relative URL
 
 send object messageType =
   let wrappedMessage =
     Encode.object [ ("messageType", Encode.string (outgoingTypeToString messageType)), ("payload", object) ] -- putting a line break here fucks up the compiler???
   in
-    WebSocket.send
+    Websocket.send
+      WsSendError
+      WsSent
       "ws://localhost:9000/ws" -- TODO relative URL
       ( Encode.encode 0 wrappedMessage )
 
