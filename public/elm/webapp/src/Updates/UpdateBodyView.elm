@@ -2,7 +2,7 @@ module Updates.UpdateBodyView exposing (updateBodyView)
 
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 
-import Models.Resources.Template exposing (TemplateId)
+import Models.Resources.Template exposing (TemplateId, Template)
 import Models.Resources.Instance exposing (InstanceId)
 import Models.Resources.JobStatus as JobStatus exposing (JobStatus)
 import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (InstanceParameterForm)
@@ -81,7 +81,18 @@ updateBodyView message oldBodyUiModel =
         let newInstanceParameterForms =
           ( Dict.update
               instance.id
-              ( updateEditInstanceParameterForm instance parameter value )
+              ( addParameterValue instance parameter value )
+              oldInstanceParameterForms
+          )
+        in
+          ( { oldBodyUiModel | instanceParameterForms = newInstanceParameterForms }
+          , Cmd.none
+          )
+      SelectEditInstanceTemplate instance templates templateId ->
+        let newInstanceParameterForms =
+          ( Dict.update
+              instance.id
+              ( selectTemplate instance templates templateId )
               oldInstanceParameterForms
           )
         in
@@ -103,7 +114,7 @@ updateBodyView message oldBodyUiModel =
         ( { oldBodyUiModel | instanceParameterForms = resetEditParameterForm instance oldInstanceParameterForms }
         , Cmd.none
         )
-      ApplyParameterValueChanges instance ->
+      ApplyParameterValueChanges instance newParameters newTemplate -> -- TODO
         ( oldBodyUiModel
         , Cmd.none
         )
@@ -190,7 +201,8 @@ resetEditParameterForm instance parameterForms =
 resetNewParameterForm templateId parameterForms =
   Dict.remove templateId parameterForms
 
-updateEditInstanceParameterForm instance parameter value maybeParameterForm =
+-- TODO edit also the template somewhere (probably another function) and keep in unchanged here
+addParameterValue instance parameter value maybeParameterForm =
   case maybeParameterForm of
     Just parameterForm ->
       let oldParameterValues = parameterForm.changedParameterValues in
@@ -200,8 +212,30 @@ updateEditInstanceParameterForm instance parameter value maybeParameterForm =
       Just
         ( { changedParameterValues = Dict.fromList [ ( parameter, value ) ]
           , originalParameterValues = instance.parameterValues
+          , selectedTemplate = Nothing
           }
         )
+
+selectTemplate instance templates templateId maybeParameterForm =
+  let selectedTemplate =
+    if (templateId == "") then
+      Nothing
+    else
+      case (List.filter (\t -> t.id == templateId) templates) of -- TODO make templates a map so you can just look it up
+        [t1] -> Just t1
+        _ -> Nothing
+  in
+    case maybeParameterForm of
+      Just parameterForm ->
+        Just
+          ( { parameterForm | selectedTemplate = selectedTemplate } )
+      Nothing ->
+        Just
+          ( { changedParameterValues = Dict.empty
+            , originalParameterValues = instance.parameterValues
+            , selectedTemplate = selectedTemplate
+            }
+          )
 
 updateNewInstanceParameterForm parameter value maybeParameterForm =
   case maybeParameterForm of
@@ -213,6 +247,7 @@ updateNewInstanceParameterForm parameter value maybeParameterForm =
       Just
         ( { changedParameterValues = Dict.fromList [ ( parameter, value ) ]
           , originalParameterValues = Dict.empty
+          , selectedTemplate = Nothing
           }
         )
 

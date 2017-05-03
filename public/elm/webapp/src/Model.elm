@@ -20,7 +20,7 @@ type alias Model =
   , loggedIn : Maybe UserInfo
   , authEnabled : Maybe Bool
   , instances : List Instance
-  , templates : List Template
+  , templates : List Template -- TODO this should be a map from ID to template to avoid duplicate templates
   , bodyUiModel : BodyUiModel
   , wsConnected : Bool
   , route : Route

@@ -2,7 +2,7 @@ module Views.ParameterFormView exposing (editView, newView)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onCheck, onInput, onSubmit)
+import Html.Events exposing (onClick, onCheck, onInput, onSubmit, on)
 import Dict exposing (..)
 import Models.Resources.Instance exposing (..)
 import Models.Resources.ServiceStatus exposing (..)
@@ -16,6 +16,8 @@ import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 import Utils.MaybeUtils as MaybeUtils
 
+import Json.Decode
+
 editingParamColor = "rgba(255, 177, 0, 0.46)"
 normalParamColor = "#eee"
 
@@ -25,11 +27,13 @@ editView instance templates maybeInstanceParameterForm visibleSecrets =
     , otherParameterValues
     , otherParameterInfos
     , formIsBeingEdited
+    , selectedTemplate
     ) =
     ( List.filter (\p -> p /= "id") instance.template.parameters
     , Dict.remove "id" instance.parameterValues
     , Dict.remove "id" instance.template.parameterInfos
     , MaybeUtils.isDefined maybeInstanceParameterForm
+    , Maybe.andThen (\f -> f.selectedTemplate) maybeInstanceParameterForm
     )
   in
     let (otherParametersLeft, otherParametersRight) =
@@ -45,9 +49,9 @@ editView instance templates maybeInstanceParameterForm visibleSecrets =
         )
     in
       Html.form
-        [ onSubmit (ApplyParameterValueChanges instance) ]
+        [ onSubmit (ApplyParameterValueChanges instance Dict.empty "g") ] -- TODO
         [ h5 [] [ text "Template" ]
-        , templateSelectionView instance.template templates
+        , templateSelectionView instance.template selectedTemplate templates instance
         , h5 [] [ text "Parameters" ]
         , div
           [ class "row" ]
@@ -83,24 +87,27 @@ editView instance templates maybeInstanceParameterForm visibleSecrets =
                 "fa fa-ban"
                 "Discard"
                 [ disabled (not formIsBeingEdited)
+                , type_ "button"
                 , onClick (DiscardParameterValueChanges instance)
                 ]
             ]
           ]
         ]
 
-templateSelectionView currentTemplate templates =
+templateSelectionView currentTemplate selectedTemplate templates instance =
   let templatesWithoutCurrentTemplate =
     List.filter (\t -> t /= currentTemplate) templates
   in
     select
-      [ class "form-control" ]
+      [ class "form-control"
+      , on "change" (Json.Decode.map (SelectEditInstanceTemplate instance templates) Html.Events.targetValue)
+      ]
       ( List.append
-        [ templateOption currentTemplate currentTemplate ]
-        ( List.map (templateOption currentTemplate) templatesWithoutCurrentTemplate )
+        [ templateOption currentTemplate selectedTemplate currentTemplate ]
+        ( List.map (templateOption currentTemplate selectedTemplate) templatesWithoutCurrentTemplate )
       )
 
-templateOption currentTemplate template =
+templateOption currentTemplate selectedTemplate template =
   let templateOption =
     if (currentTemplate == template) then
       "Unchanged"
@@ -109,7 +116,10 @@ templateOption currentTemplate template =
     else
       "Migrate to"
   in
-    option []
+    option
+      [ value (if (currentTemplate == template) then "" else template.id)
+      , selected (selectedTemplate == Just template)
+      ]
       [ text templateOption
       , text ": "
       , text template.id

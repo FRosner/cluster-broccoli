@@ -39,8 +39,9 @@ type UpdateBodyViewMsg
   | StopInstance InstanceId
   | AllInstancesExpanded (List InstanceId) Bool
   | EnterEditInstanceParameterValue Instance String String
+  | SelectEditInstanceTemplate Instance (List Template) TemplateId
   | EnterNewInstanceParameterValue Template String String
-  | ApplyParameterValueChanges Instance
+  | ApplyParameterValueChanges Instance (Dict String String) TemplateId
   | DiscardParameterValueChanges Instance
   | ToggleEditInstanceSecretVisibility InstanceId String
   | ToggleNewInstanceSecretVisibility TemplateId String
