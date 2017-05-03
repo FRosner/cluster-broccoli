@@ -19,6 +19,7 @@ type AnyMsg
   | WsConnect Url
   | WsSendError ( Url, Message, ErrorMessage )
   | WsSent ( Url, Message )
+  | WsAttemptReconnect
   | UpdateLoginFormMsg Updates.Messages.UpdateLoginFormMsg
   | UpdateLoginStatusMsg Updates.Messages.UpdateLoginStatusMsg
   | UpdateBodyViewMsg Updates.Messages.UpdateBodyViewMsg

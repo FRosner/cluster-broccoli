@@ -15,6 +15,8 @@ import Views.Body
 import Views.Footer
 import Views.Notifications
 
+import Utils.CmdUtils as CmdUtils
+
 import Routing
 
 import Model exposing (Model)
@@ -22,6 +24,8 @@ import Model exposing (Model)
 import Ws
 
 import Websocket
+
+import Time
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -51,11 +55,15 @@ update msg model =
       ( model
       , Ws.send model.location jsonObject wsMsgType
       )
+    WsAttemptReconnect ->
+      ( model
+      , Ws.connect model.location
+      )
     WsConnectError ( url, error ) ->
       let l = Debug.log "ConnectError" ( url, error )
       in
-        ( model
-        , Cmd.none
+        ( { model | wsConnected = False }
+        , CmdUtils.delay (5 * Time.second) WsAttemptReconnect
         )
     WsConnect url ->
       let l = Debug.log "Connect" url
@@ -73,7 +81,7 @@ update msg model =
       let l = Debug.log "ConnectionLost" url
       in
         ( { model | wsConnected = False } -- TODO what do I have to set here? all stuff should be unknown and disabled or so?
-        , Cmd.none
+        , Ws.connect model.location
         )
     WsMessage ( url, message ) ->
       Ws.update message model
