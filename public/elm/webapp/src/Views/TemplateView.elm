@@ -64,12 +64,12 @@ view instances templates bodyUiModel template =
                     "fa fa-stop-circle"
                     "Stop"
                     ( disabledIfNothingSelected selectedTemplateInstances )
-                , text " "
-                , iconButtonText
-                    "btn btn-default"
-                    "fa fa-code-fork"
-                    "Upgrade"
-                    ( disabledIfNothingSelected selectedTemplateInstances )
+                -- , text " "
+                -- , iconButtonText
+                --     "btn btn-default"
+                --     "fa fa-code-fork"
+                --     "Upgrade"
+                --     ( disabledIfNothingSelected selectedTemplateInstances )
                 ]
               , text " "
               , iconButtonText
