@@ -44,7 +44,7 @@ view model =
                   |> Maybe.withDefault "<SBT Version>"
                 )
               , text "), Websocket: "
-              , statusToIcon (Just model.wsConnected) (\i -> i)
+              , statusToIcon (if (model.wsConnected) then Just True else Nothing) (\i -> i)
               , text ", Cluster Manager: "
               , statusToIcon maybeAboutInfo (\i -> i.services.clusterManagerInfo.connected)
               , text ", Service Discovery: "
@@ -63,7 +63,7 @@ statusToIcon maybeAboutInfo statusFunction =
         Just False ->
           ("fa fa-times-circle", "#900")
         Nothing ->
-          ("fa fa-question-circle", "grey")
+          ("fa fa-refresh fa-spin", "grey")
     in
       span
         [ style [ ("color", textColor) ] ]
