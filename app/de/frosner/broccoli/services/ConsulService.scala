@@ -60,6 +60,7 @@ class ConsulService @Inject()(configuration: Configuration,
   @volatile
   private var consulReachable: Boolean = false
 
+  // TODO see why it is true although consul is not even running????
   def isConsulReachable: Boolean = {
     consulReachable
   }
