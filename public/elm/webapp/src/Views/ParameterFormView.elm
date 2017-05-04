@@ -96,7 +96,7 @@ editView instance templates maybeInstanceParameterForm visibleSecrets =
 
 templateSelectionView currentTemplate selectedTemplate templates instance =
   let templatesWithoutCurrentTemplate =
-    List.filter (\t -> t /= currentTemplate) templates
+    Dict.filter (\k t -> t /= currentTemplate) templates
   in
     select
       [ class "form-control"
@@ -104,7 +104,10 @@ templateSelectionView currentTemplate selectedTemplate templates instance =
       ]
       ( List.append
         [ templateOption currentTemplate selectedTemplate currentTemplate ]
-        ( List.map (templateOption currentTemplate selectedTemplate) templatesWithoutCurrentTemplate )
+        ( templatesWithoutCurrentTemplate
+          |> Dict.values
+          |> List.map (templateOption currentTemplate selectedTemplate)
+        )
       )
 
 templateOption currentTemplate selectedTemplate template =

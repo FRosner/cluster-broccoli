@@ -15,8 +15,11 @@ import Set exposing (Set)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
-view : List Template -> Dict InstanceId Instance -> BodyUiModel -> Html UpdateBodyViewMsg
+view : Dict TemplateId Template -> Dict InstanceId Instance -> BodyUiModel -> Html UpdateBodyViewMsg
 view templates instances bodyUiModel =
   div
     [ class "container" ]
-    (List.map (Views.TemplateView.view instances templates bodyUiModel) templates)
+    ( templates
+      |> Dict.values
+      |> List.map (Views.TemplateView.view instances templates bodyUiModel)
+    )

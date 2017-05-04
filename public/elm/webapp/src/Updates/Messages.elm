@@ -40,7 +40,7 @@ type UpdateBodyViewMsg
   | StopInstance InstanceId
   | AllInstancesExpanded (Set InstanceId) Bool
   | EnterEditInstanceParameterValue Instance String String
-  | SelectEditInstanceTemplate Instance (List Template) TemplateId
+  | SelectEditInstanceTemplate Instance (Dict TemplateId Template) TemplateId
   | EnterNewInstanceParameterValue Template String String
   | ApplyParameterValueChanges Instance (Maybe InstanceParameterForm)
   | DiscardParameterValueChanges InstanceId
@@ -50,6 +50,3 @@ type UpdateBodyViewMsg
   | SubmitNewInstanceCreation TemplateId (Dict String String)
   | DiscardNewInstanceCreation TemplateId
   | DeleteSelectedInstances (Set String)
-
-type UpdateTemplatesMsg
-  = ListTemplates (List Template)

@@ -1,6 +1,6 @@
 module Model exposing (Model, Route(..), initial)
 
-import Models.Resources.Template exposing (Template)
+import Models.Resources.Template exposing (Template, TemplateId)
 import Models.Resources.Instance exposing (Instance, InstanceId)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
@@ -22,7 +22,7 @@ type alias Model =
   , loggedIn : Maybe UserInfo
   , authEnabled : Maybe Bool
   , instances : Dict InstanceId Instance
-  , templates : List Template -- TODO this should be a map from ID to template to avoid duplicate templates
+  , templates : Dict TemplateId Template
   , bodyUiModel : BodyUiModel
   , wsConnected : Bool
   , route : Route
@@ -37,7 +37,7 @@ initial location route =
   , loggedIn = Nothing
   , authEnabled = Nothing
   , bodyUiModel = BodyUiModel.initialModel
-  , templates = []
+  , templates = Dict.empty
   , instances = Dict.empty
   , wsConnected = False
   , route = route

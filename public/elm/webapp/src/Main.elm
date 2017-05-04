@@ -5,8 +5,7 @@ import Updates.UpdateErrors exposing (updateErrors)
 import Updates.UpdateLoginForm exposing (updateLoginForm)
 import Updates.UpdateLoginStatus exposing (updateLoginStatus)
 import Updates.UpdateBodyView exposing (updateBodyView)
-import Updates.UpdateTemplates exposing (updateTemplates)
-import Updates.Messages exposing (UpdateAboutInfoMsg(..), UpdateLoginStatusMsg(..), UpdateErrorsMsg(..), UpdateTemplatesMsg(..))
+import Updates.Messages exposing (UpdateAboutInfoMsg(..), UpdateLoginStatusMsg(..), UpdateErrorsMsg(..))
 
 import Messages exposing (..)
 
@@ -123,13 +122,6 @@ update msg model =
         updateBodyView subMsg model.bodyUiModel
       in
         ( { model | bodyUiModel = newBodyUiModel }
-        , cmd
-        )
-    UpdateTemplatesMsg subMsg ->
-      let (newTemplates, cmd) =
-        updateTemplates subMsg model.templates
-      in
-        ( { model | templates = newTemplates }
         , cmd
         )
     UpdateLoginFormMsg subMsg ->

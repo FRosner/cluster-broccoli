@@ -229,9 +229,7 @@ selectTemplate instance templates templateId maybeParameterForm =
     if (templateId == "") then
       Nothing
     else
-      case (List.filter (\t -> t.id == templateId) templates) of -- TODO make templates a map so you can just look it up
-        [t1] -> Just t1
-        _ -> Nothing
+      Dict.get templateId templates
   in
     case maybeParameterForm of
       Just parameterForm ->

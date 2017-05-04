@@ -60,11 +60,17 @@ update msg model =
         in
           case templatesResult of
             Ok templates ->
-              ( { model | templates = (Array.toList templates) }
-              , Cmd.none -- TODO send success message similar to error (enough to just send it for now)
-              )
+              let templatesDict =
+                templates
+                |> Array.toList
+                |> List.map (\t -> (t.id, t))
+                |> Dict.fromList
+              in
+                ( { model | templates = templatesDict }
+                , Cmd.none -- TODO send success message similar to error (enough to just send it for now)
+                )
             Err error ->
-              ( { model | templates = [] } -- TODO shall we just use the old templates instead?
+              ( { model | templates = Dict.empty }
               , showError "Failed to decode templates: " error
               )
       Ok ListInstancesMsgType ->
