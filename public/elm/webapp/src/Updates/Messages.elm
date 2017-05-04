@@ -43,7 +43,7 @@ type UpdateBodyViewMsg
   | SelectEditInstanceTemplate Instance (List Template) TemplateId
   | EnterNewInstanceParameterValue Template String String
   | ApplyParameterValueChanges Instance (Maybe InstanceParameterForm)
-  | DiscardParameterValueChanges Instance
+  | DiscardParameterValueChanges InstanceId
   | ToggleEditInstanceSecretVisibility InstanceId String
   | ToggleNewInstanceSecretVisibility TemplateId String
   | ExpandNewInstanceForm Bool TemplateId

@@ -11,6 +11,9 @@ import Models.Resources.InstanceDeletionSuccess as InstanceDeletionSuccess
 import Models.Resources.InstanceDeletionFailure as InstanceDeletionFailure
 import Models.Resources.InstanceUpdateSuccess as InstanceUpdateSuccess
 import Models.Resources.InstanceUpdateFailure as InstanceUpdateFailure
+import Models.Resources.InstanceUpdate exposing (InstanceUpdate)
+
+import Utils.MaybeUtils as MaybeUtils
 
 import Updates.Messages exposing (..)
 import Messages exposing (..)
@@ -142,7 +145,12 @@ update msg model =
           case instanceUpdateSuccessResult of
             Ok instanceUpdateSuccess ->
               ( model
-              , Cmd.none
+              , if ( MaybeUtils.isDefined instanceUpdateSuccess.instanceUpdate.selectedTemplate
+                   || MaybeUtils.isDefined instanceUpdateSuccess.instanceUpdate.parameterValues
+                   ) then
+                  CmdUtils.cmd (UpdateBodyViewMsg (DiscardParameterValueChanges instanceUpdateSuccess.instance.id))
+                else
+                  Cmd.none
               )
             Err error ->
               ( model

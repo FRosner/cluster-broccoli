@@ -110,8 +110,8 @@ updateBodyView message oldBodyUiModel =
           ( { oldBodyUiModel | expandedNewInstanceForms = newExpandedNewInstanceForms }
           , Cmd.none
           )
-      DiscardParameterValueChanges instance ->
-        ( { oldBodyUiModel | instanceParameterForms = resetEditParameterForm instance oldInstanceParameterForms }
+      DiscardParameterValueChanges instanceId ->
+        ( { oldBodyUiModel | instanceParameterForms = resetEditParameterForm instanceId oldInstanceParameterForms }
         , Cmd.none
         )
       ApplyParameterValueChanges instance maybeInstanceParameterForm ->
@@ -203,8 +203,8 @@ expandParameterForm templateId oldExpandedNewInstanceForms maybeParameterForm =
     Just parameterForm -> Just parameterForm
     Nothing -> Just InstanceParameterForm.empty
 
-resetEditParameterForm instance parameterForms =
-  Dict.remove instance.id parameterForms
+resetEditParameterForm instanceId parameterForms =
+  Dict.remove instanceId parameterForms
 
 resetNewParameterForm templateId parameterForms =
   Dict.remove templateId parameterForms

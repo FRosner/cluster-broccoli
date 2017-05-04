@@ -88,7 +88,7 @@ editView instance templates maybeInstanceParameterForm visibleSecrets =
                 "Discard"
                 [ disabled (not formIsBeingEdited)
                 , type_ "button"
-                , onClick (DiscardParameterValueChanges instance)
+                , onClick (DiscardParameterValueChanges instance.id)
                 ]
             ]
           ]
