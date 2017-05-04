@@ -323,6 +323,7 @@ serviceView service =
           [ ("margin-right", "8px")
           , ("color", textColor)
           ]
+        , target "_blank"
         ]
       )
       [ icon iconClass [ style [ ("margin-right", "4px") ] ]
