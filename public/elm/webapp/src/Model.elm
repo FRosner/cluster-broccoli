@@ -1,7 +1,7 @@
 module Model exposing (Model, Route(..), initial)
 
 import Models.Resources.Template exposing (Template)
-import Models.Resources.Instance exposing (Instance)
+import Models.Resources.Instance exposing (Instance, InstanceId)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
 import Models.Ui.BodyUiModel as BodyUiModel exposing (BodyUiModel)
@@ -9,6 +9,8 @@ import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
 import Models.Ui.Notifications exposing (Errors)
 
 import Navigation exposing (Location)
+
+import Dict exposing (Dict)
 
 type Route
   = MainRoute
@@ -19,7 +21,7 @@ type alias Model =
   , loginForm : LoginForm
   , loggedIn : Maybe UserInfo
   , authEnabled : Maybe Bool
-  , instances : List Instance
+  , instances : Dict InstanceId Instance
   , templates : List Template -- TODO this should be a map from ID to template to avoid duplicate templates
   , bodyUiModel : BodyUiModel
   , wsConnected : Bool
@@ -36,7 +38,7 @@ initial location route =
   , authEnabled = Nothing
   , bodyUiModel = BodyUiModel.initialModel
   , templates = []
-  , instances = []
+  , instances = Dict.empty
   , wsConnected = False
   , route = route
   , location = location

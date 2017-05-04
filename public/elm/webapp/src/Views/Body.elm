@@ -15,7 +15,7 @@ import Set exposing (Set)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
-view : List Template -> List Instance -> BodyUiModel -> Html UpdateBodyViewMsg
+view : List Template -> Dict InstanceId Instance -> BodyUiModel -> Html UpdateBodyViewMsg
 view templates instances bodyUiModel =
   div
     [ class "container" ]

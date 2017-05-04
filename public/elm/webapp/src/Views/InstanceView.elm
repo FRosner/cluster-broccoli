@@ -25,7 +25,7 @@ jobControlsColumnWidth = 170
 view instances selectedInstances expandedInstances instanceParameterForms visibleSecrets templates =
   let (instancesIds) =
     instances
-      |> List.map (\i -> i.id)
+      |> Dict.keys
       |> Set.fromList
   in
     let (allInstancesSelected, allInstancesExpanded) =
@@ -52,7 +52,7 @@ view instances selectedInstances expandedInstances instanceParameterForms visibl
               [ input
                 [ type_ "checkbox"
                 , title "Select All"
-                , onCheck (AllInstancesSelected (List.map (\i -> i.id) instances))
+                , onCheck (AllInstancesSelected instancesIds)
                 , checked allInstancesSelected
                 ]
                 []
@@ -68,7 +68,7 @@ view instances selectedInstances expandedInstances instanceParameterForms visibl
                 [ attribute "role" "button"
                 , onClick
                     ( AllInstancesExpanded
-                      (List.map (\i -> i.id) instances)
+                      instancesIds
                       (not allInstancesExpanded)
                     )
                 ]
@@ -90,7 +90,10 @@ view instances selectedInstances expandedInstances instanceParameterForms visibl
             ]
           ]
         , tbody []
-          ( List.concatMap (instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates) instances )
+          ( instances
+            |> Dict.values
+            |> List.concatMap (instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates)
+          )
         ]
 
 instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates instance =

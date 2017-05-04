@@ -1,11 +1,9 @@
 module Views.TemplateView exposing (view)
 
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
+import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
+
 import Views.InstanceView
 import Views.ParameterFormView as ParameterFormView
-import Dict exposing (..)
 
 import Updates.Messages exposing (..)
 
@@ -13,17 +11,22 @@ import Models.Resources.Instance exposing (..)
 import Models.Resources.Service exposing (..)
 import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
 import Models.Ui.InstanceParameterForm exposing (..)
+
+import Dict exposing (Dict)
+
 import Set exposing (Set)
-import Updates.Messages exposing (UpdateBodyViewMsg(..))
-import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
+
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 
 view instances templates bodyUiModel template =
-  let (templateInstances) =
-    List.filter (\i -> i.template.id == template.id) instances
+  let templateInstances =
+    Dict.filter (\k i -> i.template.id == template.id) instances
   in
     let (selectedTemplateInstances) =
       templateInstances
-      |> List.map (\i -> i.id)
+      |> Dict.keys
       |> Set.fromList
       |> Set.intersect bodyUiModel.selectedInstances
     in
@@ -109,7 +112,7 @@ templatePanelHeadingView template expandedTemplates instances =
     []
     [ templateIdView template expandedTemplates
     , text " "
-    , templatePanelHeadingInfo "fa fa-list" "Number of Instances" (text (toString (List.length instances)))
+    , templatePanelHeadingInfo "fa fa-list" "Number of Instances" (text (toString (Dict.size instances)))
     , text " "
     , templatePanelHeadingInfo "fa fa-code-fork" "Template Version" (templateVersion template)
     ]

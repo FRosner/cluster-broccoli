@@ -34,11 +34,11 @@ type UpdateLoginFormMsg
 type UpdateBodyViewMsg
   = ToggleTemplate TemplateId
   | InstanceSelected InstanceId Bool
-  | AllInstancesSelected (List InstanceId) Bool
+  | AllInstancesSelected (Set InstanceId) Bool
   | InstanceExpanded InstanceId Bool
   | StartInstance InstanceId
   | StopInstance InstanceId
-  | AllInstancesExpanded (List InstanceId) Bool
+  | AllInstancesExpanded (Set InstanceId) Bool
   | EnterEditInstanceParameterValue Instance String String
   | SelectEditInstanceTemplate Instance (List Template) TemplateId
   | EnterNewInstanceParameterValue Template String String

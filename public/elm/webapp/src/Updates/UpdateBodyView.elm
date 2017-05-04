@@ -58,7 +58,7 @@ updateBodyView message oldBodyUiModel =
           )
       AllInstancesSelected instanceIds selected ->
         let newSelectedInstances =
-          unionOrDiff selected oldSelectedInstances (Set.fromList instanceIds)
+          unionOrDiff selected oldSelectedInstances instanceIds
         in
           ( { oldBodyUiModel | selectedInstances = newSelectedInstances }
           , Cmd.none
@@ -72,7 +72,7 @@ updateBodyView message oldBodyUiModel =
           )
       AllInstancesExpanded instanceIds expanded ->
         let newExpandedInstances =
-          unionOrDiff expanded oldExpandedInstances (Set.fromList instanceIds)
+          unionOrDiff expanded oldExpandedInstances instanceIds
         in
           ( { oldBodyUiModel | expandedInstances = newExpandedInstances }
           , Cmd.none

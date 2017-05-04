@@ -22,6 +22,8 @@ import Array
 
 import Set
 
+import Dict
+
 import Websocket
 
 import Json.Encode as Encode
@@ -71,11 +73,17 @@ update msg model =
         in
           case instancesResult of
             Ok instances ->
-              ( { model | instances = (Array.toList instances) }
-              , Cmd.none
-              )
+              let instanceDict =
+                instances
+                |> Array.toList
+                |> List.map (\i -> (i.id, i))
+                |> Dict.fromList
+              in
+                ( { model | instances = instanceDict }
+                , Cmd.none
+                )
             Err error ->
-              ( { model | instances = [] } -- TODO shall we just use the old templates instead?
+              ( { model | instances = Dict.empty }
               , showError "Failed to decode instances: " error
               )
       Ok InstanceCreationSuccessMsgType ->
