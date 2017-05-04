@@ -49,7 +49,7 @@ editView instance templates maybeInstanceParameterForm visibleSecrets =
         )
     in
       Html.form
-        [ onSubmit (ApplyParameterValueChanges instance Dict.empty "g") ] -- TODO
+        [ onSubmit (ApplyParameterValueChanges instance maybeInstanceParameterForm) ]
         [ h5 [] [ text "Template" ]
         , templateSelectionView instance.template selectedTemplate templates instance
         , h5 [] [ text "Parameters" ]

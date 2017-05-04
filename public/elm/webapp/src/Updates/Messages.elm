@@ -10,6 +10,7 @@ import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
 import Models.Resources.Template exposing (TemplateId, Template)
 import Models.Resources.Instance exposing (InstanceId, Instance)
+import Models.Ui.InstanceParameterForm exposing (InstanceParameterForm)
 
 type UpdateAboutInfoMsg
   = SetAbout AboutInfo
@@ -41,7 +42,7 @@ type UpdateBodyViewMsg
   | EnterEditInstanceParameterValue Instance String String
   | SelectEditInstanceTemplate Instance (List Template) TemplateId
   | EnterNewInstanceParameterValue Template String String
-  | ApplyParameterValueChanges Instance (Dict String String) TemplateId
+  | ApplyParameterValueChanges Instance (Maybe InstanceParameterForm)
   | DiscardParameterValueChanges Instance
   | ToggleEditInstanceSecretVisibility InstanceId String
   | ToggleNewInstanceSecretVisibility TemplateId String

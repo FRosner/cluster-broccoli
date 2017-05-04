@@ -114,10 +114,18 @@ updateBodyView message oldBodyUiModel =
         ( { oldBodyUiModel | instanceParameterForms = resetEditParameterForm instance oldInstanceParameterForms }
         , Cmd.none
         )
-      ApplyParameterValueChanges instance newParameters newTemplate -> -- TODO
-        ( oldBodyUiModel
-        , Cmd.none
-        )
+      ApplyParameterValueChanges instance maybeInstanceParameterForm ->
+        let instanceUpdateJson =
+          ( InstanceUpdate
+              instance.id
+              Nothing
+              ( Maybe.map (\f -> (Dict.insert "id" instance.id f.changedParameterValues)) maybeInstanceParameterForm ) -- TODO why do we need to send the ID here?
+              ( Maybe.andThen (\f -> (Maybe.map (\t -> t.id)) f.selectedTemplate) maybeInstanceParameterForm )
+          ) |> InstanceUpdate.encoder
+        in
+          ( oldBodyUiModel
+          , CmdUtils.cmd (SendWsMsg instanceUpdateJson UpdateInstanceMsgType) -- TODO avoid this by wrapping directly based on the message type
+          )
       ToggleEditInstanceSecretVisibility instanceId parameter ->
         let newVisibleSecrets =
           ( insertOrRemove
