@@ -304,20 +304,27 @@ serviceView service =
         ("fa fa-question-circle", "grey")
   in
     [ a
-      [ href
-        ( String.concat
-          [ service.protocol
-          , "://"
-          , service.address
-          , ":"
-          , (toString service.port_)
-          ]
+      ( List.append
+        ( if (service.status /= ServiceUnknown) then
+            [ href
+              ( String.concat
+                [ service.protocol
+                , "://"
+                , service.address
+                , ":"
+                , (toString service.port_)
+                ]
+              )
+            ]
+          else
+            []
         )
-      , style
-        [ ("margin-right", "8px")
-        , ("color", textColor)
+        [ style
+          [ ("margin-right", "8px")
+          , ("color", textColor)
+          ]
         ]
-      ]
+      )
       [ icon iconClass [ style [ ("margin-right", "4px") ] ]
       , text service.name
       ]
