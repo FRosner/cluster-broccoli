@@ -12,9 +12,6 @@ import Models.Resources.Template exposing (TemplateId, Template)
 import Models.Resources.Instance exposing (InstanceId, Instance)
 import Models.Ui.InstanceParameterForm exposing (InstanceParameterForm)
 
-type UpdateAboutInfoMsg
-  = SetAbout AboutInfo
-
 type UpdateLoginStatusMsg
   = FetchLogin (Result Http.Error UserInfo)
   | FetchLogout (Result Http.Error String)

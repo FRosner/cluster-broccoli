@@ -1,11 +1,10 @@
 module Main exposing (main)
 
-import Updates.UpdateAboutInfo exposing (updateAboutInfo)
 import Updates.UpdateErrors exposing (updateErrors)
 import Updates.UpdateLoginForm exposing (updateLoginForm)
 import Updates.UpdateLoginStatus exposing (updateLoginStatus)
 import Updates.UpdateBodyView exposing (updateBodyView)
-import Updates.Messages exposing (UpdateAboutInfoMsg(..), UpdateLoginStatusMsg(..), UpdateErrorsMsg(..))
+import Updates.Messages exposing (UpdateLoginStatusMsg(..), UpdateErrorsMsg(..))
 
 import Messages exposing (..)
 
@@ -95,13 +94,6 @@ update msg model =
       in
         ( model
         , Cmd.none
-        )
-    UpdateAboutInfoMsg subMsg ->
-      let (newAbout, cmd) =
-        updateAboutInfo subMsg model.aboutInfo
-      in
-        ( { model | aboutInfo = newAbout }
-        , cmd
         )
     UpdateLoginStatusMsg subMsg ->
       let (newLoginStatus, cmd) =

@@ -9,8 +9,7 @@ import Navigation exposing (Location)
 import Websocket exposing (..)
 
 type AnyMsg
-  = UpdateAboutInfoMsg Updates.Messages.UpdateAboutInfoMsg
-  | UpdateErrorsMsg Updates.Messages.UpdateErrorsMsg
+  = UpdateErrorsMsg Updates.Messages.UpdateErrorsMsg
   | SendWsMsg Json.Decode.Value OutgoingWsMsgType
   | WsMessage ( Url, Message )
   | WsListenError ( Url, ErrorMessage )
