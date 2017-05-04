@@ -34,12 +34,6 @@ import Set exposing (Set)
 
 import Dict exposing (Dict)
 
--- TODO what type of submessages do I want to have?
--- - Messages changing resources
--- - Error messages
--- - Messages changing the view
--- so one message per entry in my model? that means that not every single thing should define its own Msg type otherwise it will get crazy
-
 init : Location -> ( Model, Cmd AnyMsg )
 init location =
   ( Model.initial location (Routing.parseLocation location)
