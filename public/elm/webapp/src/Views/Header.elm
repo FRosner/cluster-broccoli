@@ -10,19 +10,27 @@ import Messages exposing (AnyMsg(..))
 import Updates.Messages exposing (UpdateLoginFormMsg(..))
 import Utils.HtmlUtils exposing (icon)
 
-view : Maybe AboutInfo -> LoginForm -> Maybe UserInfo -> Maybe Bool -> Html AnyMsg
-view maybeAboutInfo loginFormModel maybeUserInfo maybeAuthEnabled =
-  div
-    [ class "container" ]
-    [ nav
-      [ class "navbar navbar-default" ]
-      [ div
-        [ class "container-fluid" ]
-        [ navbarHeader maybeAboutInfo
-        , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled loginFormModel
+view : Maybe AboutInfo -> LoginForm -> Maybe Bool -> Html AnyMsg
+view maybeAboutInfo loginFormModel maybeAuthRequired =
+  let
+    ( maybeUserInfo
+    , maybeAuthEnabled
+    ) =
+    ( Maybe.map (\i -> i.authInfo.userInfo) maybeAboutInfo
+    , Maybe.map (\i -> i.authInfo.enabled) maybeAboutInfo
+    )
+  in
+    div
+      [ class "container" ]
+      [ nav
+        [ class "navbar navbar-default" ]
+        [ div
+          [ class "container-fluid" ]
+          [ navbarHeader maybeAboutInfo
+          , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel
+          ]
         ]
       ]
-    ]
 
 navbarHeader maybeAboutInfo =
   div
@@ -76,13 +84,13 @@ navbarToggleButton =
     , span [ class "icon-bar" ] []
     ]
 
-navbarCollapse : Maybe AboutInfo -> Maybe UserInfo -> Maybe Bool -> LoginForm -> Html AnyMsg
-navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled loginFormModel =
+navbarCollapse : Maybe AboutInfo -> Maybe UserInfo -> Maybe Bool -> Maybe Bool -> LoginForm -> Html AnyMsg
+navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel =
   div
     [ class "collapse navbar-collapse"
     , id "navbar-collapse"
     ]
-    [ Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeUserInfo maybeAuthEnabled)
+    [ Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired)
     , userInfoView maybeUserInfo
     ]
 
@@ -129,18 +137,20 @@ redIfLoginFailed loginFailed =
 attentionIfLoginFailed loginFailed =
   if (loginFailed) then "animated shake" else ""
 
-loginLogoutView loginFormModel maybeUserInfo maybeAuthEnabled =
-  case maybeAuthEnabled of
+loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired =
+  case maybeAuthRequired of
     Nothing ->
       span [] []
     Just True ->
-      case maybeUserInfo of
-        Nothing ->
-          loginFormView loginFormModel
-        Just userInfo ->
-          logoutFormView
+      loginFormView loginFormModel
     Just False ->
-      span [] []
+      case maybeAuthEnabled of
+        Nothing ->
+          span [] []
+        Just True ->
+          logoutFormView
+        Just False ->
+          span [] []
 
 loginFormView loginFormModel =
   Html.form

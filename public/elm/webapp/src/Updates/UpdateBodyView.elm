@@ -124,7 +124,7 @@ updateBodyView message oldBodyUiModel =
           ) |> InstanceUpdate.encoder
         in
           ( oldBodyUiModel
-          , CmdUtils.cmd (SendWsMsg instanceUpdateJson UpdateInstanceMsgType) -- TODO avoid this by wrapping directly based on the message type
+          , CmdUtils.sendMsg (SendWsMsg instanceUpdateJson UpdateInstanceMsgType) -- TODO avoid this by wrapping directly based on the message type
           )
       ToggleEditInstanceSecretVisibility instanceId parameter ->
         let newVisibleSecrets =
@@ -168,7 +168,7 @@ updateBodyView message oldBodyUiModel =
           |> InstanceCreation.encoder
         in
           ( oldBodyUiModel -- TODO reset the form when receiving a success message { oldBodyUiModel | expandedNewInstanceForms = resetNewParameterForm templateId oldExpandedNewInstanceForms }
-          , CmdUtils.cmd (SendWsMsg instanceCreationJson CreateInstanceMsgType) -- TODO avoid this by wrapping directly based on the message type
+          , CmdUtils.sendMsg (SendWsMsg instanceCreationJson CreateInstanceMsgType) -- TODO avoid this by wrapping directly based on the message type
           )
       StartInstance instanceId ->
         let instanceUpdateJson =
@@ -176,7 +176,7 @@ updateBodyView message oldBodyUiModel =
           |> InstanceUpdate.encoder
         in
           ( oldBodyUiModel -- TODO reset the form when receiving a success message?
-          , CmdUtils.cmd (SendWsMsg instanceUpdateJson UpdateInstanceMsgType) -- TODO avoid this by wrapping directly based on the message type
+          , CmdUtils.sendMsg (SendWsMsg instanceUpdateJson UpdateInstanceMsgType) -- TODO avoid this by wrapping directly based on the message type
           )
       StopInstance instanceId ->
         let instanceUpdateJson =
@@ -184,7 +184,7 @@ updateBodyView message oldBodyUiModel =
           |> InstanceUpdate.encoder
         in
           ( oldBodyUiModel -- TODO reset the form when receiving a success message?
-          , CmdUtils.cmd (SendWsMsg instanceUpdateJson UpdateInstanceMsgType) -- TODO avoid this by wrapping directly based on the message type
+          , CmdUtils.sendMsg (SendWsMsg instanceUpdateJson UpdateInstanceMsgType) -- TODO avoid this by wrapping directly based on the message type
           )
       DiscardNewInstanceCreation templateId ->
         ( { oldBodyUiModel | expandedNewInstanceForms = resetNewParameterForm templateId oldExpandedNewInstanceForms }
@@ -194,7 +194,7 @@ updateBodyView message oldBodyUiModel =
         ( oldBodyUiModel
         , selectedInstances
           |> Set.toList
-          |> List.map (\id -> CmdUtils.cmd (SendWsMsg (Encode.string id) DeleteInstanceMsgType))
+          |> List.map (\id -> CmdUtils.sendMsg (SendWsMsg (Encode.string id) DeleteInstanceMsgType))
           |> Cmd.batch
         )
 

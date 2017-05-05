@@ -19,8 +19,7 @@ type alias Model =
   { aboutInfo : Maybe AboutInfo
   , errors : Errors
   , loginForm : LoginForm
-  , loggedIn : Maybe UserInfo
-  , authEnabled : Maybe Bool
+  , authRequired : Maybe Bool
   , instances : Dict InstanceId Instance
   , templates : Dict TemplateId Template
   , bodyUiModel : BodyUiModel
@@ -34,8 +33,7 @@ initial location route =
   { aboutInfo = Nothing
   , errors = []
   , loginForm = LoginForm.empty
-  , loggedIn = Nothing
-  , authEnabled = Nothing
+  , authRequired = Nothing
   , bodyUiModel = BodyUiModel.initialModel
   , templates = Dict.empty
   , instances = Dict.empty

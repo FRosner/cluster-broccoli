@@ -32,8 +32,8 @@ case class WebSocketController @Inject()
   def socket = WebSocket.tryAccept[Msg] { request =>
     withSecurity(request) { (maybeToken, user, request) =>
       val (connectionId, connectionEnumerator) = maybeToken match {
-        case Some(token) => (token, webSocketService.newConnection(token)) // auth is enabled and we can use the session ID
-        case None => webSocketService.newConnection() // no session ID available so we generate one
+        case Some(token) => (token, webSocketService.newConnection(token, user)) // auth is enabled and we can use the session ID
+        case None => webSocketService.newConnection(user) // no session ID available so we generate one
       }
       val connectionLogString = s"$connectionId by $user from ${request.remoteAddress} at $request"
       Logger.info(s"New connection $connectionLogString")

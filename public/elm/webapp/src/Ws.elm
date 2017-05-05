@@ -99,7 +99,7 @@ update msg model =
           case instanceCreationSuccessResult of
             Ok instanceCreationSuccess ->
               ( model
-              , CmdUtils.cmd
+              , CmdUtils.sendMsg
                 ( UpdateBodyViewMsg
                   ( ExpandNewInstanceForm False instanceCreationSuccess.instanceCreation.templateId )
                 )
@@ -162,7 +162,7 @@ update msg model =
               , if ( MaybeUtils.isDefined instanceUpdateSuccess.instanceUpdate.selectedTemplate
                    || MaybeUtils.isDefined instanceUpdateSuccess.instanceUpdate.parameterValues
                    ) then
-                  CmdUtils.cmd (UpdateBodyViewMsg (DiscardParameterValueChanges instanceUpdateSuccess.instance.id))
+                  CmdUtils.sendMsg (UpdateBodyViewMsg (DiscardParameterValueChanges instanceUpdateSuccess.instance.id))
                 else
                   Cmd.none
               )
@@ -228,7 +228,7 @@ stringToIncomingType s =
     anything -> UnknownMsgType anything
 
 showError prefix error =
-  CmdUtils.cmd
+  CmdUtils.sendMsg
     ( UpdateErrorsMsg
       ( AddError
         ( String.concat [prefix, error]

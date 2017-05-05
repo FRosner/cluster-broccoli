@@ -15,7 +15,7 @@ import Models.Ui.InstanceParameterForm exposing (InstanceParameterForm)
 type UpdateLoginStatusMsg
   = FetchLogin (Result Http.Error UserInfo)
   | FetchLogout (Result Http.Error String)
-  | ResumeExistingSession UserInfo
+  | FetchVerify (Result Http.Error String)
 
 type UpdateErrorsMsg
   = AddError String

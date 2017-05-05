@@ -13,6 +13,8 @@ import Views.Body
 import Views.Footer
 import Views.Notifications
 
+import Commands.LoginLogout as LoginLogout
+
 import Utils.CmdUtils as CmdUtils
 
 import Routing
@@ -37,7 +39,7 @@ import Dict exposing (Dict)
 init : Location -> ( Model, Cmd AnyMsg )
 init location =
   ( Model.initial location (Routing.parseLocation location)
-  , Ws.connect location
+  , CmdUtils.sendMsg AttemptReconnect
   )
 
 update : AnyMsg -> Model -> ( Model, Cmd AnyMsg )
@@ -47,15 +49,16 @@ update msg model =
       ( model
       , Ws.send model.location jsonObject wsMsgType
       )
-    WsAttemptReconnect ->
+    AttemptReconnect ->
       ( model
-      , Ws.connect model.location
+      , Cmd.map UpdateLoginStatusMsg
+          LoginLogout.verifyLogin
       )
     WsConnectError ( url, error ) ->
       let l = Debug.log "ConnectError" ( url, error )
       in
         ( { model | wsConnected = False }
-        , CmdUtils.delay (5 * Time.second) WsAttemptReconnect
+        , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
         )
     WsConnect url ->
       let l = Debug.log "Connect" url
@@ -90,12 +93,7 @@ update msg model =
         , Cmd.none
         )
     UpdateLoginStatusMsg subMsg ->
-      let (newLoginStatus, cmd) =
-        updateLoginStatus subMsg model.loggedIn
-      in
-        ({ model | loggedIn = newLoginStatus }
-        , cmd
-        )
+      updateLoginStatus subMsg model
     UpdateErrorsMsg subMsg ->
       let (newErrors, cmd) =
         updateErrors subMsg model.errors
@@ -133,7 +131,7 @@ view : Model -> Html AnyMsg
 view model =
   div
     []
-    [ Views.Header.view model.aboutInfo model.loginForm model.loggedIn model.authEnabled
+    [ Views.Header.view model.aboutInfo model.loginForm model.authRequired
     , Views.Notifications.view model.errors
     , Html.map
         UpdateBodyViewMsg

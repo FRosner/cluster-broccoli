@@ -1,31 +1,65 @@
 module Updates.UpdateLoginStatus exposing (updateLoginStatus)
 
 import Updates.Messages exposing (UpdateLoginStatusMsg(..), UpdateLoginFormMsg(..), UpdateErrorsMsg(..))
+
 import Messages exposing (AnyMsg(..))
+
 import Models.Resources.UserInfo exposing (UserInfo)
-import Utils.CmdUtils exposing (cmd)
+
+import Model exposing (Model)
+
+import Utils.CmdUtils as CmdUtils
+
+import Commands.LoginLogout as LoginLogout
+
+import Ws
+
+import Time
+
 import Debug
 
-updateLoginStatus : UpdateLoginStatusMsg -> Maybe UserInfo -> (Maybe UserInfo, Cmd AnyMsg)
-updateLoginStatus message oldLoginStatus =
+import Http exposing (Error(..))
+
+updateLoginStatus : UpdateLoginStatusMsg -> Model -> (Model, Cmd AnyMsg)
+updateLoginStatus message model =
   case message of
     FetchLogin (Ok loggedInUser) ->
-      ( Just loggedInUser
+      ( model
       , Cmd.none -- TODO request about again on successful login?
       )
     FetchLogin (Err error) ->
-      ( oldLoginStatus
-      , (cmd (UpdateLoginFormMsg FailedLoginAttempt))
+      ( model
+      , (CmdUtils.sendMsg (UpdateLoginFormMsg FailedLoginAttempt))
       )
     FetchLogout (Ok string) ->
-      ( Nothing
+      ( model
       , Cmd.none
       )
     FetchLogout (Err error) ->
-      ( oldLoginStatus
-      , ( cmd ( UpdateErrorsMsg ( AddError "Logout failed." ) ) )
+      ( model
+      , ( CmdUtils.sendMsg ( UpdateErrorsMsg ( AddError "Logout failed." ) ) )
       )
-    ResumeExistingSession loggedInUser ->
-      ( Just loggedInUser
-      , Cmd.none
+    FetchVerify (Ok string) ->
+      let s = Debug.log "FetchVerify Ok" string
+      in
+      ( { model | authRequired = Just False }
+      , Ws.connect model.location
       )
+    FetchVerify (Err error) ->
+      let s = Debug.log "FetchVerify Err" error
+      in
+      case error of -- TODO always attempt reconnect or only on non-403?
+        BadStatus response ->
+          case response.status.code of
+            403 ->
+              ( { model | authRequired = Just True }
+              , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
+              )
+            _ ->
+              ( model
+              , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
+              )
+        _ ->
+          ( model
+          , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
+          )

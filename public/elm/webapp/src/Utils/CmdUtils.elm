@@ -1,4 +1,4 @@
-module Utils.CmdUtils exposing (cmd, delay)
+module Utils.CmdUtils exposing (sendMsg, delayMsg)
 
 import Task
 
@@ -6,12 +6,12 @@ import Time exposing (Time)
 
 import Utils.TaskUtils as TaskUtils
 
-cmd : msg -> Cmd msg
-cmd message =
+sendMsg : msg -> Cmd msg
+sendMsg message =
   Task.perform identity (Task.succeed message)
 
-delay : Time -> msg -> Cmd msg
-delay time message =
+delayMsg : Time -> msg -> Cmd msg
+delayMsg time message =
   Task.succeed message
   |> TaskUtils.delay time
   |> Task.perform identity
