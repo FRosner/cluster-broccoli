@@ -20,40 +20,46 @@ view model =
           [ div
             [ class "col-md-12" ]
             [ p [ class "text-muted text-center" ]
-              [ text
-                ( maybeAboutInfo
-                  |> Maybe.map (\i -> i.projectInfo.name)
-                  |> Maybe.withDefault "<Project Name>"
-                )
-              , text ": "
-              , text
-                ( maybeAboutInfo
-                  |> Maybe.map (\i -> i.projectInfo.version)
-                  |> Maybe.withDefault "<Project Version>"
-                )
-              , text " (built with Scala "
-              , text
-                ( maybeAboutInfo
-                  |> Maybe.map (\i -> i.scalaInfo.version)
-                  |> Maybe.withDefault "<Scala Version>"
-                )
-              , text ", SBT "
-              , text
-                ( maybeAboutInfo
-                  |> Maybe.map (\i -> i.sbtInfo.version)
-                  |> Maybe.withDefault "<SBT Version>"
-                )
-              , text "), Websocket: "
-              , statusToIcon (if (model.wsConnected) then Just True else Nothing) (\i -> i)
-              , text ", Cluster Manager: "
-              , statusToIcon maybeAboutInfo (\i -> i.services.clusterManagerInfo.connected)
-              , text ", Service Discovery: "
-              , statusToIcon maybeAboutInfo (\i -> i.services.serviceDiscoveryInfo.connected)
-              ]
+              ( List.concat
+                [ ( maybeAboutInfo
+                    |> Maybe.map aboutInfoToProjectText
+                    |> Maybe.withDefault []
+                  )
+                , [ text "Websocket: "
+                  , wsToIcon model.wsConnected
+                  , text ", Cluster Manager: "
+                  , statusToIcon maybeAboutInfo (\i -> i.services.clusterManagerInfo.connected)
+                  , text ", Service Discovery: "
+                  , statusToIcon maybeAboutInfo (\i -> i.services.serviceDiscoveryInfo.connected)
+                  ]
+                ]
+              )
             ]
           ]
         ]
       ]
+
+aboutInfoToProjectText aboutInfo =
+  [ text aboutInfo.projectInfo.name
+  , text ": "
+  , text aboutInfo.projectInfo.version
+  , text " (built with Scala "
+  , text aboutInfo.scalaInfo.version
+  , text ", SBT "
+  , text aboutInfo.sbtInfo.version
+  , text "), "
+  ]
+
+wsToIcon connected =
+  let (iconClass, textColor) =
+      if (connected) then
+        ("fa fa-check-circle", "#070")
+      else
+        ("fa fa-refresh fa-spin", "grey")
+    in
+      span
+        [ style [ ("color", textColor) ] ]
+        [ icon iconClass [] ]
 
 statusToIcon maybeAboutInfo statusFunction =
   let (iconClass, textColor) =
@@ -63,7 +69,7 @@ statusToIcon maybeAboutInfo statusFunction =
         Just False ->
           ("fa fa-times-circle", "#900")
         Nothing ->
-          ("fa fa-refresh fa-spin", "grey")
+          ("fa fa-question-circle", "grey")
     in
       span
         [ style [ ("color", textColor) ] ]
