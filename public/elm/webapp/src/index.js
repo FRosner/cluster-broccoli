@@ -5,6 +5,8 @@ require('jquery/dist/jquery.min.js');
 require('bootstrap/dist/css/bootstrap.min.css');
 require('animate.css/animate.css');
 require('bootstrap/dist/js/bootstrap.min.js');
+require("./favicon-300.png");
+
 
 // Require index.html so it gets copied to dist
 require('./index.html');
