@@ -78,6 +78,8 @@ update msg model =
         ( { model
           | wsConnected = False
           , aboutInfo = Nothing
+          , templates = Dict.empty
+          , instances = Dict.empty
           } -- TODO what do I have to set here? all stuff should be unknown and disabled or so?
         , Ws.connect model.location
         )
