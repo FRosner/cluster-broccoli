@@ -167,7 +167,7 @@ loginFormView loginFormModel =
       [ input
         [ type_ "text"
         , class "form-control"
-        -- , style [("background-color", (redIfLoginFailed loginFormModel.loginIncorrect))]
+        , style [("background-color", (redIfLoginFailed loginFormModel.loginIncorrect))]
         , onInput EnterUserName
         , placeholder "User"
         ]
@@ -177,7 +177,7 @@ loginFormView loginFormModel =
         [ type_ "password"
         , onInput EnterPassword
         , class "form-control"
-        -- , style [("background-color", (redIfLoginFailed loginFormModel.loginIncorrect))]
+        , style [("background-color", (redIfLoginFailed loginFormModel.loginIncorrect))]
         , placeholder "Password"
         ]
         []
