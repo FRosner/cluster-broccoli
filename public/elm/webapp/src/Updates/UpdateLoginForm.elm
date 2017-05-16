@@ -11,8 +11,6 @@ updateLoginForm message oldLoginForm =
     LoginAttempt ->
       ( { oldLoginForm
         | loginIncorrect = False
-        , username = ""
-        , password = ""
         }
       , Cmd.map UpdateLoginStatusMsg
           (Commands.LoginLogout.loginRequest oldLoginForm.username oldLoginForm.password)
