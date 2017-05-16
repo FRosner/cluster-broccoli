@@ -32,7 +32,9 @@ updateLoginStatus message model =
       , (CmdUtils.sendMsg (UpdateLoginFormMsg FailedLoginAttempt))
       )
     FetchLogout (Ok string) ->
-      ( model
+      ( { model
+        | authRequired = Just True
+        }
       , Cmd.none
       )
     FetchLogout (Err error) ->
