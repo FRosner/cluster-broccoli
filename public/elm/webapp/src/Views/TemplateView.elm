@@ -60,7 +60,11 @@ view instances templates bodyUiModel template =
                     "btn btn-default"
                     "fa fa-play-circle"
                     "Start"
-                    ( disabledIfNothingSelected selectedTemplateInstances )
+                    ( List.concat
+                      [ disabledIfNothingSelected selectedTemplateInstances
+                      , [ onClick (StartSelectedInstances selectedTemplateInstances) ]
+                      ]
+                    )
                 , text " "
                 , iconButtonText
                     "btn btn-default"

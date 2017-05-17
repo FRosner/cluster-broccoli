@@ -46,3 +46,4 @@ type UpdateBodyViewMsg
   | SubmitNewInstanceCreation TemplateId (Dict String String)
   | DiscardNewInstanceCreation TemplateId
   | DeleteSelectedInstances (Set String)
+  | StartSelectedInstances (Set String)

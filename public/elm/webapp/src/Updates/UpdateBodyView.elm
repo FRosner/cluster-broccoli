@@ -197,6 +197,13 @@ updateBodyView message oldBodyUiModel =
           |> List.map (\id -> CmdUtils.sendMsg (SendWsMsg (Encode.string id) DeleteInstanceMsgType))
           |> Cmd.batch
         )
+      StartSelectedInstances selectedInstances ->
+        ( oldBodyUiModel
+        , selectedInstances
+          |> Set.toList
+          |> List.map (\id -> CmdUtils.sendMsg (SendWsMsg (InstanceUpdate.encoder (InstanceUpdate id (Just JobStatus.JobRunning) Nothing Nothing)) UpdateInstanceMsgType))
+          |> Cmd.batch
+        )
 
 expandParameterForm templateId oldExpandedNewInstanceForms maybeParameterForm =
   case maybeParameterForm of
