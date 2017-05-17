@@ -73,12 +73,13 @@ case class SecurityController @Inject()
   }
 
   def logout = Action.async { implicit request =>
-    getSessionId(request).map(id => (id, webSocketService.closeConnection(id))) match {
-      case Some((id, true)) => Logger.info(s"Removing websocket connection of $id due to logout")
-      case Some((id, false)) => Logger.info(s"There was no websocket connection for session $id")
-      case None => Logger.info(s"No session available to logout from")
+    gotoLogoutSucceeded.andThen { case tryResult =>
+      getSessionId(request).map(id => (id, webSocketService.closeConnection(id))) match {
+        case Some((id, true)) => Logger.info(s"Removing websocket connection of $id due to logout")
+        case Some((id, false)) => Logger.info(s"There was no websocket connection for session $id")
+        case None => Logger.info(s"No session available to logout from")
+      }
     }
-    gotoLogoutSucceeded
   }
 
   def verify = StackAction { implicit request =>
