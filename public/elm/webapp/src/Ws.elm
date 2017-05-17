@@ -166,7 +166,9 @@ update msg model =
         in
           case instanceUpdateSuccessResult of
             Ok instanceUpdateSuccess ->
-              ( model
+              ( { model
+                | instances = Dict.insert instanceUpdateSuccess.instance.id instanceUpdateSuccess.instance model.instances
+                }
               , if ( MaybeUtils.isDefined instanceUpdateSuccess.instanceUpdate.selectedTemplate
                    || MaybeUtils.isDefined instanceUpdateSuccess.instanceUpdate.parameterValues
                    ) then
