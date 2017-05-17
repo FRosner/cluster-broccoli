@@ -6,6 +6,8 @@ import Messages exposing (AnyMsg(..))
 
 import Model exposing (Model)
 
+import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
+
 import Utils.CmdUtils as CmdUtils
 
 import Ws
@@ -22,7 +24,10 @@ updateLoginStatus message model =
     FetchLogin (Ok loggedInUser) ->
       let s = Debug.log "FetchLogout Ok" loggedInUser
       in
-      ( { model | authRequired = Just False }
+      ( { model
+        | authRequired = Just False
+        , loginForm = LoginForm.empty
+        }
       , Ws.connect model.location
       )
     FetchLogin (Err error) ->
