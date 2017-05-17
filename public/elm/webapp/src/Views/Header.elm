@@ -170,6 +170,7 @@ loginFormView loginFormModel =
         , style [("background-color", (redIfLoginFailed loginFormModel.loginIncorrect))]
         , onInput EnterUserName
         , placeholder "User"
+        , value loginFormModel.username
         ]
         []
       , text " "
@@ -179,6 +180,7 @@ loginFormView loginFormModel =
         , class "form-control"
         , style [("background-color", (redIfLoginFailed loginFormModel.loginIncorrect))]
         , placeholder "Password"
+        , value loginFormModel.password
         ]
         []
       ]
