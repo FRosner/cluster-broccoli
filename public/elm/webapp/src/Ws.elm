@@ -129,10 +129,18 @@ update msg model =
             Ok instanceDeletionSuccess ->
               let bodyUiModel = model.bodyUiModel
               in
-                let newBodyUiModel =
-                  { bodyUiModel | selectedInstances = (Set.remove instanceDeletionSuccess.instanceId model.bodyUiModel.selectedInstances) }
+                let
+                  ( newBodyUiModel
+                  , newInstances
+                  ) =
+                  ( { bodyUiModel | selectedInstances = (Set.remove instanceDeletionSuccess.instanceId model.bodyUiModel.selectedInstances) }
+                  , Dict.remove instanceDeletionSuccess.instance.id model.instances
+                  )
                 in
-                  ( { model | bodyUiModel = newBodyUiModel }
+                  ( { model
+                    | bodyUiModel = newBodyUiModel
+                    , instances = newInstances
+                    }
                   , Cmd.none
                   )
             Err error ->
