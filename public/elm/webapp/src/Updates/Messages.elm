@@ -23,7 +23,6 @@ type UpdateErrorsMsg
 
 type UpdateLoginFormMsg
   = LoginAttempt
-  | FailedLoginAttempt
   | LogoutAttempt
   | EnterUserName String
   | EnterPassword String

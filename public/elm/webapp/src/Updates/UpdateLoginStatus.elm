@@ -31,9 +31,17 @@ updateLoginStatus message model =
       , Ws.connect model.location
       )
     FetchLogin (Err error) ->
-      ( model
-      , (CmdUtils.sendMsg (UpdateLoginFormMsg FailedLoginAttempt))
-      )
+      let oldLoginForm = model.loginForm
+      in
+        ( { model
+          | loginForm =
+            { oldLoginForm
+            | password = ""
+            , loginIncorrect = True
+            }
+          }
+        , Cmd.none
+        )
     FetchLogout (Ok string) ->
       ( { model
         | authRequired = Just True
