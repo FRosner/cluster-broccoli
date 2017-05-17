@@ -20,8 +20,10 @@ updateLoginStatus : UpdateLoginStatusMsg -> Model -> (Model, Cmd AnyMsg)
 updateLoginStatus message model =
   case message of
     FetchLogin (Ok loggedInUser) ->
-      ( model
-      , Cmd.none -- TODO request about again on successful login?
+      let s = Debug.log "FetchLogout Ok" loggedInUser
+      in
+      ( { model | authRequired = Just False }
+      , Ws.connect model.location
       )
     FetchLogin (Err error) ->
       ( model
@@ -40,9 +42,14 @@ updateLoginStatus message model =
     FetchVerify (Ok string) ->
       let s = Debug.log "FetchVerify Ok" string
       in
-      ( { model | authRequired = Just False }
-      , Ws.connect model.location
-      )
+      if (not (model.wsConnected)) then
+        ( { model | authRequired = Just False }
+        , Ws.connect model.location
+        )
+      else
+        ( model
+        , Cmd.none
+        )
     FetchVerify (Err error) ->
       let s = Debug.log "FetchVerify Err" error
       in
