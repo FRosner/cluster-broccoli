@@ -10,6 +10,7 @@ type alias InstanceCreationSuccess =
   , instance : Instance
   }
 
+decoder : Decode.Decoder InstanceCreationSuccess
 decoder =
   Decode.map2 InstanceCreationSuccess
     (field "instanceCreation" InstanceCreation.decoder)
