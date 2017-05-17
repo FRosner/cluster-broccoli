@@ -4,13 +4,9 @@ import Updates.Messages exposing (UpdateLoginStatusMsg(..), UpdateLoginFormMsg(.
 
 import Messages exposing (AnyMsg(..))
 
-import Models.Resources.UserInfo exposing (UserInfo)
-
 import Model exposing (Model)
 
 import Utils.CmdUtils as CmdUtils
-
-import Commands.LoginLogout as LoginLogout
 
 import Ws
 
