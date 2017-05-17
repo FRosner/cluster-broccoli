@@ -1,7 +1,6 @@
 module Models.Resources.InstanceCreationSuccess exposing (InstanceCreationSuccess, decoder)
 
 import Json.Decode as Decode exposing (field)
-import Dict exposing (Dict)
 
 import Models.Resources.InstanceCreation as InstanceCreation exposing (InstanceCreation)
 import Models.Resources.Instance as Instance exposing (Instance)
