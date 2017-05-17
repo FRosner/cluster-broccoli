@@ -96,12 +96,14 @@ update msg model =
         in
           case instanceCreationSuccessResult of
             Ok instanceCreationSuccess ->
-              ( model
-              , CmdUtils.sendMsg
-                ( UpdateBodyViewMsg
-                  ( ExpandNewInstanceForm False instanceCreationSuccess.instanceCreation.templateId )
+              let newInstances = Dict.insert instanceCreationSuccess.instance.id instanceCreationSuccess.instance model.instances
+              in
+                ( { model | instances = newInstances }
+                , CmdUtils.sendMsg
+                  ( UpdateBodyViewMsg
+                    ( ExpandNewInstanceForm False instanceCreationSuccess.instanceCreation.templateId )
+                  )
                 )
-              )
             Err error ->
               ( model
               , showError "Failed to decode the instance creation result: " error
