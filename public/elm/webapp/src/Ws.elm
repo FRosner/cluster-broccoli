@@ -11,7 +11,6 @@ import Models.Resources.InstanceDeletionSuccess as InstanceDeletionSuccess
 import Models.Resources.InstanceDeletionFailure as InstanceDeletionFailure
 import Models.Resources.InstanceUpdateSuccess as InstanceUpdateSuccess
 import Models.Resources.InstanceUpdateFailure as InstanceUpdateFailure
-import Models.Resources.InstanceUpdate exposing (InstanceUpdate)
 
 import Utils.MaybeUtils as MaybeUtils
 
@@ -29,7 +28,6 @@ import Websocket
 import Json.Encode as Encode
 
 import Utils.CmdUtils as CmdUtils
-import Utils.StringUtils as StringUtils
 
 payloadFieldName = "payload"
 
