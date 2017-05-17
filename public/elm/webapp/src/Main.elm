@@ -4,7 +4,6 @@ import Updates.UpdateErrors exposing (updateErrors)
 import Updates.UpdateLoginForm exposing (updateLoginForm)
 import Updates.UpdateLoginStatus exposing (updateLoginStatus)
 import Updates.UpdateBodyView exposing (updateBodyView)
-import Updates.Messages exposing (UpdateLoginStatusMsg(..), UpdateErrorsMsg(..))
 
 import Messages exposing (..)
 
@@ -23,16 +22,11 @@ import Model exposing (Model)
 
 import Ws
 
-import Websocket
-
 import Time
 
 import Html exposing (..)
-import Html.Attributes exposing (..)
 
 import Navigation exposing (Location)
-
-import Set exposing (Set)
 
 import Dict exposing (Dict)
 
