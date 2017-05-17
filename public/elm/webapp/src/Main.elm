@@ -148,6 +148,7 @@ subscriptions : Model -> Sub AnyMsg
 subscriptions model =
   Ws.listen model.location
 
+main : Program Never Model AnyMsg
 main =
   Navigation.program OnLocationChange
     { init = init
