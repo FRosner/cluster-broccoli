@@ -64,7 +64,7 @@ If you only intend to develop Broccoli and want to quickly get started with the 
 
 1. Download or clone the source code
 2. Navigate into the project directory
-3. `sbt dist`
+3. `./build-dist.sh`
 
 ## Configuration
 
