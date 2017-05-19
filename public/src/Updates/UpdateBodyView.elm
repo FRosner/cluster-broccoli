@@ -2,15 +2,12 @@ module Updates.UpdateBodyView exposing (updateBodyView)
 
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 
-import Models.Resources.Template exposing (TemplateId, Template)
-import Models.Resources.Instance exposing (InstanceId)
 import Models.Resources.JobStatus as JobStatus exposing (JobStatus)
 import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (InstanceParameterForm)
 import Models.Ui.BodyUiModel exposing (BodyUiModel)
 import Models.Resources.InstanceCreation as InstanceCreation exposing (InstanceCreation)
 import Models.Resources.InstanceUpdate as InstanceUpdate exposing (InstanceUpdate)
 
-import Utils.MaybeUtils as MaybeUtils
 import Utils.CmdUtils as CmdUtils
 
 import Messages exposing (..)

@@ -1,4 +1,4 @@
-module Utils.MaybeUtils exposing (concat, concatMap, isDefined)
+module Utils.MaybeUtils exposing (concat, isDefined)
 
 import Maybe exposing (Maybe)
 
@@ -8,12 +8,6 @@ concat maybeMaybeA =
     Nothing -> Nothing
     Just Nothing -> Nothing
     Just (Just v) -> Just v
-
-concatMap : (a -> Maybe b) -> Maybe a -> Maybe b
-concatMap f maybeA =
-  maybeA
-    |> Maybe.map f
-    |> concat
 
 isDefined : Maybe a -> Bool
 isDefined maybeA =

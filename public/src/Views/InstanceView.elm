@@ -1,21 +1,23 @@
 module Views.InstanceView exposing (view)
 
+import Models.Resources.ServiceStatus exposing (..)
+import Models.Resources.JobStatus as JobStatus exposing (..)
+
+import Updates.Messages exposing (UpdateBodyViewMsg(..))
+
+import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
+
+import Views.ParameterFormView as ParameterFormView
+
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onCheck, onInput, onSubmit)
+
 import Dict exposing (..)
-import Models.Resources.Instance exposing (..)
-import Models.Resources.ServiceStatus exposing (..)
-import Models.Resources.JobStatus as JobStatus exposing (..)
-import Models.Resources.Template exposing (..)
-import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (InstanceParameterForm)
+
 import Set exposing (Set)
-import Maybe
+
 import Date
-import Updates.Messages exposing (UpdateBodyViewMsg(..))
-import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
-import Utils.MaybeUtils as MaybeUtils
-import Views.ParameterFormView as ParameterFormView
 
 checkboxColumnWidth = 1
 chevronColumnWidth = 30
