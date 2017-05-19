@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 
 import Model exposing (Model)
+import Models.Resources.AboutInfo exposing (AboutInfo)
 
 import Messages exposing (AnyMsg(..))
 import Utils.HtmlUtils exposing (icon)
@@ -39,6 +40,7 @@ view model =
         ]
       ]
 
+aboutInfoToProjectText : AboutInfo -> List (Html msg)
 aboutInfoToProjectText aboutInfo =
   [ text aboutInfo.projectInfo.name
   , text ": "
@@ -50,6 +52,7 @@ aboutInfoToProjectText aboutInfo =
   , text "), "
   ]
 
+wsToIcon : Bool -> Html msg
 wsToIcon connected =
   let (iconClass, textColor) =
       if (connected) then
@@ -61,6 +64,7 @@ wsToIcon connected =
         [ style [ ("color", textColor) ] ]
         [ icon iconClass [] ]
 
+statusToIcon : Maybe AboutInfo -> (AboutInfo -> Bool) -> Html msg
 statusToIcon maybeAboutInfo statusFunction =
   let (iconClass, textColor) =
       case (Maybe.map statusFunction maybeAboutInfo) of
