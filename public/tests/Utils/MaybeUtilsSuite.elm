@@ -22,4 +22,12 @@ tests =
           \() -> Expect.equal (Just 5) (MaybeUtils.concat (Just (Just 5)))
       ]
 
+    , describe "isDefined Tests"
+
+      [ test "Nothing" <|
+          \() -> Expect.false "Expected Nothing to be undefined" (MaybeUtils.isDefined Nothing)
+      , test "Something" <|
+          \() -> Expect.true "Expected Something to be defined" (MaybeUtils.isDefined (Just 5))
+      ]
+
     ]
