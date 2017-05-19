@@ -10,12 +10,10 @@ jdk:
 
 before_script:
   - npm update npm -g
-  - . prepare-karma-tests
 
 script:
   - uname -r
-  - sbt test
-  - ./node_modules/karma/bin/karma start --single-run --browsers PhantomJS
+  - ./unit-tests.sh
   - . prepare-docker-builds
   - docker build -t frosner/cluster-broccoli-test docker/test/
   - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/instance-persistence-couchdb

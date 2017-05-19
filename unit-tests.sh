@@ -3,6 +3,7 @@ set -eou pipefail
 
 ./setup.sh
 cd public
-npm run package
+npm run compile
+npm run test
 cd ..
-sbt dist
+sbt test
