@@ -19,6 +19,7 @@ iconButtonText btnClass iconClass buttonText attributes =
         attributes
         [ class btnClass
         , title buttonText
+        -- , type_ "button" -- TODO should this be a button or whaz? if so, we can't use it to submit forms, can we?
         ]
     )
     [ icon iconClass []

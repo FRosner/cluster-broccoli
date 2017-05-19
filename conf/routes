@@ -26,6 +26,6 @@ POST    /api/v1/auth/logout  @de.frosner.broccoli.controllers.SecurityController
 GET     /api/v1/auth/verify  @de.frosner.broccoli.controllers.SecurityController.verify()
 
 # Web-UI
-GET     /       @controllers.Assets.at(path="/public/elm/webapp/dist", file="index.html")
+GET     /       @controllers.Assets.at(path="/public/dist", file="index.html")
 GET     /ws     @de.frosner.broccoli.controllers.WebSocketController.socket
-GET     /*file  @controllers.Assets.versioned(path="/public/elm/webapp/dist", file)
+GET     /*file  @controllers.Assets.versioned(path="/public/dist", file)

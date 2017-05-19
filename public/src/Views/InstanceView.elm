@@ -19,8 +19,10 @@ import Views.ParameterFormView as ParameterFormView
 
 checkboxColumnWidth = 1
 chevronColumnWidth = 30
+-- nameColumnWidth = 200
+serviceColumnWidth = 500
 templateVersionColumnWidth = 1
-jobControlsColumnWidth = 170
+jobControlsColumnWidth = 200
 
 view instances selectedInstances expandedInstances instanceParameterForms visibleSecrets templates =
   let (instancesIds) =
@@ -73,12 +75,17 @@ view instances selectedInstances expandedInstances instanceParameterForms visibl
                     )
                 ]
               ]
-            , th []
+            , th
+              -- [ width nameColumnWidth ]
+              []
               [ icon "fa fa-hashtag" [ title "Instance ID" ] ]
-            , th [ class "text-left hidden-xs" ]
+            , th
+              [ class "text-left hidden-xs"
+              , width serviceColumnWidth
+              ]
               [ icon "fa fa-cubes" [ title "Services" ] ]
             , th
-              [ class "text-center hidden-xs"
+              [ class "text-center hidden-sm hidden-xs"
               , width templateVersionColumnWidth
               ]
               [ icon "fa fa-code-fork" [ title "Template Version" ] ]
@@ -128,17 +135,22 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
           , onClick (InstanceExpanded instance.id (not instanceExpanded))
           ]
         ]
-      , td []
+      , td
+        -- [ width nameColumnWidth ]
+        []
         [ span
             [ attribute "role" "button"
             , onClick (InstanceExpanded instance.id (not instanceExpanded))
             ]
             [ text instance.id ]
         ]
-      , td [ class "text-left hidden-xs" ]
+      , td
+        [ class "text-left hidden-xs"
+        , width serviceColumnWidth
+        ]
         ( servicesView instance.services )
       , td
-        [ class "text-center hidden-xs"
+        [ class "text-center hidden-sm hidden-xs"
         , width templateVersionColumnWidth
         ]
         [ span
@@ -280,7 +292,7 @@ jobStatusView jobStatus =
       JobUnknown -> ("warning", "unknown")
   in
     span
-      [ class ( String.concat [ "label label-", statusLabel ] )
+      [ class ( String.concat [ "hidden-xs label label-", statusLabel ] )
       , style
         [ ("font-size", "90%")
         , ("width", "80px")
