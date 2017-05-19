@@ -26,7 +26,7 @@
   "scripts": {
     "test": "elm-test",
     "compile": "elm-make",
-    "setup": "elm-install",
+    "setup": "elm-install; cd tests; elm-install",
     "package": "webpack",
     "watch": "webpack --watch"
   },

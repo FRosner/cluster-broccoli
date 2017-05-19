@@ -56,9 +56,11 @@ wsToIcon connected =
       else
         ("fa fa-refresh fa-spin", "grey")
     in
-      span
-        [ style [ ("color", textColor) ] ]
-        [ icon iconClass [] ]
+      icon
+        iconClass
+        [ id "ws-indicator"
+        , style [ ("color", textColor) ]
+        ]
 
 statusToIcon : Maybe AboutInfo -> (AboutInfo -> Bool) -> Html msg
 statusToIcon maybeAboutInfo statusFunction =
