@@ -140,7 +140,7 @@ view model =
             model.bodyUiModel
         )
     , text (toString model)
-    , Views.Footer.view model
+    , Views.Footer.view model.aboutInfo model.wsConnected
     ]
 
 -- Sub.map UpdateErrorsMsg ( WebSocket.listen "ws://localhost:9000/ws" AddError ) when AddError is an UpdateErrorsMsg

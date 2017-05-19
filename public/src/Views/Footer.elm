@@ -3,42 +3,38 @@ module Views.Footer exposing (view)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 
-import Model exposing (Model)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 
 import Messages exposing (AnyMsg(..))
 import Utils.HtmlUtils exposing (icon)
 
-view : Model -> Html AnyMsg
-view model =
-  let
-    maybeAboutInfo = model.aboutInfo
-  in
-    footer [ class "footer" ]
-      [ div [ class "container" ]
+view : Maybe AboutInfo -> Bool -> Html AnyMsg
+view maybeAboutInfo wsConnected =
+  footer [ class "footer" ]
+    [ div [ class "container" ]
+      [ div
+        [ class "row" ]
         [ div
-          [ class "row" ]
-          [ div
-            [ class "col-md-12" ]
-            [ p [ class "text-muted text-center" ]
-              ( List.concat
-                [ ( maybeAboutInfo
-                    |> Maybe.map aboutInfoToProjectText
-                    |> Maybe.withDefault []
-                  )
-                , [ text "Websocket: "
-                  , wsToIcon model.wsConnected
-                  , text ", Cluster Manager: "
-                  , statusToIcon maybeAboutInfo (\i -> i.services.clusterManagerInfo.connected)
-                  , text ", Service Discovery: "
-                  , statusToIcon maybeAboutInfo (\i -> i.services.serviceDiscoveryInfo.connected)
-                  ]
+          [ class "col-md-12" ]
+          [ p [ class "text-muted text-center" ]
+            ( List.concat
+              [ ( maybeAboutInfo
+                  |> Maybe.map aboutInfoToProjectText
+                  |> Maybe.withDefault []
+                )
+              , [ text "Websocket: "
+                , wsToIcon wsConnected
+                , text ", Cluster Manager: "
+                , statusToIcon maybeAboutInfo (\i -> i.services.clusterManagerInfo.connected)
+                , text ", Service Discovery: "
+                , statusToIcon maybeAboutInfo (\i -> i.services.serviceDiscoveryInfo.connected)
                 ]
-              )
-            ]
+              ]
+            )
           ]
         ]
       ]
+    ]
 
 aboutInfoToProjectText : AboutInfo -> List (Html msg)
 aboutInfoToProjectText aboutInfo =
