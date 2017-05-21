@@ -25,7 +25,7 @@ tests =
               |> Query.find [ Selector.id "header-login-username" ]
               |> Query.has [ Selector.attribute "value" defaultLoginForm.username ]
 
-      , test "Render username in input field" <|
+      , test "Render password in input field" <|
           \() ->
             let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
               ( Nothing, defaultLoginForm, Just True )
