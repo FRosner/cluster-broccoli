@@ -2,6 +2,7 @@ port module Main exposing (..)
 
 import Utils.MaybeUtilsSuite as MaybeUtilsSuite
 import Views.FooterSuite as FooterSuite
+import Views.HeaderSuite as HeaderSuite
 
 import Test exposing (describe)
 
@@ -17,6 +18,7 @@ main =
       "Cluster Broccoli UI Tests"
       [ MaybeUtilsSuite.tests
       , FooterSuite.tests
+      , HeaderSuite.tests
       ]
     )
 

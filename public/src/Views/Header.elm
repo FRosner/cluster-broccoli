@@ -166,6 +166,7 @@ loginFormView loginFormModel =
     [ div [ class "form-group" ]
       [ input
         [ type_ "text"
+        , id "header-login-username"
         , class "form-control"
         , style [("background-color", (redIfLoginFailed loginFormModel.loginIncorrect))]
         , onInput EnterUserName
@@ -176,6 +177,7 @@ loginFormView loginFormModel =
       , text " "
       , input
         [ type_ "password"
+        , id "header-login-password"
         , onInput EnterPassword
         , class "form-control"
         , style [("background-color", (redIfLoginFailed loginFormModel.loginIncorrect))]
