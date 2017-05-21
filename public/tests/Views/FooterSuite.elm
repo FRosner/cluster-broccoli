@@ -139,13 +139,13 @@ defaultAboutInfo =
 
 withClusterManagerConnected aboutInfo connected =
   { connected = connected }
-  |> AboutInfo.asClusterManagerInfoOf defaultAboutInfo.services
-  |> AboutInfo.asServicesInfoOf defaultAboutInfo
+  |> AboutInfo.asClusterManagerInfoOf aboutInfo.services
+  |> AboutInfo.asServicesInfoOf aboutInfo
 
 withServiceDiscoveryConnected aboutInfo connected =
   { connected = connected }
-  |> AboutInfo.asServiceDiscoveryInfoOf defaultAboutInfo.services
-  |> AboutInfo.asServicesInfoOf defaultAboutInfo
+  |> AboutInfo.asServiceDiscoveryInfoOf aboutInfo.services
+  |> AboutInfo.asServicesInfoOf aboutInfo
 
 expectClasses id classes html =
   html
