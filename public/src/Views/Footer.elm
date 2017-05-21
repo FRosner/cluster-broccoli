@@ -38,14 +38,20 @@ view maybeAboutInfo wsConnected =
 
 aboutInfoToProjectText : AboutInfo -> List (Html msg)
 aboutInfoToProjectText aboutInfo =
-  [ text aboutInfo.projectInfo.name
-  , text ": "
-  , text aboutInfo.projectInfo.version
-  , text " (built with Scala "
-  , text aboutInfo.scalaInfo.version
-  , text ", SBT "
-  , text aboutInfo.sbtInfo.version
-  , text "), "
+  [ span
+    [ id "footer-project-info" ]
+    [ text <|
+        String.concat
+          [ aboutInfo.projectInfo.name
+          , ": "
+          , aboutInfo.projectInfo.version
+          , " (built with Scala "
+          , aboutInfo.scalaInfo.version
+          , ", SBT "
+          , aboutInfo.sbtInfo.version
+          , "), "
+          ]
+    ]
   ]
 
 wsToIcon : Bool -> Html msg
