@@ -58,7 +58,7 @@ wsToIcon connected =
     in
       icon
         iconClass
-        [ id "ws-indicator"
+        [ id "footer-ws-indicator"
         , style [ ("color", textColor) ]
         ]
 

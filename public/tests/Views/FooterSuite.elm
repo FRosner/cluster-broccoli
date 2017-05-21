@@ -30,7 +30,7 @@ tests =
 expectClasses classes html =
   html
   |> Query.fromHtml
-  |> Query.find [ Selector.id "ws-indicator" ]
+  |> Query.find [ Selector.id "footer-ws-indicator" ]
   |> Query.has
     [ Selector.classes classes
     -- TODO test style (not possible at the moment): https://github.com/eeue56/elm-html-test/issues/3
