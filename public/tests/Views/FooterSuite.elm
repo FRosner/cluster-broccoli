@@ -28,7 +28,7 @@ tests =
             Footer.view maybeAboutInfo wsConnected
             |> expectClasses "footer-ws-indicator" [ "fa", "fa-check-circle" ]
 
-    , test "Shows correct info" <|
+    , test "Shows correct info if available" <|
         \() ->
           let ( maybeAboutInfo, wsConnected ) =
             ( Just defaultAboutInfo, True )
@@ -39,6 +39,14 @@ tests =
             |> Query.has
               [ Selector.text "pname: pversion (built with Scala sversion, SBT sbtversion), "
               ]
+      , test "Shows correct info if available" <|
+          \() ->
+            let ( maybeAboutInfo, wsConnected ) =
+              ( Nothing, True )
+            in
+              Footer.view maybeAboutInfo wsConnected
+              |> Query.fromHtml
+              |> Query.hasNot [ Selector.id "footer-project-info" ]
 
       , test "Cluster manager disconnected" <|
           \() ->
