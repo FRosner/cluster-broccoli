@@ -55,6 +55,15 @@ tests =
               |> Query.find [ Selector.id "header-login-form" ]
               |> Query.has [ Selector.classes [ "navbar-form", "navbar-right", "animated", "shake" ] ]
 
+      , test "Should render if auth is required" <|
+          \() ->
+            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
+              ( Nothing, defaultLoginForm, Just True )
+            in
+              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              |> Query.fromHtml
+              |> Query.has [ Selector.id "header-login-form" ]
+
       , test "Should not render if auth is not required" <|
           \() ->
             let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
