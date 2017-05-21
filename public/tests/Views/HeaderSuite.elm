@@ -35,6 +35,26 @@ tests =
               |> Query.find [ Selector.id "header-login-password" ]
               |> Query.has [ Selector.attribute "value" defaultLoginForm.password ]
 
+      , test "Should look normal if the login is correct" <|
+          \() ->
+            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
+              ( Nothing, { defaultLoginForm | loginIncorrect = False }, Just True )
+            in
+              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "header-login-form" ]
+              |> Query.has [ Selector.classes [ "navbar-form", "navbar-right" ] ]
+
+      , test "Should shake if the login is correct" <|
+          \() ->
+            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
+              ( Nothing, { defaultLoginForm | loginIncorrect = True }, Just True )
+            in
+              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "header-login-form" ]
+              |> Query.has [ Selector.classes [ "navbar-form", "navbar-right", "animated", "shake" ] ]
+
       , test "Should not render if auth is not required" <|
           \() ->
             let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
