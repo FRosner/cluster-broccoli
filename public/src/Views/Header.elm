@@ -197,7 +197,7 @@ loginFormView loginFormModel =
 
 logoutFormView =
   Html.form
-    [ id "logoutForm"
+    [ id "header-logout-form"
     , class "navbar-form navbar-right"
     , onSubmit LogoutAttempt
     ]

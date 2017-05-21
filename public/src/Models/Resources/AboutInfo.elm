@@ -4,6 +4,7 @@ module Models.Resources.AboutInfo exposing
   , asServicesInfoOf
   , asServiceDiscoveryInfoOf
   , asClusterManagerInfoOf
+  , asAuthInfoOf
   )
 
 import Models.Resources.UserInfo exposing (UserInfo, userInfoDecoder)
@@ -51,6 +52,10 @@ type alias AboutInfo =
 asServicesInfoOf : AboutInfo -> ServicesInfo -> AboutInfo
 asServicesInfoOf aboutInfo servicesInfo =
   { aboutInfo | services = servicesInfo }
+
+asAuthInfoOf : AboutInfo -> AuthInfo -> AboutInfo
+asAuthInfoOf aboutInfo authInfo =
+  { aboutInfo | authInfo = authInfo }
 
 asServiceDiscoveryInfoOf : ServicesInfo -> ServiceDiscoveryInfo -> ServicesInfo
 asServiceDiscoveryInfoOf servicesInfo serviceDiscoveryInfo =

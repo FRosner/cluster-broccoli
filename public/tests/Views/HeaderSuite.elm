@@ -83,6 +83,46 @@ tests =
               |> Query.hasNot [ Selector.id "header-login-form" ]
       ]
 
+    , describe "Logout Form"
+
+      [ test "Should render if auth is enabled but not required (which means you are logged in)" <|
+          \() ->
+            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
+              ( Just <| withAuthEnabled defaultAboutInfo True
+              , defaultLoginForm
+              , Just False
+              )
+            in
+              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              |> Query.fromHtml
+              |> Query.has [ Selector.id "header-logout-form" ]
+
+      , test "Should not render if auth is disabled and not required" <|
+          \() ->
+            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
+              ( Just <| withAuthEnabled defaultAboutInfo False
+              , defaultLoginForm
+              , Just False
+              )
+            in
+              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              |> Query.fromHtml
+              |> Query.hasNot [ Selector.id "header-logout-form" ]
+
+      , test "Should not render if it is unknown whether auth is required" <|
+          \() ->
+            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
+              ( Nothing
+              , defaultLoginForm
+              , Just False
+              )
+            in
+              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              |> Query.fromHtml
+              |> Query.hasNot [ Selector.id "header-logout-form" ]
+
+      ]
+
     ]
 
 
@@ -122,3 +162,8 @@ defaultAboutInfo =
       }
     }
   }
+
+withAuthEnabled aboutInfo authEnabled =
+  { enabled = authEnabled
+  , userInfo = aboutInfo.authInfo.userInfo
+  } |> AboutInfo.asAuthInfoOf aboutInfo
