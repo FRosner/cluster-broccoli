@@ -1,4 +1,10 @@
-module Models.Resources.AboutInfo exposing (AboutInfo, decoder)
+module Models.Resources.AboutInfo exposing
+  ( AboutInfo
+  , decoder
+  , asServicesInfoOf
+  , asServiceDiscoveryInfoOf
+  , asClusterManagerInfoOf
+  )
 
 import Models.Resources.UserInfo exposing (UserInfo, userInfoDecoder)
 import Json.Decode as Decode exposing (field)
@@ -41,6 +47,18 @@ type alias AboutInfo =
   , authInfo : AuthInfo
   , services : ServicesInfo
   }
+
+asServicesInfoOf : AboutInfo -> ServicesInfo -> AboutInfo
+asServicesInfoOf aboutInfo servicesInfo =
+  { aboutInfo | services = servicesInfo }
+
+asServiceDiscoveryInfoOf : ServicesInfo -> ServiceDiscoveryInfo -> ServicesInfo
+asServiceDiscoveryInfoOf servicesInfo serviceDiscoveryInfo =
+  { servicesInfo | serviceDiscoveryInfo = serviceDiscoveryInfo }
+
+asClusterManagerInfoOf : ServicesInfo -> ClusterManagerInfo -> ServicesInfo
+asClusterManagerInfoOf servicesInfo clusterManagerInfo =
+  { servicesInfo | clusterManagerInfo = clusterManagerInfo }
 
 decoder =
   Decode.map5 AboutInfo

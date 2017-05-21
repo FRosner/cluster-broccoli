@@ -25,9 +25,9 @@ view maybeAboutInfo wsConnected =
               , [ text "Websocket: "
                 , wsToIcon wsConnected
                 , text ", Cluster Manager: "
-                , statusToIcon maybeAboutInfo (\i -> i.services.clusterManagerInfo.connected)
+                , statusToIcon "footer-cm-indicator" maybeAboutInfo (\i -> i.services.clusterManagerInfo.connected)
                 , text ", Service Discovery: "
-                , statusToIcon maybeAboutInfo (\i -> i.services.serviceDiscoveryInfo.connected)
+                , statusToIcon "footer-sd-indicator" maybeAboutInfo (\i -> i.services.serviceDiscoveryInfo.connected)
                 ]
               ]
             )
@@ -68,8 +68,8 @@ wsToIcon connected =
         , style [ ("color", textColor) ]
         ]
 
-statusToIcon : Maybe AboutInfo -> (AboutInfo -> Bool) -> Html msg
-statusToIcon maybeAboutInfo statusFunction =
+statusToIcon : String -> Maybe AboutInfo -> (AboutInfo -> Bool) -> Html msg
+statusToIcon elementId maybeAboutInfo statusFunction =
   let (iconClass, textColor) =
       case (Maybe.map statusFunction maybeAboutInfo) of
         Just True ->
@@ -79,6 +79,8 @@ statusToIcon maybeAboutInfo statusFunction =
         Nothing ->
           ("fa fa-question-circle", "grey")
     in
-      span
-        [ style [ ("color", textColor) ] ]
-        [ icon iconClass [] ]
+      icon
+        iconClass
+        [ style [ ("color", textColor) ]
+        , id elementId
+        ]

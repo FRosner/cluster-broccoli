@@ -2,7 +2,7 @@ module Views.FooterSuite exposing (tests)
 
 import Views.Footer as Footer
 
-import Models.Resources.AboutInfo exposing (AboutInfo)
+import Models.Resources.AboutInfo as AboutInfo exposing (AboutInfo)
 
 import Test exposing (test, describe, Test)
 import Test.Html.Query as Query
@@ -18,7 +18,7 @@ tests =
             ( Nothing, False )
           in
             Footer.view maybeAboutInfo wsConnected
-            |> expectClasses [ "fa", "fa-refresh", "fa-spin" ]
+            |> expectClasses "footer-ws-indicator" [ "fa", "fa-refresh", "fa-spin" ]
 
     , test "Websocket connected" <|
         \() ->
@@ -26,7 +26,7 @@ tests =
             ( Nothing, True )
           in
             Footer.view maybeAboutInfo wsConnected
-            |> expectClasses [ "fa", "fa-check-circle" ]
+            |> expectClasses "footer-ws-indicator" [ "fa", "fa-check-circle" ]
 
     , test "Shows correct info" <|
         \() ->
@@ -39,6 +39,64 @@ tests =
             |> Query.has
               [ Selector.text "pname: pversion (built with Scala sversion, SBT sbtversion), "
               ]
+
+      , test "Cluster manager disconnected" <|
+          \() ->
+            let ( maybeAboutInfo, wsConnected ) =
+              ( Just <| withClusterManagerConnected defaultAboutInfo False
+              , False )
+            in
+              Footer.view maybeAboutInfo wsConnected
+              |> expectClasses "footer-cm-indicator" [ "fa", "fa-times-circle" ]
+
+      , test "Cluster manager connected" <|
+          \() ->
+            let ( maybeAboutInfo, wsConnected ) =
+              ( Just <| withClusterManagerConnected defaultAboutInfo True
+              , False
+              )
+            in
+              Footer.view maybeAboutInfo wsConnected
+              |> expectClasses "footer-cm-indicator" [ "fa", "fa-check-circle" ]
+
+      , test "Cluster manager unknown" <|
+          \() ->
+            let ( maybeAboutInfo, wsConnected ) =
+              ( Nothing
+              , False
+              )
+            in
+              Footer.view maybeAboutInfo wsConnected
+              |> expectClasses "footer-cm-indicator" [ "fa", "fa-question-circle" ]
+
+      , test "Service discovery disconnected" <|
+          \() ->
+            let ( maybeAboutInfo, wsConnected ) =
+              ( Just <| withServiceDiscoveryConnected defaultAboutInfo False
+              , False )
+            in
+              Footer.view maybeAboutInfo wsConnected
+              |> expectClasses "footer-sd-indicator" [ "fa", "fa-times-circle" ]
+
+      , test "Service discovery connected" <|
+          \() ->
+            let ( maybeAboutInfo, wsConnected ) =
+              ( Just <| withServiceDiscoveryConnected defaultAboutInfo True
+              , False
+              )
+            in
+              Footer.view maybeAboutInfo wsConnected
+              |> expectClasses "footer-sd-indicator" [ "fa", "fa-check-circle" ]
+
+      , test "Service discovery unknown" <|
+          \() ->
+            let ( maybeAboutInfo, wsConnected ) =
+              ( Nothing
+              , False
+              )
+            in
+              Footer.view maybeAboutInfo wsConnected
+              |> expectClasses "footer-sd-indicator" [ "fa", "fa-question-circle" ]
     ]
 
 defaultAboutInfo : AboutInfo
@@ -71,10 +129,20 @@ defaultAboutInfo =
     }
   }
 
-expectClasses classes html =
+withClusterManagerConnected aboutInfo connected =
+  { connected = connected }
+  |> AboutInfo.asClusterManagerInfoOf defaultAboutInfo.services
+  |> AboutInfo.asServicesInfoOf defaultAboutInfo
+
+withServiceDiscoveryConnected aboutInfo connected =
+  { connected = connected }
+  |> AboutInfo.asServiceDiscoveryInfoOf defaultAboutInfo.services
+  |> AboutInfo.asServicesInfoOf defaultAboutInfo
+
+expectClasses id classes html =
   html
   |> Query.fromHtml
-  |> Query.find [ Selector.id "footer-ws-indicator" ]
+  |> Query.find [ Selector.id id ]
   |> Query.has
     [ Selector.classes classes
     -- TODO test style (not possible at the moment): https://github.com/eeue56/elm-html-test/issues/3
