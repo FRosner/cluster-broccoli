@@ -154,7 +154,7 @@ loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired =
 
 loginFormView loginFormModel =
   Html.form
-    [ id "loginForm"
+    [ id "header-login-form"
     , class
         ( String.concat
             [ "navbar-form navbar-right "
