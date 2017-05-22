@@ -5,7 +5,7 @@ import Views.Header as Header
 import Models.Resources.AboutInfo as AboutInfo exposing (AboutInfo)
 import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
 
-import Updates.Messages exposing (UpdateLoginFormMsg(EnterUserName, EnterPassword, LoginAttempt))
+import Updates.Messages exposing (UpdateLoginFormMsg(EnterUserName, EnterPassword, LoginAttempt, LogoutAttempt))
 
 import Messages exposing (AnyMsg(UpdateLoginFormMsg))
 
@@ -158,6 +158,20 @@ tests =
               Header.view maybeAboutInfo loginForm maybeAuthRequired
               |> Query.fromHtml
               |> Query.hasNot [ Selector.id "header-logout-form" ]
+
+
+      , test "Should attempt to login with the entered credentials on form sumbission" <|
+          \() ->
+            let
+              maybeAboutInfo = Just <| withAuthEnabled defaultAboutInfo True
+              loginForm = defaultLoginForm
+              maybeAuthRequired = Just False
+            in
+              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "header-logout-form" ]
+              |> Events.simulate Events.Submit
+              |> Events.expectEvent (UpdateLoginFormMsg LogoutAttempt)
 
       ]
 
