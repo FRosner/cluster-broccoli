@@ -5,14 +5,12 @@ sudo: required
 services:
   - docker
 
-env:
-  - TRAVIS_NODE_VERSION="6"
-
 jdk:
   - oraclejdk8
 
 before_script:
   - npm update npm -g
+  - nvm install 6
   - uname -r
   - node --version
   - npm --version
