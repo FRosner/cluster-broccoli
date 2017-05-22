@@ -13,6 +13,9 @@ before_script:
   - node --version
   - npm --version
   - npm update npm -g
+  - sudo npm cache clean -f
+  - sudo npm install -g n
+  - sudo n stable
 
 script:
   - ./unit-tests.sh
