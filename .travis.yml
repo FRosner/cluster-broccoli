@@ -5,16 +5,17 @@ sudo: required
 services:
   - docker
 
+env:
+  - TRAVIS_NODE_VERSION="6"
+
 jdk:
   - oraclejdk8
 
 before_script:
+  - npm update npm -g
   - uname -r
   - node --version
   - npm --version
-  - npm update npm -g
-  - npm install -g n
-  - n stable
 
 script:
   - ./unit-tests.sh
