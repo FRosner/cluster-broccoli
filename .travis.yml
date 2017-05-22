@@ -4,15 +4,17 @@ sudo: required
 
 services:
   - docker
-  
+
 jdk:
   - oraclejdk8
 
 before_script:
+  - uname -r
+  - node --version
+  - npm --version
   - npm update npm -g
 
 script:
-  - uname -r
   - ./unit-tests.sh
   - . prepare-docker-builds
   - docker build -t frosner/cluster-broccoli-test docker/test/
