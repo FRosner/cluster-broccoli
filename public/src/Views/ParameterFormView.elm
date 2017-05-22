@@ -26,18 +26,11 @@ normalParamColor = "#eee"
 
 editView instance templates maybeInstanceParameterForm visibleSecrets =
   let
-    ( otherParameters
-    , otherParameterValues
-    , otherParameterInfos
-    , formIsBeingEdited
-    , selectedTemplate
-    ) =
-    ( List.filter (\p -> p /= "id") instance.template.parameters
-    , Dict.remove "id" instance.parameterValues
-    , Dict.remove "id" instance.template.parameterInfos
-    , MaybeUtils.isDefined maybeInstanceParameterForm
-    , Maybe.andThen (\f -> f.selectedTemplate) maybeInstanceParameterForm
-    )
+    otherParameters = List.filter (\p -> p /= "id") instance.template.parameters
+    otherParameterValues = Dict.remove "id" instance.parameterValues
+    otherParameterInfos = Dict.remove "id" instance.template.parameterInfos
+    formIsBeingEdited = MaybeUtils.isDefined maybeInstanceParameterForm
+    selectedTemplate = Maybe.andThen (\f -> f.selectedTemplate) maybeInstanceParameterForm
   in
     let (otherParametersLeft, otherParametersRight) =
       let firstHalf =
