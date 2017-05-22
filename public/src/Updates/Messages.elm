@@ -22,7 +22,7 @@ type UpdateErrorsMsg
   | CloseError Int
 
 type UpdateLoginFormMsg
-  = LoginAttempt
+  = LoginAttempt String String
   | LogoutAttempt
   | EnterUserName String
   | EnterPassword String

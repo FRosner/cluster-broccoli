@@ -161,7 +161,7 @@ loginFormView loginFormModel =
             , (attentionIfLoginFailed loginFormModel.loginIncorrect)
             ]
         )
-    , onSubmit LoginAttempt
+    , onSubmit <| LoginAttempt loginFormModel.username loginFormModel.password
     ]
     [ div [ class "form-group" ]
       [ input

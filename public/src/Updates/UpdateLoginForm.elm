@@ -8,12 +8,12 @@ import Models.Ui.LoginForm exposing (LoginForm)
 updateLoginForm : UpdateLoginFormMsg -> LoginForm -> (LoginForm, Cmd AnyMsg)
 updateLoginForm message oldLoginForm =
   case message of
-    LoginAttempt ->
+    LoginAttempt username password ->
       ( { oldLoginForm
         | loginIncorrect = False
         }
       , Cmd.map UpdateLoginStatusMsg
-          (Commands.LoginLogout.loginRequest oldLoginForm.username oldLoginForm.password)
+          (Commands.LoginLogout.loginRequest username password)
       )
     LogoutAttempt ->
       ( oldLoginForm
