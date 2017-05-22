@@ -5,9 +5,14 @@ import Views.Header as Header
 import Models.Resources.AboutInfo as AboutInfo exposing (AboutInfo)
 import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
 
+import Updates.Messages exposing (UpdateLoginFormMsg(EnterUserName, EnterPassword))
+
+import Messages exposing (AnyMsg(UpdateLoginFormMsg))
+
 import Test exposing (test, describe, Test)
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector
+import Test.Html.Events as Events
 
 tests : Test
 tests =
@@ -81,6 +86,28 @@ tests =
               Header.view maybeAboutInfo loginForm maybeAuthRequired
               |> Query.fromHtml
               |> Query.hasNot [ Selector.id "header-login-form" ]
+
+      , test "Should update the username when the user name input field changes" <|
+          \() ->
+            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
+              ( Nothing, defaultLoginForm, Just True )
+            in
+              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "header-login-username" ]
+              |> Events.simulate (Events.Input "admin")
+              |> Events.expectEvent (UpdateLoginFormMsg (EnterUserName "admin"))
+
+      , test "Should update the password when the password input field changes" <|
+          \() ->
+            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
+              ( Nothing, defaultLoginForm, Just True )
+            in
+              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "header-login-password" ]
+              |> Events.simulate (Events.Input "secret")
+              |> Events.expectEvent (UpdateLoginFormMsg (EnterPassword "secret"))
       ]
 
     , describe "Logout Form"
