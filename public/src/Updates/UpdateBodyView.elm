@@ -111,12 +111,19 @@ updateBodyView message oldBodyUiModel =
         ( { oldBodyUiModel | instanceParameterForms = resetEditParameterForm instanceId oldInstanceParameterForms }
         , Cmd.none
         )
-      ApplyParameterValueChanges instance maybeInstanceParameterForm ->
+      ApplyParameterValueChanges instance maybeInstanceParameterForm template ->
         let instanceUpdateJson =
           ( InstanceUpdate
               instance.id
               Nothing
-              ( Maybe.map (\f -> (Dict.insert "id" instance.id f.changedParameterValues)) maybeInstanceParameterForm ) -- TODO why do we need to send the ID here?
+              ( Maybe.map
+                ( \f ->
+                  f.originalParameterValues
+                  |> Dict.union f.changedParameterValues
+                  |> Dict.filter (\p v -> List.member p template.parameters)
+                )
+                maybeInstanceParameterForm
+              )
               ( Maybe.andThen (\f -> (Maybe.map (\t -> t.id)) f.selectedTemplate) maybeInstanceParameterForm )
           ) |> InstanceUpdate.encoder
         in

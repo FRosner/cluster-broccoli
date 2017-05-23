@@ -30,7 +30,12 @@ editView instance templates maybeInstanceParameterForm visibleSecrets =
     formIsBeingEdited = MaybeUtils.isDefined maybeInstanceParameterForm
   in
     Html.form
-      [ onSubmit (ApplyParameterValueChanges instance maybeInstanceParameterForm) ]
+      [ onSubmit <|
+          ApplyParameterValueChanges
+            instance
+            maybeInstanceParameterForm
+            ( Maybe.withDefault instance.template selectedTemplate )
+      ]
       ( List.concat
         [ [ h5 [] [ text "Template" ]
           , templateSelectionView instance.template selectedTemplate templates instance
@@ -89,21 +94,15 @@ parametersView parametersH instance template maybeInstanceParameterForm visibleS
         )
     in
       [ h5 [] [ text parametersH ]
+      , div
+        [ class "row" ]
+        [ div
+          [ class "col-md-6" ]
+          ( editParameterValuesView instance otherParametersLeft otherParameterValues otherParameterInfos maybeInstanceParameterForm enabled visibleSecrets )
         , div
-          [ class "row" ]
-          [ div
-            [ class "col-md-6" ]
-            [ ( editParameterValueView instance instance.parameterValues template.parameterInfos maybeInstanceParameterForm False visibleSecrets "id" ) ]
-          ]
-        , div
-          [ class "row" ]
-          [ div
-            [ class "col-md-6" ]
-            ( editParameterValuesView instance otherParametersLeft otherParameterValues otherParameterInfos maybeInstanceParameterForm enabled visibleSecrets )
-          , div
-            [ class "col-md-6" ]
-            ( editParameterValuesView instance otherParametersRight otherParameterValues otherParameterInfos maybeInstanceParameterForm enabled visibleSecrets )
-          ]
+          [ class "col-md-6" ]
+          ( editParameterValuesView instance otherParametersRight otherParameterValues otherParameterInfos maybeInstanceParameterForm enabled visibleSecrets )
+        ]
       ]
 
 templateSelectionView currentTemplate selectedTemplate templates instance =
