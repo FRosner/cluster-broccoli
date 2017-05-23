@@ -26,13 +26,57 @@ normalParamColor = "#eee"
 
 editView instance templates maybeInstanceParameterForm visibleSecrets =
   let
-    otherParameters = List.filter (\p -> p /= "id") instance.template.parameters
-    otherParameterValues = Dict.remove "id" instance.parameterValues
-    otherParameterInfos = Dict.remove "id" instance.template.parameterInfos
-    formIsBeingEdited = MaybeUtils.isDefined maybeInstanceParameterForm
     selectedTemplate = Maybe.andThen (\f -> f.selectedTemplate) maybeInstanceParameterForm
+    formIsBeingEdited = MaybeUtils.isDefined maybeInstanceParameterForm
   in
-    let (otherParametersLeft, otherParametersRight) =
+    Html.form
+      [ onSubmit (ApplyParameterValueChanges instance maybeInstanceParameterForm) ]
+      ( List.concat
+        [ [ h5 [] [ text "Template" ]
+          , templateSelectionView instance.template selectedTemplate templates instance
+          ]
+        , parametersView "Parameters" instance instance.template maybeInstanceParameterForm visibleSecrets (not (MaybeUtils.isDefined selectedTemplate))
+        , selectedTemplate
+          |> Maybe.map (\t -> parametersView "New Parameters" instance t maybeInstanceParameterForm visibleSecrets True)
+          |> Maybe.withDefault []
+        , [ div
+            [ class "row"
+            , style [ ("margin-bottom", "15px") ]
+            ]
+            [ div
+              [ class "col-md-6" ]
+              [ iconButtonText
+                  ( if (formIsBeingEdited) then "btn btn-success" else "btn btn-default" )
+                  "fa fa-check"
+                  "Apply"
+                  [ disabled (not formIsBeingEdited)
+                  , type_ "submit"
+                  ]
+              , text " "
+              , iconButtonText
+                  ( if (formIsBeingEdited) then "btn btn-warning" else "btn btn-default" )
+                  "fa fa-ban"
+                  "Discard"
+                  [ disabled (not formIsBeingEdited)
+                  , type_ "button"
+                  , onClick (DiscardParameterValueChanges instance.id)
+                  ]
+              ]
+            ]
+          ]
+        ]
+      )
+
+parametersView parametersH instance template maybeInstanceParameterForm visibleSecrets enabled =
+  let
+    otherParameters = List.filter (\p -> p /= "id") template.parameters
+    otherParameterValues = Dict.remove "id" instance.parameterValues
+    otherParameterInfos = Dict.remove "id" template.parameterInfos
+  in
+    let
+      ( otherParametersLeft
+      , otherParametersRight
+      ) =
       let firstHalf =
         otherParameters
           |> List.length
@@ -44,51 +88,23 @@ editView instance templates maybeInstanceParameterForm visibleSecrets =
         , List.drop firstHalf otherParameters
         )
     in
-      Html.form
-        [ onSubmit (ApplyParameterValueChanges instance maybeInstanceParameterForm) ]
-        [ h5 [] [ text "Template" ]
-        , templateSelectionView instance.template selectedTemplate templates instance
-        , h5 [] [ text "Parameters" ]
+      [ h5 [] [ text parametersH ]
         , div
           [ class "row" ]
           [ div
             [ class "col-md-6" ]
-            [ ( editParameterValueView instance instance.parameterValues instance.template.parameterInfos maybeInstanceParameterForm False visibleSecrets "id" ) ]
+            [ ( editParameterValueView instance instance.parameterValues template.parameterInfos maybeInstanceParameterForm False visibleSecrets "id" ) ]
           ]
         , div
           [ class "row" ]
           [ div
             [ class "col-md-6" ]
-            ( editParameterValuesView instance otherParametersLeft otherParameterValues otherParameterInfos maybeInstanceParameterForm visibleSecrets )
+            ( editParameterValuesView instance otherParametersLeft otherParameterValues otherParameterInfos maybeInstanceParameterForm enabled visibleSecrets )
           , div
             [ class "col-md-6" ]
-            ( editParameterValuesView instance otherParametersRight otherParameterValues otherParameterInfos maybeInstanceParameterForm visibleSecrets )
+            ( editParameterValuesView instance otherParametersRight otherParameterValues otherParameterInfos maybeInstanceParameterForm enabled visibleSecrets )
           ]
-        , div
-          [ class "row"
-          , style [ ("margin-bottom", "15px") ]
-          ]
-          [ div
-            [ class "col-md-6" ]
-            [ iconButtonText
-                ( if (formIsBeingEdited) then "btn btn-success" else "btn btn-default" )
-                "fa fa-check"
-                "Apply"
-                [ disabled (not formIsBeingEdited)
-                , type_ "submit"
-                ]
-            , text " "
-            , iconButtonText
-                ( if (formIsBeingEdited) then "btn btn-warning" else "btn btn-default" )
-                "fa fa-ban"
-                "Discard"
-                [ disabled (not formIsBeingEdited)
-                , type_ "button"
-                , onClick (DiscardParameterValueChanges instance.id)
-                ]
-            ]
-          ]
-        ]
+      ]
 
 templateSelectionView currentTemplate selectedTemplate templates instance =
   let templatesWithoutCurrentTemplate =
@@ -127,11 +143,10 @@ templateOption currentTemplate selectedTemplate template =
       , text ")"
       ]
 
-editParameterValuesView instance parameters parameterValues parameterInfos maybeInstanceParameterForm visibleSecrets =
+editParameterValuesView instance parameters parameterValues parameterInfos maybeInstanceParameterForm enabled visibleSecrets =
   List.map
-    ( editParameterValueView instance parameterValues parameterInfos maybeInstanceParameterForm True visibleSecrets )
+    ( editParameterValueView instance parameterValues parameterInfos maybeInstanceParameterForm enabled visibleSecrets )
     parameters
-
 
 editParameterValueView : Instance -> Dict String String -> Dict String ParameterInfo -> Maybe InstanceParameterForm -> Bool -> Set (InstanceId, String) -> String -> Html UpdateBodyViewMsg
 editParameterValueView instance parameterValues parameterInfos maybeInstanceParameterForm enabled visibleSecrets parameter =
