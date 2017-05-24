@@ -151,7 +151,7 @@ view model =
             model.instances
             model.bodyUiModel
         )
-    , text (toString model)
+    -- , text (toString model) -- enable this for a debug view of the whole model
     , Views.Footer.view model.aboutInfo model.wsConnected
     ]
 
