@@ -32,7 +32,7 @@ trait BroccoliWebsocketSecurity extends AsyncAuth with AuthConfigImpl with Loggi
         maybeUser.recover {
           case exception =>
             Logger.info(s"Authenticating the following session failed (session probably outdated): $tokenString") // TODO log level
-            (None, identity)
+            (None, identity[Result] _)
         }.flatMap {
           // TODO do we need the updater here? can we even use cookies or should we authenticate for each new WS connection?
           case (Some(user), updater) =>
