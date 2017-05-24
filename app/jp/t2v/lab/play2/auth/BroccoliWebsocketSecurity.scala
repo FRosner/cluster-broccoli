@@ -15,7 +15,6 @@ import scala.concurrent.Future
 
 trait BroccoliWebsocketSecurity extends AsyncAuth with AuthConfigImpl with Logging {
 
-  // TODO get rid of all this useless self inheritance implicit piece of ****?
   self: Controller with AuthConfig =>
 
   val securityService: SecurityService
