@@ -46,11 +46,11 @@ updateLoginStatus message model =
       ( { model
         | authRequired = Just True
         }
-      , Cmd.none
+      , Ws.disconnect model.location
       )
     FetchLogout (Err error) ->
       ( model
-      , ( CmdUtils.sendMsg ( UpdateErrorsMsg ( AddError "Logout failed." ) ) )
+      , Ws.disconnect model.location
       )
     FetchVerify (Ok string) ->
       let s = Debug.log "FetchVerify Ok" string

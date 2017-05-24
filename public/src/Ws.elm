@@ -1,4 +1,4 @@
-module Ws exposing (update, listen, send, connect)
+module Ws exposing (update, listen, send, connect, disconnect)
 
 import Json.Decode as Decode exposing (field)
 
@@ -248,6 +248,9 @@ showError prefix error =
 
 connect location =
   Websocket.connect WsConnectError WsConnect (locationToWsUrl location)
+
+disconnect location =
+  Websocket.disconnect WsErrorDisconnect WsSuccessDisconnect (locationToWsUrl location)
 
 listen location =
   -- WebSocket.listen "ws://localhost:9000/ws" ProcessWsMsg -- TODO relative URL

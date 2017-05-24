@@ -66,6 +66,18 @@ update msg model =
         ( model
         , Cmd.none
         )
+    WsSuccessDisconnect url ->
+      let l = Debug.log "SuccessDisconnect" url
+      in
+        ( { model | wsConnected = False }
+        , Cmd.none
+        )
+    WsErrorDisconnect ( url, error ) ->
+      let l = Debug.log "ErrorDisconnect" ( url, error )
+      in
+        ( model
+        , Cmd.none
+        )
     WsConnectionLost url ->
       let l = Debug.log "ConnectionLost" url
       in
