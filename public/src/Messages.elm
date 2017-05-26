@@ -25,6 +25,7 @@ type AnyMsg
   | UpdateLoginStatusMsg Updates.Messages.UpdateLoginStatusMsg
   | UpdateBodyViewMsg Updates.Messages.UpdateBodyViewMsg
   | OnLocationChange Location
+  | TemplateFilter String
   | NoOp
 
 type IncomingWsMsgType

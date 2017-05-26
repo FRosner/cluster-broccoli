@@ -30,6 +30,8 @@ import Navigation exposing (Location)
 
 import Dict exposing (Dict)
 
+import Regex exposing (Regex)
+
 init : Location -> ( Model, Cmd AnyMsg )
 init location =
   ( Model.initial location (Routing.parseLocation location)
@@ -136,6 +138,16 @@ update msg model =
           }
         , Cmd.none
         )
+    TemplateFilter regexString ->
+      ( { model
+        | templateFilter =
+            if (String.isEmpty regexString) then
+              Nothing
+            else
+              Just (Regex.regex regexString)
+        }
+      , Cmd.none
+      )
     NoOp -> (model, Cmd.none)
 
 view : Model -> Html AnyMsg
@@ -147,7 +159,14 @@ view model =
     , Html.map
         UpdateBodyViewMsg
         ( Views.Body.view
-            model.templates
+            ( Dict.filter
+              ( \k v ->
+                  model.templateFilter
+                  |> Maybe.map (\f -> Regex.contains f k)
+                  |> Maybe.withDefault True
+              )
+              model.templates
+            )
             model.instances
             model.bodyUiModel
         )

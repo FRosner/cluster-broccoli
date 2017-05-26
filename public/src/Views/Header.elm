@@ -1,14 +1,20 @@
 module Views.Header exposing (view)
 
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (onInput, onSubmit)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
 import Models.Ui.LoginForm exposing (LoginForm)
+
 import Messages exposing (AnyMsg(..))
+
 import Updates.Messages exposing (UpdateLoginFormMsg(..))
+
 import Utils.HtmlUtils exposing (icon)
+
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (onInput, onSubmit)
+
+import Regex exposing (Regex)
 
 view : Maybe AboutInfo -> LoginForm -> Maybe Bool -> Html AnyMsg
 view maybeAboutInfo loginFormModel maybeAuthRequired =
@@ -92,6 +98,25 @@ navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired l
     ]
     [ Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired)
     , userInfoView maybeUserInfo
+    , templateFilter
+    ]
+
+templateFilter =
+  ul
+    [ class "nav navbar-nav navbar-right" ]
+    [ li []
+      [ div [ class "form-group navbar-form" ]
+        [ input
+          [ type_ "text"
+          , id "header-template-filter"
+          , class "form-control"
+          , onInput TemplateFilter
+          , placeholder "Template Filter"
+          -- , value (toString (Regex.regex ".*")) -- TODO toString Regex doesn't work
+          ]
+          []
+        ]
+      ]
     ]
 
 userInfoView maybeUserInfo =

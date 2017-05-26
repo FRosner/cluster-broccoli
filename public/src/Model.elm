@@ -3,12 +3,13 @@ module Model exposing (Model, Route(..), initial)
 import Models.Resources.Template exposing (Template, TemplateId)
 import Models.Resources.Instance exposing (Instance, InstanceId)
 import Models.Resources.AboutInfo exposing (AboutInfo)
-import Models.Resources.UserInfo exposing (UserInfo)
 import Models.Ui.BodyUiModel as BodyUiModel exposing (BodyUiModel)
 import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
 import Models.Ui.Notifications exposing (Errors)
 
 import Navigation exposing (Location)
+
+import Regex exposing (Regex)
 
 import Dict exposing (Dict)
 
@@ -26,6 +27,7 @@ type alias Model =
   , wsConnected : Bool
   , route : Route
   , location : Location
+  , templateFilter : Maybe Regex
   }
 
 initial : Location -> Route -> Model
@@ -40,4 +42,5 @@ initial location route =
   , wsConnected = False
   , route = route
   , location = location
+  , templateFilter = Nothing
   }
