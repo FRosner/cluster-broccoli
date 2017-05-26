@@ -10,7 +10,7 @@ import Utils.HtmlUtils exposing (icon)
 
 view : Maybe AboutInfo -> Bool -> Html AnyMsg
 view maybeAboutInfo wsConnected =
-  footer [ class "footer" ]
+  footer [ class "footer navbar-fixed-bottom" ]
     [ div [ class "container" ]
       [ div
         [ class "row" ]
