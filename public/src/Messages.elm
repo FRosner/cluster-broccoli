@@ -26,6 +26,7 @@ type AnyMsg
   | UpdateBodyViewMsg Updates.Messages.UpdateBodyViewMsg
   | OnLocationChange Location
   | TemplateFilter String
+  | InstanceFilter String
   | NoOp
 
 type IncomingWsMsgType

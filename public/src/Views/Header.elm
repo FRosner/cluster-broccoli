@@ -99,6 +99,7 @@ navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired l
     [ Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired)
     , userInfoView maybeUserInfo
     , templateFilter
+    , instanceFilter
     ]
 
 templateFilter =
@@ -112,6 +113,24 @@ templateFilter =
           , class "form-control"
           , onInput TemplateFilter
           , placeholder "Template Filter"
+          -- , value (toString (Regex.regex ".*")) -- TODO toString Regex doesn't work
+          ]
+          []
+        ]
+      ]
+    ]
+
+instanceFilter =
+  ul
+    [ class "nav navbar-nav navbar-right" ]
+    [ li []
+      [ div [ class "form-group navbar-form" ]
+        [ input
+          [ type_ "text"
+          , id "header-instance-filter"
+          , class "form-control"
+          , onInput InstanceFilter
+          , placeholder "Instance Filter"
           -- , value (toString (Regex.regex ".*")) -- TODO toString Regex doesn't work
           ]
           []

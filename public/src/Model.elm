@@ -28,6 +28,7 @@ type alias Model =
   , route : Route
   , location : Location
   , templateFilter : Maybe Regex
+  , instanceFilter : Maybe Regex
   }
 
 initial : Location -> Route -> Model
@@ -43,4 +44,5 @@ initial location route =
   , route = route
   , location = location
   , templateFilter = Nothing
+  , instanceFilter = Nothing
   }

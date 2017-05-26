@@ -148,6 +148,16 @@ update msg model =
         }
       , Cmd.none
       )
+    InstanceFilter regexString ->
+      ( { model
+        | instanceFilter =
+            if (String.isEmpty regexString) then
+              Nothing
+            else
+              Just (Regex.regex regexString)
+        }
+      , Cmd.none
+      )
     NoOp -> (model, Cmd.none)
 
 view : Model -> Html AnyMsg
@@ -167,7 +177,14 @@ view model =
               )
               model.templates
             )
-            model.instances
+            ( Dict.filter
+              ( \k v ->
+                  model.instanceFilter
+                  |> Maybe.map (\f -> Regex.contains f k)
+                  |> Maybe.withDefault True
+              )
+              model.instances
+            )
             model.bodyUiModel
         )
     -- , text (toString model) -- enable this for a debug view of the whole model
