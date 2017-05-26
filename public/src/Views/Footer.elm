@@ -40,7 +40,7 @@ aboutInfoToProjectText : AboutInfo -> List (Html msg)
 aboutInfoToProjectText aboutInfo =
   [ span
     [ id "footer-project-info"
-    , class "hidden-xs"
+    , class "hidden-xs hidden-sm"
     ]
     [ text <|
         String.concat
