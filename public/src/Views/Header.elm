@@ -96,11 +96,19 @@ navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired l
     [ class "collapse navbar-collapse"
     , id "navbar-collapse"
     ]
-    [ Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired)
-    , userInfoView maybeUserInfo
-    , templateFilter
-    , instanceFilter
-    ]
+    ( List.concat
+      [ [ Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired)
+        , userInfoView maybeUserInfo
+        ]
+      , if (maybeAuthRequired == Just True || maybeAuthRequired == Nothing) then
+          []
+        else
+          [ templateFilter
+          , instanceFilter
+          ]
+      ]
+
+    )
 
 templateFilter =
   ul
