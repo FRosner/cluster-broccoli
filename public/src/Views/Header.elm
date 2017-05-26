@@ -112,36 +112,48 @@ navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired l
 
 templateFilter =
   ul
-    [ class "nav navbar-nav navbar-right" ]
+    [ class "nav navbar-nav navbar-left" ]
     [ li []
       [ div [ class "form-group navbar-form" ]
-        [ input
-          [ type_ "text"
-          , id "header-template-filter"
-          , class "form-control"
-          , onInput TemplateFilter
-          , placeholder "Template Filter"
-          -- , value (toString (Regex.regex ".*")) -- TODO toString Regex doesn't work
+        [ div
+          [ class "input-group" ]
+          [ span
+            [ class "input-group-addon" ]
+            [ icon "fa fa-filter" [ title "Template Filter" ] ]
+          , input
+            [ type_ "text"
+            , id "header-template-filter"
+            , class "form-control"
+            , onInput TemplateFilter
+            , placeholder "Template Filter"
+            -- , value (toString (Regex.regex ".*")) -- TODO toString Regex doesn't work
+            ]
+            []
           ]
-          []
         ]
       ]
     ]
 
 instanceFilter =
   ul
-    [ class "nav navbar-nav navbar-right" ]
+    [ class "nav navbar-nav navbar-left" ]
     [ li []
       [ div [ class "form-group navbar-form" ]
-        [ input
-          [ type_ "text"
-          , id "header-instance-filter"
-          , class "form-control"
-          , onInput InstanceFilter
-          , placeholder "Instance Filter"
-          -- , value (toString (Regex.regex ".*")) -- TODO toString Regex doesn't work
+        [ div
+          [ class "input-group" ]
+          [ span
+            [ class "input-group-addon" ]
+            [ icon "fa fa-filter" [ title "Instance Filter" ] ]
+          , input
+            [ type_ "text"
+            , id "header-instance-filter"
+            , class "form-control"
+            , onInput InstanceFilter
+            , placeholder "Instance Filter"
+            -- , value (toString (Regex.regex ".*")) -- TODO toString Regex doesn't work
+            ]
+            []
           ]
-          []
         ]
       ]
     ]
