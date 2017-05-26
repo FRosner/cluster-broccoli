@@ -16,8 +16,8 @@ import Html.Events exposing (onInput, onSubmit)
 
 import Regex exposing (Regex)
 
-view : Maybe AboutInfo -> LoginForm -> Maybe Bool -> Html AnyMsg
-view maybeAboutInfo loginFormModel maybeAuthRequired =
+view : Maybe AboutInfo -> LoginForm -> Maybe Bool -> String -> String -> Html AnyMsg
+view maybeAboutInfo loginFormModel maybeAuthRequired templateFilterString instanceFilterString =
   let
     ( maybeUserInfo
     , maybeAuthEnabled
@@ -33,7 +33,7 @@ view maybeAboutInfo loginFormModel maybeAuthRequired =
         [ div
           [ class "container-fluid" ]
           [ navbarHeader maybeAboutInfo
-          , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel
+          , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString
           ]
         ]
       ]
@@ -90,8 +90,8 @@ navbarToggleButton =
     , span [ class "icon-bar" ] []
     ]
 
-navbarCollapse : Maybe AboutInfo -> Maybe UserInfo -> Maybe Bool -> Maybe Bool -> LoginForm -> Html AnyMsg
-navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel =
+navbarCollapse : Maybe AboutInfo -> Maybe UserInfo -> Maybe Bool -> Maybe Bool -> LoginForm -> String -> String -> Html AnyMsg
+navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString =
   div
     [ class "collapse navbar-collapse"
     , id "navbar-collapse"
@@ -103,14 +103,14 @@ navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired l
       , if (maybeAuthRequired == Just True || maybeAuthRequired == Nothing) then
           []
         else
-          [ templateFilter
-          , instanceFilter
+          [ templateFilter templateFilterString
+          , instanceFilter instanceFilterString
           ]
       ]
 
     )
 
-templateFilter =
+templateFilter filterString =
   ul
     [ class "nav navbar-nav navbar-left" ]
     [ li []
@@ -126,7 +126,7 @@ templateFilter =
             , class "form-control"
             , onInput TemplateFilter
             , placeholder "Template Filter"
-            -- , value (toString (Regex.regex ".*")) -- TODO toString Regex doesn't work
+            , value filterString
             ]
             []
           ]
@@ -134,7 +134,7 @@ templateFilter =
       ]
     ]
 
-instanceFilter =
+instanceFilter filterString =
   ul
     [ class "nav navbar-nav navbar-left" ]
     [ li []
@@ -150,7 +150,7 @@ instanceFilter =
             , class "form-control"
             , onInput InstanceFilter
             , placeholder "Instance Filter"
-            -- , value (toString (Regex.regex ".*")) -- TODO toString Regex doesn't work
+            , value filterString
             ]
             []
           ]

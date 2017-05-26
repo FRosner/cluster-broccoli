@@ -138,24 +138,12 @@ update msg model =
           }
         , Cmd.none
         )
-    TemplateFilter regexString ->
-      ( { model
-        | templateFilter =
-            if (String.isEmpty regexString) then
-              Nothing
-            else
-              Just (Regex.regex regexString)
-        }
+    TemplateFilter filterString ->
+      ( { model | templateFilter = filterString }
       , Cmd.none
       )
-    InstanceFilter regexString ->
-      ( { model
-        | instanceFilter =
-            if (String.isEmpty regexString) then
-              Nothing
-            else
-              Just (Regex.regex regexString)
-        }
+    InstanceFilter filterString ->
+      ( { model | instanceFilter = filterString }
       , Cmd.none
       )
     NoOp -> (model, Cmd.none)
@@ -164,27 +152,13 @@ view : Model -> Html AnyMsg
 view model =
   div
     []
-    [ Views.Header.view model.aboutInfo model.loginForm model.authRequired
+    [ Views.Header.view model.aboutInfo model.loginForm model.authRequired model.templateFilter model.instanceFilter
     , Views.Notifications.view model.errors
     , Html.map
         UpdateBodyViewMsg
         ( Views.Body.view
-            ( Dict.filter
-              ( \k v ->
-                  model.templateFilter
-                  |> Maybe.map (\f -> Regex.contains f k)
-                  |> Maybe.withDefault True
-              )
-              model.templates
-            )
-            ( Dict.filter
-              ( \k v ->
-                  model.instanceFilter
-                  |> Maybe.map (\f -> Regex.contains f k)
-                  |> Maybe.withDefault True
-              )
-              model.instances
-            )
+            ( Dict.filter (\k v -> String.contains model.templateFilter k) model.templates )
+            ( Dict.filter (\k v -> String.contains model.instanceFilter k) model.instances )
             model.bodyUiModel
         )
     -- , text (toString model) -- enable this for a debug view of the whole model

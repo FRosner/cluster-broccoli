@@ -27,8 +27,8 @@ type alias Model =
   , wsConnected : Bool
   , route : Route
   , location : Location
-  , templateFilter : Maybe Regex
-  , instanceFilter : Maybe Regex
+  , templateFilter : String
+  , instanceFilter : String
   }
 
 initial : Location -> Route -> Model
@@ -43,6 +43,6 @@ initial location route =
   , wsConnected = False
   , route = route
   , location = location
-  , templateFilter = Nothing
-  , instanceFilter = Nothing
+  , templateFilter = ""
+  , instanceFilter = ""
   }
