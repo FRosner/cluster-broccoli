@@ -39,7 +39,9 @@ view maybeAboutInfo wsConnected =
 aboutInfoToProjectText : AboutInfo -> List (Html msg)
 aboutInfoToProjectText aboutInfo =
   [ span
-    [ id "footer-project-info" ]
+    [ id "footer-project-info"
+    , class "hidden-xs"
+    ]
     [ text <|
         String.concat
           [ aboutInfo.projectInfo.name
