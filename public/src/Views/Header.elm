@@ -31,7 +31,12 @@ view maybeAboutInfo loginFormModel maybeAuthRequired templateFilterString instan
       [ nav
         [ class "navbar navbar-default navbar-fixed-top" ]
         [ div
-          [ class "container-fluid" ]
+          [ class "container-fluid"
+          , style
+            [ ("padding-left", "35px")
+            , ("padding-right", "35px")
+            ]
+          ]
           [ navbarHeader maybeAboutInfo
           , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString
           ]
