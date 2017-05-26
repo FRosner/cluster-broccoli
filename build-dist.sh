@@ -5,4 +5,4 @@ set -eou pipefail
 cd public
 npm run package
 cd ..
-sbt dist
+sbt clean && sbt dist
