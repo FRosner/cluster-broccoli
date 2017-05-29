@@ -2,6 +2,7 @@ module Views.InstanceView exposing (view)
 
 import Models.Resources.ServiceStatus exposing (..)
 import Models.Resources.JobStatus as JobStatus exposing (..)
+import Models.Resources.Role as Role exposing (Role(..))
 
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 
@@ -26,7 +27,7 @@ serviceColumnWidth = 500
 templateVersionColumnWidth = 1
 jobControlsColumnWidth = 200
 
-view instances selectedInstances expandedInstances instanceParameterForms visibleSecrets templates =
+view instances selectedInstances expandedInstances instanceParameterForms visibleSecrets templates maybeRole =
   let (instancesIds) =
     instances
       |> Dict.keys
@@ -101,11 +102,11 @@ view instances selectedInstances expandedInstances instanceParameterForms visibl
         , tbody []
           ( instances
             |> Dict.values
-            |> List.concatMap (instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates)
+            |> List.concatMap (instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates maybeRole)
           )
         ]
 
-instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates instance =
+instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates maybeRole instance =
   let
     ( instanceExpanded
     , instanceParameterForm
@@ -180,7 +181,9 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
             "Start Instance"
             ( List.append
               [ onClick (StartInstance instance.id) ]
-              ( if (instance.jobStatus == JobStatus.JobUnknown) then
+              ( if (instance.jobStatus == JobStatus.JobUnknown
+                || (maybeRole /= Just Operator && maybeRole /= Just Administrator)
+                ) then
                   [ attribute "disabled" "disabled" ]
                 else
                   []
@@ -193,7 +196,10 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
             "Stop Instance"
             ( List.append
               [ onClick (StopInstance instance.id) ]
-              ( if (instance.jobStatus == JobStatus.JobStopped || instance.jobStatus == JobStatus.JobUnknown) then
+              ( if (instance.jobStatus == JobStatus.JobStopped
+                || instance.jobStatus == JobStatus.JobUnknown
+                || (maybeRole /= Just Operator && maybeRole /= Just Administrator)
+                ) then
                   [ attribute "disabled" "disabled" ]
                 else
                   []

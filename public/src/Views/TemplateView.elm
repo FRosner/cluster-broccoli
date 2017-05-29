@@ -135,6 +135,7 @@ view instances templates bodyUiModel maybeRole template =
               bodyUiModel.instanceParameterForms
               bodyUiModel.visibleEditInstanceSecrets
               templates
+              maybeRole
             )
           ]
         ]
