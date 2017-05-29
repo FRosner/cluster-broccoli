@@ -107,7 +107,15 @@ view instances templates bodyUiModel maybeRole template =
                         "btn btn-default"
                         "fa fa-trash"
                         "Delete"
-                        [ onClick (DeleteSelectedInstances selectedTemplateInstances) ]
+                        ( List.concat
+                          [ ( if (Set.isEmpty selectedTemplateInstances) then
+                                [ attribute "disabled" "disabled" ]
+                              else
+                                []
+                            )
+                          , [ onClick (DeleteSelectedInstances selectedTemplateInstances) ]
+                          ]
+                        )
                     ]
                 ]
               )
