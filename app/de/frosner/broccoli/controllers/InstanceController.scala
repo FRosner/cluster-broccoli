@@ -113,40 +113,54 @@ object InstanceController {
   }
 
   def create(instanceCreation: InstanceCreation, loggedIn: Account, instanceService: InstanceService): InstanceCreationResult = {
-    val maybeId = instanceCreation.parameters.get("id")
-    val instanceRegex = loggedIn.instanceRegex
-    maybeId match {
-      case Some(id) if id.matches(instanceRegex) =>
-        val tryNewInstance = instanceService.addInstance(instanceCreation)
-        tryNewInstance.map { instanceWithStatus =>
-          InstanceCreationSuccess(instanceCreation, instanceWithStatus)
-        }.recover { case error =>
-          InstanceCreationFailure(instanceCreation, error.toString)
-        }.get
-      case Some(id) =>
-        InstanceCreationFailure(
-          instanceCreation,
-          s"Only allowed to create instances matching $instanceRegex"
-        )
-      case None =>
-        InstanceCreationFailure(
-          instanceCreation,
-          s"Instance ID missing"
-        )
+    if (loggedIn.role == Role.Administrator) {
+      val maybeId = instanceCreation.parameters.get("id")
+      val instanceRegex = loggedIn.instanceRegex
+      maybeId match {
+        case Some(id) if id.matches(instanceRegex) =>
+          val tryNewInstance = instanceService.addInstance(instanceCreation)
+          tryNewInstance.map { instanceWithStatus =>
+            InstanceCreationSuccess(instanceCreation, instanceWithStatus)
+          }.recover { case error =>
+            InstanceCreationFailure(instanceCreation, error.toString)
+          }.get
+        case Some(id) =>
+          InstanceCreationFailure(
+            instanceCreation,
+            s"Only allowed to create instances matching $instanceRegex"
+          )
+        case None =>
+          InstanceCreationFailure(
+            instanceCreation,
+            s"Instance ID missing"
+          )
+      }
+    } else {
+      InstanceCreationFailure(
+        instanceCreation,
+        s"Only administrators are allowed to create new instances"
+      )
     }
   }
 
   def delete(id: String, loggedIn: Account, instanceService: InstanceService): InstanceDeletionResult = {
-    val instanceRegex = loggedIn.instanceRegex
-    if (id.matches(instanceRegex)) {
-      val maybeDeletedInstance = instanceService.deleteInstance(id)
-      maybeDeletedInstance.map {
-        instance => InstanceDeletionSuccess(id, instance)
-      }.recover {
-        case throwable => InstanceDeletionFailure(id, throwable.toString)
-      }.get
+    if (loggedIn.role == Role.Administrator) {
+      val instanceRegex = loggedIn.instanceRegex
+      if (id.matches(instanceRegex)) {
+        val maybeDeletedInstance = instanceService.deleteInstance(id)
+        maybeDeletedInstance.map {
+          instance => InstanceDeletionSuccess(id, instance)
+        }.recover {
+          case throwable => InstanceDeletionFailure(id, throwable.toString)
+        }.get
+      } else {
+        InstanceDeletionFailure(id, s"Only allowed to delete instances matching $instanceRegex")
+      }
     } else {
-      InstanceDeletionFailure(id, s"Only allowed to delete instances matching $instanceRegex")
+      InstanceDeletionFailure(
+        id,
+        s"Only administrators are allowed to delete instances"
+      )
     }
   }
 
@@ -165,33 +179,40 @@ object InstanceController {
 
   def update(id: String, instanceUpdate: InstanceUpdate, loggedIn: Account, instanceService: InstanceService): InstanceUpdateResult = {
     val user = loggedIn
-    val instanceRegex = user.instanceRegex
-    if (!id.matches(instanceRegex)) {
-      InstanceUpdateFailure(instanceUpdate, s"Only allowed to update instances matching $instanceRegex")
-    } else {
-      val maybeStatusUpdater = instanceUpdate.status
-      val maybeParameterValuesUpdater = instanceUpdate.parameterValues
-      val maybeTemplateSelector = instanceUpdate.selectedTemplate
-      if (maybeStatusUpdater.isEmpty && maybeParameterValuesUpdater.isEmpty && maybeTemplateSelector.isEmpty) {
-        InstanceUpdateFailure(instanceUpdate, "Invalid request to update an instance. Please refer to the API documentation.")
-      } else if ((maybeParameterValuesUpdater.isDefined || maybeTemplateSelector.isDefined) && user.role != Role.Administrator) {
-        InstanceUpdateFailure(instanceUpdate, s"Updating parameter values or templates only allowed for administrators.")
+    if (user.role == Role.Administrator || user.role == Role.Operator) {
+      val instanceRegex = user.instanceRegex
+      if (!id.matches(instanceRegex)) {
+        InstanceUpdateFailure(instanceUpdate, s"Only allowed to update instances matching $instanceRegex")
       } else {
-        val maybeExistingAndChangedInstance = instanceService.updateInstance(
-          id = id,
-          statusUpdater = maybeStatusUpdater,
-          parameterValuesUpdater = maybeParameterValuesUpdater,
-          templateSelector = maybeTemplateSelector
-        )
-        maybeExistingAndChangedInstance match {
-          case Success(changedInstance) => InstanceUpdateSuccess(instanceUpdate, changedInstance)
-          case Failure(throwable: FileNotFoundException) => InstanceUpdateFailure(instanceUpdate, s"Instance not found: $throwable")
-          case Failure(throwable: InstanceNotFoundException) => InstanceUpdateFailure(instanceUpdate, s"Instance not found: $throwable")
-          case Failure(throwable: IllegalArgumentException) => InstanceUpdateFailure(instanceUpdate, s"Invalid request to update an instance: $throwable")
-          case Failure(throwable: TemplateNotFoundException) => InstanceUpdateFailure(instanceUpdate, s"Invalid request to update an instance: $throwable")
-          case Failure(throwable) => InstanceUpdateFailure(instanceUpdate, s"Something went wrong when updating the instance: $throwable")
+        val maybeStatusUpdater = instanceUpdate.status
+        val maybeParameterValuesUpdater = instanceUpdate.parameterValues
+        val maybeTemplateSelector = instanceUpdate.selectedTemplate
+        if (maybeStatusUpdater.isEmpty && maybeParameterValuesUpdater.isEmpty && maybeTemplateSelector.isEmpty) {
+          InstanceUpdateFailure(instanceUpdate, "Invalid request to update an instance. Please refer to the API documentation.")
+        } else if ((maybeParameterValuesUpdater.isDefined || maybeTemplateSelector.isDefined) && user.role != Role.Administrator) {
+          InstanceUpdateFailure(instanceUpdate, s"Updating parameter values or templates only allowed for administrators.")
+        } else {
+          val maybeExistingAndChangedInstance = instanceService.updateInstance(
+            id = id,
+            statusUpdater = maybeStatusUpdater,
+            parameterValuesUpdater = maybeParameterValuesUpdater,
+            templateSelector = maybeTemplateSelector
+          )
+          maybeExistingAndChangedInstance match {
+            case Success(changedInstance) => InstanceUpdateSuccess(instanceUpdate, changedInstance)
+            case Failure(throwable: FileNotFoundException) => InstanceUpdateFailure(instanceUpdate, s"Instance not found: $throwable")
+            case Failure(throwable: InstanceNotFoundException) => InstanceUpdateFailure(instanceUpdate, s"Instance not found: $throwable")
+            case Failure(throwable: IllegalArgumentException) => InstanceUpdateFailure(instanceUpdate, s"Invalid request to update an instance: $throwable")
+            case Failure(throwable: TemplateNotFoundException) => InstanceUpdateFailure(instanceUpdate, s"Invalid request to update an instance: $throwable")
+            case Failure(throwable) => InstanceUpdateFailure(instanceUpdate, s"Something went wrong when updating the instance: $throwable")
+          }
         }
       }
+    } else {
+      InstanceUpdateFailure(
+        instanceUpdate,
+        s"Only administrators and operators are allowed to update instances"
+      )
     }
   }
 
