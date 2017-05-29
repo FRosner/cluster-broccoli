@@ -163,6 +163,7 @@ instanceFilter filterString =
       ]
     ]
 
+userInfoView : Maybe UserInfo -> Html a
 userInfoView maybeUserInfo =
   case maybeUserInfo of
     Just userInfo ->
@@ -185,7 +186,7 @@ userInfoView maybeUserInfo =
               [ li []
                   [ a []
                     [ text "Role: "
-                    , code [] [ text userInfo.role ]
+                    , code [] [ text (toString userInfo.role) ]
                     ]
                   ]
               , li []
