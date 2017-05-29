@@ -41,7 +41,13 @@ editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole 
         [ [ h5 [] [ text "Template" ]
           , templateSelectionView instance.template selectedTemplate templates instance maybeRole
           ]
-        , parametersView "Parameters" instance instance.template maybeInstanceParameterForm visibleSecrets (not (MaybeUtils.isDefined selectedTemplate))
+        , parametersView
+            "Parameters"
+            instance
+            instance.template
+            maybeInstanceParameterForm
+            visibleSecrets
+            (not (MaybeUtils.isDefined selectedTemplate) && (maybeRole == Just Administrator))
         , selectedTemplate
           |> Maybe.map (\t -> parametersView "New Parameters" instance t maybeInstanceParameterForm visibleSecrets True)
           |> Maybe.withDefault []
