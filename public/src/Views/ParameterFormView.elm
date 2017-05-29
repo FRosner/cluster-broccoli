@@ -154,7 +154,7 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
     , maybeParameterInfo
     , maybeEditedValue
     ) =
-    ( MaybeUtils.concat (Dict.get parameter parameterValues)
+    ( Dict.get parameter parameterValues
     , Dict.get parameter parameterInfos
     , MaybeUtils.concat (Maybe.andThen (\f -> (Dict.get parameter f.changedParameterValues)) maybeInstanceParameterForm)
     )
@@ -168,8 +168,11 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
       ( maybeParameterInfo
           |> Maybe.andThen (\i -> i.default)
           |> Maybe.withDefault ""
-      , maybeEditedValue
-          |> Maybe.withDefault (Maybe.withDefault "concealed" maybeParameterValue)
+      , case ( maybeEditedValue, maybeParameterValue ) of
+          ( Nothing, Nothing ) -> ""
+          ( Just edited, _ ) -> edited
+          ( Nothing, Just Nothing ) -> "concealed"
+          ( Nothing, Just (Just original) ) -> original
       , maybeParameterInfo
           |> Maybe.andThen (\i -> i.secret)
           |> Maybe.withDefault False
