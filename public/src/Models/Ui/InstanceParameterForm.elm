@@ -7,8 +7,8 @@ import Dict exposing (Dict)
 import Maybe exposing (Maybe)
 
 type alias InstanceParameterForm =
-  { originalParameterValues : Dict String String
-  , changedParameterValues : Dict String String
+  { originalParameterValues : Dict String (Maybe String)
+  , changedParameterValues : Dict String (Maybe String)
   , selectedTemplate : Maybe Template
   }
 

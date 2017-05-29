@@ -147,16 +147,16 @@ editParameterValuesView instance parameters parameterValues parameterInfos maybe
     ( editParameterValueView instance parameterValues parameterInfos maybeInstanceParameterForm enabled visibleSecrets )
     parameters
 
-editParameterValueView : Instance -> Dict String String -> Dict String ParameterInfo -> Maybe InstanceParameterForm -> Bool -> Set (InstanceId, String) -> String -> Html UpdateBodyViewMsg
+editParameterValueView : Instance -> Dict String (Maybe String) -> Dict String ParameterInfo -> Maybe InstanceParameterForm -> Bool -> Set (InstanceId, String) -> String -> Html UpdateBodyViewMsg
 editParameterValueView instance parameterValues parameterInfos maybeInstanceParameterForm enabled visibleSecrets parameter =
   let
     ( maybeParameterValue
     , maybeParameterInfo
     , maybeEditedValue
     ) =
-    ( Dict.get parameter parameterValues
+    ( MaybeUtils.concat (Dict.get parameter parameterValues)
     , Dict.get parameter parameterInfos
-    , Maybe.andThen (\f -> (Dict.get parameter f.changedParameterValues)) maybeInstanceParameterForm
+    , MaybeUtils.concat (Maybe.andThen (\f -> (Dict.get parameter f.changedParameterValues)) maybeInstanceParameterForm)
     )
   in
     let
@@ -169,7 +169,7 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
           |> Maybe.andThen (\i -> i.default)
           |> Maybe.withDefault ""
       , maybeEditedValue
-          |> Maybe.withDefault (Maybe.withDefault "" maybeParameterValue)
+          |> Maybe.withDefault (Maybe.withDefault "concealed" maybeParameterValue)
       , maybeParameterInfo
           |> Maybe.andThen (\i -> i.secret)
           |> Maybe.withDefault False
@@ -321,7 +321,7 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
     , maybeEditedValue
     ) =
     ( Dict.get parameter parameterInfos
-    , Maybe.andThen (\f -> (Dict.get parameter f.changedParameterValues)) maybeInstanceParameterForm
+    , MaybeUtils.concat (Maybe.andThen (\f -> (Dict.get parameter f.changedParameterValues)) maybeInstanceParameterForm)
     )
   in
     let

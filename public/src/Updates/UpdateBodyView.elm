@@ -121,6 +121,7 @@ updateBodyView message oldBodyUiModel =
                   f.originalParameterValues
                   |> Dict.union f.changedParameterValues
                   |> Dict.filter (\p v -> List.member p template.parameters)
+                  |> Dict.map (\k v -> Maybe.withDefault "" v)
                 )
                 maybeInstanceParameterForm
               )
@@ -168,7 +169,9 @@ updateBodyView message oldBodyUiModel =
           )
       SubmitNewInstanceCreation templateId parameterValues ->
         let instanceCreationJson =
-          ( InstanceCreation templateId parameterValues )
+          parameterValues
+          |> Dict.map (\k v -> Maybe.withDefault "" v)
+          |> InstanceCreation templateId
           |> InstanceCreation.encoder
         in
           ( oldBodyUiModel -- TODO reset the form when receiving a success message { oldBodyUiModel | expandedNewInstanceForms = resetNewParameterForm templateId oldExpandedNewInstanceForms }
@@ -233,10 +236,10 @@ addParameterValue instance parameter value maybeParameterForm =
     Just parameterForm ->
       let oldParameterValues = parameterForm.changedParameterValues in
         Just
-          ( { parameterForm | changedParameterValues = Dict.insert parameter value oldParameterValues } )
+          ( { parameterForm | changedParameterValues = Dict.insert parameter (Just value) oldParameterValues } )
     Nothing ->
       Just
-        ( { changedParameterValues = Dict.fromList [ ( parameter, value ) ]
+        ( { changedParameterValues = Dict.fromList [ ( parameter, Just value ) ]
           , originalParameterValues = instance.parameterValues
           , selectedTemplate = Nothing
           }
@@ -266,10 +269,10 @@ updateNewInstanceParameterForm parameter value maybeParameterForm =
     Just parameterForm ->
       let oldParameterValues = parameterForm.changedParameterValues in
         Just
-          ( { parameterForm | changedParameterValues = Dict.insert parameter value oldParameterValues } )
+          ( { parameterForm | changedParameterValues = Dict.insert parameter (Just value) oldParameterValues } )
     Nothing ->
       Just
-        ( { changedParameterValues = Dict.fromList [ ( parameter, value ) ]
+        ( { changedParameterValues = Dict.fromList [ ( parameter, Just value ) ]
           , originalParameterValues = Dict.empty
           , selectedTemplate = Nothing
           }

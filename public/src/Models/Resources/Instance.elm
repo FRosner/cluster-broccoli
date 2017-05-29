@@ -13,7 +13,7 @@ type alias InstanceId = String
 type alias Instance =
   { id : InstanceId
   , template : Template
-  , parameterValues : Dict String String
+  , parameterValues : Dict String (Maybe String) -- Nothing as a value here means that you have no right to see the value
   , jobStatus : JobStatus
   , services : List Service
   , periodicRuns : List PeriodicRun
@@ -23,7 +23,7 @@ decoder =
   Decode.map6 Instance
     (field "id" Decode.string)
     (field "template" Template.decoder)
-    (field "parameterValues" (Decode.dict Decode.string))
+    (field "parameterValues" (Decode.dict (Decode.nullable Decode.string)))
     (field "status" JobStatus.decoder)
     (field "services" (Decode.list Service.decoder))
     (field "periodicRuns" (Decode.list PeriodicRun.decoder))

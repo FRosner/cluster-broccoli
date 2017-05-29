@@ -43,7 +43,7 @@ type UpdateBodyViewMsg
   | ToggleEditInstanceSecretVisibility InstanceId String
   | ToggleNewInstanceSecretVisibility TemplateId String
   | ExpandNewInstanceForm Bool TemplateId
-  | SubmitNewInstanceCreation TemplateId (Dict String String)
+  | SubmitNewInstanceCreation TemplateId (Dict String (Maybe String))
   | DiscardNewInstanceCreation TemplateId
   | DeleteSelectedInstances (Set String)
   | StartSelectedInstances (Set String)
