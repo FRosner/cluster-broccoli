@@ -16,6 +16,8 @@ import Time
 
 import Debug
 
+import Routing
+
 import Http exposing (Error(..))
 
 updateLoginStatus : UpdateLoginStatusMsg -> Model -> (Model, Cmd AnyMsg)
@@ -43,13 +45,16 @@ updateLoginStatus message model =
         , Cmd.none
         )
     FetchLogout (Ok string) ->
-      ( { model
-        | authRequired = Just True
-        }
-      , Ws.disconnect model.location
-      )
+      let
+        initialModel = Model.initial model.location (Routing.parseLocation model.location)
+      in
+        ( { initialModel
+          | authRequired = Just True
+          }
+        , Ws.disconnect model.location
+        )
     FetchLogout (Err error) ->
-      ( model
+      ( Model.initial model.location (Routing.parseLocation model.location)
       , Ws.disconnect model.location
       )
     FetchVerify (Ok string) ->
