@@ -214,6 +214,7 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
             instanceParameterForm
             visibleSecrets
             templates
+            maybeRole
         ]
       else
         []
@@ -225,7 +226,7 @@ expandedTdStyle =
   ]
 
 -- TODO as "id" is special we should treat it also special
-instanceDetailView instance maybeInstanceParameterForm visibleSecrets templates =
+instanceDetailView instance maybeInstanceParameterForm visibleSecrets templates maybeRole =
   let periodicRuns =
     List.reverse (List.sortBy .utcSeconds instance.periodicRuns)
   in
@@ -244,7 +245,7 @@ instanceDetailView instance maybeInstanceParameterForm visibleSecrets templates 
           )
         ]
         ( List.append
-          [ ParameterFormView.editView instance templates maybeInstanceParameterForm visibleSecrets
+          [ ParameterFormView.editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole
           ]
           ( if (List.isEmpty periodicRuns) then
               []

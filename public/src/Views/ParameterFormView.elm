@@ -2,6 +2,7 @@ module Views.ParameterFormView exposing (editView, newView)
 
 import Models.Resources.Instance exposing (..)
 import Models.Resources.Template exposing (..)
+import Models.Resources.Role as Role exposing (Role(..))
 import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (InstanceParameterForm)
 
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
@@ -24,7 +25,7 @@ import Json.Decode
 editingParamColor = "rgba(255, 177, 0, 0.46)"
 normalParamColor = "#eee"
 
-editView instance templates maybeInstanceParameterForm visibleSecrets =
+editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole =
   let
     selectedTemplate = Maybe.andThen (\f -> f.selectedTemplate) maybeInstanceParameterForm
     formIsBeingEdited = MaybeUtils.isDefined maybeInstanceParameterForm
@@ -38,7 +39,7 @@ editView instance templates maybeInstanceParameterForm visibleSecrets =
       ]
       ( List.concat
         [ [ h5 [] [ text "Template" ]
-          , templateSelectionView instance.template selectedTemplate templates instance
+          , templateSelectionView instance.template selectedTemplate templates instance maybeRole
           ]
         , parametersView "Parameters" instance instance.template maybeInstanceParameterForm visibleSecrets (not (MaybeUtils.isDefined selectedTemplate))
         , selectedTemplate
@@ -105,14 +106,21 @@ parametersView parametersH instance template maybeInstanceParameterForm visibleS
         ]
       ]
 
-templateSelectionView currentTemplate selectedTemplate templates instance =
+templateSelectionView currentTemplate selectedTemplate templates instance maybeRole =
   let templatesWithoutCurrentTemplate =
     Dict.filter (\k t -> t /= currentTemplate) templates
   in
     select
-      [ class "form-control"
-      , on "change" (Json.Decode.map (SelectEditInstanceTemplate instance templates) Html.Events.targetValue)
-      ]
+      ( List.concat
+        [ if (maybeRole /= Just Administrator) then
+            [ attribute "disabled" "disabled" ]
+          else
+            []
+        , [ class "form-control"
+          , on "change" (Json.Decode.map (SelectEditInstanceTemplate instance templates) Html.Events.targetValue)
+          ]
+        ]
+      )
       ( List.append
         [ templateOption currentTemplate selectedTemplate currentTemplate ]
         ( templatesWithoutCurrentTemplate
