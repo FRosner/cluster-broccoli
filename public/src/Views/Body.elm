@@ -1,25 +1,24 @@
 module Views.Body exposing (view)
 
+import Views.TemplateView as TemplateView
+
+import Models.Resources.Instance exposing (Instance, InstanceId)
+import Models.Resources.Role exposing (Role)
+import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
+import Models.Ui.BodyUiModel exposing (BodyUiModel)
+
+import Updates.Messages exposing (UpdateBodyViewMsg(..))
+
+import Dict exposing (Dict)
+
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
-import Views.TemplateView
-import Dict exposing (..)
-import Models.Resources.Instance exposing (..)
-import Models.Resources.Service exposing (..)
-import Models.Resources.JobStatus exposing (..)
-import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
-import Models.Ui.InstanceParameterForm exposing (..)
-import Models.Ui.BodyUiModel exposing (BodyUiModel)
-import Set exposing (Set)
-import Updates.Messages exposing (UpdateBodyViewMsg(..))
-import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 
-view : Dict TemplateId Template -> Dict InstanceId Instance -> BodyUiModel -> Html UpdateBodyViewMsg
-view templates instances bodyUiModel =
+view : Dict TemplateId Template -> Dict InstanceId Instance -> BodyUiModel -> Maybe Role -> Html UpdateBodyViewMsg
+view templates instances bodyUiModel maybeRole =
   div
     [ class "container" ]
     ( templates
       |> Dict.values
-      |> List.map (Views.TemplateView.view instances templates bodyUiModel)
+      |> List.map (TemplateView.view instances templates bodyUiModel maybeRole)
     )

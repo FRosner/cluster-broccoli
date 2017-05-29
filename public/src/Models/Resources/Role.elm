@@ -1,4 +1,4 @@
-module Models.Resources.Role exposing (Role, decoder, encoder)
+module Models.Resources.Role exposing (Role(..), decoder, encoder)
 
 import Json.Decode as Decode exposing (field)
 import Json.Encode as Encode

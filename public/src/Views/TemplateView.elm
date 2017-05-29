@@ -7,10 +7,10 @@ import Views.ParameterFormView as ParameterFormView
 
 import Updates.Messages exposing (..)
 
-import Models.Resources.Instance exposing (..)
-import Models.Resources.Service exposing (..)
+import Models.Resources.Instance exposing (Instance, InstanceId)
+import Models.Resources.Role as Role exposing (Role(..))
 import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
-import Models.Ui.InstanceParameterForm exposing (..)
+import Models.Ui.BodyUiModel exposing (BodyUiModel)
 
 import Dict exposing (Dict)
 
@@ -20,7 +20,8 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 
-view instances templates bodyUiModel template =
+view : Dict InstanceId Instance -> Dict TemplateId Template -> BodyUiModel -> Maybe Role -> Template -> Html UpdateBodyViewMsg
+view instances templates bodyUiModel maybeRole template =
   let templateInstances =
     Dict.filter (\k i -> i.template.id == template.id) instances
   in
@@ -48,8 +49,15 @@ view instances templates bodyUiModel template =
                   "btn btn-default"
                   "fa fa-plus-circle"
                   "New"
-                  [ onClick (ExpandNewInstanceForm True template.id)
-                  ]
+                  ( List.concat
+                    [ ( if (maybeRole /= Just Administrator) then
+                          [ attribute "disabled" "disabled" ]
+                        else
+                          []
+                      )
+                    , [ onClick (ExpandNewInstanceForm True template.id) ]
+                    ]
+                  )
               , text " "
               , div
                 [ class "btn-group"
@@ -61,7 +69,13 @@ view instances templates bodyUiModel template =
                     "fa fa-play-circle"
                     "Start"
                     ( List.concat
-                      [ disabledIfNothingSelected selectedTemplateInstances
+                      [ ( if (Set.isEmpty selectedTemplateInstances
+                          || (maybeRole /= Just Administrator && maybeRole /= Just Operator)
+                          ) then
+                            [ attribute "disabled" "disabled" ]
+                          else
+                            []
+                        )
                       , [ onClick (StartSelectedInstances selectedTemplateInstances) ]
                       ]
                     )
@@ -71,7 +85,13 @@ view instances templates bodyUiModel template =
                     "fa fa-stop-circle"
                     "Stop"
                     ( List.concat
-                      [ disabledIfNothingSelected selectedTemplateInstances
+                      [ ( if (Set.isEmpty selectedTemplateInstances
+                          || (maybeRole /= Just Administrator && maybeRole /= Just Operator)
+                          ) then
+                            [ attribute "disabled" "disabled" ]
+                          else
+                            []
+                        )
                       , [ onClick (StopSelectedInstances selectedTemplateInstances) ]
                       ]
                     )
@@ -87,7 +107,17 @@ view instances templates bodyUiModel template =
                   "btn btn-default"
                   "fa fa-trash"
                   "Delete"
-                  [ onClick (DeleteSelectedInstances selectedTemplateInstances) ]
+                  ( List.concat
+                    [ ( if (Set.isEmpty selectedTemplateInstances
+                        || (maybeRole /= Just Administrator)
+                        ) then
+                          [ attribute "disabled" "disabled" ]
+                        else
+                          []
+                      )
+                    , [ onClick (DeleteSelectedInstances selectedTemplateInstances) ]
+                    ]
+                  )
               ]
             ]
           , div
@@ -108,12 +138,6 @@ view instances templates bodyUiModel template =
             )
           ]
         ]
-
-disabledIfNothingSelected selectedInstances =
-  if (Set.isEmpty selectedInstances) then
-    [ attribute "disabled" "disabled" ]
-  else
-    []
 
 templatePanelHeadingView template expandedTemplates instances =
   span

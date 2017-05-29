@@ -160,6 +160,7 @@ view model =
             ( Dict.filter (\k v -> String.contains model.templateFilter k) model.templates )
             ( Dict.filter (\k v -> String.contains model.instanceFilter k) model.instances )
             model.bodyUiModel
+            ( Maybe.map (\i -> i.authInfo.userInfo.role) model.aboutInfo )
         )
     -- , text (toString model) -- enable this for a debug view of the whole model
     , Views.Footer.view model.aboutInfo model.wsConnected
