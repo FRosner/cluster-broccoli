@@ -22,8 +22,11 @@ import Html.Events exposing (onClick)
 
 view : Dict InstanceId Instance -> Dict TemplateId Template -> BodyUiModel -> Maybe Role -> Template -> Html UpdateBodyViewMsg
 view instances templates bodyUiModel maybeRole template =
-  let templateInstances =
-    Dict.filter (\k i -> i.template.id == template.id) instances
+  let
+    templateInstances = Dict.filter (\k i -> i.template.id == template.id) instances
+    attemptedDeleteInstances =
+      bodyUiModel.attemptedDeleteInstances
+      |> Maybe.andThen (\(templateId, instanceIds) -> if (templateId == template.id) then Just instanceIds else Nothing)
   in
     let (selectedTemplateInstances) =
       templateInstances
@@ -98,25 +101,42 @@ view instances templates bodyUiModel maybeRole template =
                       --     "Upgrade"
                       --     ( disabledIfNothingSelected selectedTemplateInstances )
                       ]
+                    , text " "
                     ]
                 , if (maybeRole /= Just Administrator) then
                     []
                   else
-                    [ text " "
-                    , iconButtonText
-                        "btn btn-default"
-                        "fa fa-trash"
-                        "Delete"
-                        ( List.concat
-                          [ ( if (Set.isEmpty selectedTemplateInstances) then
-                                [ attribute "disabled" "disabled" ]
-                              else
-                                []
+                    case attemptedDeleteInstances of
+                      Nothing ->
+                        [ iconButtonText
+                            "btn btn-default"
+                            "fa fa-trash"
+                            "Delete"
+                            ( List.concat
+                              [ ( if (Set.isEmpty selectedTemplateInstances) then
+                                    [ attribute "disabled" "disabled" ]
+                                  else
+                                    []
+                                )
+                              , [ onClick (AttemptDeleteSelectedInstances template.id selectedTemplateInstances) ]
+                              ]
                             )
-                          , [ onClick (DeleteSelectedInstances selectedTemplateInstances) ]
-                          ]
-                        )
-                    ]
+                        ]
+                      Just toDelete ->
+                        [ iconButtonText
+                            "btn btn-danger"
+                            "fa fa-trash"
+                            ( String.concat ["Delete?"] )
+                            ( List.concat
+                              [ ( if (Set.isEmpty selectedTemplateInstances) then
+                                    [ attribute "disabled" "disabled" ]
+                                  else
+                                    []
+                                )
+                              , [ onClick (DeleteSelectedInstances template.id selectedTemplateInstances) ]
+                              ]
+                            )
+                        ]
                 ]
               )
             ]
