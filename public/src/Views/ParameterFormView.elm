@@ -45,31 +45,34 @@ editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole 
         , selectedTemplate
           |> Maybe.map (\t -> parametersView "New Parameters" instance t maybeInstanceParameterForm visibleSecrets True)
           |> Maybe.withDefault []
-        , [ div
-            [ class "row"
-            , style [ ("margin-bottom", "15px") ]
-            ]
+        , if (maybeRole /= Just Administrator) then
+            []
+          else
             [ div
-              [ class "col-md-6" ]
-              [ iconButtonText
-                  ( if (formIsBeingEdited) then "btn btn-success" else "btn btn-default" )
-                  "fa fa-check"
-                  "Apply"
-                  [ disabled (not formIsBeingEdited)
-                  , type_ "submit"
-                  ]
-              , text " "
-              , iconButtonText
-                  ( if (formIsBeingEdited) then "btn btn-warning" else "btn btn-default" )
-                  "fa fa-ban"
-                  "Discard"
-                  [ disabled (not formIsBeingEdited)
-                  , type_ "button"
-                  , onClick (DiscardParameterValueChanges instance.id)
-                  ]
+              [ class "row"
+              , style [ ("margin-bottom", "15px") ]
+              ]
+              [ div
+                [ class "col-md-6" ]
+                [ iconButtonText
+                    ( if (formIsBeingEdited) then "btn btn-success" else "btn btn-default" )
+                    "fa fa-check"
+                    "Apply"
+                    [ disabled (not formIsBeingEdited)
+                    , type_ "submit"
+                    ]
+                , text " "
+                , iconButtonText
+                    ( if (formIsBeingEdited) then "btn btn-warning" else "btn btn-default" )
+                    "fa fa-ban"
+                    "Discard"
+                    [ disabled (not formIsBeingEdited)
+                    , type_ "button"
+                    , onClick (DiscardParameterValueChanges instance.id)
+                    ]
+                ]
               ]
             ]
-          ]
         ]
       )
 
