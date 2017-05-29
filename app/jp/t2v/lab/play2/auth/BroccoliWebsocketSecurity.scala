@@ -21,7 +21,6 @@ trait BroccoliWebsocketSecurity extends AsyncAuth with AuthConfigImpl with Loggi
 
   private[auth] case object AuthKey extends RequestAttributeKey[User]
 
-  // TODO do we keep the session alive somehow (e.g. by prolonging the timeout like in AsyncAuth)?
   def withSecurity[A](req: RequestHeader)
                      (f: (Option[AuthenticityToken], User, RequestHeader) => (Iteratee[A, _], Enumerator[A])): Future[Either[Result, (Iteratee[A, _], Enumerator[A])]] = {
     securityService.authMode match {
