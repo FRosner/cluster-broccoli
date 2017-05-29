@@ -156,6 +156,7 @@ view instances templates bodyUiModel maybeRole template =
               bodyUiModel.visibleEditInstanceSecrets
               templates
               maybeRole
+              attemptedDeleteInstances
             )
           ]
         ]

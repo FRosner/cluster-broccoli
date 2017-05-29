@@ -27,7 +27,7 @@ serviceColumnWidth = 500
 templateVersionColumnWidth = 1
 jobControlsColumnWidth = 200
 
-view instances selectedInstances expandedInstances instanceParameterForms visibleSecrets templates maybeRole =
+view instances selectedInstances expandedInstances instanceParameterForms visibleSecrets templates maybeRole attemptedDeleteInstances =
   let (instancesIds) =
     instances
       |> Dict.keys
@@ -102,21 +102,35 @@ view instances selectedInstances expandedInstances instanceParameterForms visibl
         , tbody []
           ( instances
             |> Dict.values
-            |> List.concatMap (instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates maybeRole)
+            |> List.concatMap
+              ( instanceRow
+                  selectedInstances
+                  expandedInstances
+                  instanceParameterForms
+                  visibleSecrets
+                  templates
+                  maybeRole
+                  attemptedDeleteInstances
+              )
           )
         ]
 
-instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates maybeRole instance =
+instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates maybeRole attemptedDeleteInstances instance =
   let
-    ( instanceExpanded
-    , instanceParameterForm
-    ) =
-    ( (Set.member instance.id expandedInstances)
-    , (Dict.get instance.id instanceParameterForms)
-    )
+    instanceExpanded = Set.member instance.id expandedInstances
+    instanceParameterForm = Dict.get instance.id instanceParameterForms
+    toDelete =
+      attemptedDeleteInstances
+      |> Maybe.map (Set.member instance.id)
+      |> Maybe.withDefault False
   in
     List.append
-    [ tr []
+    [ tr
+        ( if (toDelete) then
+            [ style [ ("background-color", "#c9302c") ] ]
+          else
+            []
+        )
       [ td
         [ width checkboxColumnWidth ]
         [ input
