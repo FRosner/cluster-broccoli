@@ -105,7 +105,7 @@ navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired l
       [ [ Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired)
         , userInfoView maybeUserInfo
         ]
-      , if (maybeAuthRequired == Just True || maybeAuthRequired == Nothing) then
+      , if (maybeAuthRequired == Just True || maybeAuthRequired == Nothing || (maybeAuthRequired == Just False && maybeAuthEnabled == Nothing)) then
           []
         else
           [ templateFilter templateFilterString
