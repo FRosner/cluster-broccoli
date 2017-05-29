@@ -45,80 +45,72 @@ view instances templates bodyUiModel maybeRole template =
             [ p []
               [ text template.description ]
             , p []
-              [ iconButtonText
-                  "btn btn-default"
-                  "fa fa-plus-circle"
-                  "New"
-                  ( List.concat
-                    [ ( if (maybeRole /= Just Administrator) then
-                          [ attribute "disabled" "disabled" ]
-                        else
-                          []
-                      )
-                    , [ onClick (ExpandNewInstanceForm True template.id) ]
+              ( List.concat
+                [ if (maybeRole /= Just Administrator) then
+                    []
+                  else
+                    [ iconButtonText
+                        "btn btn-default"
+                        "fa fa-plus-circle"
+                        "New"
+                        [ onClick (ExpandNewInstanceForm True template.id) ]
+                    , text " "
                     ]
-                  )
-              , text " "
-              , div
-                [ class "btn-group"
-                , attribute "role" "group"
-                , attribute "aria-label" "..."
-                ]
-                [ iconButtonText
-                    "btn btn-default"
-                    "fa fa-play-circle"
-                    "Start"
-                    ( List.concat
-                      [ ( if (Set.isEmpty selectedTemplateInstances
-                          || (maybeRole /= Just Administrator && maybeRole /= Just Operator)
-                          ) then
-                            [ attribute "disabled" "disabled" ]
-                          else
-                            []
-                        )
-                      , [ onClick (StartSelectedInstances selectedTemplateInstances) ]
+                , if (maybeRole /= Just Administrator && maybeRole /= Just Operator) then
+                    []
+                  else
+                    [ div
+                      [ class "btn-group"
+                      , attribute "role" "group"
+                      , attribute "aria-label" "..."
                       ]
-                    )
-                , text " "
-                , iconButtonText
-                    "btn btn-default"
-                    "fa fa-stop-circle"
-                    "Stop"
-                    ( List.concat
-                      [ ( if (Set.isEmpty selectedTemplateInstances
-                          || (maybeRole /= Just Administrator && maybeRole /= Just Operator)
-                          ) then
-                            [ attribute "disabled" "disabled" ]
-                          else
-                            []
-                        )
-                      , [ onClick (StopSelectedInstances selectedTemplateInstances) ]
+                      [ iconButtonText
+                          "btn btn-default"
+                          "fa fa-play-circle"
+                          "Start"
+                          ( List.concat
+                            [ ( if (Set.isEmpty selectedTemplateInstances) then
+                                  [ attribute "disabled" "disabled" ]
+                                else
+                                  []
+                              )
+                            , [ onClick (StartSelectedInstances selectedTemplateInstances) ]
+                            ]
+                          )
+                      , text " "
+                      , iconButtonText
+                          "btn btn-default"
+                          "fa fa-stop-circle"
+                          "Stop"
+                          ( List.concat
+                            [ ( if (Set.isEmpty selectedTemplateInstances) then
+                                  [ attribute "disabled" "disabled" ]
+                                else
+                                  []
+                              )
+                            , [ onClick (StopSelectedInstances selectedTemplateInstances) ]
+                            ]
+                          )
+                      -- , text " "
+                      -- , iconButtonText
+                      --     "btn btn-default"
+                      --     "fa fa-code-fork"
+                      --     "Upgrade"
+                      --     ( disabledIfNothingSelected selectedTemplateInstances )
                       ]
-                    )
-                -- , text " "
-                -- , iconButtonText
-                --     "btn btn-default"
-                --     "fa fa-code-fork"
-                --     "Upgrade"
-                --     ( disabledIfNothingSelected selectedTemplateInstances )
-                ]
-              , text " "
-              , iconButtonText
-                  "btn btn-default"
-                  "fa fa-trash"
-                  "Delete"
-                  ( List.concat
-                    [ ( if (Set.isEmpty selectedTemplateInstances
-                        || (maybeRole /= Just Administrator)
-                        ) then
-                          [ attribute "disabled" "disabled" ]
-                        else
-                          []
-                      )
-                    , [ onClick (DeleteSelectedInstances selectedTemplateInstances) ]
                     ]
-                  )
-              ]
+                , if (maybeRole /= Just Administrator) then
+                    []
+                  else
+                    [ text " "
+                    , iconButtonText
+                        "btn btn-default"
+                        "fa fa-trash"
+                        "Delete"
+                        [ onClick (DeleteSelectedInstances selectedTemplateInstances) ]
+                    ]
+                ]
+              )
             ]
           , div
             [ class (if (Dict.member template.id bodyUiModel.expandedNewInstanceForms) then "show" else "hidden") ]

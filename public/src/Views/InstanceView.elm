@@ -164,48 +164,51 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
         [ class "text-center"
         , width jobControlsColumnWidth
         ]
-        [ jobStatusView instance.jobStatus
-        , text " "
-        , iconButton
-            "btn btn-default btn-xs"
-            ( String.append
-              "glyphicon glyphicon-"
-              ( if ( instance.jobStatus == JobStatus.JobRunning
-                    || instance.jobStatus == JobStatus.JobPending
-                    || instance.jobStatus == JobStatus.JobDead) then
-                  "refresh"
-                else
-                  "play"
-              )
-            )
-            "Start Instance"
-            ( List.append
-              [ onClick (StartInstance instance.id) ]
-              ( if (instance.jobStatus == JobStatus.JobUnknown
-                || (maybeRole /= Just Operator && maybeRole /= Just Administrator)
-                ) then
-                  [ attribute "disabled" "disabled" ]
-                else
-                  []
-              )
-            )
-        , text " "
-        , iconButton
-            "btn btn-default btn-xs"
-            "glyphicon glyphicon-stop"
-            "Stop Instance"
-            ( List.append
-              [ onClick (StopInstance instance.id) ]
-              ( if (instance.jobStatus == JobStatus.JobStopped
-                || instance.jobStatus == JobStatus.JobUnknown
-                || (maybeRole /= Just Operator && maybeRole /= Just Administrator)
-                ) then
-                  [ attribute "disabled" "disabled" ]
-                else
-                  []
-              )
-            )
-        ]
+        ( List.concat
+          [ [ jobStatusView instance.jobStatus
+            , text " "
+            ]
+          , if (maybeRole /= Just Operator && maybeRole /= Just Administrator) then
+              []
+            else
+              [ iconButton
+                  "btn btn-default btn-xs"
+                  ( String.append
+                    "glyphicon glyphicon-"
+                    ( if ( instance.jobStatus == JobStatus.JobRunning
+                          || instance.jobStatus == JobStatus.JobPending
+                          || instance.jobStatus == JobStatus.JobDead) then
+                        "refresh"
+                      else
+                        "play"
+                    )
+                  )
+                  "Start Instance"
+                  ( List.append
+                    [ onClick (StartInstance instance.id) ]
+                    ( if (instance.jobStatus == JobStatus.JobUnknown) then
+                        [ attribute "disabled" "disabled" ]
+                      else
+                        []
+                    )
+                  )
+              , text " "
+              , iconButton
+                  "btn btn-default btn-xs"
+                  "glyphicon glyphicon-stop"
+                  "Stop Instance"
+                  ( List.append
+                    [ onClick (StopInstance instance.id) ]
+                    ( if (instance.jobStatus == JobStatus.JobStopped
+                      || instance.jobStatus == JobStatus.JobUnknown) then
+                        [ attribute "disabled" "disabled" ]
+                      else
+                        []
+                    )
+                  )
+              ]
+          ]
+        )
       ]
     ]
     ( if (instanceExpanded) then
