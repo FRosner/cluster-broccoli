@@ -397,7 +397,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } {
         request => request.withJsonBody(Json.toJson(instanceCreation))
       } {
-        (controller, result) => status(result) must be equalTo 403
+        (controller, result) => status(result) must be equalTo 400
       }
     }
 
@@ -423,7 +423,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } {
         request => request.withJsonBody(Json.toJson(instanceCreation))
       } {
-        (controller, result) => status(result) must be equalTo 403
+        (controller, result) => status(result) must be equalTo 400
       }
     }
 
@@ -692,7 +692,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           ))
         )
       } {
-        (controller, result) => status(result) must be equalTo 403
+        (controller, result) => status(result) must be equalTo 400
       }
     }
 
@@ -733,7 +733,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           ))
         )
       } {
-        (controller, result) => status(result) must be equalTo 403
+        (controller, result) => status(result) must be equalTo 400
       }
       operatorMatchers and userMatchers
     }
@@ -771,7 +771,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           ))
         )
       } {
-        (controller, result) => status(result) must be equalTo 403
+        (controller, result) => status(result) must be equalTo 400
       }
       operatorMatchers and userMatchers
     }
@@ -870,7 +870,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } {
         request => request
       } {
-        (controller, result) => status(result) must be equalTo 403
+        (controller, result) => status(result) must be equalTo 400
       }
       val userMatcher = testWithAllAuths(user) {
         securityService => InstanceController(

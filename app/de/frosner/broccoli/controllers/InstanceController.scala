@@ -12,7 +12,7 @@ import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
 import InstanceUpdate.{instanceUpdateReads, instanceUpdateWrites}
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.util.Logging
-import jp.t2v.lab.play2.auth.{BroccoliRoleAuthorization, BroccoliSimpleAuthorization}
+import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
 import play.api.http.ContentTypes
 import play.api.libs.json.{JsObject, JsString, JsValue, Json}
 import play.api.mvc.{Action, Controller, Results}
@@ -22,14 +22,14 @@ import scala.util.{Failure, Success, Try}
 
 case class InstanceController @Inject() (instanceService: InstanceService,
                                          override val securityService: SecurityService)
-  extends Controller with Logging with BroccoliRoleAuthorization {
+  extends Controller with Logging with BroccoliSimpleAuthorization {
 
-  def list(maybeTemplateId: Option[String]) = StackAction(AuthorityKey -> Role.NormalUser) { implicit request =>
+  def list(maybeTemplateId: Option[String]) = StackAction { implicit request =>
     val instances = InstanceController.list(maybeTemplateId, loggedIn, instanceService)
     Results.Ok(Json.toJson(instances))
   }
 
-  def show(id: String) = StackAction(AuthorityKey -> Role.NormalUser) { implicit request =>
+  def show(id: String) = StackAction { implicit request =>
     val notFound = NotFound(s"Instance $id not found.")
     val user = loggedIn
     if (id.matches(user.instanceRegex)) {
@@ -48,7 +48,7 @@ case class InstanceController @Inject() (instanceService: InstanceService,
     }
   }
 
-  def create = StackAction(AuthorityKey -> Role.Administrator) { implicit request =>
+  def create = StackAction { implicit request =>
     val maybeValidatedInstanceCreation = request.body.asJson.map(_.validate[InstanceCreation])
     maybeValidatedInstanceCreation.map { validatedInstanceCreation =>
       validatedInstanceCreation.map { instanceCreation =>
@@ -64,7 +64,7 @@ case class InstanceController @Inject() (instanceService: InstanceService,
     }.getOrElse(Results.Status(400)("Expected JSON data"))
   }
 
-  def update(id: String) = StackAction(AuthorityKey -> Role.Operator) { implicit request =>
+  def update(id: String) = StackAction { implicit request =>
     val maybeJsObject = request.body.asJson.map(_.as[JsObject])
     val maybeInstanceUpdate = request.body.asJson.map(_.validate[InstanceUpdate])
     maybeInstanceUpdate.map { instanceUpdateResult =>
@@ -79,7 +79,7 @@ case class InstanceController @Inject() (instanceService: InstanceService,
     }.getOrElse(Status(400)("Expected JSON data"))
   }
 
-  def delete(id: String) = StackAction(AuthorityKey -> Role.Administrator) { implicit request =>
+  def delete(id: String) = StackAction { implicit request =>
     InstanceController.delete(id, loggedIn, instanceService) match {
       case InstanceDeletionSuccess(id, instanceWithStatus) =>
         Results.Ok(Json.toJson(instanceWithStatus))
