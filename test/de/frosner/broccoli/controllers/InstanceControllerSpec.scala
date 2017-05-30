@@ -882,7 +882,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } {
         request => request
       } {
-        (controller, result) => status(result) must be equalTo 403
+        (controller, result) => status(result) must be equalTo 400
       }
       operatorMatcher and userMatcher
     }
