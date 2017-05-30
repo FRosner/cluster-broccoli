@@ -33,8 +33,7 @@ view maybeAboutInfo loginFormModel maybeAuthRequired templateFilterString instan
         [ div
           [ class "container-fluid"
           , style
-            [ ("padding-left", "35px")
-            , ("padding-right", "35px")
+            [ ("padding-right", "35px")
             ]
           ]
           [ navbarHeader maybeAboutInfo
@@ -45,7 +44,11 @@ view maybeAboutInfo loginFormModel maybeAuthRequired templateFilterString instan
 
 navbarHeader maybeAboutInfo =
   div
-    [ class "navbar-header" ]
+    [ class "navbar-header"
+    , style
+      [ ("margin-left", "35px")
+      ]
+    ]
     [ navbarToggleButton
     , navbarBrand
     , navbarBrandDropdown maybeAboutInfo
@@ -66,7 +69,11 @@ navbarBrand =
 
 navbarBrandDropdown maybeAboutInfo =
   ul
-    [ class "dropdown-menu" ]
+    [ class "dropdown-menu"
+    , style
+      [ ("margin-left", "35px")
+      ]
+    ]
     [ lia "https://github.com/FRosner/cluster-broccoli" "Source Code"
     , lia "https://github.com/FRosner/cluster-broccoli/wiki" "Documentation"
     , lia "https://github.com/FRosner/cluster-broccoli/issues/new" "Report a Bug"
