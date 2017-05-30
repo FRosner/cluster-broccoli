@@ -59,6 +59,10 @@ module.exports = {
         options: {
           name: './images/[name].[ext]',
         },
+      },
+      {
+        test: /\.js$/,
+        loader: 'babel-loader'
       }
     ],
 
