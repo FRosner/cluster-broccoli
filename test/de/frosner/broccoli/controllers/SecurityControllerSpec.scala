@@ -1,11 +1,18 @@
 package de.frosner.broccoli.controllers
 
+import java.util.concurrent.TimeUnit
+
 import de.frosner.broccoli.models.{Role, UserAccount, UserCredentials}
 import de.frosner.broccoli.services.{SecurityService, WebSocketService}
 import jp.t2v.lab.play2.auth.test.Helpers._
+import org.mockito.Matchers._
 import org.mockito.Mockito._
 import play.api.mvc.MultipartFormData
 import play.api.test._
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import scala.concurrent.duration.TimeUnit
 
 class SecurityControllerSpec extends PlaySpecification with AuthUtils {
 
@@ -90,8 +97,14 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
         (header("Set-Cookie", result) should beSome.which((s: String) => s.startsWith(s"${AuthConfigImpl.CookieName}=; ")))
     }
 
-    "cancel the websocket connection" in {
-      true === false // TODO also check all match branches when closing the connection
+    "cancel the websocket connection" in new WithApplication {
+      val controller = SecurityController(
+        securityService = withAuthConf(mock(classOf[SecurityService]), List(account)),
+        webSocketService = mock(classOf[WebSocketService])
+      )
+      val result = controller.logout.apply(FakeRequest().withLoggedIn(controller)(account.name))
+      Await.ready(result, Duration(5, TimeUnit.SECONDS))
+      verify(controller.webSocketService).closeConnection(anyString())
     }
 
   }
