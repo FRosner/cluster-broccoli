@@ -219,7 +219,7 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
               ]
               []
             ]
-            ( if (isSecret) then
+            ( if (isSecret && enabled) then
                 [ a
                   [ class "input-group-addon"
                   , attribute "role" "button"
