@@ -24,8 +24,6 @@ updateLoginStatus : UpdateLoginStatusMsg -> Model -> (Model, Cmd AnyMsg)
 updateLoginStatus message model =
   case message of
     FetchLogin (Ok loggedInUser) ->
-      let s = Debug.log "FetchLogout Ok" loggedInUser
-      in
       ( { model
         | authRequired = Just False
         , loginForm = LoginForm.empty
@@ -58,8 +56,6 @@ updateLoginStatus message model =
       , Ws.disconnect model.location
       )
     FetchVerify (Ok string) ->
-      let s = Debug.log "FetchVerify Ok" string
-      in
       if (not (model.wsConnected)) then
         ( { model | authRequired = Just False }
         , Ws.connect model.location
@@ -69,8 +65,6 @@ updateLoginStatus message model =
         , Cmd.none
         )
     FetchVerify (Err error) ->
-      let s = Debug.log "FetchVerify Err" error
-      in
       case error of -- TODO always attempt reconnect or only on non-403?
         BadStatus response ->
           case response.status.code of

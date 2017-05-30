@@ -63,11 +63,9 @@ update msg model =
         , Cmd.none
         )
     WsListenError ( url, error ) ->
-      let l = Debug.log "ListenError" ( url, error )
-      in
-        ( model
-        , Cmd.none
-        )
+      ( model
+      , Cmd.none
+      )
     WsSuccessDisconnect url ->
       let l = Debug.log "SuccessDisconnect" url
       in
@@ -94,17 +92,13 @@ update msg model =
     WsMessage ( url, message ) ->
       Ws.update message model
     WsSendError ( url, message, error ) ->
-      let l = Debug.log "SendError" ( url, message, error )
-      in
-        ( model
-        , Cmd.none
-        )
+      ( model
+      , Cmd.none
+      )
     WsSent ( url, message ) ->
-      let l = Debug.log "Sent" ( url, message )
-      in
-        ( model
-        , Cmd.none
-        )
+      ( model
+      , Cmd.none
+      )
     UpdateLoginStatusMsg subMsg ->
       updateLoginStatus subMsg model
     UpdateErrorsMsg subMsg ->
