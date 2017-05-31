@@ -9,11 +9,7 @@ object IncomingWsMessageType extends Enumeration {
 
   val AddInstance = Value("addInstance")
   val DeleteInstance = Value("deleteInstance")
-    val UpdateInstance = Value("updateInstance")
-  //  val SetInstanceStatuses = Value("setInstanceStatuses")
-  //  val SetServiceStatuses = Value("setServiceStatuses")
-//  val SetClusterManagerStatus = Value("setClusterManagerStatus")
-//  val SetServiceDiscoveryStatus = Value("setServiceDiscoveryStatus")
+  val UpdateInstance = Value("updateInstance")
 
   implicit val webSocketMessageTypeReads: Reads[IncomingWsMessageType] = Reads(_.validate[String].map(IncomingWsMessageType.withName))
 
