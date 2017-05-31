@@ -83,6 +83,27 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
       status(result) must be equalTo 400
     }
 
+    "cancel an existing websocket connection if already logged in" in new WithApplication {
+      val controller = SecurityController(
+        securityService = withAuthConf(mock(classOf[SecurityService]), List(account)),
+        webSocketService = mock(classOf[WebSocketService])
+      )
+      val result = controller.login.apply(FakeRequest().withLoggedIn(controller)(account.name))
+      Await.ready(result, Duration(5, TimeUnit.SECONDS))
+      verify(controller.webSocketService).closeConnection(anyString())
+    }
+
+    "don't cancel anything if it is the first login" in new WithApplication {
+      val controller = SecurityController(
+        securityService = withAuthConf(mock(classOf[SecurityService]), List(account)),
+        webSocketService = mock(classOf[WebSocketService])
+      )
+      val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, account.password))
+      val result = controller.login.apply(requestWithData)
+      Await.ready(result, Duration(5, TimeUnit.SECONDS))
+      verify(controller.webSocketService, times(0)).closeConnection(anyString())
+    }
+
   }
 
   "logout" should {
