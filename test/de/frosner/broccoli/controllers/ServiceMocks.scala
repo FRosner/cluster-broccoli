@@ -5,6 +5,7 @@ import de.frosner.broccoli.models._
 import de.frosner.broccoli.services._
 import org.mockito.Mockito._
 import org.mockito.internal.util.MockUtil
+import org.mockito.Matchers._
 
 trait ServiceMocks {
 
@@ -31,9 +32,9 @@ trait ServiceMocks {
     securityService
   }
 
-  def withDummyValues(aboutInfoService: AboutInfoService, account: Account): AboutInfoService = {
+  def withDummyValues(aboutInfoService: AboutInfoService): AboutInfoService = {
     requireMock(aboutInfoService)
-    when(aboutInfoService.aboutInfo(account)).thenReturn(
+    when(aboutInfoService.aboutInfo(any(classOf[Account]))).thenReturn(
       AboutInfo(
         project = AboutProject(
           name = "project",
