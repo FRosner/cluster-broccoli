@@ -10,10 +10,60 @@ import jp.t2v.lab.play2.auth.test.Helpers._
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import ParameterInfo.{parameterInfoReads, parameterInfoWrites}
+import de.frosner.broccoli.controllers.IncomingWsMessageType.IncomingWsMessageType
+import de.frosner.broccoli.controllers.OutgoingWsMessageType.OutgoingWsMessageType
 
-import ParameterInfo.{parameterInfoWrites, parameterInfoReads}
+import scala.util.Success
 
 class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
+
+  val instanceWithStatus = InstanceWithStatus(
+    instance = Instance(
+      id = "i",
+      template = Template(
+        id = "t",
+        template = "{{id}} {{secret}}",
+        description = "d",
+        parameterInfos = Map(
+          "secret" -> ParameterInfo(
+            name = "secret",
+            default = Some("value"),
+            secret = Some(true)
+          )
+        )
+      ),
+      parameterValues = Map(
+        "id" -> "i",
+        "secret" -> "thisshouldnotappearanywhere"
+      )
+    ),
+    status = JobStatus.Unknown,
+    services = List(
+      Service(
+        name = "n",
+        protocol = "http",
+        address = "localhost",
+        port = 8888,
+        status = ServiceStatus.Unknown
+      )
+    ),
+    periodicRuns = Iterable.empty
+  )
+
+  private def wrap(messageType: IncomingWsMessageType, payload: JsValue): JsValue = JsObject(Map(
+    "messageType" -> Json.toJson(messageType),
+    "payload" -> payload
+  ))
+
+  private implicit val incomingWsMessagesWrites: Writes[IncomingWsMessage] = Writes {
+    case IncomingWsMessage(IncomingWsMessageType.AddInstance, payload: InstanceCreation) =>
+      wrap(IncomingWsMessageType.AddInstance, Json.toJson(payload))
+    case IncomingWsMessage(IncomingWsMessageType.DeleteInstance, payload: String) =>
+      wrap(IncomingWsMessageType.DeleteInstance, Json.toJson(payload))
+    case IncomingWsMessage(IncomingWsMessageType.UpdateInstance, payload: InstanceUpdate) =>
+      wrap(IncomingWsMessageType.UpdateInstance, Json.toJson(payload))
+  }
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
@@ -67,38 +117,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
     "send about info, template and instance list after establishing the connection" in new WithWebSocketApplication[Msg] {
       val account = UserAccount("user", "pass", ".*", Role.Administrator)
       val instances = Seq(
-        InstanceWithStatus(
-          instance = Instance(
-            id = "i",
-            template = Template(
-              id = "t",
-              template = "{{id}} {{secret}}",
-              description = "d",
-              parameterInfos = Map(
-                "secret" -> ParameterInfo(
-                  name = "secret",
-                  default = Some("value"),
-                  secret = Some(true)
-                )
-              )
-            ),
-            parameterValues = Map(
-              "id" -> "i",
-              "secret" -> "thisshouldnotappearanywhere"
-            )
-          ),
-          status = JobStatus.Unknown,
-          services = List(
-            Service(
-              name = "n",
-              protocol = "http",
-              address = "localhost",
-              port = 8888,
-              status = ServiceStatus.Unknown
-            )
-          ),
-          periodicRuns = Iterable.empty
-        )
+        instanceWithStatus
       )
       val templates = Seq.empty[Template]
       val controller = WebSocketController(
@@ -123,7 +142,45 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       }
     }
 
-    "process instance addition requests from admins" in new WithApplication {
+    "process instance addition requests from admins" in new WithWebSocketApplication[Msg] {
+      val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val id = "id"
+      val controller = WebSocketController(
+        webSocketService = mock(classOf[WebSocketService]),
+        templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
+        instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+        aboutService = withDummyValues(mock(classOf[AboutInfoService])),
+        securityService = withAuthNone(mock(classOf[SecurityService]))
+      )
+      when(controller.webSocketService.newConnection(any(classOf[Account]))).thenReturn((id, Enumerator.empty[Msg]))
+      val instanceCreation = InstanceCreation(
+        "template",
+        Map(
+          "id" -> "blib"
+        )
+      )
+      when(controller.instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
+      val result = controller.requestToSocket(FakeRequest())
+      val maybeConnection = wrapConnection(result)
+      maybeConnection match {
+        case Right((incoming, outgoing)) =>
+          val creationMsg = IncomingWsMessage(
+            IncomingWsMessageType.AddInstance,
+            instanceCreation
+          )
+          val resultMsg = OutgoingWsMessage(
+            OutgoingWsMessageType.InstanceCreationSuccessMsg,
+            InstanceCreationSuccess(
+              instanceCreation,
+              instanceWithStatus
+            )
+          )
+          incoming.feed(Json.toJson(creationMsg)(incomingWsMessagesWrites)).end
+          verify(controller.webSocketService).send(id, Json.toJson(resultMsg)(OutgoingWsMessage.outgoingWsMessageWrites))
+      }
+    }
+
+    "propagate other problems during instance creation" in new WithWebSocketApplication[Msg] {
 
     }
 

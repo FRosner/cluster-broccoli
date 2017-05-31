@@ -16,11 +16,11 @@ trait WithWebSocketApplication[Msg] extends WithApplication {
 
   case class Incoming(iteratee: Iteratee[Msg, _]) {
 
-    def feed(message: Msg): Iteratee[Msg, _] =
-      Await.result(iteratee.feed(Input.El(message)), waitTime)
+    def feed(message: Msg): Incoming =
+      Incoming(Await.result(iteratee.feed(Input.El(message)), waitTime))
 
-    def end: Iteratee[Msg, _] =
-      Await.result(iteratee.feed(Input.EOF), waitTime)
+    def end: Incoming =
+      Incoming(Await.result(iteratee.feed(Input.EOF), waitTime))
 
   }
 
