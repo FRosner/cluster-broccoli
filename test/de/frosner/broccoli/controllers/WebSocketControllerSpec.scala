@@ -14,7 +14,7 @@ import ParameterInfo.{parameterInfoReads, parameterInfoWrites}
 import de.frosner.broccoli.controllers.IncomingWsMessageType.IncomingWsMessageType
 import de.frosner.broccoli.controllers.OutgoingWsMessageType.OutgoingWsMessageType
 
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
 
@@ -181,7 +181,42 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "propagate other problems during instance creation" in new WithWebSocketApplication[Msg] {
-
+      val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val id = "id"
+      val controller = WebSocketController(
+        webSocketService = mock(classOf[WebSocketService]),
+        templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
+        instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+        aboutService = withDummyValues(mock(classOf[AboutInfoService])),
+        securityService = withAuthNone(mock(classOf[SecurityService]))
+      )
+      when(controller.webSocketService.newConnection(any(classOf[Account]))).thenReturn((id, Enumerator.empty[Msg]))
+      val instanceCreation = InstanceCreation(
+        "template",
+        Map(
+          "id" -> "blib"
+        )
+      )
+      val exception = new Exception("")
+      when(controller.instanceService.addInstance(instanceCreation)).thenReturn(Failure(exception))
+      val result = controller.requestToSocket(FakeRequest())
+      val maybeConnection = wrapConnection(result)
+      maybeConnection match {
+        case Right((incoming, outgoing)) =>
+          val creationMsg = IncomingWsMessage(
+            IncomingWsMessageType.AddInstance,
+            instanceCreation
+          )
+          val resultMsg = OutgoingWsMessage(
+            OutgoingWsMessageType.InstanceCreationFailureMsg,
+            InstanceCreationFailure(
+              instanceCreation,
+              exception.toString
+            )
+          )
+          incoming.feed(Json.toJson(creationMsg)(incomingWsMessagesWrites)).end
+          verify(controller.webSocketService).send(id, Json.toJson(resultMsg)(OutgoingWsMessage.outgoingWsMessageWrites))
+      }
     }
 
     "not process instance addition requests from operators" in new WithApplication {
