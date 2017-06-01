@@ -106,8 +106,6 @@ class WebSocketService @Inject() (templateService: TemplateService,
     }
   }
 
-//  def send(message: String) = channel.push(message)
-
 }
 
 object WebSocketService {
