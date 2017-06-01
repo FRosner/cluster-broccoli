@@ -24,14 +24,6 @@ script:
   - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad
   - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad-consul
   - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/instance-persistence-dir
-
-cache:
-  directories:
-    - $HOME/.m2
-    - $HOME/.ivy2
-
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
   - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
   - export COMMIT=${TRAVIS_COMMIT::8}
   - export REPO=frosner/cluster-broccoli
@@ -41,3 +33,11 @@ after_success:
   - docker tag $REPO:$COMMIT $REPO:$TAG
   - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
   - docker push $REPO
+
+cache:
+  directories:
+    - $HOME/.m2
+    - $HOME/.ivy2
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
