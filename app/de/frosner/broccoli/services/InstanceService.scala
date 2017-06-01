@@ -189,6 +189,11 @@ class InstanceService @Inject()(templateService: TemplateService,
                      parameterValuesUpdater: Option[Map[String, String]],
                      templateSelector: Option[String]): Try[InstanceWithStatus] = synchronized {
     val updateInstanceId = id
+    val parameterValuesUpdatesWithPossibleDefaults = parameterValuesUpdater.map {
+      p => p.filter {
+        case (parameter, value) => !value.isEmpty
+      }
+    }
     val maybeInstance = instances.get(id)
     val maybeUpdatedInstance = maybeInstance.map { instance =>
       val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (templateSelector.isDefined) {
@@ -196,9 +201,9 @@ class InstanceService @Inject()(templateService: TemplateService,
         val newTemplate = templateService.template(newTemplateId)
         newTemplate.map { template =>
           // Requested template exists, update the template
-          if (parameterValuesUpdater.isDefined) {
+          if (parameterValuesUpdatesWithPossibleDefaults.isDefined) {
             // New parameter values are specified
-            val newParameterValues = parameterValuesUpdater.get
+            val newParameterValues = parameterValuesUpdatesWithPossibleDefaults.get
             instance.updateTemplate(template, newParameterValues)
           } else {
             // Just use the old parameter values
@@ -210,9 +215,9 @@ class InstanceService @Inject()(templateService: TemplateService,
         }
       } else {
         // No template update required
-        if (parameterValuesUpdater.isDefined) {
+        if (parameterValuesUpdatesWithPossibleDefaults.isDefined) {
           // Just update the parameter values
-          val newParameterValues = parameterValuesUpdater.get
+          val newParameterValues = parameterValuesUpdatesWithPossibleDefaults.get
           instance.updateParameterValues(newParameterValues)
         } else {
           // Neither template update nor parameter value update required
