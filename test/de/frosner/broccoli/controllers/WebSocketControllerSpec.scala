@@ -13,6 +13,7 @@ import play.api.libs.functional.syntax._
 import ParameterInfo.{parameterInfoReads, parameterInfoWrites}
 import de.frosner.broccoli.controllers.IncomingWsMessageType.IncomingWsMessageType
 import de.frosner.broccoli.controllers.OutgoingWsMessageType.OutgoingWsMessageType
+import de.frosner.broccoli.models.Role.Role
 import org.mockito.Matchers
 
 import scala.util.{Failure, Success}
@@ -65,12 +66,39 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
     case IncomingWsMessage(IncomingWsMessageType.UpdateInstance, payload: InstanceUpdate) =>
       wrap(IncomingWsMessageType.UpdateInstance, Json.toJson(payload))
   }
+  
+  private def testWs(controllerSetup: SecurityService => WebSocketController, inMsg: IncomingWsMessage, expectations: Map[Option[(String, Role)], OutgoingWsMessage]) = {
+    expectations.foreach { 
+      case (maybeInstanceRegexAndRole, outMsg) =>
+        val maybeAccount = maybeInstanceRegexAndRole.map {
+          case (instanceRegex, role) => UserAccount("user", "pass", instanceRegex, role)
+        }
+        val securityService = maybeAccount.map {
+          account => withAuthConf(mock(classOf[SecurityService]), List(account))
+        }.getOrElse {
+          withAuthNone(mock(classOf[SecurityService]))
+        }
+        val controller = controllerSetup(securityService)
+        when(controller.webSocketService.newConnection(anyString(), any(classOf[Account]))).thenReturn(Enumerator.empty[Msg])
+        when(controller.webSocketService.newConnection(any(classOf[Account]))).thenReturn(("session_id", Enumerator.empty[Msg]))
+        val result = maybeAccount.map {
+          account => controller.requestToSocket(FakeRequest().withLoggedIn(controller)(account.name))
+        }.getOrElse {
+          controller.requestToSocket(FakeRequest())
+        }
+        WsTestUtil.wrapConnection(result) match {
+          case Right((incoming, outgoing)) =>
+            incoming.feed(Json.toJson(inMsg)(incomingWsMessagesWrites)).end
+            verify(controller.webSocketService).send(anyString(), Matchers.eq(Json.toJson(outMsg)(OutgoingWsMessage.outgoingWsMessageWrites)))
+        }
+    }
+  }
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
   "WebSocketController" should {
 
-    "establish a websocket connection correctly (with authentication)" in new WithWebSocketApplication[Msg] {
+    "establish a websocket connection correctly (with authentication)" in new WithApplication {
       val account = UserAccount("user", "pass", ".*", Role.Administrator)
       val controller = WebSocketController(
         webSocketService = mock(classOf[WebSocketService]),
@@ -80,11 +108,11 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         securityService = withAuthConf(mock(classOf[SecurityService]), List(account))
       )
       val result = controller.requestToSocket(FakeRequest().withLoggedIn(controller)(account.name))
-      val maybeConnection = wrapConnection(result)
+      val maybeConnection = WsTestUtil.wrapConnection(result)
       maybeConnection should beRight
     }
 
-    "establish a websocket connection correctly (without authentication)" in new WithWebSocketApplication[Msg] {
+    "establish a websocket connection correctly (without authentication)" in new WithApplication {
       val account = UserAccount("user", "pass", ".*", Role.Administrator)
       val controller = WebSocketController(
         webSocketService = mock(classOf[WebSocketService]),
@@ -95,11 +123,11 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       )
       when(controller.webSocketService.newConnection(any(classOf[Account]))).thenReturn(("id", null))
       val result = controller.requestToSocket(FakeRequest())
-      val maybeConnection = wrapConnection(result)
+      val maybeConnection = WsTestUtil.wrapConnection(result)
       maybeConnection should beRight
     }
 
-    "decline the websocket connection if not authenticated" in new WithWebSocketApplication[Msg] {
+    "decline the websocket connection if not authenticated" in new WithApplication {
       val account = UserAccount("user", "pass", ".*", Role.Administrator)
       val controller = WebSocketController(
         webSocketService = mock(classOf[WebSocketService]),
@@ -109,13 +137,13 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         securityService = withAuthConf(mock(classOf[SecurityService]), List(account))
       )
       val result = controller.requestToSocket(FakeRequest())
-      val maybeConnection = wrapConnection(result)
+      val maybeConnection = WsTestUtil.wrapConnection(result)
       maybeConnection should beLeft.like {
         case d => d.header.status === 403
       }
     }
 
-    "send about info, template and instance list after establishing the connection" in new WithWebSocketApplication[Msg] {
+    "send about info, template and instance list after establishing the connection" in new WithApplication {
       val account = UserAccount("user", "pass", ".*", Role.Administrator)
       val instances = Seq(
         instanceWithStatus
@@ -130,7 +158,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       )
       when(controller.webSocketService.newConnection(any(classOf[Account]))).thenReturn(("id", Enumerator.empty[Msg]))
       val result = controller.requestToSocket(FakeRequest())
-      val maybeConnection = wrapConnection(result)
+      val maybeConnection = WsTestUtil.wrapConnection(result)
       maybeConnection should beRight.like {
         case (incoming, outgoing) =>
           val messages = outgoing.get
@@ -143,7 +171,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       }
     }
 
-    "process instance addition requests if no auth is enabled" in new WithWebSocketApplication[Msg] {
+    "process instance addition requests if no auth is enabled" in new WithApplication {
       val id = "id"
       val controller = WebSocketController(
         webSocketService = mock(classOf[WebSocketService]),
@@ -161,7 +189,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       )
       when(controller.instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
       val result = controller.requestToSocket(FakeRequest())
-      val maybeConnection = wrapConnection(result)
+      val maybeConnection = WsTestUtil.wrapConnection(result)
       maybeConnection match {
         case Right((incoming, outgoing)) =>
           val creationMsg = IncomingWsMessage(
@@ -180,142 +208,114 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       }
     }
 
-    "process instance addition requests from admins" in new WithWebSocketApplication[Msg] {
-      val account = UserAccount("user", "pass", ".*", Role.Administrator)
-      val id = "id"
-      val controller = WebSocketController(
-        webSocketService = mock(classOf[WebSocketService]),
-        templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-        instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
-        aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-        securityService = withAuthConf(mock(classOf[SecurityService]), List(account))
-      )
-      when(controller.webSocketService.newConnection(anyString(), any(classOf[Account]))).thenReturn(Enumerator.empty[Msg])
+    "process instance addition correctly" in new WithApplication {
       val instanceCreation = InstanceCreation(
         "template",
         Map(
           "id" -> "blib"
         )
       )
-      when(controller.instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
-      val result = controller.requestToSocket(FakeRequest().withLoggedIn(controller)(account.name))
-      val maybeConnection = wrapConnection(result)
-      maybeConnection match {
-        case Right((incoming, outgoing)) =>
-          val creationMsg = IncomingWsMessage(
-            IncomingWsMessageType.AddInstance,
-            instanceCreation
-          )
-          val resultMsg = OutgoingWsMessage(
-            OutgoingWsMessageType.InstanceCreationSuccessMsg,
-            InstanceCreationSuccess(
-              instanceCreation,
-              instanceWithStatus
-            )
-          )
-          incoming.feed(Json.toJson(creationMsg)(incomingWsMessagesWrites)).end
-          verify(controller.webSocketService).send(anyString(), Matchers.eq(Json.toJson(resultMsg)(OutgoingWsMessage.outgoingWsMessageWrites)))
-      }
-    }
-
-    "propagate other problems during instance creation" in new WithWebSocketApplication[Msg] {
-      val account = UserAccount("user", "pass", ".*", Role.Administrator)
-      val id = "id"
-      val controller = WebSocketController(
-        webSocketService = mock(classOf[WebSocketService]),
-        templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-        instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
-        aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-        securityService = withAuthNone(mock(classOf[SecurityService]))
-      )
-      when(controller.webSocketService.newConnection(any(classOf[Account]))).thenReturn((id, Enumerator.empty[Msg]))
-      val instanceCreation = InstanceCreation(
-        "template",
-        Map(
-          "id" -> "blib"
+      
+      val success = OutgoingWsMessage(
+        OutgoingWsMessageType.InstanceCreationSuccessMsg,
+        InstanceCreationSuccess(
+          instanceCreation,
+          instanceWithStatus
         )
       )
-      val exception = new Exception("")
-      when(controller.instanceService.addInstance(instanceCreation)).thenReturn(Failure(exception))
-      val result = controller.requestToSocket(FakeRequest())
-      val maybeConnection = wrapConnection(result)
-      maybeConnection match {
-        case Right((incoming, outgoing)) =>
-          val creationMsg = IncomingWsMessage(
-            IncomingWsMessageType.AddInstance,
-            instanceCreation
-          )
-          val resultMsg = OutgoingWsMessage(
-            OutgoingWsMessageType.InstanceCreationFailureMsg,
-            InstanceCreationFailure(
-              instanceCreation,
-              exception.toString
+      val roleFailure = OutgoingWsMessage(
+        OutgoingWsMessageType.InstanceCreationFailureMsg,
+        InstanceCreationFailure(
+          instanceCreation,
+          "Only administrators are allowed to create new instances"
+        )
+      )
+      val regexFailure = OutgoingWsMessage(
+        OutgoingWsMessageType.InstanceCreationFailureMsg,
+        InstanceCreationFailure(
+          instanceCreation,
+          "Only allowed to create instances matching bla"
+        )
+      )
+      
+      testWs(
+        controllerSetup = {
+          securityService =>
+            val controller = WebSocketController(
+              webSocketService = mock(classOf[WebSocketService]),
+              templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
+              instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+              aboutService = withDummyValues(mock(classOf[AboutInfoService])),
+              securityService = securityService
             )
-          )
-          incoming.feed(Json.toJson(creationMsg)(incomingWsMessagesWrites)).end
-          verify(controller.webSocketService).send(id, Json.toJson(resultMsg)(OutgoingWsMessage.outgoingWsMessageWrites))
-      }
+            when(controller.instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
+            controller
+        },
+        inMsg = IncomingWsMessage(
+          IncomingWsMessageType.AddInstance,
+          instanceCreation
+        ),
+        expectations = Map(
+          None -> success,
+          Some((".*", Role.Administrator)) -> success,
+          Some(("bla", Role.Administrator)) -> regexFailure,
+          Some((".*", Role.Operator)) -> roleFailure,
+          Some((".*", Role.NormalUser)) -> roleFailure
+        )
+      )
     }
 
-    "not process instance addition requests from operators" in new WithApplication {
-
-    }
-
-    "not process instance addition requests from users" in new WithApplication {
-
-    }
-
-    "process instance parameter updates from admins" in new WithApplication {
-
-    }
-
-    "not process instance parameter updates from operators" in new WithApplication {
-
-    }
-
-    "not process instance parameter updates from users" in new WithApplication {
-
-    }
-
-    "process instance template updates from admins" in new WithApplication {
-
-    }
-
-    "not process instance template updates from operators" in new WithApplication {
-
-    }
-
-    "not process instance template updates from users" in new WithApplication {
-
-    }
-
-    "process instance status change requests from admins" in new WithApplication {
-
-    }
-
-    "process instance status change requests from operators" in new WithApplication {
-
-    }
-
-    "not process instance status change requests from users" in new WithApplication {
-
-    }
-
-    "process instance deletions from admins" in new WithApplication {
-
-    }
-
-    "not process instance deletions from operators" in new WithApplication {
-
-    }
-
-    "not process instance deletions from users" in new WithApplication {
-
-    }
-
-    "ignore unknown incoming messages" in new WithApplication {
-
-    }
+//    "process instance parameter updates from admins" in new WithApplication {
+//
+//    }
+//
+//    "not process instance parameter updates from operators" in new WithApplication {
+//
+//    }
+//
+//    "not process instance parameter updates from users" in new WithApplication {
+//
+//    }
+//
+//    "process instance template updates from admins" in new WithApplication {
+//
+//    }
+//
+//    "not process instance template updates from operators" in new WithApplication {
+//
+//    }
+//
+//    "not process instance template updates from users" in new WithApplication {
+//
+//    }
+//
+//    "process instance status change requests from admins" in new WithApplication {
+//
+//    }
+//
+//    "process instance status change requests from operators" in new WithApplication {
+//
+//    }
+//
+//    "not process instance status change requests from users" in new WithApplication {
+//
+//    }
+//
+//    "process instance deletions from admins" in new WithApplication {
+//
+//    }
+//
+//    "not process instance deletions from operators" in new WithApplication {
+//
+//    }
+//
+//    "not process instance deletions from users" in new WithApplication {
+//
+//    }
+//
+//    "ignore unknown incoming messages" in new WithApplication {
+//
+//    }
 
   }
 

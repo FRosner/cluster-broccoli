@@ -2,6 +2,7 @@ package de.frosner.broccoli.controllers
 
 import java.util.concurrent.TimeUnit
 
+import de.frosner.broccoli.services.WebSocketService.Msg
 import play.api.libs.iteratee.{Enumerator, Input, Iteratee}
 import play.api.mvc.Result
 import play.api.test.WithApplication
@@ -10,7 +11,7 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait WithWebSocketApplication[Msg] extends WithApplication {
+object WsTestUtil {
 
   private val waitTime = FiniteDuration(1, TimeUnit.SECONDS)
 
