@@ -33,7 +33,6 @@ payloadFieldName = "payload"
 
 wsRelativePath = "/ws"
 
--- TODO return also a Cmd
 update msg model =
   let msgType =
     Decode.decodeString typeDecoder msg
@@ -65,7 +64,7 @@ update msg model =
                 |> Dict.fromList
               in
                 ( { model | templates = templatesDict }
-                , Cmd.none -- TODO send success message similar to error (enough to just send it for now)
+                , Cmd.none
                 )
             Err error ->
               ( { model | templates = Dict.empty }
@@ -253,7 +252,6 @@ disconnect location =
   Websocket.disconnect WsErrorDisconnect WsSuccessDisconnect (locationToWsUrl location)
 
 listen location =
-  -- WebSocket.listen "ws://localhost:9000/ws" ProcessWsMsg -- TODO relative URL
   Websocket.listen WsListenError WsMessage WsConnectionLost (locationToWsUrl location)
 
 send location object messageType =

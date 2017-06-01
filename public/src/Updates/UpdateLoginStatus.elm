@@ -65,7 +65,7 @@ updateLoginStatus message model =
         , Cmd.none
         )
     FetchVerify (Err error) ->
-      case error of -- TODO always attempt reconnect or only on non-403?
+      case error of
         BadStatus response ->
           case response.status.code of
             403 ->

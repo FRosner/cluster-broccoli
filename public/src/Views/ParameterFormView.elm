@@ -253,7 +253,6 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
           )
         ]
 
--- TODO editParameterValueView needs to be adapted (probably copy paste for now?) so it can work without an instance as we don't have one here
 newView template maybeInstanceParameterForm visibleSecrets =
   let
     ( otherParameters
