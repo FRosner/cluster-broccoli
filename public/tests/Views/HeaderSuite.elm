@@ -8,7 +8,7 @@ import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
 
 import Updates.Messages exposing (UpdateLoginFormMsg(EnterUserName, EnterPassword, LoginAttempt, LogoutAttempt))
 
-import Messages exposing (AnyMsg(UpdateLoginFormMsg))
+import Messages exposing (AnyMsg(UpdateLoginFormMsg, TemplateFilter, InstanceFilter))
 
 import Test exposing (test, describe, Test)
 import Test.Html.Query as Query
@@ -23,77 +23,109 @@ tests =
 
       [ test "Should render username in input field" <|
           \() ->
-            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
-              ( Nothing, defaultLoginForm, Just True )
+            let
+              maybeAboutInfo = Nothing
+              loginForm = defaultLoginForm
+              maybeAuthRequired = Just True
+              templateFilter = ""
+              instanceFilter = ""
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
+              Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-login-username" ]
               |> Query.has [ Selector.attribute "value" defaultLoginForm.username ]
 
       , test "Should render password in input field" <|
           \() ->
-            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
-              ( Nothing, defaultLoginForm, Just True )
+            let
+              maybeAboutInfo = Nothing
+              loginForm = defaultLoginForm
+              maybeAuthRequired = Just True
+              templateFilter = ""
+              instanceFilter = ""
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
+              Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-login-password" ]
               |> Query.has [ Selector.attribute "value" defaultLoginForm.password ]
 
       , test "Should look normal if the login is correct" <|
           \() ->
-            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
-              ( Nothing, { defaultLoginForm | loginIncorrect = False }, Just True )
+            let
+              maybeAboutInfo = Nothing
+              loginForm = { defaultLoginForm | loginIncorrect = False }
+              maybeAuthRequired = Just True
+              templateFilter = ""
+              instanceFilter = ""
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
+              Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-login-form" ]
               |> Query.has [ Selector.classes [ "navbar-form", "navbar-right" ] ]
 
       , test "Should shake if the login is correct" <|
           \() ->
-            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
-              ( Nothing, { defaultLoginForm | loginIncorrect = True }, Just True )
+            let
+              maybeAboutInfo = Nothing
+              loginForm = { defaultLoginForm | loginIncorrect = True }
+              maybeAuthRequired = Just True
+              templateFilter = ""
+              instanceFilter = ""
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
+              Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-login-form" ]
               |> Query.has [ Selector.classes [ "navbar-form", "navbar-right", "animated", "shake" ] ]
 
       , test "Should render if auth is required" <|
           \() ->
-            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
-              ( Nothing, defaultLoginForm, Just True )
+            let
+              maybeAboutInfo = Nothing
+              loginForm = defaultLoginForm
+              maybeAuthRequired = Just True
+              templateFilter = ""
+              instanceFilter = ""
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
+              Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
               |> Query.fromHtml
               |> Query.has [ Selector.id "header-login-form" ]
 
       , test "Should not render if auth is not required" <|
           \() ->
-            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
-              ( Nothing, defaultLoginForm, Just False )
+            let
+              maybeAboutInfo = Nothing
+              loginForm = defaultLoginForm
+              maybeAuthRequired = Just False
+              templateFilter = ""
+              instanceFilter = ""
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
+              Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
               |> Query.fromHtml
               |> Query.hasNot [ Selector.id "header-login-form" ]
 
       , test "Should not render if we don't know if auth is required" <|
           \() ->
-            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
-              ( Nothing, defaultLoginForm, Nothing )
+            let
+              maybeAboutInfo = Nothing
+              loginForm = defaultLoginForm
+              maybeAuthRequired = Nothing
+              templateFilter = ""
+              instanceFilter = ""
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
+              Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
               |> Query.fromHtml
               |> Query.hasNot [ Selector.id "header-login-form" ]
 
       , test "Should update the username when the user name input field changes" <|
           \() ->
-            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
-              ( Nothing, defaultLoginForm, Just True )
+            let
+              maybeAboutInfo = Nothing
+              loginForm = defaultLoginForm
+              maybeAuthRequired = Just True
+              templateFilter = ""
+              instanceFilter = ""
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
+              Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-login-username" ]
               |> Events.simulate (Events.Input "admin")
@@ -101,10 +133,14 @@ tests =
 
       , test "Should update the password when the password input field changes" <|
           \() ->
-            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
-              ( Nothing, defaultLoginForm, Just True )
+            let
+              maybeAboutInfo = Nothing
+              loginForm = defaultLoginForm
+              maybeAuthRequired = Just True
+              templateFilter = ""
+              instanceFilter = ""
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
+              Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-login-password" ]
               |> Events.simulate (Events.Input "secret")
@@ -112,10 +148,14 @@ tests =
 
       , test "Should attempt to login with the entered credentials on form sumbission" <|
           \() ->
-            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
-              ( Nothing, defaultLoginForm, Just True )
+            let
+              maybeAboutInfo = Nothing
+              loginForm = defaultLoginForm
+              maybeAuthRequired = Just True
+              templateFilter = ""
+              instanceFilter = ""
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
+              Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-login-form" ]
               |> Events.simulate Events.Submit
@@ -126,37 +166,40 @@ tests =
 
       [ test "Should render if auth is enabled but not required (which means you are logged in)" <|
           \() ->
-            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
-              ( Just <| withAuthEnabled defaultAboutInfo True
-              , defaultLoginForm
-              , Just False
-              )
+            let
+              maybeAboutInfo = Just <| withAuthEnabled defaultAboutInfo True
+              loginForm = defaultLoginForm
+              maybeAuthRequired = Just False
+              templateFilter = ""
+              instanceFilter = ""
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
+              Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
               |> Query.fromHtml
               |> Query.has [ Selector.id "header-logout-form" ]
 
       , test "Should not render if auth is disabled and not required" <|
           \() ->
-            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
-              ( Just <| withAuthEnabled defaultAboutInfo False
-              , defaultLoginForm
-              , Just False
-              )
+            let
+              maybeAboutInfo = Just <| withAuthEnabled defaultAboutInfo False
+              loginForm = defaultLoginForm
+              maybeAuthRequired = Just False
+              templateFilter = ""
+              instanceFilter = ""
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
+              Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
               |> Query.fromHtml
               |> Query.hasNot [ Selector.id "header-logout-form" ]
 
       , test "Should not render if it is unknown whether auth is required" <|
           \() ->
-            let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
-              ( Nothing
-              , defaultLoginForm
-              , Just False
-              )
+            let
+              maybeAboutInfo = Nothing
+              loginForm = defaultLoginForm
+              maybeAuthRequired = Just False
+              templateFilter = ""
+              instanceFilter = ""
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
+              Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
               |> Query.fromHtml
               |> Query.hasNot [ Selector.id "header-logout-form" ]
 
@@ -167,8 +210,10 @@ tests =
               maybeAboutInfo = Just <| withAuthEnabled defaultAboutInfo True
               loginForm = defaultLoginForm
               maybeAuthRequired = Just False
+              templateFilter = ""
+              instanceFilter = ""
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
+              Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-logout-form" ]
               |> Events.simulate Events.Submit
