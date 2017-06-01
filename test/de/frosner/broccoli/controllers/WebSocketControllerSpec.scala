@@ -444,10 +444,71 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         )
       )
     }
-    
-//    "ignore unknown incoming messages" in new WithApplication {
-//
-//    }
+
+    "process instance template updates correctly" in new WithApplication {
+      val instanceUpdate = InstanceUpdate(
+        instanceId = Some("id"),
+        status = None,
+        parameterValues = None,
+        selectedTemplate = Some("templateId")
+      )
+
+      val success = OutgoingWsMessage(
+        OutgoingWsMessageType.InstanceUpdateSuccessMsg,
+        InstanceUpdateSuccess(
+          instanceUpdate,
+          instanceWithStatus
+        )
+      )
+      testWs(
+        controllerSetup = {
+          securityService =>
+            val controller = WebSocketController(
+              webSocketService = mock(classOf[WebSocketService]),
+              templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
+              instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+              aboutService = withDummyValues(mock(classOf[AboutInfoService])),
+              securityService = securityService
+            )
+            when(controller.instanceService.updateInstance(
+              id = instanceUpdate.instanceId.get,
+              statusUpdater = instanceUpdate.status,
+              parameterValuesUpdater = instanceUpdate.parameterValues,
+              templateSelector = instanceUpdate.selectedTemplate
+            )).thenReturn(Success(instanceWithStatus))
+            controller
+        },
+        inMsg = IncomingWsMessage(
+          IncomingWsMessageType.UpdateInstance,
+          instanceUpdate
+        ),
+        expectations = Map(
+          None -> success,
+          Some((".*", Role.Administrator)) -> success,
+          Some(("bla", Role.Administrator)) -> OutgoingWsMessage(
+            OutgoingWsMessageType.InstanceUpdateFailureMsg,
+            InstanceUpdateFailure(
+              instanceUpdate,
+              "Only allowed to update instances matching bla"
+            )
+          ),
+          Some((".*", Role.Operator)) -> OutgoingWsMessage(
+            OutgoingWsMessageType.InstanceUpdateFailureMsg,
+            InstanceUpdateFailure(
+              instanceUpdate,
+              "Updating parameter values or templates only allowed for administrators."
+            )
+          ),
+          Some((".*", Role.NormalUser)) -> OutgoingWsMessage(
+            OutgoingWsMessageType.InstanceUpdateFailureMsg,
+            InstanceUpdateFailure(
+              instanceUpdate,
+              "Only administrators and operators are allowed to update instances"
+            )
+          )
+        )
+      )
+    }
 
   }
 
