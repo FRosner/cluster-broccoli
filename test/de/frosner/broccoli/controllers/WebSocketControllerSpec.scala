@@ -265,6 +265,58 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       )
     }
 
+    "process instance deletion correctly" in new WithApplication {
+      val instanceDeletion = "id"
+
+      val success = OutgoingWsMessage(
+        OutgoingWsMessageType.InstanceDeletionSuccessMsg,
+        InstanceDeletionSuccess(
+          instanceDeletion,
+          instanceWithStatus
+        )
+      )
+      val roleFailure = OutgoingWsMessage(
+        OutgoingWsMessageType.InstanceDeletionFailureMsg,
+        InstanceDeletionFailure(
+          instanceDeletion,
+          "Only administrators are allowed to delete instances"
+        )
+      )
+      val regexFailure = OutgoingWsMessage(
+        OutgoingWsMessageType.InstanceDeletionFailureMsg,
+        InstanceDeletionFailure(
+          instanceDeletion,
+          "Only allowed to delete instances matching bla"
+        )
+      )
+
+      testWs(
+        controllerSetup = {
+          securityService =>
+            val controller = WebSocketController(
+              webSocketService = mock(classOf[WebSocketService]),
+              templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
+              instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+              aboutService = withDummyValues(mock(classOf[AboutInfoService])),
+              securityService = securityService
+            )
+            when(controller.instanceService.deleteInstance(instanceDeletion)).thenReturn(Success(instanceWithStatus))
+            controller
+        },
+        inMsg = IncomingWsMessage(
+          IncomingWsMessageType.DeleteInstance,
+          instanceDeletion
+        ),
+        expectations = Map(
+          None -> success,
+          Some((".*", Role.Administrator)) -> success,
+          Some(("bla", Role.Administrator)) -> regexFailure,
+          Some((".*", Role.Operator)) -> roleFailure,
+          Some((".*", Role.NormalUser)) -> roleFailure
+        )
+      )
+    }
+
 //    "process instance parameter updates from admins" in new WithApplication {
 //
 //    }
