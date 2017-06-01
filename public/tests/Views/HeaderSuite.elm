@@ -3,6 +3,7 @@ module Views.HeaderSuite exposing (tests)
 import Views.Header as Header
 
 import Models.Resources.AboutInfo as AboutInfo exposing (AboutInfo)
+import Models.Resources.Role as Role exposing (Role(Administrator))
 import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
 
 import Updates.Messages exposing (UpdateLoginFormMsg(EnterUserName, EnterPassword, LoginAttempt, LogoutAttempt))
@@ -25,7 +26,7 @@ tests =
             let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
               ( Nothing, defaultLoginForm, Just True )
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-login-username" ]
               |> Query.has [ Selector.attribute "value" defaultLoginForm.username ]
@@ -35,7 +36,7 @@ tests =
             let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
               ( Nothing, defaultLoginForm, Just True )
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-login-password" ]
               |> Query.has [ Selector.attribute "value" defaultLoginForm.password ]
@@ -45,7 +46,7 @@ tests =
             let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
               ( Nothing, { defaultLoginForm | loginIncorrect = False }, Just True )
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-login-form" ]
               |> Query.has [ Selector.classes [ "navbar-form", "navbar-right" ] ]
@@ -55,7 +56,7 @@ tests =
             let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
               ( Nothing, { defaultLoginForm | loginIncorrect = True }, Just True )
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-login-form" ]
               |> Query.has [ Selector.classes [ "navbar-form", "navbar-right", "animated", "shake" ] ]
@@ -65,7 +66,7 @@ tests =
             let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
               ( Nothing, defaultLoginForm, Just True )
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
               |> Query.fromHtml
               |> Query.has [ Selector.id "header-login-form" ]
 
@@ -74,7 +75,7 @@ tests =
             let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
               ( Nothing, defaultLoginForm, Just False )
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
               |> Query.fromHtml
               |> Query.hasNot [ Selector.id "header-login-form" ]
 
@@ -83,7 +84,7 @@ tests =
             let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
               ( Nothing, defaultLoginForm, Nothing )
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
               |> Query.fromHtml
               |> Query.hasNot [ Selector.id "header-login-form" ]
 
@@ -92,7 +93,7 @@ tests =
             let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
               ( Nothing, defaultLoginForm, Just True )
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-login-username" ]
               |> Events.simulate (Events.Input "admin")
@@ -103,7 +104,7 @@ tests =
             let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
               ( Nothing, defaultLoginForm, Just True )
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-login-password" ]
               |> Events.simulate (Events.Input "secret")
@@ -114,7 +115,7 @@ tests =
             let ( maybeAboutInfo, loginForm, maybeAuthRequired ) =
               ( Nothing, defaultLoginForm, Just True )
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-login-form" ]
               |> Events.simulate Events.Submit
@@ -131,7 +132,7 @@ tests =
               , Just False
               )
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
               |> Query.fromHtml
               |> Query.has [ Selector.id "header-logout-form" ]
 
@@ -143,7 +144,7 @@ tests =
               , Just False
               )
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
               |> Query.fromHtml
               |> Query.hasNot [ Selector.id "header-logout-form" ]
 
@@ -155,7 +156,7 @@ tests =
               , Just False
               )
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
               |> Query.fromHtml
               |> Query.hasNot [ Selector.id "header-logout-form" ]
 
@@ -167,7 +168,7 @@ tests =
               loginForm = defaultLoginForm
               maybeAuthRequired = Just False
             in
-              Header.view maybeAboutInfo loginForm maybeAuthRequired
+              Header.view maybeAboutInfo loginForm maybeAuthRequired "" ""
               |> Query.fromHtml
               |> Query.find [ Selector.id "header-logout-form" ]
               |> Events.simulate Events.Submit
@@ -201,7 +202,7 @@ defaultAboutInfo =
     { enabled = True
     , userInfo =
       { name = "user"
-      , role = "role"
+      , role = Administrator
       , instanceRegex = ".*"
       }
     }

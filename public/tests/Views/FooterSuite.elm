@@ -3,6 +3,7 @@ module Views.FooterSuite exposing (tests)
 import Views.Footer as Footer
 
 import Models.Resources.AboutInfo as AboutInfo exposing (AboutInfo)
+import Models.Resources.Role as Role exposing (Role(Administrator))
 
 import Test exposing (test, describe, Test)
 import Test.Html.Query as Query
@@ -123,7 +124,7 @@ defaultAboutInfo =
     { enabled = True
     , userInfo =
       { name = "user"
-      , role = "role"
+      , role = Administrator
       , instanceRegex = ".*"
       }
     }
