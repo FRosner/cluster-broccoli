@@ -212,7 +212,6 @@ updateBodyView message oldBodyUiModel =
           |> InstanceCreation templateId
           |> InstanceCreation.encoder
         in
-          -- TODO reset the form when receiving a success message { oldBodyUiModel | expandedNewInstanceForms = resetNewParameterForm templateId oldExpandedNewInstanceForms }
           ( { oldBodyUiModel
             | attemptedDeleteInstances = Nothing
             }
@@ -223,7 +222,6 @@ updateBodyView message oldBodyUiModel =
           ( InstanceUpdate instanceId (Just JobStatus.JobRunning) Nothing Nothing )
           |> InstanceUpdate.encoder
         in
-          -- TODO reset the form when receiving a success message?
           ( { oldBodyUiModel
             | attemptedDeleteInstances = Nothing
             }
@@ -234,7 +232,6 @@ updateBodyView message oldBodyUiModel =
           ( InstanceUpdate instanceId (Just JobStatus.JobStopped) Nothing Nothing )
           |> InstanceUpdate.encoder
         in
-          -- TODO reset the form when receiving a success message?
           ( { oldBodyUiModel
             | attemptedDeleteInstances = Nothing
             }
