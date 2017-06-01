@@ -13,6 +13,7 @@ import play.api.libs.functional.syntax._
 import ParameterInfo.{parameterInfoReads, parameterInfoWrites}
 import de.frosner.broccoli.controllers.IncomingWsMessageType.IncomingWsMessageType
 import de.frosner.broccoli.controllers.OutgoingWsMessageType.OutgoingWsMessageType
+import org.mockito.Matchers
 
 import scala.util.{Failure, Success}
 
@@ -142,8 +143,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       }
     }
 
-    "process instance addition requests from admins" in new WithWebSocketApplication[Msg] {
-      val account = UserAccount("user", "pass", ".*", Role.Administrator)
+    "process instance addition requests if no auth is enabled" in new WithWebSocketApplication[Msg] {
       val id = "id"
       val controller = WebSocketController(
         webSocketService = mock(classOf[WebSocketService]),
@@ -177,6 +177,44 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           )
           incoming.feed(Json.toJson(creationMsg)(incomingWsMessagesWrites)).end
           verify(controller.webSocketService).send(id, Json.toJson(resultMsg)(OutgoingWsMessage.outgoingWsMessageWrites))
+      }
+    }
+
+    "process instance addition requests from admins" in new WithWebSocketApplication[Msg] {
+      val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val id = "id"
+      val controller = WebSocketController(
+        webSocketService = mock(classOf[WebSocketService]),
+        templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
+        instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+        aboutService = withDummyValues(mock(classOf[AboutInfoService])),
+        securityService = withAuthConf(mock(classOf[SecurityService]), List(account))
+      )
+      when(controller.webSocketService.newConnection(anyString(), any(classOf[Account]))).thenReturn(Enumerator.empty[Msg])
+      val instanceCreation = InstanceCreation(
+        "template",
+        Map(
+          "id" -> "blib"
+        )
+      )
+      when(controller.instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
+      val result = controller.requestToSocket(FakeRequest().withLoggedIn(controller)(account.name))
+      val maybeConnection = wrapConnection(result)
+      maybeConnection match {
+        case Right((incoming, outgoing)) =>
+          val creationMsg = IncomingWsMessage(
+            IncomingWsMessageType.AddInstance,
+            instanceCreation
+          )
+          val resultMsg = OutgoingWsMessage(
+            OutgoingWsMessageType.InstanceCreationSuccessMsg,
+            InstanceCreationSuccess(
+              instanceCreation,
+              instanceWithStatus
+            )
+          )
+          incoming.feed(Json.toJson(creationMsg)(incomingWsMessagesWrites)).end
+          verify(controller.webSocketService).send(anyString(), Matchers.eq(Json.toJson(resultMsg)(OutgoingWsMessage.outgoingWsMessageWrites)))
       }
     }
 
