@@ -41,7 +41,6 @@ case class WebSocketController @Inject()
         // TODO receive string and try json decoding here because I can handle the error better
         val in = Iteratee.foreach[Msg] {
           jsMsg =>
-            Logger.info(s"Received message through $connectionId: $jsMsg")
             val msg = Json.fromJson(jsMsg)(IncomingWsMessage.incomingWsMessageReads)
             val result = msg.map {
               case IncomingWsMessage(IncomingWsMessageType.AddInstance, instanceCreation: InstanceCreation) =>
