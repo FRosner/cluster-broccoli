@@ -164,7 +164,10 @@ class InstanceService @Inject()(templateService: TemplateService,
   }
 
   def addInstance(instanceCreation: InstanceCreation): Try[InstanceWithStatus] = synchronized {
-    val maybeId = instanceCreation.parameters.get("id") // FIXME requires ID to be defined inside the parameter values
+    val parameters = instanceCreation.parameters.filter {
+      case (parameter, value) => !value.isEmpty
+    }
+    val maybeId = parameters.get("id") // FIXME requires ID to be defined inside the parameter values
     val templateId = instanceCreation.templateId
     val maybeCreatedInstance = maybeId.map { id =>
       if (instances.contains(id)) {
@@ -172,7 +175,7 @@ class InstanceService @Inject()(templateService: TemplateService,
       } else {
         val potentialTemplate = templateService.template(templateId)
         potentialTemplate.map { template =>
-          val maybeNewInstance = Try(Instance(id, template, instanceCreation.parameters))
+          val maybeNewInstance = Try(Instance(id, template, parameters))
           maybeNewInstance.flatMap { newInstance =>
             val result = instanceStorage.writeInstance(newInstance)
             result.foreach { writtenInstance => instancesMap = instancesMap.updated(id, writtenInstance) }
