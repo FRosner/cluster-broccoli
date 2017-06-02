@@ -387,6 +387,163 @@ tests =
 
         ]
 
+    , describe "New Instance Form"
+
+      [ test "Should be invisible if it is not expanded" <|
+        \() ->
+          let
+            templates = defaultTemplates
+            instances = defaultInstances
+            bodyUiModel =
+              { defaultBodyUiModel
+              | expandedTemplates = Set.fromList <| [ "t2" ]
+              }
+            maybeRole = Just Administrator
+          in
+            Body.view templates instances bodyUiModel maybeRole
+            |> Query.fromHtml
+            |> Query.find [ Selector.id "new-instance-form-container-t2" ]
+            |> Query.has [ Selector.class "hidden" ]
+
+      , test "Should be visible if it is expanded" <|
+        \() ->
+          let
+            templates = defaultTemplates
+            instances = defaultInstances
+            bodyUiModel =
+              { defaultBodyUiModel
+              | expandedTemplates = Set.fromList <| [ "t2" ]
+              , expandedNewInstanceForms =
+                  Dict.fromList <|
+                    [ ( "t2"
+                      , { originalParameterValues = Dict.empty
+                        , changedParameterValues = Dict.empty
+                        , selectedTemplate = Nothing
+                        }
+                      )
+                    ]
+              }
+            maybeRole = Just Administrator
+          in
+            Body.view templates instances bodyUiModel maybeRole
+            |> Query.fromHtml
+            |> Query.find [ Selector.id "new-instance-form-container-t2" ]
+            |> Query.has [ Selector.class "show" ]
+
+      , test "Should submit the entered parameters correctly" <|
+        \() ->
+          let
+            changedParameterValues = Dict.fromList <| [ ("i1-p1", Just "lol") ]
+          in
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                , expandedNewInstanceForms =
+                    Dict.fromList <|
+                      [ ( "t2"
+                        , { originalParameterValues = Dict.empty
+                          , changedParameterValues = changedParameterValues
+                          , selectedTemplate = Nothing
+                          }
+                        )
+                      ]
+                }
+              maybeRole = Just Administrator
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "new-instance-form-t2" ]
+              |> Events.simulate ( Events.Submit )
+              |> Events.expectEvent ( SubmitNewInstanceCreation "t2" changedParameterValues )
+
+      , test "Should render input groups for all parameters" <|
+        \() ->
+          let
+            templates = defaultTemplates
+            instances = defaultInstances
+            bodyUiModel =
+              { defaultBodyUiModel
+              | expandedTemplates = Set.fromList <| [ "t2" ]
+              , expandedNewInstanceForms =
+                  Dict.fromList <|
+                    [ ( "t2"
+                      , { originalParameterValues = Dict.empty
+                        , changedParameterValues = Dict.empty
+                        , selectedTemplate = Nothing
+                        }
+                      )
+                    ]
+              }
+            maybeRole = Just Administrator
+          in
+            Body.view templates instances bodyUiModel maybeRole
+            |> Query.fromHtml
+            |> Query.find [ Selector.id "new-instance-form-t2" ]
+            |> Query.findAll [ Selector.class "input-group" ]
+            |> Query.count (Expect.equal 3)
+
+      , test "Should discard the entered parameters if clicked" <|
+        \() ->
+          let
+            changedParameterValues = Dict.fromList <| [ ("i1-p1", Just "lol") ]
+          in
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel = defaultBodyUiModel
+              maybeRole = Just Administrator
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "new-instance-form-discard-button-t2" ]
+              |> Events.simulate ( Events.Click )
+              |> Events.expectEvent ( DiscardNewInstanceCreation "t2" )
+
+      , test "Should enter parameter values correctly" <|
+        \() ->
+          let
+            templates = defaultTemplates
+            instances = defaultInstances
+            bodyUiModel = defaultBodyUiModel
+            maybeRole = Just Administrator
+          in
+            Body.view templates instances bodyUiModel maybeRole
+            |> Query.fromHtml
+            |> Query.find [ Selector.id "new-instance-form-parameter-input-t2-t2-p1" ]
+            |> Events.simulate ( Events.Input "value" )
+            |> Events.expectEvent ( EnterNewInstanceParameterValue "t2" "t2-p1" "value" )
+
+      , test "Should enter parameter values correctly" <|
+        \() ->
+          let
+            templates = defaultTemplates
+            instances = defaultInstances
+            bodyUiModel =
+              { defaultBodyUiModel
+              | expandedTemplates = Set.fromList <| [ "t2" ]
+              , expandedNewInstanceForms =
+                  Dict.fromList <|
+                    [ ( "t2"
+                      , { originalParameterValues = Dict.empty
+                        , changedParameterValues = Dict.empty
+                        , selectedTemplate = Nothing
+                        }
+                      )
+                    ]
+              }
+            maybeRole = Just Administrator
+          in
+            Body.view templates instances bodyUiModel maybeRole
+            |> Query.fromHtml
+            |> Query.find [ Selector.id "new-instance-form-parameter-secret-visibility-t2-t2-p2" ]
+            |> Events.simulate ( Events.Click )
+            |> Events.expectEvent ( ToggleNewInstanceSecretVisibility "t2" "t2-p2" )
+
+      ]
+
     ]
 
 defaultBodyUiModel : BodyUiModel

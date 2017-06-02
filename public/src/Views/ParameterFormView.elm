@@ -255,14 +255,9 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
 
 newView template maybeInstanceParameterForm visibleSecrets =
   let
-    ( otherParameters
-    , otherParameterInfos
-    , instanceParameterForms
-    ) =
-    ( List.filter (\p -> p /= "id") template.parameters
-    , Dict.remove "id" template.parameterInfos
-    , Maybe.withDefault InstanceParameterForm.empty maybeInstanceParameterForm
-    )
+    otherParameters = List.filter (\p -> p /= "id") template.parameters
+    otherParameterInfos = Dict.remove "id" template.parameterInfos
+    instanceParameterForms = Maybe.withDefault InstanceParameterForm.empty maybeInstanceParameterForm
   in
     let
       ( otherParametersLeft
@@ -287,6 +282,7 @@ newView template maybeInstanceParameterForm visibleSecrets =
           [ ("padding-left", "40px")
           , ("padding-right", "40px")
           ]
+        , id <| String.concat [ "new-instance-form-", template.id ]
         ]
         [ h5 [] [ text "Parameters" ]
         , div
@@ -322,6 +318,7 @@ newView template maybeInstanceParameterForm visibleSecrets =
                 "Discard"
                 [ onClick (DiscardNewInstanceCreation template.id)
                 , type_ "button"
+                , id <| String.concat [ "new-instance-form-discard-button-", template.id ]
                 ]
             ]
           ]
@@ -363,7 +360,9 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
       p
         []
         [ div
-          [ class "input-group" ]
+          [ class "input-group"
+          , id <| String.concat [ "new-instance-form-input-group-", template.id, "-", parameter ]
+          ]
           ( List.append
             [ span
               [ class "input-group-addon"
@@ -379,7 +378,8 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
               , placeholder placeholderValue
               , value parameterValue
               , disabled (not enabled)
-              , onInput (EnterNewInstanceParameterValue template parameter)
+              , id <| String.concat [ "new-instance-form-parameter-input-", template.id, "-", parameter ]
+              , onInput (EnterNewInstanceParameterValue template.id parameter)
               ]
               []
             ]
@@ -388,6 +388,7 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                   [ class "input-group-addon"
                   , attribute "role" "button"
                   , onClick ( ToggleNewInstanceSecretVisibility template.id parameter )
+                  , id <| String.concat [ "new-instance-form-parameter-secret-visibility-", template.id, "-", parameter ]
                   ]
                   [ icon
                     ( String.concat

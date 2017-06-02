@@ -117,10 +117,10 @@ updateBodyView message oldBodyUiModel =
             }
           , Cmd.none
           )
-      EnterNewInstanceParameterValue template parameter value ->
+      EnterNewInstanceParameterValue templateId parameter value ->
         let newExpandedNewInstanceForms =
           ( Dict.update
-              template.id
+              templateId
               ( updateNewInstanceParameterForm parameter value )
               oldExpandedNewInstanceForms
           )

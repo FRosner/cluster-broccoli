@@ -153,7 +153,9 @@ view instances templates bodyUiModel maybeRole template =
               )
             ]
           , div
-            [ class (if (Dict.member template.id bodyUiModel.expandedNewInstanceForms) then "show" else "hidden") ]
+            [ class (if (Dict.member template.id bodyUiModel.expandedNewInstanceForms) then "show" else "hidden")
+            , id <| String.concat [ "new-instance-form-container-", template.id ]
+            ]
             [ ( ParameterFormView.newView
                 template
                 (Dict.get template.id bodyUiModel.expandedNewInstanceForms)
