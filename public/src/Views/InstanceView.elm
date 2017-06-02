@@ -126,10 +126,16 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
   in
     List.append
     [ tr
-        ( if (toDelete) then
-            [ style [ ("background-color", "#c9302c") ] ]
-          else
-            []
+        ( List.concat
+          [ [ class "instance-row"
+            , id ( String.concat [ "instance-row-", instance.id ] )
+            ]
+          , ( if (toDelete) then
+                [ style [ ("background-color", "#c9302c") ] ]
+              else
+                []
+            )
+          ]
         )
       [ td
         [ width checkboxColumnWidth ]

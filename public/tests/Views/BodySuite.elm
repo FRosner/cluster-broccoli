@@ -4,6 +4,8 @@ import Views.Body as Body
 
 import Models.Resources.Role as Role exposing (Role(Administrator))
 import Models.Resources.Template as Template exposing (Template, TemplateId)
+import Models.Resources.Instance as Instance exposing (Instance, InstanceId)
+import Models.Resources.JobStatus exposing (JobStatus(..))
 import Models.Ui.BodyUiModel as BodyUiModel exposing (BodyUiModel)
 
 import Test exposing (test, describe, Test)
@@ -29,11 +31,42 @@ tests =
             |> Query.fromHtml
             |> Query.findAll [ Selector.class "template" ]
             |> Query.count (Expect.equal 2)
+
+    , test "Should render each instance" <|
+        \() ->
+          let
+            templates = defaultTemplates
+            instances = defaultInstances
+            bodyUiModel = defaultBodyUiModel
+            maybeRole = Just Administrator
+          in
+            Body.view templates instances bodyUiModel maybeRole
+            |> Query.fromHtml
+            |> Query.findAll [ Selector.class "instance-row" ]
+            |> Query.count (Expect.equal 3)
     ]
 
 defaultBodyUiModel : BodyUiModel
 defaultBodyUiModel =
   BodyUiModel.initialModel
+
+defaultInstance : InstanceId -> TemplateId -> Instance
+defaultInstance instanceId templateId =
+  { id = instanceId
+  , template = defaultTemplate templateId
+  , parameterValues = Dict.empty
+  , jobStatus = JobStopped
+  , services = []
+  , periodicRuns = []
+  }
+
+defaultInstances : Dict InstanceId Instance
+defaultInstances =
+  [ ( "i1", defaultInstance "i1" "t1" )
+  , ( "i2", defaultInstance "i2" "t2" )
+  , ( "i3", defaultInstance "i3" "t2" )
+  ]
+  |> Dict.fromList
 
 defaultTemplate : TemplateId -> Template
 defaultTemplate templateId =
