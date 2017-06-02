@@ -30,8 +30,6 @@ import Navigation exposing (Location)
 
 import Dict exposing (Dict)
 
-import Regex exposing (Regex)
-
 init : Location -> ( Model, Cmd AnyMsg )
 init location =
   ( Model.initial location (Routing.parseLocation location)
