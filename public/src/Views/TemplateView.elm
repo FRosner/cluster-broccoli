@@ -97,7 +97,9 @@ view instances templates bodyUiModel maybeRole template =
                                 else
                                   []
                               )
-                            , [ onClick (StopSelectedInstances selectedTemplateInstances) ]
+                            , [ onClick (StopSelectedInstances selectedTemplateInstances)
+                              , id <| String.concat [ "stop-selected-instances-", template.id ]
+                              ]
                             ]
                           )
                       -- , text " "

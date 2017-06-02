@@ -319,6 +319,74 @@ tests =
 
       ]
 
+      , describe "Selected Instance Stopping"
+
+        [ test "Should trigger instance stop on click" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                , selectedInstances = Set.fromList <| [ "i1", "i2" ]
+                }
+              maybeRole = Just Administrator
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "stop-selected-instances-t2" ]
+              |> Events.simulate (Events.Click)
+              |> Events.expectEvent (StopSelectedInstances (Set.fromList ["i2"]))
+
+        , test "Should be disabled when no instances are selected" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                }
+              maybeRole = Just Administrator
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "stop-selected-instances-t2" ]
+              |> Query.has [ Selector.attribute "disabled" "disabled" ]
+
+        , test "Should show the stop button to operators" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                }
+              maybeRole = Just Operator
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.has [ Selector.id "stop-selected-instances-t2" ]
+
+        , test "Should show the stop button not to users" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                }
+              maybeRole = Just User
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.hasNot [ Selector.id "stop-selected-instances-t2" ]
+
+        ]
+
     ]
 
 defaultBodyUiModel : BodyUiModel
