@@ -6,7 +6,6 @@ import Dict exposing (Dict)
 
 import Set exposing (Set)
 
-import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
 import Models.Resources.Template exposing (TemplateId, Template)
 import Models.Resources.Instance exposing (InstanceId, Instance)
