@@ -40,6 +40,7 @@ tests =
             |> Query.has
               [ Selector.text "pname: pversion (built with Scala sversion, SBT sbtversion), "
               ]
+              
       , test "Shows correct info if available" <|
           \() ->
             let ( maybeAboutInfo, wsConnected ) =
