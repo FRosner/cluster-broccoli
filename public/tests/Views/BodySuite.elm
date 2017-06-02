@@ -164,7 +164,7 @@ tests =
 
         ]
 
-    , describe "Instance Deletion"
+    , describe "Selected Instance Deletion"
 
       [ test "Should trigger instance deletion confirmation on click" <|
         \() ->
@@ -248,6 +248,74 @@ tests =
             Body.view templates instances bodyUiModel maybeRole
             |> Query.fromHtml
             |> Query.hasNot [ Selector.id "delete-selected-instances-t2" ]
+
+      ]
+
+    , describe "Selected Instance Starting"
+
+      [ test "Should trigger instance start on click" <|
+        \() ->
+          let
+            templates = defaultTemplates
+            instances = defaultInstances
+            bodyUiModel =
+              { defaultBodyUiModel
+              | expandedTemplates = Set.fromList <| [ "t2" ]
+              , selectedInstances = Set.fromList <| [ "i1", "i2" ]
+              }
+            maybeRole = Just Administrator
+          in
+            Body.view templates instances bodyUiModel maybeRole
+            |> Query.fromHtml
+            |> Query.find [ Selector.id "start-selected-instances-t2" ]
+            |> Events.simulate (Events.Click)
+            |> Events.expectEvent (StartSelectedInstances (Set.fromList ["i2"]))
+
+      , test "Should be disabled when no instances are selected" <|
+        \() ->
+          let
+            templates = defaultTemplates
+            instances = defaultInstances
+            bodyUiModel =
+              { defaultBodyUiModel
+              | expandedTemplates = Set.fromList <| [ "t2" ]
+              }
+            maybeRole = Just Administrator
+          in
+            Body.view templates instances bodyUiModel maybeRole
+            |> Query.fromHtml
+            |> Query.find [ Selector.id "start-selected-instances-t2" ]
+            |> Query.has [ Selector.attribute "disabled" "disabled" ]
+
+      , test "Should show the start button to operators" <|
+        \() ->
+          let
+            templates = defaultTemplates
+            instances = defaultInstances
+            bodyUiModel =
+              { defaultBodyUiModel
+              | expandedTemplates = Set.fromList <| [ "t2" ]
+              }
+            maybeRole = Just Operator
+          in
+            Body.view templates instances bodyUiModel maybeRole
+            |> Query.fromHtml
+            |> Query.has [ Selector.id "start-selected-instances-t2" ]
+
+      , test "Should show the start button not to users" <|
+        \() ->
+          let
+            templates = defaultTemplates
+            instances = defaultInstances
+            bodyUiModel =
+              { defaultBodyUiModel
+              | expandedTemplates = Set.fromList <| [ "t2" ]
+              }
+            maybeRole = Just User
+          in
+            Body.view templates instances bodyUiModel maybeRole
+            |> Query.fromHtml
+            |> Query.hasNot [ Selector.id "start-selected-instances-t2" ]
 
       ]
 

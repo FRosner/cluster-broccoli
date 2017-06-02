@@ -81,7 +81,9 @@ view instances templates bodyUiModel maybeRole template =
                                 else
                                   []
                               )
-                            , [ onClick (StartSelectedInstances selectedTemplateInstances) ]
+                            , [ onClick (StartSelectedInstances selectedTemplateInstances)
+                              , id <| String.concat [ "start-selected-instances-", template.id ]
+                              ]
                             ]
                           )
                       , text " "
