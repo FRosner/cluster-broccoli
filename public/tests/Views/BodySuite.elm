@@ -128,7 +128,7 @@ tests =
             in
               Body.view templates instances bodyUiModel maybeRole
               |> Query.fromHtml
-              |> Query.find [ Selector.id "new-template-t2" ]
+              |> Query.find [ Selector.id "expand-new-instance-t2" ]
               |> Events.simulate (Events.Click)
               |> Events.expectEvent (ExpandNewInstanceForm True "t2")
 
@@ -145,7 +145,7 @@ tests =
             in
               Body.view templates instances bodyUiModel maybeRole
               |> Query.fromHtml
-              |> Query.hasNot [ Selector.id "new-template-t2" ]
+              |> Query.hasNot [ Selector.id "expand-new-instance-t2" ]
 
         , test "Should show the creation button not to users" <|
           \() ->
@@ -160,9 +160,96 @@ tests =
             in
               Body.view templates instances bodyUiModel maybeRole
               |> Query.fromHtml
-              |> Query.hasNot [ Selector.id "new-template-t2" ]
+              |> Query.hasNot [ Selector.id "expand-new-instance-t2" ]
 
         ]
+
+    , describe "Instance Deletion"
+
+      [ test "Should trigger instance deletion confirmation on click" <|
+        \() ->
+          let
+            templates = defaultTemplates
+            instances = defaultInstances
+            bodyUiModel =
+              { defaultBodyUiModel
+              | expandedTemplates = Set.fromList <| [ "t2" ]
+              , selectedInstances = Set.fromList <| [ "i1", "i2" ]
+              }
+            maybeRole = Just Administrator
+          in
+            Body.view templates instances bodyUiModel maybeRole
+            |> Query.fromHtml
+            |> Query.find [ Selector.id "delete-selected-instances-t2" ]
+            |> Events.simulate (Events.Click)
+            |> Events.expectEvent (AttemptDeleteSelectedInstances "t2" (Set.fromList ["i2"]))
+
+      , test "Should trigger instance deletion on confirmation" <|
+        \() ->
+          let
+            templates = defaultTemplates
+            instances = defaultInstances
+            bodyUiModel =
+              { defaultBodyUiModel
+              | expandedTemplates = Set.fromList <| [ "t2" ]
+              , selectedInstances = Set.fromList <| [ "i1", "i2" ]
+              , attemptedDeleteInstances = Just ("t2", Set.fromList <| [ "i2" ])
+              }
+            maybeRole = Just Administrator
+          in
+            Body.view templates instances bodyUiModel maybeRole
+            |> Query.fromHtml
+            |> Query.find [ Selector.id "confirm-delete-selected-instances-t2" ]
+            |> Events.simulate (Events.Click)
+            |> Events.expectEvent (DeleteSelectedInstances "t2" (Set.fromList ["i2"]))
+
+      , test "Should be disabled when no instances are selected" <|
+        \() ->
+          let
+            templates = defaultTemplates
+            instances = defaultInstances
+            bodyUiModel =
+              { defaultBodyUiModel
+              | expandedTemplates = Set.fromList <| [ "t2" ]
+              }
+            maybeRole = Just Administrator
+          in
+            Body.view templates instances bodyUiModel maybeRole
+            |> Query.fromHtml
+            |> Query.find [ Selector.id "delete-selected-instances-t2" ]
+            |> Query.has [ Selector.attribute "disabled" "disabled" ]
+
+      , test "Should show the deletion button not to operators" <|
+        \() ->
+          let
+            templates = defaultTemplates
+            instances = defaultInstances
+            bodyUiModel =
+              { defaultBodyUiModel
+              | expandedTemplates = Set.fromList <| [ "t2" ]
+              }
+            maybeRole = Just Operator
+          in
+            Body.view templates instances bodyUiModel maybeRole
+            |> Query.fromHtml
+            |> Query.hasNot [ Selector.id "delete-selected-instances-t2" ]
+
+      , test "Should show the deletion button not to users" <|
+        \() ->
+          let
+            templates = defaultTemplates
+            instances = defaultInstances
+            bodyUiModel =
+              { defaultBodyUiModel
+              | expandedTemplates = Set.fromList <| [ "t2" ]
+              }
+            maybeRole = Just User
+          in
+            Body.view templates instances bodyUiModel maybeRole
+            |> Query.fromHtml
+            |> Query.hasNot [ Selector.id "delete-selected-instances-t2" ]
+
+      ]
 
     ]
 

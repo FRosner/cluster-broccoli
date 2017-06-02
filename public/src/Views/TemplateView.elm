@@ -59,7 +59,7 @@ view instances templates bodyUiModel maybeRole template =
                         "fa fa-plus-circle"
                         "New"
                         [ onClick (ExpandNewInstanceForm True template.id)
-                        , id <| String.concat [ "new-template-", template.id ]
+                        , id <| String.concat [ "expand-new-instance-", template.id ]
                         ]
                     , text " "
                     ]
@@ -122,7 +122,9 @@ view instances templates bodyUiModel maybeRole template =
                                   else
                                     []
                                 )
-                              , [ onClick (AttemptDeleteSelectedInstances template.id selectedTemplateInstances) ]
+                              , [ onClick (AttemptDeleteSelectedInstances template.id selectedTemplateInstances)
+                                , id <| String.concat [ "delete-selected-instances-", template.id ]
+                                ]
                               ]
                             )
                         ]
@@ -137,7 +139,9 @@ view instances templates bodyUiModel maybeRole template =
                                   else
                                     []
                                 )
-                              , [ onClick (DeleteSelectedInstances template.id selectedTemplateInstances) ]
+                              , [ onClick (DeleteSelectedInstances template.id selectedTemplateInstances)
+                                , id <| String.concat [ "confirm-delete-selected-instances-", template.id ]
+                                ]
                               ]
                             )
                         ]
