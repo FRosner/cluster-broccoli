@@ -34,7 +34,7 @@ updateBodyView message oldBodyUiModel =
     , oldBodyUiModel.expandedInstances
     , oldBodyUiModel.instanceParameterForms
     , oldBodyUiModel.visibleEditInstanceSecrets
-    , oldBodyUiModel.visibleNewTemplateSecrets
+    , oldBodyUiModel.visibleNewInstanceSecrets
     , oldBodyUiModel.expandedNewInstanceForms
     )
   in
@@ -183,7 +183,7 @@ updateBodyView message oldBodyUiModel =
           )
         in
           ( { oldBodyUiModel
-            | visibleNewTemplateSecrets = newVisibleSecrets
+            | visibleNewInstanceSecrets = newVisibleSecrets
             , attemptedDeleteInstances = Nothing
             }
           , Cmd.none

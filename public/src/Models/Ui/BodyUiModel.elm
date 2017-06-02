@@ -13,7 +13,7 @@ type alias BodyUiModel =
   , expandedInstances : Set InstanceId
   , instanceParameterForms : Dict InstanceId InstanceParameterForm
   , visibleEditInstanceSecrets : Set (InstanceId, String)
-  , visibleNewTemplateSecrets : Set (TemplateId, String)
+  , visibleNewInstanceSecrets : Set (TemplateId, String)
   , expandedNewInstanceForms : Dict TemplateId InstanceParameterForm
   , attemptedDeleteInstances : Maybe (TemplateId, (Set InstanceId))
   }
@@ -24,7 +24,7 @@ initialModel =
   , expandedInstances = Set.empty
   , instanceParameterForms = Dict.empty
   , visibleEditInstanceSecrets = Set.empty
-  , visibleNewTemplateSecrets = Set.empty
+  , visibleNewInstanceSecrets = Set.empty
   , expandedNewInstanceForms = Dict.empty
   , attemptedDeleteInstances = Nothing
   }

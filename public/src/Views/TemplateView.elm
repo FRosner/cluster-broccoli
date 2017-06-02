@@ -157,7 +157,7 @@ view instances templates bodyUiModel maybeRole template =
             [ ( ParameterFormView.newView
                 template
                 (Dict.get template.id bodyUiModel.expandedNewInstanceForms)
-                bodyUiModel.visibleNewTemplateSecrets
+                bodyUiModel.visibleNewInstanceSecrets
               )
             ]
           , ( Views.InstanceView.view
