@@ -25,21 +25,21 @@
     "id": "test"
   },
   "status": "running",
-  "services": {
-    "test-web-ui-1": {
+  "services": [
+    {
       "name": "test-web-ui-1",
       "protocol": "http",
       "address": "127.0.0.1",
       "port": 8000,
       "status": "passing"
     },
-    "test-web-ui-2": {
+    {
       "name": "test-web-ui-2",
       "protocol": "http",
       "address": "127.0.0.1",
       "port": 8000,
       "status": "failing"
     }
-  },
+  ],
   "periodicRuns": []
 }
