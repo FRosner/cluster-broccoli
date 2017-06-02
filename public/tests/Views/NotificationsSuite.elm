@@ -23,8 +23,7 @@ tests =
           in
             Notifications.view errors
             |> Query.fromHtml
-            |> Query.findAll [ Selector.class "alert" ]
-            |> Query.count (Expect.equal 0)
+            |> Query.hasNot [ Selector.class "alert" ]
 
     , test "Should render errors correctly" <|
         \() ->

@@ -145,8 +145,7 @@ tests =
             in
               Body.view templates instances bodyUiModel maybeRole
               |> Query.fromHtml
-              |> Query.findAll [ Selector.id "new-template-t2" ]
-              |> Query.count (Expect.equal 0)
+              |> Query.hasNot [ Selector.id "new-template-t2" ]
 
         , test "Should show the creation button not to users" <|
           \() ->
@@ -161,8 +160,7 @@ tests =
             in
               Body.view templates instances bodyUiModel maybeRole
               |> Query.fromHtml
-              |> Query.findAll [ Selector.id "new-template-t2" ]
-              |> Query.count (Expect.equal 0)
+              |> Query.hasNot [ Selector.id "new-template-t2" ]
 
         ]
 
