@@ -35,7 +35,9 @@ view instances templates bodyUiModel maybeRole template =
       |> Set.intersect bodyUiModel.selectedInstances
     in
       div
-        [ class "panel panel-default" ]
+        [ id ( String.concat [ "template-", template.id ] )
+        , class "panel panel-default template"
+        ]
         [ div
           [ class "panel-heading" ]
           [ templatePanelHeadingView template bodyUiModel.expandedTemplates templateInstances ]
