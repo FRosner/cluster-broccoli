@@ -8,12 +8,20 @@ import Models.Resources.Instance as Instance exposing (Instance, InstanceId)
 import Models.Resources.JobStatus exposing (JobStatus(..))
 import Models.Ui.BodyUiModel as BodyUiModel exposing (BodyUiModel)
 
+import Updates.Messages exposing (UpdateBodyViewMsg(..))
+
+import Messages exposing (AnyMsg(UpdateBodyViewMsg))
+
 import Test exposing (test, describe, Test)
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector
+import Test.Html.Events as Events
+
 import Expect as Expect
 
 import Dict exposing (Dict)
+
+import Set exposing (Set)
 
 tests : Test
 tests =
@@ -58,6 +66,50 @@ tests =
               |> Query.find [ Selector.id "template-t2" ]
               |> Query.findAll [ Selector.class "instance-row" ]
               |> Query.count (Expect.equal 2)
+
+        , test "Expand a template on click" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel = defaultBodyUiModel
+              maybeRole = Just Administrator
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "expand-template-t2" ]
+              |> Events.simulate (Events.Click)
+              |> Events.expectEvent (ToggleTemplate "t2")
+
+        , test "Render the template expansion chevron for expanded templates" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                }
+              maybeRole = Just Administrator
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "expand-template-t2" ]
+              |> Query.has [ Selector.class "glyphicon-chevron-down" ]
+
+        , test "Render the template expansion chevron for non-expanded templates" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel = defaultBodyUiModel
+              maybeRole = Just Administrator
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "expand-template-t2" ]
+              |> Query.has [ Selector.class "glyphicon-chevron-right" ]
+
     ]
 
 defaultBodyUiModel : BodyUiModel

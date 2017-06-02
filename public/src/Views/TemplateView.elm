@@ -191,7 +191,8 @@ templatePanelHeadingInfo clazz infoTitle info =
 
 templateIdView template expandedTemplates =
   span
-    [ attribute "role" "button"
+    [ id ( String.concat [ "expand-template-", template.id ] )
+    , attribute "role" "button"
     , onClick (ToggleTemplate template.id)
     ]
     [ icon
