@@ -44,6 +44,20 @@ tests =
             |> Query.fromHtml
             |> Query.findAll [ Selector.class "instance-row" ]
             |> Query.count (Expect.equal 3)
+
+      , test "Should assign the instance to the corresponding template" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel = defaultBodyUiModel
+              maybeRole = Just Administrator
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "template-t2" ]
+              |> Query.findAll [ Selector.class "instance-row" ]
+              |> Query.count (Expect.equal 2)
     ]
 
 defaultBodyUiModel : BodyUiModel
