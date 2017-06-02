@@ -25,6 +25,7 @@ errorAlert (index, error) =
     [ button
       [ type_ "button"
       , class "close"
+      , id ( String.concat [ "close-error-", (toString index) ] )
       , onClick ( UpdateErrorsMsg ( CloseError index ) )
       ]
       [ icon "fa fa-times" [] ]
