@@ -2,7 +2,7 @@ module Views.BodySuite exposing (tests)
 
 import Views.Body as Body
 
-import Models.Resources.Role as Role exposing (Role(Administrator))
+import Models.Resources.Role as Role exposing (Role(..))
 import Models.Resources.Template as Template exposing (Template, TemplateId)
 import Models.Resources.Instance as Instance exposing (Instance, InstanceId)
 import Models.Resources.JobStatus exposing (JobStatus(..))
@@ -67,21 +67,55 @@ tests =
               |> Query.findAll [ Selector.class "instance-row" ]
               |> Query.count (Expect.equal 2)
 
-        , test "Expand a template on click" <|
-          \() ->
-            let
-              templates = defaultTemplates
-              instances = defaultInstances
-              bodyUiModel = defaultBodyUiModel
-              maybeRole = Just Administrator
-            in
-              Body.view templates instances bodyUiModel maybeRole
-              |> Query.fromHtml
-              |> Query.find [ Selector.id "expand-template-t2" ]
-              |> Events.simulate (Events.Click)
-              |> Events.expectEvent (ToggleTemplate "t2")
+        , describe "Template Expanding"
 
-        , test "Render the template expansion chevron for expanded templates" <|
+          [ test "Expand a template on click" <|
+            \() ->
+              let
+                templates = defaultTemplates
+                instances = defaultInstances
+                bodyUiModel = defaultBodyUiModel
+                maybeRole = Just Administrator
+              in
+                Body.view templates instances bodyUiModel maybeRole
+                |> Query.fromHtml
+                |> Query.find [ Selector.id "expand-template-t2" ]
+                |> Events.simulate (Events.Click)
+                |> Events.expectEvent (ToggleTemplate "t2")
+
+          , test "Render the template expansion chevron for expanded templates" <|
+            \() ->
+              let
+                templates = defaultTemplates
+                instances = defaultInstances
+                bodyUiModel =
+                  { defaultBodyUiModel
+                  | expandedTemplates = Set.fromList <| [ "t2" ]
+                  }
+                maybeRole = Just Administrator
+              in
+                Body.view templates instances bodyUiModel maybeRole
+                |> Query.fromHtml
+                |> Query.find [ Selector.id "expand-template-t2" ]
+                |> Query.has [ Selector.class "glyphicon-chevron-down" ]
+
+          , test "Render the template expansion chevron for non-expanded templates" <|
+            \() ->
+              let
+                templates = defaultTemplates
+                instances = defaultInstances
+                bodyUiModel = defaultBodyUiModel
+                maybeRole = Just Administrator
+              in
+                Body.view templates instances bodyUiModel maybeRole
+                |> Query.fromHtml
+                |> Query.find [ Selector.id "expand-template-t2" ]
+                |> Query.has [ Selector.class "glyphicon-chevron-right" ]
+          ]
+
+      , describe "Instance Creation"
+
+        [ test "Should open the instance creation form on click" <|
           \() ->
             let
               templates = defaultTemplates
@@ -94,21 +128,43 @@ tests =
             in
               Body.view templates instances bodyUiModel maybeRole
               |> Query.fromHtml
-              |> Query.find [ Selector.id "expand-template-t2" ]
-              |> Query.has [ Selector.class "glyphicon-chevron-down" ]
+              |> Query.find [ Selector.id "new-template-t2" ]
+              |> Events.simulate (Events.Click)
+              |> Events.expectEvent (ExpandNewInstanceForm True "t2")
 
-        , test "Render the template expansion chevron for non-expanded templates" <|
+        , test "Should show the creation button not to operators" <|
           \() ->
             let
               templates = defaultTemplates
               instances = defaultInstances
-              bodyUiModel = defaultBodyUiModel
-              maybeRole = Just Administrator
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                }
+              maybeRole = Just Operator
             in
               Body.view templates instances bodyUiModel maybeRole
               |> Query.fromHtml
-              |> Query.find [ Selector.id "expand-template-t2" ]
-              |> Query.has [ Selector.class "glyphicon-chevron-right" ]
+              |> Query.findAll [ Selector.id "new-template-t2" ]
+              |> Query.count (Expect.equal 0)
+
+        , test "Should show the creation button not to users" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                }
+              maybeRole = Just User
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.findAll [ Selector.id "new-template-t2" ]
+              |> Query.count (Expect.equal 0)
+
+        ]
 
     ]
 

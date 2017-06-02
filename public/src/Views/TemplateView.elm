@@ -58,7 +58,9 @@ view instances templates bodyUiModel maybeRole template =
                         "btn btn-default"
                         "fa fa-plus-circle"
                         "New"
-                        [ onClick (ExpandNewInstanceForm True template.id) ]
+                        [ onClick (ExpandNewInstanceForm True template.id)
+                        , id <| String.concat [ "new-template-", template.id ]
+                        ]
                     , text " "
                     ]
                 , if (maybeRole /= Just Administrator && maybeRole /= Just Operator) then
