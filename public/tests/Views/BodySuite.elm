@@ -544,6 +544,154 @@ tests =
 
       ]
 
+    , describe "Instance View"
+
+      [ test "Should expand on click (chevron)" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                }
+              maybeRole = Just User
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "expand-instance-chevron-i2" ]
+              |> Events.simulate ( Events.Click )
+              |> Events.expectEvent ( InstanceExpanded "i2" True )
+
+      , test "Should expand on click (instance name)" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                }
+              maybeRole = Just User
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "expand-instance-name-i2" ]
+              |> Events.simulate ( Events.Click )
+              |> Events.expectEvent ( InstanceExpanded "i2" True )
+
+      , test "Should select instance on check" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                }
+              maybeRole = Just User
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "select-instance-i2" ]
+              |> Events.simulate ( Events.Check True )
+              |> Events.expectEvent ( InstanceSelected "i2" True )
+
+      , test "Should start instance on click" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                }
+              maybeRole = Just Administrator
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "start-instance-i2" ]
+              |> Events.simulate ( Events.Click )
+              |> Events.expectEvent ( StartInstance "i2" )
+
+      , test "Should stop instance on click" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                }
+              maybeRole = Just Administrator
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.find [ Selector.id "stop-instance-i2" ]
+              |> Events.simulate ( Events.Click )
+              |> Events.expectEvent ( StopInstance "i2" )
+
+      , test "Should render start button for operators" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                }
+              maybeRole = Just Operator
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.has [ Selector.id "start-instance-i2" ]
+
+      , test "Should render stop button for operators" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                }
+              maybeRole = Just Operator
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.has [ Selector.id "stop-instance-i2" ]
+
+      , test "Should not render start button for users" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                }
+              maybeRole = Just User
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.hasNot [ Selector.id "start-instance-i2" ]
+
+      , test "Should not render start button for users" <|
+          \() ->
+            let
+              templates = defaultTemplates
+              instances = defaultInstances
+              bodyUiModel =
+                { defaultBodyUiModel
+                | expandedTemplates = Set.fromList <| [ "t2" ]
+                }
+              maybeRole = Just User
+            in
+              Body.view templates instances bodyUiModel maybeRole
+              |> Query.fromHtml
+              |> Query.hasNot [ Selector.id "stop-instance-i2" ]
+      ]
+
     ]
 
 defaultBodyUiModel : BodyUiModel

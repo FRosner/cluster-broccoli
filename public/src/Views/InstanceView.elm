@@ -143,6 +143,7 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
           [ type_ "checkbox"
           , onCheck (InstanceSelected instance.id)
           , checked (Set.member instance.id selectedInstances)
+          , id <| String.concat [ "select-instance-", instance.id ]
           ]
           []
         ]
@@ -156,16 +157,18 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
           )
           [ attribute "role" "button"
           , onClick (InstanceExpanded instance.id (not instanceExpanded))
+          , id <| String.concat [ "expand-instance-chevron-", instance.id ]
           ]
         ]
       , td
         -- [ width nameColumnWidth ]
         []
         [ span
-            [ attribute "role" "button"
-            , onClick (InstanceExpanded instance.id (not instanceExpanded))
-            ]
-            [ text instance.id ]
+          [ attribute "role" "button"
+          , onClick (InstanceExpanded instance.id (not instanceExpanded))
+          , id <| String.concat [ "expand-instance-name-", instance.id ]
+          ]
+          [ text instance.id ]
         ]
       , td
         [ class "text-left hidden-xs"
@@ -205,7 +208,9 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
                   )
                   "Start Instance"
                   ( List.append
-                    [ onClick (StartInstance instance.id) ]
+                    [ onClick (StartInstance instance.id)
+                    , id <| String.concat [ "start-instance-", instance.id ]
+                    ]
                     ( if (instance.jobStatus == JobStatus.JobUnknown) then
                         [ attribute "disabled" "disabled" ]
                       else
@@ -218,7 +223,9 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
                   "glyphicon glyphicon-stop"
                   "Stop Instance"
                   ( List.append
-                    [ onClick (StopInstance instance.id) ]
+                    [ onClick (StopInstance instance.id)
+                    , id <| String.concat [ "stop-instance-", instance.id ]
+                    ]
                     ( if (instance.jobStatus == JobStatus.JobStopped
                       || instance.jobStatus == JobStatus.JobUnknown) then
                         [ attribute "disabled" "disabled" ]
