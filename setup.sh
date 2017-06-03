@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eou pipefail
 
-cd public
+cd elm
 npm install
 npm run setup
 cd ..

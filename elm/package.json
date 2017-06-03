@@ -31,7 +31,7 @@
     "test": "elm-test",
     "compile": "elm-make",
     "setup": "elm-install; cd tests; elm-install",
-    "package": "webpack; babel dist/app.js --out-file dist/app-babel.js",
+    "package": "webpack; babel dist/app.js --out-file dist/app-babel.js; cp -r dist/* ../public/",
     "watch": "webpack --watch"
   },
   "author": "",
