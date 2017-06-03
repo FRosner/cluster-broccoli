@@ -1,4 +1,4 @@
-# Cluster Broccoli
+# Cluster Broccoli ![Icon](https://github.com/FRosner/cluster-broccoli/raw/52dd3447343705bc2d2a76de7e19a84873d89d0c/public/images/favicon-readme.png)
 
 [![Build Status](https://travis-ci.org/FRosner/cluster-broccoli.svg?branch=master)](https://travis-ci.org/FRosner/cluster-broccoli)
 [![codecov](https://codecov.io/gh/FRosner/cluster-broccoli/branch/master/graph/badge.svg)](https://codecov.io/gh/FRosner/cluster-broccoli)
