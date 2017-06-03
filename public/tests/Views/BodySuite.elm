@@ -516,7 +516,7 @@ tests =
             |> Events.simulate ( Events.Input "value" )
             |> Events.expectEvent ( EnterNewInstanceParameterValue "t2" "t2-p1" "value" )
 
-      , test "Should enter parameter values correctly" <|
+      , test "Should toggle secret parameter visibility" <|
         \() ->
           let
             templates = defaultTemplates
