@@ -38,7 +38,6 @@ Cluster Broccoli provides a RESTful HTTP API. You can control it using curl, wri
 
 - Nomad (HTTP API v1)
 - Consul (HTTP API v1)
-- CouchDB 1.6 (persistence layer)
 - Cluster Broccoli Nomad Job + Docker Image (for running the Play application)
 
 #### Distributed Application Server
