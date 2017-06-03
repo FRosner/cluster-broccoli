@@ -2,7 +2,7 @@
 set -e
 
 ./setup.sh
-cd public
+cd elm
 npm run package
 cd ..
 sbt clean && sbt dist
