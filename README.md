@@ -17,9 +17,9 @@ Cluster Broccoli is meant to be setup by your IT. Some technical knowledge is re
 
 ### Web UI
 
-Cluster Broccoli comes with a minimalistic web user interface. It allows you to create, destroy, start and stop your instances based on a set of predefined templates. Please consult the documenation for a [detailed description of the Web UI](https://github.com/FRosner/cluster-broccoli/wiki/Web-UI).
+Cluster Broccoli comes with a minimalistic web user interface. It allows you to create, destroy, start and stop your instances based on a set of predefined templates. Please consult the documentation for a [detailed description of the Web UI](https://github.com/FRosner/cluster-broccoli/wiki/Web-UI).
 
-![image](https://cloud.githubusercontent.com/assets/3427394/18438860/6159e5f0-7903-11e6-9a59-b4ba0c884a50.png)
+![image](https://cloud.githubusercontent.com/assets/3427394/26752821/f1e2c6a8-4858-11e7-81ed-82afa3017dea.png)
 
 ### HTTP API
 
@@ -38,7 +38,6 @@ Cluster Broccoli provides a RESTful HTTP API. You can control it using curl, wri
 
 - Nomad (HTTP API v1)
 - Consul (HTTP API v1)
-- CouchDB 1.6 (persistence layer)
 - Cluster Broccoli Nomad Job + Docker Image (for running the Play application)
 
 #### Distributed Application Server
@@ -64,7 +63,7 @@ If you only intend to develop Broccoli and want to quickly get started with the 
 
 1. Download or clone the source code
 2. Navigate into the project directory
-3. `sbt dist`
+3. `./build-dist.sh`
 
 ## Configuration
 

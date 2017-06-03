@@ -3,30 +3,29 @@
 # ~~~~
 
 # Templates
-GET     /api/v1/templates                          @de.frosner.broccoli.controllers.TemplateController.list
-GET     /api/v1/templates/:id                      @de.frosner.broccoli.controllers.TemplateController.show(id: String)
+GET     /api/v1/templates      @de.frosner.broccoli.controllers.TemplateController.list
+GET     /api/v1/templates/:id  @de.frosner.broccoli.controllers.TemplateController.show(id: String)
 
 # Instances
-GET     /api/v1/instances                          @de.frosner.broccoli.controllers.InstanceController.list(templateId: Option[String])
-GET     /api/v1/instances/:id                      @de.frosner.broccoli.controllers.InstanceController.show(id: String)
-POST    /api/v1/instances                          @de.frosner.broccoli.controllers.InstanceController.create
-POST    /api/v1/instances/:id                      @de.frosner.broccoli.controllers.InstanceController.update(id: String)
-DELETE  /api/v1/instances/:id                      @de.frosner.broccoli.controllers.InstanceController.delete(id: String)
+GET     /api/v1/instances      @de.frosner.broccoli.controllers.InstanceController.list(templateId: Option[String])
+GET     /api/v1/instances/:id  @de.frosner.broccoli.controllers.InstanceController.show(id: String)
+POST    /api/v1/instances      @de.frosner.broccoli.controllers.InstanceController.create
+POST    /api/v1/instances/:id  @de.frosner.broccoli.controllers.InstanceController.update(id: String)
+DELETE  /api/v1/instances/:id  @de.frosner.broccoli.controllers.InstanceController.delete(id: String)
 
 # About
-GET     /api/v1/about                              @de.frosner.broccoli.controllers.AboutController.about
+GET     /api/v1/about  @de.frosner.broccoli.controllers.AboutController.about
 
 # Status
 
-GET     /api/v1/status                              @de.frosner.broccoli.controllers.StatusController.status
+GET     /api/v1/status  @de.frosner.broccoli.controllers.StatusController.status
 
 # Authentication
-POST    /api/v1/auth/login        @de.frosner.broccoli.controllers.SecurityController.login()
-POST    /api/v1/auth/logout       @de.frosner.broccoli.controllers.SecurityController.logout()
-GET     /api/v1/auth/verify       @de.frosner.broccoli.controllers.SecurityController.verify()
+POST    /api/v1/auth/login   @de.frosner.broccoli.controllers.SecurityController.login()
+POST    /api/v1/auth/logout  @de.frosner.broccoli.controllers.SecurityController.logout()
+GET     /api/v1/auth/verify  @de.frosner.broccoli.controllers.SecurityController.verify()
 
-# Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file                       @controllers.Assets.versioned(path="/public", file)
-
-# Map root path to UI
-GET     /                                   @controllers.Assets.at(path="/public", file="index.html")
+# Web-UI
+GET     /       @controllers.Assets.at(path="/public/dist", file="index.html")
+GET     /ws     @de.frosner.broccoli.controllers.WebSocketController.socket
+GET     /*file  @controllers.Assets.versioned(path="/public/dist", file)

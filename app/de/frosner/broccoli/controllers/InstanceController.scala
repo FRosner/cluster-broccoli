@@ -9,34 +9,27 @@ import de.frosner.broccoli.models._
 import de.frosner.broccoli.conf
 import Instance.instanceApiWrites
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
+import InstanceUpdate.{instanceUpdateReads, instanceUpdateWrites}
 import de.frosner.broccoli.services._
-import de.frosner.broccoli.services.InstanceService._
 import de.frosner.broccoli.util.Logging
-import jp.t2v.lab.play2.auth.{BroccoliRoleAuthorization, BroccoliSimpleAuthorization}
-import play.api.libs.json.{JsObject, JsString, Json}
-import play.api.mvc.{Action, Controller}
+import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
+import play.api.http.ContentTypes
+import play.api.libs.json.{JsObject, JsString, JsValue, Json}
+import play.api.mvc.{Action, Controller, Results}
+import play.mvc.Http.HeaderNames
 
 import scala.util.{Failure, Success, Try}
 
 case class InstanceController @Inject() (instanceService: InstanceService,
                                          override val securityService: SecurityService)
-  extends Controller with Logging with BroccoliRoleAuthorization {
+  extends Controller with Logging with BroccoliSimpleAuthorization {
 
-  def list(maybeTemplateId: Option[String]) = StackAction(AuthorityKey -> Role.NormalUser) { implicit request =>
-    val user = loggedIn
-    val instances = instanceService.getInstances
-    val filteredInstances = maybeTemplateId.map(
-      id => instances.filter(_.instance.template.id == id)
-    ).getOrElse(instances).filter(_.instance.id.matches(user.instanceRegex))
-    val anonymizedInstances = if (user.role != Role.Administrator) {
-      filteredInstances.map(InstanceController.removeSecretVariables)
-    } else {
-      filteredInstances
-    }
-    Ok(Json.toJson(anonymizedInstances))
+  def list(maybeTemplateId: Option[String]) = StackAction { implicit request =>
+    val instances = InstanceController.list(maybeTemplateId, loggedIn, instanceService)
+    Results.Ok(Json.toJson(instances))
   }
 
-  def show(id: String) = StackAction(AuthorityKey -> Role.NormalUser) { implicit request =>
+  def show(id: String) = StackAction { implicit request =>
     val notFound = NotFound(s"Instance $id not found.")
     val user = loggedIn
     if (id.matches(user.instanceRegex)) {
@@ -55,94 +48,43 @@ case class InstanceController @Inject() (instanceService: InstanceService,
     }
   }
 
-  def create = StackAction(AuthorityKey -> Role.Administrator) { implicit request =>
+  def create = StackAction { implicit request =>
     val maybeValidatedInstanceCreation = request.body.asJson.map(_.validate[InstanceCreation])
     maybeValidatedInstanceCreation.map { validatedInstanceCreation =>
       validatedInstanceCreation.map { instanceCreation =>
-        val maybeId = instanceCreation.parameters.get("id")
-        val instanceRegex = loggedIn.instanceRegex
-        maybeId match {
-          case Some(id) if id.matches(instanceRegex) =>
-            val tryNewInstance = instanceService.addInstance(instanceCreation)
-            tryNewInstance.map { instanceWithStatus =>
-              Status(201)(Json.toJson(instanceWithStatus)).withHeaders(
-                LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
-              )
-            }.recover { case error =>
-              Status(400)(error.toString)
-            }.get
-          case Some(id) => Status(403)(s"Only allowed to create instances matching $instanceRegex")
-          case None => Status(400)(s"Instance ID missing")
+        InstanceController.create(instanceCreation, loggedIn, instanceService) match {
+          case InstanceCreationSuccess(creation, instanceWithStatus) =>
+            Results.Status(201)(Json.toJson(instanceWithStatus)).withHeaders(
+              HeaderNames.LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
+            )
+          case InstanceCreationFailure(creation, reason) =>
+            Results.Status(400)(s"Creating $instanceCreation failed: $reason")
+        }
+      }.getOrElse(Results.Status(400)("Expected JSON data"))
+    }.getOrElse(Results.Status(400)("Expected JSON data"))
+  }
+
+  def update(id: String) = StackAction { implicit request =>
+    val maybeJsObject = request.body.asJson.map(_.as[JsObject])
+    val maybeInstanceUpdate = request.body.asJson.map(_.validate[InstanceUpdate])
+    maybeInstanceUpdate.map { instanceUpdateResult =>
+      instanceUpdateResult.map { instanceUpdate =>
+        InstanceController.update(id, instanceUpdate, loggedIn, instanceService) match {
+          case InstanceUpdateSuccess(update, updatedInstance) =>
+            Results.Ok(Json.toJson(updatedInstance))
+          case InstanceUpdateFailure(update, reason) =>
+            Results.Status(400)(s"Updating instance $id failed: $reason")
         }
       }.getOrElse(Status(400)("Expected JSON data"))
     }.getOrElse(Status(400)("Expected JSON data"))
   }
 
-  def update(id: String) = StackAction(AuthorityKey -> Role.Operator) { implicit request =>
-    val user = loggedIn
-    val instanceRegex = user.instanceRegex
-    if (!id.matches(instanceRegex)) {
-      Status(403)(s"Only allowed to update instances matching $instanceRegex")
-    } else {
-      val maybeJsObject = request.body.asJson.map(_.as[JsObject])
-      maybeJsObject.map { jsObject =>
-        // extract updates
-        val fields = jsObject.value
-        val maybeStatusUpdater = fields.get("status").flatMap { value =>
-          val maybeValidatedNewStatus = Try(value.as[JobStatus])
-          maybeValidatedNewStatus.map(status => Some(StatusUpdater(status))).getOrElse(None)
-        }
-        val maybeParameterValuesUpdater = Try{
-          fields.get("parameterValues").map { value =>
-            val parameterValues = value.as[JsObject].value
-            ParameterValuesUpdater(parameterValues.map { case (k, v) => (k, v.as[JsString].value) }.toMap)
-          }
-        }.toOption.getOrElse(None)
-        val maybeTemplateSelector = Try(fields.get("selectedTemplate").map { value =>
-          TemplateSelector(value.as[JsString].value)
-        }).toOption.getOrElse(None)
-
-        // warn for unrecognized updates
-        fields.foreach { case (key, _) =>
-          if (!Set("status", "parameterValues", "selectedTemplate").contains(key))
-            Logger.warn(s"Received unrecognized instance update field: $key")
-        }
-        if (maybeStatusUpdater.isEmpty && maybeParameterValuesUpdater.isEmpty && maybeTemplateSelector.isEmpty) {
-          Status(400)("Invalid request to update an instance. Please refer to the API documentation.")
-        } else if ((maybeParameterValuesUpdater.isDefined || maybeTemplateSelector.isDefined) && user.role != Role.Administrator) {
-          Status(403)(s"Updating parameter values or templates only allowed for administrators.")
-        } else {
-          val maybeExistingAndChangedInstance = instanceService.updateInstance(
-            id = id,
-            statusUpdater = maybeStatusUpdater,
-            parameterValuesUpdater = maybeParameterValuesUpdater,
-            templateSelector = maybeTemplateSelector
-          )
-          maybeExistingAndChangedInstance match {
-            case Success(changedInstance) => Ok(Json.toJson(changedInstance))
-            case Failure(throwable: FileNotFoundException) => Status(404)(s"Instance not found: $throwable")
-            case Failure(throwable: InstanceNotFoundException) => Status(404)(s"Instance not found: $throwable")
-            case Failure(throwable: IllegalArgumentException) => Status(400)(s"Invalid request to update an instance: $throwable")
-            case Failure(throwable: TemplateNotFoundException) => Status(400)(s"Invalid request to update an instance: $throwable")
-            case Failure(throwable) => Status(500)(s"Something went wrong when updating the instance: $throwable")
-          }
-        }
-      }.getOrElse(Status(400)("Expected JSON data"))
-    }
-  }
-
-  def delete(id: String) = StackAction(AuthorityKey -> Role.Administrator) { implicit request =>
-    val instanceRegex = loggedIn.instanceRegex
-    if (id.matches(instanceRegex)) {
-      val maybeDeletedInstance = instanceService.deleteInstance(id)
-      maybeDeletedInstance.map {
-        instance => Ok(Json.toJson(instance))
-      }.recover {
-        case throwable: InstanceNotFoundException => NotFound(throwable.toString)
-        case throwable => Status(400)(throwable.toString)
-      }.get
-    } else {
-      Status(403)(s"Only allowed to delete instances matching $instanceRegex")
+  def delete(id: String) = StackAction { implicit request =>
+    InstanceController.delete(id, loggedIn, instanceService) match {
+      case InstanceDeletionSuccess(id, instanceWithStatus) =>
+        Results.Ok(Json.toJson(instanceWithStatus))
+      case InstanceDeletionFailure(id, reason) =>
+        Results.BadRequest(s"Deleting $id failed: $reason")
     }
   }
 
@@ -168,6 +110,110 @@ object InstanceController {
         parameterValues = newParameterValues
       )
     )
+  }
+
+  def create(instanceCreation: InstanceCreation, loggedIn: Account, instanceService: InstanceService): InstanceCreationResult = {
+    if (loggedIn.role == Role.Administrator) {
+      val maybeId = instanceCreation.parameters.get("id")
+      val instanceRegex = loggedIn.instanceRegex
+      maybeId match {
+        case Some(id) if id.matches(instanceRegex) =>
+          val tryNewInstance = instanceService.addInstance(instanceCreation)
+          tryNewInstance.map { instanceWithStatus =>
+            InstanceCreationSuccess(instanceCreation, instanceWithStatus)
+          }.recover { case error =>
+            InstanceCreationFailure(instanceCreation, error.toString)
+          }.get
+        case Some(id) =>
+          InstanceCreationFailure(
+            instanceCreation,
+            s"Only allowed to create instances matching $instanceRegex"
+          )
+        case None =>
+          InstanceCreationFailure(
+            instanceCreation,
+            s"Instance ID missing"
+          )
+      }
+    } else {
+      InstanceCreationFailure(
+        instanceCreation,
+        s"Only administrators are allowed to create new instances"
+      )
+    }
+  }
+
+  def delete(id: String, loggedIn: Account, instanceService: InstanceService): InstanceDeletionResult = {
+    if (loggedIn.role == Role.Administrator) {
+      val instanceRegex = loggedIn.instanceRegex
+      if (id.matches(instanceRegex)) {
+        val maybeDeletedInstance = instanceService.deleteInstance(id)
+        maybeDeletedInstance.map {
+          instance => InstanceDeletionSuccess(id, instance)
+        }.recover {
+          case throwable => InstanceDeletionFailure(id, throwable.toString)
+        }.get
+      } else {
+        InstanceDeletionFailure(id, s"Only allowed to delete instances matching $instanceRegex")
+      }
+    } else {
+      InstanceDeletionFailure(
+        id,
+        s"Only administrators are allowed to delete instances"
+      )
+    }
+  }
+
+  def list(maybeTemplateId: Option[String], loggedIn: Account, instanceService: InstanceService) = {
+    val instances = instanceService.getInstances
+    val filteredInstances = maybeTemplateId.map(
+      id => instances.filter(_.instance.template.id == id)
+    ).getOrElse(instances).filter(_.instance.id.matches(loggedIn.instanceRegex))
+    val anonymizedInstances = if (loggedIn.role != Role.Administrator) {
+      filteredInstances.map(removeSecretVariables)
+    } else {
+      filteredInstances
+    }
+    anonymizedInstances
+  }
+
+  def update(id: String, instanceUpdate: InstanceUpdate, loggedIn: Account, instanceService: InstanceService): InstanceUpdateResult = {
+    val user = loggedIn
+    if (user.role == Role.Administrator || user.role == Role.Operator) {
+      val instanceRegex = user.instanceRegex
+      if (!id.matches(instanceRegex)) {
+        InstanceUpdateFailure(instanceUpdate, s"Only allowed to update instances matching $instanceRegex")
+      } else {
+        val maybeStatusUpdater = instanceUpdate.status
+        val maybeParameterValuesUpdater = instanceUpdate.parameterValues
+        val maybeTemplateSelector = instanceUpdate.selectedTemplate
+        if (maybeStatusUpdater.isEmpty && maybeParameterValuesUpdater.isEmpty && maybeTemplateSelector.isEmpty) {
+          InstanceUpdateFailure(instanceUpdate, "Invalid request to update an instance. Please refer to the API documentation.")
+        } else if ((maybeParameterValuesUpdater.isDefined || maybeTemplateSelector.isDefined) && user.role != Role.Administrator) {
+          InstanceUpdateFailure(instanceUpdate, s"Updating parameter values or templates only allowed for administrators.")
+        } else {
+          val maybeExistingAndChangedInstance = instanceService.updateInstance(
+            id = id,
+            statusUpdater = maybeStatusUpdater,
+            parameterValuesUpdater = maybeParameterValuesUpdater,
+            templateSelector = maybeTemplateSelector
+          )
+          maybeExistingAndChangedInstance match {
+            case Success(changedInstance) => InstanceUpdateSuccess(instanceUpdate, changedInstance)
+            case Failure(throwable: FileNotFoundException) => InstanceUpdateFailure(instanceUpdate, s"Instance not found: $throwable")
+            case Failure(throwable: InstanceNotFoundException) => InstanceUpdateFailure(instanceUpdate, s"Instance not found: $throwable")
+            case Failure(throwable: IllegalArgumentException) => InstanceUpdateFailure(instanceUpdate, s"Invalid request to update an instance: $throwable")
+            case Failure(throwable: TemplateNotFoundException) => InstanceUpdateFailure(instanceUpdate, s"Invalid request to update an instance: $throwable")
+            case Failure(throwable) => InstanceUpdateFailure(instanceUpdate, s"Something went wrong when updating the instance: $throwable")
+          }
+        }
+      }
+    } else {
+      InstanceUpdateFailure(
+        instanceUpdate,
+        s"Only administrators and operators are allowed to update instances"
+      )
+    }
   }
 
 }

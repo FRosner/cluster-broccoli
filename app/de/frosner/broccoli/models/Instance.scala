@@ -66,20 +66,20 @@ case class Instance(id: String,
 object Instance {
 
   implicit val instanceApiWrites: Writes[Instance] = {
-    import JobStatusJson.instanceStatusWrites
+    import JobStatusJson.jobStatusWrites
     import Template.templateApiWrites
     Json.writes[Instance]
   }
 
   implicit val instancePersistenceWrites: Writes[Instance] = {
-    import JobStatusJson.instanceStatusWrites
+    import JobStatusJson.jobStatusWrites
     import Template.templatePersistenceWrites
     Json.writes[Instance]
   }
 
   implicit val instancePersistenceReads: Reads[Instance] = {
     import Template.templatePersistenceReads
-    import JobStatusJson.instanceStatusReads
+    import JobStatusJson.jobStatusReads
     Json.reads[Instance]
   }
 

@@ -15,11 +15,19 @@ case class TemplateController @Inject() (templateService: TemplateService,
   private val templates = templateService.getTemplates
 
   def list: Action[AnyContent] = StackAction { implicit request =>
-    Ok(Json.toJson(templateService.getTemplates))
+    Ok(Json.toJson(TemplateController.list(templateService)))
   }
 
   def show(id: String): Action[AnyContent] = StackAction { implicit request =>
     templateService.template(id).map(template => Ok(Json.toJson(template))).getOrElse(NotFound)
+  }
+
+}
+
+object TemplateController {
+
+  def list(templateService: TemplateService) = {
+    templateService.getTemplates
   }
 
 }

@@ -5,6 +5,7 @@ import de.frosner.broccoli.models._
 import de.frosner.broccoli.services._
 import org.mockito.Mockito._
 import org.mockito.internal.util.MockUtil
+import org.mockito.Matchers._
 
 trait ServiceMocks {
 
@@ -31,13 +32,39 @@ trait ServiceMocks {
     securityService
   }
 
-  def withDummyValues(buildInfoService: BuildInfoService): BuildInfoService = {
-    requireMock(buildInfoService)
-    when(buildInfoService.projectName).thenReturn("project")
-    when(buildInfoService.projectVersion).thenReturn("version")
-    when(buildInfoService.scalaVersion).thenReturn("scala")
-    when(buildInfoService.sbtVersion).thenReturn("sbt")
-    buildInfoService
+  def withDummyValues(aboutInfoService: AboutInfoService): AboutInfoService = {
+    requireMock(aboutInfoService)
+    when(aboutInfoService.aboutInfo(any(classOf[Account]))).thenReturn(
+      AboutInfo(
+        project = AboutProject(
+          name = "project",
+          version = "version"
+        ),
+        scala = AboutScala(
+          version = "scala"
+        ),
+        sbt = AboutSbt(
+          version = "sbt"
+        ),
+        auth = AboutAuth(
+          enabled = false,
+          user = AboutUser(
+            name = "name",
+            role = "role",
+            instanceRegex = "instances"
+          )
+        ),
+        services = AboutServices(
+          clusterManager = AboutClusterManager(
+            connected = true
+          ),
+          serviceDiscovery = AboutServiceDiscovery(
+            connected = true
+          )
+        )
+      )
+    )
+    aboutInfoService
   }
 
   def withConsulReachable(consulService: ConsulService): ConsulService = {
