@@ -177,24 +177,26 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
     )
   in
     let
-      ( placeholderValue
-      , parameterValue
-      , isSecret
-      , secretVisible
-      ) =
-      ( maybeParameterInfo
+      placeholderValue =
+        maybeParameterInfo
           |> Maybe.andThen (\i -> i.default)
           |> Maybe.withDefault ""
-      , case ( maybeEditedValue, maybeParameterValue ) of
+      parameterValue =
+        case ( maybeEditedValue, maybeParameterValue ) of
           ( Nothing, Nothing ) -> ""
           ( Just edited, _ ) -> edited
           ( Nothing, Just Nothing ) -> "concealed"
           ( Nothing, Just (Just original) ) -> original
-      , maybeParameterInfo
+      isSecret =
+        maybeParameterInfo
           |> Maybe.andThen (\i -> i.secret)
           |> Maybe.withDefault False
-      , Set.member (instance.id, parameter) visibleSecrets
-      )
+      secretVisible =
+        Set.member (instance.id, parameter) visibleSecrets
+      parameterName =
+        maybeParameterInfo
+          |> Maybe.andThen (\i -> i.name)
+          |> Maybe.withDefault parameter
     in
       p
         []
@@ -207,7 +209,7 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                 [ ( "background-color", Maybe.withDefault normalParamColor (Maybe.map (\v -> editingParamColor) maybeEditedValue) )
                 ]
               ]
-              [ text parameter ]
+              [ text parameterName ]
             , input
               [ type_ ( if ( isSecret && ( not secretVisible ) ) then "password" else "text" )
               , class "form-control"
@@ -341,21 +343,23 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
     )
   in
     let
-      ( placeholderValue
-      , parameterValue
-      , isSecret
-      , secretVisible
-      ) =
-      ( maybeParameterInfo
+      placeholderValue =
+        maybeParameterInfo
           |> Maybe.andThen (\i -> i.default)
           |> Maybe.withDefault ""
-      , maybeEditedValue
+      parameterValue =
+        maybeEditedValue
           |> Maybe.withDefault ""
-      , maybeParameterInfo
+      isSecret =
+        maybeParameterInfo
           |> Maybe.andThen (\i -> i.secret)
           |> Maybe.withDefault False
-      , Set.member (template.id, parameter) visibleSecrets
-      )
+      secretVisible =
+        Set.member (template.id, parameter) visibleSecrets
+      parameterName =
+        maybeParameterInfo
+          |> Maybe.andThen (\i -> i.name)
+          |> Maybe.withDefault parameter
     in
       p
         []
@@ -370,7 +374,7 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                 [ ( "background-color", Maybe.withDefault normalParamColor (Maybe.map (\v -> editingParamColor) maybeEditedValue) )
                 ]
               ]
-              [ text parameter ]
+              [ text parameterName ]
             , input
               [ type_ ( if ( isSecret && ( not secretVisible ) ) then "password" else "text" )
               , class "form-control"

@@ -45,7 +45,8 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         description = "d",
         parameterInfos = Map(
           "secret" -> ParameterInfo(
-            name = "secret",
+            id = "secret",
+            name = Some("secret"),
             default = Some("value"),
             secret = Some(true)
           )
@@ -901,7 +902,8 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
             description = "d",
             parameterInfos = Map(
               "password" -> ParameterInfo(
-                name = "secret password",
+                id = "secret password",
+                name = None,
                 default = None,
                 secret = Some(true)
               )
@@ -925,7 +927,8 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
             description = "d",
             parameterInfos = Map(
               "password" -> ParameterInfo(
-                name = "secret password",
+                id = "secret password",
+                name = None,
                 default = None,
                 secret = Some(true)
               )
@@ -953,12 +956,14 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
             description = "d",
             parameterInfos = Map(
               "password" -> ParameterInfo(
-                name = "secret password",
+                id = "secret password",
+                name = None,
                 default = None,
                 secret = Some(true)
               ),
               "id" -> ParameterInfo(
-                name = "secret id",
+                id = "secret id",
+                name = None,
                 default = None,
                 secret = Some(true)
               )
@@ -982,12 +987,14 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
             description = "d",
             parameterInfos = Map(
               "password" -> ParameterInfo(
-                name = "secret password",
+                id = "secret password",
+                name = None,
                 default = None,
                 secret = Some(true)
               ),
               "id" -> ParameterInfo(
-                name = "secret id",
+                id = "secret id",
+                name = None,
                 default = None,
                 secret = Some(true)
               )
