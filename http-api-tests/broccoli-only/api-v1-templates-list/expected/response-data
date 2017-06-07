@@ -8,13 +8,16 @@
       "enabled"
     ],
     "parameterInfos": {
-      "URL": {
-        "name": "URL",
-        "default": "localhost:8000"
+      "cpu": {
+        "id": "cpu",
+        "name": "CPU Shares",
+        "default": "100"
       },
-      "enabled": {
-        "name": "enabled",
-        "default": "true"
+      "secret": {
+        "id": "secret",
+        "name": "A Secret Parameter",
+        "default": "guessme",
+        "secret": true
       }
     },
     "version": "5f4c4f9fe0bde4fcb4a3e9765e03c720"
@@ -29,11 +32,13 @@
     ],
     "parameterInfos": {
       "cpu": {
-        "name": "cpu",
+        "id": "cpu",
+        "name": "CPU Shares",
         "default": "100"
       },
       "secret": {
-        "name": "secret",
+        "id": "secret",
+        "name": "A Secret Parameter",
         "default": "guessme",
         "secret": true
       }

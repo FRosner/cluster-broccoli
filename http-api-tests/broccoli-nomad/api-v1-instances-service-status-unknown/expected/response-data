@@ -10,11 +10,13 @@
     ],
     "parameterInfos": {
       "cpu": {
-        "name": "cpu",
+        "id": "cpu",
+        "name": "CPU Shares",
         "default": "100"
       },
       "secret": {
-        "name": "secret",
+        "id": "secret",
+        "name": "A Secret Parameter",
         "default": "guessme",
         "secret": true
       }
