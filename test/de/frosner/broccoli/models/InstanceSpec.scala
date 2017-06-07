@@ -38,7 +38,7 @@ class InstanceSpec extends Specification {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos = Map("age" -> ParameterInfo("age", Some("50"), secret = Some(false)))
+          parameterInfos = Map("age" -> ParameterInfo("age", None, Some("50"), secret = Some(false)))
         ),
         parameterValues = Map("id" -> "Frank")
       )
@@ -52,7 +52,7 @@ class InstanceSpec extends Specification {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos = Map("age" -> ParameterInfo("age", None, secret = Some(false)))
+          parameterInfos = Map("age" -> ParameterInfo("age", None, None, secret = Some(false)))
         ),
         parameterValues = Map("id" -> "Frank", "age" -> "50")
       )
@@ -66,7 +66,7 @@ class InstanceSpec extends Specification {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos = Map("age" -> ParameterInfo("age", None, secret = Some(false)))
+          parameterInfos = Map("age" -> ParameterInfo("age", None, None, secret = Some(false)))
         ),
         parameterValues = Map("id" -> "Frank")
       ) must throwA[IllegalArgumentException]

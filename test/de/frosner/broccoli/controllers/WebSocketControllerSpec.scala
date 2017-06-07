@@ -30,6 +30,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         parameterInfos = Map(
           "secret" -> ParameterInfo(
             id = "secret",
+            name = None,
             default = Some("value"),
             secret = Some(true)
           )
