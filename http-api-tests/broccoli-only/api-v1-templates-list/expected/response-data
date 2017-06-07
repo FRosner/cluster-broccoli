@@ -8,19 +8,16 @@
       "enabled"
     ],
     "parameterInfos": {
-      "cpu": {
-        "id": "cpu",
-        "name": "CPU Shares",
-        "default": "100"
+      "URL": {
+        "name": "URL",
+        "default": "localhost:8000"
       },
-      "secret": {
-        "id": "secret",
-        "name": "A Secret Parameter",
-        "default": "guessme",
-        "secret": true
+      "enabled": {
+        "name": "enabled",
+        "default": "true"
       }
     },
-    "version": "5f4c4f9fe0bde4fcb4a3e9765e03c720"
+    "version": "04b869d719e32cace16c457fa3cbe8bb"
   },
   {
     "id": "http-server",
