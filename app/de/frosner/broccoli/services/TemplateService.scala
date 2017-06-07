@@ -72,11 +72,12 @@ class TemplateService @Inject() (configuration: Configuration) extends Logging {
             if (information.has("parameters")) {
               val fields = JavaConversions.asScalaIterator(information.get("parameters").fields()).toIterable
               val parameterInfoMap = fields.map { entry =>
-                val name = entry.getKey
+                val id = entry.getKey
                 val entryValue = entry.getValue
+                val name = if (entryValue.has("name")) Some(entryValue.get("name").asText) else None
                 val default = if (entryValue.has("default")) Some(entryValue.get("default").asText) else None
                 val secret = if (entryValue.has("secret")) Some(entryValue.get("secret").asBoolean()) else None
-                (name, ParameterInfo(name, default, secret))
+                (id, ParameterInfo(id, name, default, secret))
               }.toMap
               Success(parameterInfoMap)
             } else {

@@ -728,15 +728,17 @@ defaultTemplate templateId =
      ]
   , parameterInfos =
       [ ( ( String.concat [ templateId, "-p1" ] )
-        , { name = ( String.concat [ templateId, "-p1" ] )
+        , { id = ( String.concat [ templateId, "-p1" ] )
           , default = Just "default"
           , secret = Nothing
+          , name = Nothing
           }
         )
       , ( ( String.concat [ templateId, "-p2" ] )
-        , { name = ( String.concat [ templateId, "-p2" ] )
+        , { id = ( String.concat [ templateId, "-p2" ] )
           , default = Nothing
           , secret = Just True
+          , name = Nothing
           }
         )
       ]

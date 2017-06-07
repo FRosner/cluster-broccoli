@@ -1,7 +1,6 @@
 module Models.Resources.Template exposing (..)
 
 import Json.Decode as Decode exposing (field)
-import Utils.DecodeUtils as DecodeUtils
 import Dict exposing (Dict)
 
 type alias TemplateId = String
@@ -15,7 +14,8 @@ type alias Template =
   }
 
 type alias ParameterInfo =
-  { name : String
+  { id : String
+  , name : Maybe String
   , default : Maybe String
   , secret : Maybe Bool
   }
@@ -32,7 +32,8 @@ decoder =
     (field "parameterInfos" (Decode.dict parameterInfoDecoder))
 
 parameterInfoDecoder =
-  Decode.map3 ParameterInfo
-    (field "name" Decode.string)
+  Decode.map4 ParameterInfo
+    (field "id" Decode.string)
+    (Decode.maybe (field "name" Decode.string))
     (Decode.maybe (field "default" Decode.string))
     (Decode.maybe (field "secret" Decode.bool))

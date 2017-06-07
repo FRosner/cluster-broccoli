@@ -9,15 +9,15 @@
     ],
     "parameterInfos": {
       "URL": {
-        "name": "URL",
+        "id": "URL",
         "default": "localhost:8000"
       },
       "enabled": {
-        "name": "enabled",
+        "id": "enabled",
         "default": "true"
       }
     },
-    "version": "5f4c4f9fe0bde4fcb4a3e9765e03c720"
+    "version": "04b869d719e32cace16c457fa3cbe8bb"
   },
   {
     "id": "http-server",
@@ -29,16 +29,18 @@
     ],
     "parameterInfos": {
       "cpu": {
-        "name": "cpu",
+        "id": "cpu",
+        "name": "CPU Shares",
         "default": "100"
       },
       "secret": {
-        "name": "secret",
+        "id": "secret",
+        "name": "A Secret Parameter",
         "default": "guessme",
         "secret": true
       }
     },
-    "version": "0993c48883a3d2cdd0d191f438dc964c"
+    "version": "175530a654665f25a54aed1207b967e8"
   },
   {
     "id": "jupyter",
