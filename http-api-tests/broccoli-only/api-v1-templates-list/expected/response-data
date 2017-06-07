@@ -9,11 +9,11 @@
     ],
     "parameterInfos": {
       "URL": {
-        "name": "URL",
+        "id": "URL",
         "default": "localhost:8000"
       },
       "enabled": {
-        "name": "enabled",
+        "id": "enabled",
         "default": "true"
       }
     },
