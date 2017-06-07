@@ -21,7 +21,7 @@
         "secret": true
       }
     },
-    "version": "0993c48883a3d2cdd0d191f438dc964c"
+    "version": "175530a654665f25a54aed1207b967e8"
   },
   "parameterValues": {
     "id": "test-http"
