@@ -54,7 +54,7 @@ class WebSocketService @Inject() (templateService: TemplateService,
   private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS)
 
   @volatile
-  private var connections: Map[String, (Account, Concurrent.Channel[Msg])] = Map.empty
+  private var connections: Map[String, (Account, Set[Concurrent.Channel[Msg]])] = Map.empty
 
   def newConnection(user: Account): (String, Enumerator[Msg]) = {
     val id = UUID.randomUUID().toString
@@ -62,22 +62,22 @@ class WebSocketService @Inject() (templateService: TemplateService,
   }
 
   def newConnection(id: String, user: Account): Enumerator[Msg] = {
-    val (enumerator, channel) = Concurrent.broadcast[Msg]
     if (connections.contains(id)) {
-      val error = s"ID $id is already an open web socket connection"
-      Logger.warn(error)
-      throw new IllegalArgumentException(error)
-    } else {
-      val (enumerator, channel) = Concurrent.broadcast[Msg]
-      connections = connections.updated(id, (user, channel))
-      enumerator
+      Logger.info(s"ID $id (${user.name}) already has an open web socket connection. Probably he/she has two tabs open?")
     }
+    val (enumerator, channel) = Concurrent.broadcast[Msg]
+    val maybeExistingChannels = connections.get(id)
+    val existingChannels = maybeExistingChannels.map {
+      case (u, c) => c
+    }.getOrElse(Set.empty)
+    connections = connections.updated(id, (user, existingChannels + channel))
+    enumerator
   }
 
-  def closeConnection(id: String): Boolean = {
+  def closeConnections(id: String): Boolean = {
     connections.get(id).exists {
-      case (user, channel) =>
-        channel.eofAndEnd()
+      case (user, channels) =>
+        channels.foreach(_.eofAndEnd())
         connections = connections - id
         true
     }
@@ -85,11 +85,11 @@ class WebSocketService @Inject() (templateService: TemplateService,
 
   def broadcast(msg: Account => Msg): Unit = {
     connections.foreach {
-      case (id, (user, channel)) =>
+      case (id, (user, channels)) =>
         // TODO we're kinda swallowing the exceptions here. That's ok because currently we have no authorization on broadcasts
         val tryMsg = Try {
           val actualMsg = msg(user)
-          channel.push(actualMsg)
+          channels.foreach(_.push(actualMsg))
           actualMsg
         }
         tryMsg match {
@@ -101,7 +101,7 @@ class WebSocketService @Inject() (templateService: TemplateService,
 
   def send(id: String, msg: Msg): Unit = {
     connections.get(id) match {
-      case Some((user, channel)) => channel.push(msg)
+      case Some((user, channels)) => channels.foreach(_.push(msg))
       case None => throw InvalidWebsocketConnectionException(id, connections.keys)
     }
   }
