@@ -90,7 +90,7 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
       )
       val result = controller.login.apply(FakeRequest().withLoggedIn(controller)(account.name))
       Await.ready(result, Duration(5, TimeUnit.SECONDS))
-      verify(controller.webSocketService).closeConnection(anyString())
+      verify(controller.webSocketService).closeConnections(anyString())
     }
 
     "don't cancel anything if it is the first login" in new WithApplication {
@@ -101,7 +101,7 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
       val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, account.password))
       val result = controller.login.apply(requestWithData)
       Await.ready(result, Duration(5, TimeUnit.SECONDS))
-      verify(controller.webSocketService, times(0)).closeConnection(anyString())
+      verify(controller.webSocketService, times(0)).closeConnections(anyString())
     }
 
   }
@@ -125,7 +125,7 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
       )
       val result = controller.logout.apply(FakeRequest().withLoggedIn(controller)(account.name))
       Await.ready(result, Duration(5, TimeUnit.SECONDS))
-      verify(controller.webSocketService).closeConnection(anyString())
+      verify(controller.webSocketService).closeConnections(anyString())
     }
 
   }
