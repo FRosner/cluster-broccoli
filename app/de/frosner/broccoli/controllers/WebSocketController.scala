@@ -70,7 +70,7 @@ case class WebSocketController @Inject()
             }
             webSocketService.send(connectionId, Json.toJson(result))
         }.map { _ =>
-          webSocketService.closeConnection(connectionId)
+          webSocketService.closeConnections(connectionId)
           Logger.info(s"Closed connection $connectionLogString")
         }
 
