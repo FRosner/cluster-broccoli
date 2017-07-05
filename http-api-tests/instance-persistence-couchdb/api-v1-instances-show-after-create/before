@@ -6,7 +6,7 @@ curl -H 'Content-Type: application/json' \
 sleep $BROCCOLI_SLEEP_SHORT
 docker stop $(cat cluster-broccoli.did)
 sleep $BROCCOLI_SLEEP_SHORT
-docker run -d --net host \
+docker run --rm -d --net host \
   frosner/cluster-broccoli-test \
   cluster-broccoli \
   -Dbroccoli.instances.storage.type=couchdb > cluster-broccoli.did

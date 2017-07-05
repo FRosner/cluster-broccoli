@@ -1,6 +1,6 @@
 #!/bin/bash
 mkdir /tmp/instances
-docker run -d --net host \
+docker run --rm -d --net host \
   -v /tmp/instances:/instances \
   frosner/cluster-broccoli-test \
   cluster-broccoli > cluster-broccoli.did

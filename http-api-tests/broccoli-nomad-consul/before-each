@@ -1,8 +1,8 @@
 #!/bin/bash
-docker run -d --net host frosner/cluster-broccoli-test consul > consul.did
+docker run --rm -d --net host frosner/cluster-broccoli-test consul > consul.did
 sleep $BROCCOLI_SLEEP_MEDIUM
-docker run -d --net host -v /var/run/docker.sock:/var/run/docker.sock frosner/cluster-broccoli-test nomad > nomad.did
+docker run --rm -d --net host -v /var/run/docker.sock:/var/run/docker.sock frosner/cluster-broccoli-test nomad > nomad.did
 sleep $BROCCOLI_SLEEP_MEDIUM
-docker run -d --net host frosner/cluster-broccoli-test cluster-broccoli > cluster-broccoli.did
+docker run --rm -d --net host frosner/cluster-broccoli-test cluster-broccoli > cluster-broccoli.did
 sleep $BROCCOLI_SLEEP_MEDIUM
 curl -s localhost:9000 > /dev/null && echo "Broccoli started successfully" || echo "Broccoli did not start, yet"
