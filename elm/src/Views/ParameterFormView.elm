@@ -7,6 +7,7 @@ import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (Instan
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 import Utils.MaybeUtils as MaybeUtils
+import Utils.ParameterUtils exposing (getOtherParameters)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onCheck, onInput, onSubmit, on)
@@ -91,20 +92,6 @@ editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole 
                     ]
                 ]
             )
-
-
-{-| Get other parameters, in alphabetical order.
-
-"Other" parameters are all parameters except "id" which receives special treatment of being shown
-first in all cases.
-
-Note: We sort parameters by their ID not by their user-visible name, so the sort order in the UI
-might seem different.
-
--}
-getOtherParameters : List String -> List String
-getOtherParameters params =
-    List.filter ((/=) "id") params |> List.sortBy String.toLower
 
 
 parametersView parametersH instance template maybeInstanceParameterForm visibleSecrets enabled =
