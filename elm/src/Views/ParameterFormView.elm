@@ -93,10 +93,17 @@ editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole 
             )
 
 
+{-| Get other parameters, ie, sorted parameters except "id"
+-}
+getOtherParameters : List String -> List String
+getOtherParameters params =
+    List.filter ((/=) "id") params
+
+
 parametersView parametersH instance template maybeInstanceParameterForm visibleSecrets enabled =
     let
         otherParameters =
-            List.filter (\p -> p /= "id") template.parameters
+            getOtherParameters template.parameters
 
         otherParameterValues =
             Dict.remove "id" instance.parameterValues
@@ -302,7 +309,7 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
 newView template maybeInstanceParameterForm visibleSecrets =
     let
         otherParameters =
-            List.filter (\p -> p /= "id") template.parameters
+            getOtherParameters template.parameters
 
         otherParameterInfos =
             Dict.remove "id" template.parameterInfos
