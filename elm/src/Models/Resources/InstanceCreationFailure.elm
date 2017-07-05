@@ -2,15 +2,16 @@ module Models.Resources.InstanceCreationFailure exposing (InstanceCreationFailur
 
 import Json.Decode as Decode exposing (field)
 import Dict exposing (Dict)
-
 import Models.Resources.InstanceCreation as InstanceCreation exposing (InstanceCreation)
 
+
 type alias InstanceCreationFailure =
-  { instanceCreation : InstanceCreation
-  , reason : String
-  }
+    { instanceCreation : InstanceCreation
+    , reason : String
+    }
+
 
 decoder =
-  Decode.map2 InstanceCreationFailure
-    (field "instanceCreation" InstanceCreation.decoder)
-    (field "reason" Decode.string)
+    Decode.map2 InstanceCreationFailure
+        (field "instanceCreation" InstanceCreation.decoder)
+        (field "reason" Decode.string)
