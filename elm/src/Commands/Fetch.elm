@@ -1,3 +1,5 @@
 module Commands.Fetch exposing (apiBaseUrl)
 
-apiBaseUrl = "/api/v1"
+
+apiBaseUrl =
+    "/api/v1"
