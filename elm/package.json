@@ -14,6 +14,7 @@
     "bootstrap": "^3.3.7",
     "css-loader": "^0.26.0",
     "elm": "^0.18.0",
+    "elm-format": "^0.6.1-alpha",
     "elm-github-install": "1.0.1",
     "elm-test": "0.18.2",
     "elm-webpack-loader": "^3.1.0",
@@ -28,6 +29,8 @@
     "webpack": "^2.5.1"
   },
   "scripts": {
+    "format": "elm-format src/",
+    "format:validate": "elm-format --validate src/",
     "test": "elm-test",
     "compile": "elm-make",
     "setup": "elm-install; cd tests; elm-install",
