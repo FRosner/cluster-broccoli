@@ -158,7 +158,7 @@ class NomadService @Inject()(configuration: Configuration,
     Try {
       val result = Await.result(request.post(job), Duration(5, TimeUnit.SECONDS))
       if (result.status == 200) {
-        Success()
+        Success(())
       } else {
         Failure(NomadRequestFailed(request.uri.toString, result.status))
       }
@@ -175,7 +175,7 @@ class NomadService @Inject()(configuration: Configuration,
         // TODO doesn't work with periodic runs so we have to remove it, in order to avoid a memory leak we should use a cache with TTLs
         // jobStatuses -= id
         consulService.serviceStatuses -= id
-        Success()
+        Success(())
       } else {
         Failure(NomadRequestFailed(request.uri.toString, result.status))
       }
