@@ -21,8 +21,3 @@ lazy val root = project
     parallelExecution in Test := false
   ))
 )
-
-
-
-
-
