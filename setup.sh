@@ -2,6 +2,6 @@
 set -eou pipefail
 
 cd elm
-npm install
-npm run setup
+yarn install
+yarn setup
 cd ..
