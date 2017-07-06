@@ -1,27 +1,27 @@
-name := "Cluster Broccoli"
-
-version := "0.7.0-SNAPSHOT"
-
-lazy val root = project.in(file(".")).enablePlugins(PlayScala, BuildInfoPlugin).
-  settings(
+lazy val root = project
+  .in(file("."))
+  .enablePlugins(PlayScala, BuildInfoPlugin)
+  .settings(
+    name := "Cluster Broccoli",
+    routesGenerator := InjectedRoutesGenerator,
+    libraryDependencies ++= List(
+      ws,
+      cache,
+      specs2 % Test,
+      "jp.t2v" %% "play2-auth" % "0.14.2",
+      "jp.t2v" %% "play2-auth-test" % "0.14.2" % "test"
+    ),
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.frosner.broccoli.build"
-  )
+  ).settings(
+  inThisBuild(Seq(
+    version := "0.7.0-SNAPSHOT",
+    resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
+    parallelExecution in Test := false
+  ))
+)
 
-libraryDependencies += ws
 
-libraryDependencies += cache
 
-libraryDependencies += specs2 % Test
 
-libraryDependencies += "jp.t2v" %% "play2-auth" % "0.14.2"
 
-libraryDependencies += "jp.t2v" %% "play2-auth-test"   % "0.14.2" % "test"
-
-libraryDependencies += play.sbt.Play.autoImport.cache
-
-resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
-
-routesGenerator := InjectedRoutesGenerator
-
-parallelExecution in Test := false
