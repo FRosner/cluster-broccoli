@@ -4,35 +4,45 @@ sudo: required
 
 services:
   - docker
-
 jdk:
   - oraclejdk8
+node_js:
+  - node
+
+before_install:
+  - curl -o- -L https://yarnpkg.com/install.sh
+  - export PATH="$HOME/.yarn/bin:$PATH"
 
 before_script:
-  - npm update npm -g
-  - nvm install 6
   - uname -r
   - node --version
-  - npm --version
+  - yarn --version
 
-script:
-  - ./unit-tests.sh
-  - . prepare-docker-builds
-  - docker build -t frosner/cluster-broccoli-test docker/test/
-  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/instance-persistence-couchdb
-  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-only
-  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad
-  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad-consul
-  - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/instance-persistence-dir
-  - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
-  - export COMMIT=${TRAVIS_COMMIT::8}
-  - export REPO=frosner/cluster-broccoli
-  - export NICE_BRANCH_NAME=$(echo $TRAVIS_BRANCH | sed -e 's/\//_/g')
-  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo "$NICE_BRANCH_NAME" ; fi`
-  - docker build -t $REPO:$COMMIT docker/prod/
-  - docker tag $REPO:$COMMIT $REPO:$TAG
-  - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-  - docker push $REPO
+jobs:
+  include:
+    - stage: test
+      script: ./unit-tests.sh
+    - stage: integration
+      script:
+        - . prepare-docker-builds
+        - docker build -t frosner/cluster-broccoli-test docker/test/
+        - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/instance-persistence-couchdb
+        - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-only
+        - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad
+        - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad-consul
+        - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/instance-persistence-dir
+    - stage: docker
+      script:
+        - . prepare-docker-builds
+        - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+        - export COMMIT=${TRAVIS_COMMIT::8}
+        - export REPO=frosner/cluster-broccoli
+        - export NICE_BRANCH_NAME=$(echo $TRAVIS_BRANCH | sed -e 's/\//_/g')
+        - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo "$NICE_BRANCH_NAME" ; fi`
+        - docker build -t $REPO:$COMMIT docker/prod/
+        - docker tag $REPO:$COMMIT $REPO:$TAG
+        - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+        - docker push $REPO
 
 cache:
   directories:

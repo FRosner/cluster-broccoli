@@ -1,5 +1,5 @@
 #!/bin/bash
-docker run -d --net host frosner/cluster-broccoli-test nomad > nomad.did
+docker run --rm -d --net host frosner/cluster-broccoli-test nomad > nomad.did
 sleep $BROCCOLI_SLEEP_MEDIUM
-docker run -d --net host frosner/cluster-broccoli-test cluster-broccoli > cluster-broccoli.did
+docker run --rm -d --net host frosner/cluster-broccoli-test cluster-broccoli > cluster-broccoli.did
 sleep $BROCCOLI_SLEEP_MEDIUM

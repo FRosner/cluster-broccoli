@@ -1,6 +1,5 @@
 #!/bin/bash
 
-cat services-test.json | jq '."services" | map(select(.name == "test-http-web-ui-1"))[0].address'
 service_address=$(curl -s localhost:9000/api/v1/instances/test | jq -r '."services" | map(select(."name" == "test-web-ui-1"))[0]."address"')
 service_port=$(curl -s localhost:9000/api/v1/instances/test | jq -r '."services" | map(select(."name" == "test-web-ui-1"))[0]."port"')
 service_socket=$service_address:$service_port

@@ -3,7 +3,7 @@ set -e
 
 ./setup.sh
 cd elm
-npm run package
+yarn package
 cd ..
 sbt clean && sbt dist
 

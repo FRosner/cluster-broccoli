@@ -3,8 +3,8 @@ set -eou pipefail
 
 ./setup.sh
 cd elm
-npm run format:validate
-npm run compile
-npm run test
+yarn format:validate
+yarn compile
+yarn test
 cd ..
 sbt test
