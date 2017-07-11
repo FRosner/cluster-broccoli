@@ -1,5 +1,4 @@
 language: scala
-
 sudo: required
 
 services:
@@ -9,10 +8,6 @@ jdk:
 node_js:
   - node
 
-before_install:
-  - curl -o- -L https://yarnpkg.com/install.sh
-  - export PATH="$HOME/.yarn/bin:$PATH"
-
 before_script:
   - uname -r
   - node --version
@@ -20,8 +15,21 @@ before_script:
 
 jobs:
   include:
+    # Backend tests
     - stage: test
-      script: ./unit-tests.sh
+      script:
+        - sbt test:compile
+        - sbt test
+    # Frontend tests
+    - stage: test
+      install:
+        - cd elm
+        - yarn install
+        - yarn setup
+      script:
+        - yarn format:validate
+        - yarn compile
+        - yarn test
     - stage: integration
       script:
         - . prepare-docker-builds
