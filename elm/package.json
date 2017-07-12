@@ -29,8 +29,8 @@
     "webpack": "^2.5.1"
   },
   "scripts": {
-    "format": "elm-format src/",
-    "format:validate": "elm-format --validate src/",
+    "format": "elm-format src/ tests/",
+    "format:validate": "elm-format --validate src/ tests/",
     "test": "elm-test",
     "compile": "elm-make",
     "setup": "elm-install; cd tests; elm-install",

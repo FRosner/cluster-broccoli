@@ -7,6 +7,7 @@ import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (Instan
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 import Utils.MaybeUtils as MaybeUtils
+import Utils.ParameterUtils exposing (getOtherParameters)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onCheck, onInput, onSubmit, on)
@@ -96,7 +97,7 @@ editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole 
 parametersView parametersH instance template maybeInstanceParameterForm visibleSecrets enabled =
     let
         otherParameters =
-            List.filter (\p -> p /= "id") template.parameters
+            getOtherParameters template.parameters
 
         otherParameterValues =
             Dict.remove "id" instance.parameterValues
@@ -302,7 +303,7 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
 newView template maybeInstanceParameterForm visibleSecrets =
     let
         otherParameters =
-            List.filter (\p -> p /= "id") template.parameters
+            getOtherParameters template.parameters
 
         otherParameterInfos =
             Dict.remove "id" template.parameterInfos
