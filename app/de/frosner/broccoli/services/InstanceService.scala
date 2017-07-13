@@ -214,38 +214,26 @@ class InstanceService @Inject()(templateService: TemplateService,
         case (parameter, value) => !value.isEmpty
       }
     }
-    val maybeInstance = instances.get(id)
-    val maybeUpdatedInstance = maybeInstance.map { instance =>
-      val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (templateSelector.isDefined) {
-        val newTemplateId = templateSelector.get
-        val newTemplate = templateService.template(newTemplateId)
-        newTemplate
-          .map { template =>
-            // Requested template exists, update the template
-            if (parameterValuesUpdatesWithPossibleDefaults.isDefined) {
-              // New parameter values are specified
-              val newParameterValues = parameterValuesUpdatesWithPossibleDefaults.get
-              instance.updateTemplate(template, newParameterValues)
-            } else {
-              // Just use the old parameter values
-              instance.updateTemplate(template, instance.parameterValues)
-            }
+
+    val maybeUpdatedInstance = instances.get(id).map { instance =>
+      val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] =
+        templateSelector
+          .map { newTemplateId =>
+            templateService
+              .template(newTemplateId)
+              .map { template =>
+                instance.updateTemplate(template,
+                                        parameterValuesUpdatesWithPossibleDefaults.getOrElse(instance.parameterValues))
+              }
+              .getOrElse {
+                // New template does not exist
+                Failure(TemplateNotFoundException(newTemplateId))
+              }
           }
           .getOrElse {
-            // New template does not exist
-            Failure(TemplateNotFoundException(newTemplateId))
+            // No template update required
+            parameterValuesUpdatesWithPossibleDefaults.map(instance.updateParameterValues).getOrElse(Success(instance))
           }
-      } else {
-        // No template update required
-        if (parameterValuesUpdatesWithPossibleDefaults.isDefined) {
-          // Just update the parameter values
-          val newParameterValues = parameterValuesUpdatesWithPossibleDefaults.get
-          instance.updateParameterValues(newParameterValues)
-        } else {
-          // Neither template update nor parameter value update required
-          Success(instance)
-        }
-      }
       val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
         statusUpdater
           .map {
