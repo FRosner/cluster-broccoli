@@ -17,8 +17,10 @@ import scala.util.{Failure, Success, Try}
 class FileSystemInstanceStorageSpec extends Specification {
 
   val testRoot = new File("test/resources/de/frosner/broccoli/services")
-  require(testRoot.isDirectory && testRoot.canRead && testRoot.canWrite,
-    s"Cannot use '$testRoot' properly. Current working dir is '${Paths.get("").toAbsolutePath()}'.")
+  require(
+    testRoot.isDirectory && testRoot.canRead && testRoot.canWrite,
+    s"Cannot use '$testRoot' properly. Current working dir is '${Paths.get("").toAbsolutePath()}'."
+  )
 
   def usingTempFolder[T](f: File => T): T = {
     val tempFolder = new File(testRoot, UUID.randomUUID().toString)
@@ -39,7 +41,7 @@ class FileSystemInstanceStorageSpec extends Specification {
 
   val instance = Instance(
     id = "prefix-id",
-    template = Template(id = "t", template = "{{id}}" ,description = "d", parameterInfos = Map.empty),
+    template = Template(id = "t", template = "{{id}}", description = "d", parameterInfos = Map.empty),
     parameterValues = Map(
       "id" -> "prefix-id"
     )
@@ -111,7 +113,11 @@ class FileSystemInstanceStorageSpec extends Specification {
         val storage = FileSystemInstanceStorage(folder)
         storage.writeInstance(instance)
         val instanceFile = new File(folder, instance.id + ".json")
-        val fileContent = Source.fromFile(instanceFile).getLines().mkString("").replaceFirst("^\\{\"id\"\\:\"prefix\\-id\"", "{\"id\":\"not-matching\"")
+        val fileContent = Source
+          .fromFile(instanceFile)
+          .getLines()
+          .mkString("")
+          .replaceFirst("^\\{\"id\"\\:\"prefix\\-id\"", "{\"id\":\"not-matching\"")
         val writer = new PrintStream(new FileOutputStream(instanceFile))
         writer.println(fileContent)
         writer.close()

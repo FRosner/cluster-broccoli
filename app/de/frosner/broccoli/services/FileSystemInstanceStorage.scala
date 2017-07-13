@@ -14,7 +14,8 @@ case class FileSystemInstanceStorage(storageDirectory: File) extends InstanceSto
   import Instance.instancePersistenceWrites
   import Instance.instancePersistenceReads
 
-  require(storageDirectory.isDirectory && storageDirectory.canWrite, s"'$storageDirectory' needs to be a writable directory")
+  require(storageDirectory.isDirectory && storageDirectory.canWrite,
+          s"'$storageDirectory' needs to be a writable directory")
   private val lock = new File(storageDirectory, ".lock")
   Logger.info(s"Locking $storageDirectory ($lock)")
   if (!lock.createNewFile()) {
@@ -23,14 +24,13 @@ case class FileSystemInstanceStorage(storageDirectory: File) extends InstanceSto
 
   def idToFile(id: String): File = new File(storageDirectory, id + ".json")
 
-  override def closeImpl(): Unit = {
+  override def closeImpl(): Unit =
     if (lock.delete()) {
       Logger.info(s"Releasing lock on '$storageDirectory' ('$lock')")
       closed = true
     } else {
       Logger.error(s"Could not release lock on '$storageDirectory' ('$lock')")
     }
-  }
 
   override def readInstanceImpl(id: String): Try[Instance] = {
     val input = Try(new FileInputStream(idToFile(id)))
@@ -48,9 +48,8 @@ case class FileSystemInstanceStorage(storageDirectory: File) extends InstanceSto
   }
 
   @volatile
-  protected override def readInstancesImpl(): Try[Set[Instance]] = {
+  protected override def readInstancesImpl(): Try[Set[Instance]] =
     readInstances(_ => true)
-  }
 
   @volatile
   override def readInstancesImpl(idFilter: String => Boolean): Try[Set[Instance]] = {
@@ -67,7 +66,7 @@ case class FileSystemInstanceStorage(storageDirectory: File) extends InstanceSto
     instanceIds.map(_.map { id =>
       val tryInstance = readInstanceImpl(id)
       tryInstance match {
-        case Success(instance) => instance
+        case Success(instance)  => instance
         case Failure(throwable) => throw throwable
       }
     }.toSet)

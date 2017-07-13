@@ -7,13 +7,12 @@ import scala.util.{Failure, Success, Try}
 
 trait InstanceStorage extends Logging {
 
-  private def ifNotClosed[T](f: => T): T = {
+  private def ifNotClosed[T](f: => T): T =
     if (!isClosed) {
       f
     } else {
       throw new IllegalStateException(s"$this has already been closed.")
     }
-  }
 
   /**
     * Reads the instance with the specified ID.

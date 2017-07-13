@@ -9,11 +9,10 @@ sealed trait InstanceCreationResult {
   val instanceCreation: InstanceCreation
 }
 
-case class InstanceCreationSuccess(instanceCreation: InstanceCreation,
-                                   instanceWithStatus: InstanceWithStatus) extends InstanceCreationResult
+case class InstanceCreationSuccess(instanceCreation: InstanceCreation, instanceWithStatus: InstanceWithStatus)
+    extends InstanceCreationResult
 
-case class InstanceCreationFailure(instanceCreation: InstanceCreation,
-                                   reason: String) extends InstanceCreationResult
+case class InstanceCreationFailure(instanceCreation: InstanceCreation, reason: String) extends InstanceCreationResult
 
 object InstanceCreationSuccess {
 

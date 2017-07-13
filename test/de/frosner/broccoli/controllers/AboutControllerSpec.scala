@@ -6,7 +6,6 @@ import org.mockito.Mockito._
 import play.api.libs.json.{JsBoolean, JsObject, JsString, Json}
 import play.api.test._
 
-
 class AboutControllerSpec extends PlaySpecification with AuthUtils {
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
@@ -16,18 +15,17 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
     "return the about object with authentication" in new WithApplication {
       val account = UserAccount("user", "pass", ".*", Role.Administrator)
       val aboutInfoService = withDummyValues(mock(classOf[AboutInfoService]))
-      testWithAllAuths(account) {
-        securityService =>
-          AboutController(
-            aboutInfoService = aboutInfoService,
-            securityService = securityService
-          )
-      } {
-        controller => controller.about
+      testWithAllAuths(account) { securityService =>
+        AboutController(
+          aboutInfoService = aboutInfoService,
+          securityService = securityService
+        )
+      } { controller =>
+        controller.about
       } {
         identity
-      } {
-        (controller, result) => (status(result) must be equalTo 200) and {
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and {
           contentAsJson(result) must be equalTo Json.toJson(aboutInfoService.aboutInfo(account))
         }
       }

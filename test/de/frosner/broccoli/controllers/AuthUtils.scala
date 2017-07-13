@@ -14,11 +14,9 @@ import scala.concurrent.Future
 
 trait AuthUtils extends ServiceMocks {
 
-  def testWithAllAuths[T <: AuthConfigImpl](account: Account)
-                                           (controller: SecurityService => T)
-                                           (action: T => Action[AnyContent])
-                                           (requestModifier: FakeRequest[_] => FakeRequest[_])
-                                           (matcher: (T, Future[Result]) => MatchResult[_]): MatchResult[_] = {
+  def testWithAllAuths[T <: AuthConfigImpl](account: Account)(controller: SecurityService => T)(
+      action: T => Action[AnyContent])(requestModifier: FakeRequest[_] => FakeRequest[_])(
+      matcher: (T, Future[Result]) => MatchResult[_]): MatchResult[_] = {
     val confAuthController = controller(withAuthConf(mock(classOf[SecurityService]), List(account)))
     val confAuthRequest = requestModifier(
       FakeRequest().withLoggedIn(confAuthController)(account.name)
@@ -34,10 +32,9 @@ trait AuthUtils extends ServiceMocks {
     confAuthMatcher and confAuthNoLoginMatcher
   }
 
-  def testWithAllAuths[T <: AuthConfigImpl](controller: SecurityService => T)
-                                           (action: T => Action[AnyContent])
-                                           (requestModifier: FakeRequest[_] => FakeRequest[_])
-                                           (matcher: (T, Future[Result]) => MatchResult[_]): MatchResult[_] = {
+  def testWithAllAuths[T <: AuthConfigImpl](controller: SecurityService => T)(action: T => Action[AnyContent])(
+      requestModifier: FakeRequest[_] => FakeRequest[_])(
+      matcher: (T, Future[Result]) => MatchResult[_]): MatchResult[_] = {
     val account = UserAccount("user", "pass", ".*", Role.Administrator)
     val noAuthController = controller(withAuthNone(mock(classOf[SecurityService])))
     val noAuthRequest = requestModifier(FakeRequest()).asInstanceOf[FakeRequest[AnyContent]]

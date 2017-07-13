@@ -13,10 +13,10 @@ import scala.io.Source
 import scala.util.Try
 
 @Singleton
-class AboutInfoService @Inject() ( nomadService: NomadService
-                                 , consulService: ConsulService
-                                 , securityService: SecurityService
-                                 ) extends Logging {
+class AboutInfoService @Inject()(nomadService: NomadService,
+                                 consulService: ConsulService,
+                                 securityService: SecurityService)
+    extends Logging {
 
   def aboutInfo(loggedIn: Account) = AboutInfo(
     project = AboutProject(

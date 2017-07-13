@@ -16,9 +16,10 @@ import scala.util.{Failure, Success, Try}
 
 // http://stackoverflow.com/questions/24576405/broadcasting-messages-in-play-framework-websockets
 @Singleton
-class WebSocketService @Inject() (templateService: TemplateService,
-                                  instanceService: InstanceService,
-                                  aboutInfoService: AboutInfoService) extends Logging {
+class WebSocketService @Inject()(templateService: TemplateService,
+                                 instanceService: InstanceService,
+                                 aboutInfoService: AboutInfoService)
+    extends Logging {
 
   private val scheduler = new ScheduledThreadPoolExecutor(1)
   private val task = new Runnable {
@@ -63,27 +64,29 @@ class WebSocketService @Inject() (templateService: TemplateService,
 
   def newConnection(id: String, user: Account): Enumerator[Msg] = {
     if (connections.contains(id)) {
-      Logger.info(s"ID $id (${user.name}) already has an open web socket connection. Probably he/she has two tabs open?")
+      Logger.info(
+        s"ID $id (${user.name}) already has an open web socket connection. Probably he/she has two tabs open?")
     }
     val (enumerator, channel) = Concurrent.broadcast[Msg]
     val maybeExistingChannels = connections.get(id)
-    val existingChannels = maybeExistingChannels.map {
-      case (u, c) => c
-    }.getOrElse(Set.empty)
+    val existingChannels = maybeExistingChannels
+      .map {
+        case (u, c) => c
+      }
+      .getOrElse(Set.empty)
     connections = connections.updated(id, (user, existingChannels + channel))
     enumerator
   }
 
-  def closeConnections(id: String): Boolean = {
+  def closeConnections(id: String): Boolean =
     connections.get(id).exists {
       case (user, channels) =>
         channels.foreach(_.eofAndEnd())
         connections = connections - id
         true
     }
-  }
 
-  def broadcast(msg: Account => Msg): Unit = {
+  def broadcast(msg: Account => Msg): Unit =
     connections.foreach {
       case (id, (user, channels)) =>
         // TODO we're kinda swallowing the exceptions here. That's ok because currently we have no authorization on broadcasts
@@ -97,14 +100,12 @@ class WebSocketService @Inject() (templateService: TemplateService,
           case Failure(throwable) => Logger.warn(s"Broadcasting to $id failed: $throwable")
         }
     }
-  }
 
-  def send(id: String, msg: Msg): Unit = {
+  def send(id: String, msg: Msg): Unit =
     connections.get(id) match {
       case Some((user, channels)) => channels.foreach(_.push(msg))
-      case None => throw InvalidWebsocketConnectionException(id, connections.keys)
+      case None                   => throw InvalidWebsocketConnectionException(id, connections.keys)
     }
-  }
 
 }
 

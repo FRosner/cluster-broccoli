@@ -31,11 +31,12 @@ trait AuthConfigImpl extends AuthConfig with Logging {
   val cookieSecure = securityService.cookieSecure
 
   override lazy val idContainer: AsyncIdContainer[Id] = securityService.allowMultiLogin match {
-    case true => AsyncIdContainer(new MultiLoginCacheIdContainer[Id])
+    case true  => AsyncIdContainer(new MultiLoginCacheIdContainer[Id])
     case false => AsyncIdContainer(new CacheIdContainer[Id])
   }
 
-  def resolveUser(id: Id)(implicit ctx: ExecutionContext): Future[Option[User]] = Future.successful(securityService.getAccount(id))
+  def resolveUser(id: Id)(implicit ctx: ExecutionContext): Future[Option[User]] =
+    Future.successful(securityService.getAccount(id))
 
   def loginSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
     Future.successful(Results.Ok(JsString("Login successful!"))) // the content is not used anyway as the controller replaces it
@@ -46,15 +47,16 @@ trait AuthConfigImpl extends AuthConfig with Logging {
   def authenticationFailed(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
     Future.successful(Results.Forbidden("Authentication failed."))
 
-  override def authorizationFailed(request: RequestHeader, user: User, authority: Option[Authority])(implicit context: ExecutionContext): Future[Result] = {
-    Future.successful(Results.Forbidden(s"Authorization failed: Your privileges (${user.role}) are not matching the required (${authority.getOrElse("None")})."))
-  }
+  override def authorizationFailed(request: RequestHeader, user: User, authority: Option[Authority])(
+      implicit context: ExecutionContext): Future[Result] =
+    Future.successful(Results.Forbidden(
+      s"Authorization failed: Your privileges (${user.role}) are not matching the required (${authority.getOrElse("None")})."))
 
   def authorize(user: User, authority: Authority)(implicit ctx: ExecutionContext): Future[Boolean] = Future.successful {
     user.role match {
       case Role.Administrator => true
-      case Role.Operator => authority == Role.Operator || authority == Role.NormalUser
-      case Role.NormalUser => authority == Role.NormalUser
+      case Role.Operator      => authority == Role.Operator || authority == Role.NormalUser
+      case Role.NormalUser    => authority == Role.NormalUser
     }
   }
 

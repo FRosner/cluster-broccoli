@@ -27,7 +27,8 @@ class InstanceSpec extends Specification {
     }
 
     "parse the template correctly when it contains multiple parameters" in {
-      val instance = Instance("1", Template("1", "\"{{id}} {{age}}\"", "desc", Map.empty), Map("id" -> "Frank", "age" -> "5"))
+      val instance =
+        Instance("1", Template("1", "\"{{id}} {{age}}\"", "desc", Map.empty), Map("id" -> "Frank", "age" -> "5"))
       instance.templateJson === JsString("Frank 5")
     }
 

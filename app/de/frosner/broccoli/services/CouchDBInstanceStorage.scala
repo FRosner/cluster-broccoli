@@ -15,7 +15,9 @@ import scala.util.Try
   * Instance storage using CouchDB as a peristence layer.
   * On construction it is checking whether the instance DB exists and creating it if it doesn't.
   */
-case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSClient) extends InstanceStorage with Logging {
+case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSClient)
+    extends InstanceStorage
+    with Logging {
 
   import Instance.{instancePersistenceReads, instancePersistenceWrites}
 
@@ -37,7 +39,8 @@ case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSCl
       if (dbPut.status == 201) {
         Logger.info(s"$dbUri did not exist, so I created it.")
       } else {
-        throw new IllegalArgumentException(s"$dbUri did not exist but failed to create: HTTP status code ${dbPut.status}")
+        throw new IllegalArgumentException(
+          s"$dbUri did not exist but failed to create: HTTP status code ${dbPut.status}")
       }
     }
 
@@ -50,7 +53,7 @@ case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSCl
     }
   }
 
-  private def requireDocIdEqualToInstanceId[T](docId: JsValue, instanceId: JsValue)(f: => T): T = {
+  private def requireDocIdEqualToInstanceId[T](docId: JsValue, instanceId: JsValue)(f: => T): T =
     if (docId != instanceId) {
       val error = s"Document ID ($docId) did not match the instance ID ($instanceId)."
       Logger.error(error)
@@ -58,7 +61,6 @@ case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSCl
     } else {
       f
     }
-  }
 
   override def closeImpl(): Unit = {
     Logger.info(s"Releasing lock from CouchDB ($lockUri)")
@@ -72,7 +74,7 @@ case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSCl
     "id": "blub"
   }
    */
-  override def readInstanceImpl(id: String): Try[Instance] = {
+  override def readInstanceImpl(id: String): Try[Instance] =
     Try {
       val instanceUrl = ws.url(s"$dbUrlString/$id")
       val instanceResult = Await.result(instanceUrl.get(), Duration(5, TimeUnit.SECONDS))
@@ -91,11 +93,9 @@ case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSCl
         throw new InstanceNotFoundException(id)
       }
     }
-  }
 
-  protected override def readInstancesImpl: Try[Set[Instance]] = {
+  protected override def readInstancesImpl: Try[Set[Instance]] =
     readInstances(_ => true)
-  }
 
   /*
   {
@@ -130,7 +130,7 @@ case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSCl
   }
    */
   // TODO #131 /_find http://docs.couchdb.org/en/2.0.0/api/database/find.html#post--db-_find so we can let the DB filter
-  override def readInstancesImpl(idFilter: String => Boolean): Try[Set[Instance]] = {
+  override def readInstancesImpl(idFilter: String => Boolean): Try[Set[Instance]] =
     Try {
       val allDocsUrl = ws.url(s"$dbUrlString/_all_docs?include_docs=true")
       val allDocsResult = Await.result(allDocsUrl.get(), Duration(5, TimeUnit.SECONDS))
@@ -140,33 +140,34 @@ case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSCl
         throw new IllegalStateException("Received positive offset so we are missing some data here.")
       } else {
         val rows = allDocsJsObject("rows").as[JsArray].value
-        rows.map { row =>
-          val doc = row.as[JsObject].value("doc").as[JsObject].value
-          val docId = doc("_id")
-          val instanceId = doc("id")
-          requireDocIdEqualToInstanceId(docId, instanceId) {
-            val publicFields = doc.filter {
-              case (key, value) => !key.startsWith("_")
+        rows
+          .map { row =>
+            val doc = row.as[JsObject].value("doc").as[JsObject].value
+            val docId = doc("_id")
+            val instanceId = doc("id")
+            requireDocIdEqualToInstanceId(docId, instanceId) {
+              val publicFields = doc.filter {
+                case (key, value) => !key.startsWith("_")
+              }
+              JsObject(publicFields).as[Instance]
             }
-            JsObject(publicFields).as[Instance]
           }
-        }.toSet.filter(instance => idFilter(instance.id))
+          .toSet
+          .filter(instance => idFilter(instance.id))
       }
     }
-  }
 
   override def writeInstanceImpl(instance: Instance): Try[Instance] = {
     val id = instance.id
     Try {
       val instanceUrl = ws.url(s"$dbUrlString/$id")
       val instanceResult = Await.result(instanceUrl.get(), Duration(5, TimeUnit.SECONDS))
-      def checkStatusCode(status: Int) = {
+      def checkStatusCode(status: Int) =
         if (status == 201) {
           instance
         } else {
           throw new IllegalStateException(s"Persisting instance '$id' failed. HTTP status code: $status")
         }
-      }
       instanceResult.status match {
         case 404 => {
           // Instance does not exist so it will be created
@@ -181,7 +182,8 @@ case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSCl
           val creationResult = Await.result(instanceUrl.put(instanceJsonWithRev), Duration(5, TimeUnit.SECONDS))
           checkStatusCode(creationResult.status)
         }
-        case other => throw new IllegalStateException(s"Unexpected status code returned from ${instanceUrl.uri}: $other")
+        case other =>
+          throw new IllegalStateException(s"Unexpected status code returned from ${instanceUrl.uri}: $other")
       }
     }
   }
@@ -191,13 +193,12 @@ case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSCl
     Try {
       val readInstanceUrl = ws.url(s"$dbUrlString/$id")
       val instanceResult = Await.result(readInstanceUrl.get(), Duration(5, TimeUnit.SECONDS))
-      def checkStatusCode(status: Int) = {
+      def checkStatusCode(status: Int) =
         if (status == 200) {
           instance
         } else {
           throw new IllegalStateException(s"Deleting instance '$id' failed. HTTP status code: $status")
         }
-      }
       instanceResult.status match {
         case 404 => {
           throw new InstanceNotFoundException(id)
@@ -209,7 +210,8 @@ case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSCl
           val creationResult = Await.result(deleteInstanceUrl.delete(), Duration(5, TimeUnit.SECONDS))
           checkStatusCode(creationResult.status)
         }
-        case other => throw new IllegalStateException(s"Unexpected status code returned from ${readInstanceUrl.uri}: $other")
+        case other =>
+          throw new IllegalStateException(s"Unexpected status code returned from ${readInstanceUrl.uri}: $other")
       }
     }
   }

@@ -2,12 +2,7 @@ package de.frosner.broccoli.models
 
 import play.api.libs.json.{Json, Reads, Writes}
 
-case class AboutInfo ( project: AboutProject
-                     , scala: AboutScala
-                     , sbt: AboutSbt
-                     , auth: AboutAuth
-                     , services: AboutServices
-                     )
+case class AboutInfo(project: AboutProject, scala: AboutScala, sbt: AboutSbt, auth: AboutAuth, services: AboutServices)
 
 case class AboutProject(name: String, version: String)
 
@@ -50,7 +45,6 @@ object AboutInfo {
 
   private implicit val aboutProjectWrites = Json.writes[AboutProject]
   private implicit val aboutProjectReads = Json.reads[AboutProject]
-
 
   implicit val aboutInfoWrites: Writes[AboutInfo] = Json.writes[AboutInfo]
 

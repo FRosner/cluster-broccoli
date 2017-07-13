@@ -24,32 +24,34 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
       )
 
       testWithAllAuths { securityService =>
-          TemplateController(
-            templateService = withTemplates(mock(classOf[TemplateService]), List(template)),
-            securityService = securityService
-          )
+        TemplateController(
+          templateService = withTemplates(mock(classOf[TemplateService]), List(template)),
+          securityService = securityService
+        )
       } { controller =>
         controller.list
       } {
         identity
       } { (controller, result) =>
         (status(result) must be equalTo 200) and {
-          contentAsJson(result) must be equalTo JsArray(Seq(
-            JsObject(Map(
-              "id" -> JsString(template.id),
-              "parameters" -> JsArray(Seq(JsString("id"))),
-              "parameterInfos" -> JsObject(Map(
-                "id" -> JsObject(Map(
-                  "id" -> JsString("id"),
-                  "name" -> JsString("myname"),
-                  "default" -> JsString("myid"),
-                  "secret" -> JsBoolean(false)
-                ))
-              )),
-              "description" -> JsString(template.description),
-              "version" -> JsString(template.version)
+          contentAsJson(result) must be equalTo JsArray(
+            Seq(
+              JsObject(Map(
+                "id" -> JsString(template.id),
+                "parameters" -> JsArray(Seq(JsString("id"))),
+                "parameterInfos" -> JsObject(
+                  Map(
+                    "id" -> JsObject(Map(
+                      "id" -> JsString("id"),
+                      "name" -> JsString("myname"),
+                      "default" -> JsString("myid"),
+                      "secret" -> JsBoolean(false)
+                    ))
+                  )),
+                "description" -> JsString(template.description),
+                "version" -> JsString(template.version)
+              ))
             ))
-          ))
         }
       }
     }
@@ -76,13 +78,14 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
         identity
       } { (controller, result) =>
         (status(result) must be equalTo 200) and {
-          contentAsJson(result) must be equalTo JsObject(Map(
-            "id" -> JsString(template.id),
-            "parameters" -> JsArray(Seq(JsString("id"))),
-            "parameterInfos" -> JsObject(Map.empty[String, JsValue]),
-            "description" -> JsString(template.description),
-            "version" -> JsString(template.version)
-          ))
+          contentAsJson(result) must be equalTo JsObject(
+            Map(
+              "id" -> JsString(template.id),
+              "parameters" -> JsArray(Seq(JsString("id"))),
+              "parameterInfos" -> JsObject(Map.empty[String, JsValue]),
+              "description" -> JsString(template.description),
+              "version" -> JsString(template.version)
+            ))
         }
       }
     }

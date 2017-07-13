@@ -4,7 +4,8 @@ import de.frosner.broccoli.models.ServiceStatus.ServiceStatus
 import ServiceStatusJson._
 import play.api.libs.json.Json
 
-case class Service(name: String, protocol: String, address: String, port: Int, status: ServiceStatus) extends Serializable
+case class Service(name: String, protocol: String, address: String, port: Int, status: ServiceStatus)
+    extends Serializable
 
 object Service {
 

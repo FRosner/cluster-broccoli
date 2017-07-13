@@ -21,28 +21,31 @@ import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Try
 
-case class WebSocketController @Inject()
-  ( webSocketService: WebSocketService
-  , templateService: TemplateService
-  , instanceService: InstanceService
-  , aboutService: AboutInfoService
-  , override val securityService: SecurityService
-  ) extends Controller with Logging with BroccoliWebsocketSecurity {
+case class WebSocketController @Inject()(webSocketService: WebSocketService,
+                                         templateService: TemplateService,
+                                         instanceService: InstanceService,
+                                         aboutService: AboutInfoService,
+                                         override val securityService: SecurityService)
+    extends Controller
+    with Logging
+    with BroccoliWebsocketSecurity {
 
-  def requestToSocket(request: RequestHeader): Future[Either[Result, (Iteratee[Msg, _], Enumerator[Msg])]] = {
-      withSecurity(request) { (maybeToken, user, request) =>
-        val (connectionId, connectionEnumerator) = maybeToken match {
-          case Some(token) => (token, webSocketService.newConnection(token, user)) // auth is enabled and we can use the session ID
-          case None => webSocketService.newConnection(user) // no session ID available so we generate one
-        }
-        val connectionLogString = s"$connectionId by $user from ${request.remoteAddress} at $request"
-        Logger.info(s"New connection $connectionLogString")
+  def requestToSocket(request: RequestHeader): Future[Either[Result, (Iteratee[Msg, _], Enumerator[Msg])]] =
+    withSecurity(request) { (maybeToken, user, request) =>
+      val (connectionId, connectionEnumerator) = maybeToken match {
+        case Some(token) =>
+          (token, webSocketService.newConnection(token, user)) // auth is enabled and we can use the session ID
+        case None => webSocketService.newConnection(user) // no session ID available so we generate one
+      }
+      val connectionLogString = s"$connectionId by $user from ${request.remoteAddress} at $request"
+      Logger.info(s"New connection $connectionLogString")
 
-        // TODO receive string and try json decoding here because I can handle the error better
-        val in = Iteratee.foreach[Msg] {
-          jsMsg =>
-            val msg = Json.fromJson(jsMsg)(IncomingWsMessage.incomingWsMessageReads)
-            val result = msg.map {
+      // TODO receive string and try json decoding here because I can handle the error better
+      val in = Iteratee
+        .foreach[Msg] { jsMsg =>
+          val msg = Json.fromJson(jsMsg)(IncomingWsMessage.incomingWsMessageReads)
+          val result = msg
+            .map {
               case IncomingWsMessage(IncomingWsMessageType.AddInstance, instanceCreation: InstanceCreation) =>
                 InstanceController.create(instanceCreation, user, instanceService) match {
                   case success: InstanceCreationSuccess =>
@@ -64,41 +67,44 @@ case class WebSocketController @Inject()
                   case failure: InstanceUpdateFailure =>
                     OutgoingWsMessage(OutgoingWsMessageType.InstanceUpdateFailureMsg, failure)
                 }
-            }.getOrElse {
+            }
+            .getOrElse {
               Logger.warn(s"Can't parse a message from $connectionId: $msg")
               OutgoingWsMessage(OutgoingWsMessageType.ErrorMsg, "Received unparsable message")
             }
-            webSocketService.send(connectionId, Json.toJson(result))
-        }.map { _ =>
+          webSocketService.send(connectionId, Json.toJson(result))
+        }
+        .map { _ =>
           webSocketService.closeConnections(connectionId)
           Logger.info(s"Closed connection $connectionLogString")
         }
 
-        val aboutEnumerator = Enumerator[Msg](Json.toJson(
+      val aboutEnumerator = Enumerator[Msg](
+        Json.toJson(
           OutgoingWsMessage(
             OutgoingWsMessageType.AboutInfoMsg,
             AboutController.about(aboutService, user)
           )
         ))
 
-        val templateEnumerator = Enumerator[Msg](Json.toJson(
+      val templateEnumerator = Enumerator[Msg](
+        Json.toJson(
           OutgoingWsMessage(
             OutgoingWsMessageType.ListTemplatesMsg,
             TemplateController.list(templateService)
           )
         ))
 
-        val instanceEnumerator = Enumerator[Msg](Json.toJson(
+      val instanceEnumerator = Enumerator[Msg](
+        Json.toJson(
           OutgoingWsMessage(
             OutgoingWsMessageType.ListInstancesMsg,
             InstanceController.list(None, user, instanceService)
           )
         ))
-        (in, aboutEnumerator.andThen(templateEnumerator).andThen(instanceEnumerator).andThen(connectionEnumerator))
-      }
-  }
+      (in, aboutEnumerator.andThen(templateEnumerator).andThen(instanceEnumerator).andThen(connectionEnumerator))
+    }
 
   def socket: WebSocket = WebSocket.tryAccept[Msg](requestToSocket)
 
 }
-
