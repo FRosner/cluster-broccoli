@@ -18,6 +18,7 @@ jobs:
     # Backend tests
     - stage: test
       script:
+        - ./scalafmt --test
         - sbt test:compile
         - sbt test
     # Frontend tests
