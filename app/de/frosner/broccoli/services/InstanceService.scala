@@ -5,6 +5,9 @@ import java.net.ConnectException
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import javax.inject.{Inject, Singleton}
 
+import cats.data.OptionT
+import cats.instances.all._
+import cats.syntax.all._
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.util.Logging
@@ -215,59 +218,59 @@ class InstanceService @Inject()(templateService: TemplateService,
       }
     }
 
-    val maybeUpdatedInstance = instances.get(id).map { instance =>
-      val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] =
+    instances
+      .get(id)
+      .toRight(InstanceNotFoundException(id))
+      // Update instance parameters
+      .flatMap { instance =>
         templateSelector
           .map { newTemplateId =>
             templateService
               .template(newTemplateId)
-              .map { template =>
-                instance.updateTemplate(template,
-                                        parameterValuesUpdatesWithPossibleDefaults.getOrElse(instance.parameterValues))
-              }
-              .getOrElse {
-                // New template does not exist
-                Failure(TemplateNotFoundException(newTemplateId))
+              .toRight(TemplateNotFoundException(newTemplateId))
+              .flatMap { template =>
+                val values = parameterValuesUpdatesWithPossibleDefaults.getOrElse(instance.parameterValues)
+                Either.fromTry(instance.updateTemplate(template, values))
               }
           }
           .getOrElse {
             // No template update required
-            parameterValuesUpdatesWithPossibleDefaults.map(instance.updateParameterValues).getOrElse(Success(instance))
+            parameterValuesUpdatesWithPossibleDefaults
+              .map(values => Either.fromTry(instance.updateParameterValues(values)))
+              .getOrElse(Right(instance))
           }
-      val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
-        statusUpdater
-          .map {
-            // Update the instance status
-            case JobStatus.Running =>
-              nomadService.startJob(instance.templateJson).map(_ => instance)
-            case JobStatus.Stopped =>
-              nomadService.deleteJob(instance.id).map(_ => instance)
-            case other =>
-              Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
-          }
-          .getOrElse {
-            // Don't update the instance status
-            Success(instance)
-          }
-      }.flatten
-
-      updatedInstance match {
-        case Failure(throwable)       => Logger.error(s"Error updating instance: $throwable")
-        case Success(changedInstance) => Logger.debug(s"Successfully applied an update to $changedInstance")
       }
+      // Update instance status
+      .flatMap { instance =>
+        val updatedInstance =
+          statusUpdater
+            .map {
+              // Update the instance status
+              case JobStatus.Running =>
+                nomadService.startJob(instance.templateJson).map(_ => instance)
+              case JobStatus.Stopped =>
+                nomadService.deleteJob(instance.id).map(_ => instance)
+              case other =>
+                Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
+            }
+            .getOrElse {
+              // Don't update the instance status
+              Success(instance)
+            }
 
-      updatedInstance
-        .flatMap { instance =>
-          val maybeWrittenInstance = instanceStorage.writeInstance(instance)
-          maybeWrittenInstance.foreach(written => instancesMap = instancesMap.updated(id, written))
-          maybeWrittenInstance
+        updatedInstance match {
+          case Failure(throwable)       => Logger.error(s"Error updating instance: $throwable")
+          case Success(changedInstance) => Logger.debug(s"Successfully applied an update to $changedInstance")
         }
-        .map(addStatuses)
-    }
-    maybeUpdatedInstance match {
-      case Some(tryUpdatedInstance) => tryUpdatedInstance
-      case None                     => Failure(InstanceNotFoundException(id))
-    }
+        Either.fromTry(updatedInstance)
+      }
+      // Write instance status to storage
+      .flatMap { instance =>
+        val maybeWrittenInstance = Either.fromTry(instanceStorage.writeInstance(instance))
+        maybeWrittenInstance.foreach(written => instancesMap = instancesMap.updated(id, written))
+        maybeWrittenInstance.map(addStatuses)
+      }
+      .toTry
   }
 
   def deleteInstance(id: String): Try[InstanceWithStatus] = synchronized {

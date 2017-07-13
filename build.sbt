@@ -8,8 +8,11 @@ lazy val root = project
       ws,
       cache,
       specs2 % Test,
+      // Play authentication framework
       "jp.t2v" %% "play2-auth" % "0.14.2",
-      "jp.t2v" %% "play2-auth-test" % "0.14.2" % "test"
+      "jp.t2v" %% "play2-auth-test" % "0.14.2" % "test",
+      // Functional programming tools
+      "org.typelevel" %% "cats-core" % "0.9.0"
     ),
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.frosner.broccoli.build"
