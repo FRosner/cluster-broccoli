@@ -98,7 +98,7 @@ case class WebSocketController @Inject()
       }
   }
 
-  def socket: WebSocket[Msg, Msg] = WebSocket.tryAccept[Msg](requestToSocket)
+  def socket: WebSocket = WebSocket.tryAccept[Msg](requestToSocket)
 
 }
 

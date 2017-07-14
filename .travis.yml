@@ -1,5 +1,4 @@
 language: scala
-
 sudo: required
 
 services:
@@ -9,10 +8,6 @@ jdk:
 node_js:
   - node
 
-before_install:
-  - curl -o- -L https://yarnpkg.com/install.sh
-  - export PATH="$HOME/.yarn/bin:$PATH"
-
 before_script:
   - uname -r
   - node --version
@@ -20,8 +15,21 @@ before_script:
 
 jobs:
   include:
+    # Backend tests
     - stage: test
-      script: ./unit-tests.sh
+      script:
+        - sbt test:compile
+        - sbt test
+    # Frontend tests
+    - stage: test
+      install:
+        - cd elm
+        - yarn install
+        - yarn setup
+      script:
+        - yarn format:validate
+        - yarn compile
+        - yarn test
     - stage: integration
       script:
         - . prepare-docker-builds
@@ -44,10 +52,22 @@ jobs:
         - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
         - docker push $REPO
 
+before_cache:
+  # Delete transient files to avoid needless re-caching
+  - find $HOME/.sbt -name "*.lock" -type f -delete
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
 cache:
   directories:
-    - $HOME/.m2
-    - $HOME/.ivy2
+    # Cache SBT launcher and SBT dependencies
+    - $HOME/.sbt/0.13/dependency
+    - $HOME/.sbt/boot/scala*
+    - $HOME/.sbt/launchers
+    - $HOME/.ivy2/cache
+    # Cache ELM stuff. In particular build-artifacts for tests to avoid needless
+    # rebuilds
+    - elm/elm-stuff/packages
+    - elm/tests/elm-stuff/packages
+    - elm/tests/elm-stuff/build-artifacts
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

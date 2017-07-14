@@ -47,8 +47,7 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
         SecurityController.PasswordFormKey -> Seq(password)
       ),
       files = Seq.empty,
-      badParts = Seq.empty,
-      missingFileParts = Seq.empty
+      badParts = Seq.empty
     )
 
 
