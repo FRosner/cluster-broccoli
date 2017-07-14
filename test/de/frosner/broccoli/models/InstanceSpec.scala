@@ -45,6 +45,20 @@ class InstanceSpec extends Specification {
       instance.templateJson === JsString("Frank 50")
     }
 
+    "parse the template correctly when it contains regex stuff that breacks with replaceAll" in {
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = "\"{{id}}\"",
+          description = "desc",
+          parameterInfos = Map.empty
+        ),
+        parameterValues = Map("id" -> "^.*$")
+      )
+      instance.templateJson === JsString("^.*$")
+    }
+
     "parse the template correctly when it contains an undefined default parameter" in {
       val instance = Instance(
         id = "1",
