@@ -50,13 +50,13 @@ case class Instance(id: String,
 
   def templateJson: JsValue = {
     val templateWithValues = parameterValues.foldLeft(template.template){
-      case (intermediateTemplate, (parameter, value)) => intermediateTemplate.replaceAll("\\{\\{" + parameter + "\\}\\}", value)
+      case (intermediateTemplate, (parameter, value)) => intermediateTemplate.replaceAllLiterally(s"{{$parameter}}", value)
     }
     val parameterDefaults = template.parameterInfos.flatMap {
       case (parameterId, parameterInfo) => parameterInfo.default.map(default => (parameterId, default))
     }
     val templateWithDefaults = parameterDefaults.foldLeft(templateWithValues){
-      case (intermediateTemplate, (parameter, value)) => intermediateTemplate.replaceAll("\\{\\{" + parameter + "\\}\\}", value)
+      case (intermediateTemplate, (parameter, value)) => intermediateTemplate.replaceAllLiterally(s"{{$parameter}}", value)
     }
     Json.parse(templateWithDefaults)
   }
