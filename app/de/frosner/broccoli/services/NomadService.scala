@@ -1,5 +1,6 @@
 package de.frosner.broccoli.services
 
+import java.net.ConnectException
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Named, Singleton}
 import javax.xml.ws.http.HTTPException
@@ -12,7 +13,7 @@ import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
 import play.api.libs.ws.WSClient
 import play.api.Configuration
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 
@@ -112,9 +113,12 @@ class NomadService @Inject()(configuration: Configuration,
         jobStatuses = idsAndStatusesWithPeriodic.toMap
         filteredIdsAndStatuses.map { case (key, value) => key }.foreach(requestServices)
       }
-      case Failure(throwable) => {
+      case Failure(throwable: ConnectException) => {
         Logger.error(s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
         setNomadNotReachable()
+      }
+      case Failure(throwable) => {
+        Logger.error(s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
       }
     }
   }
@@ -124,7 +128,7 @@ class NomadService @Inject()(configuration: Configuration,
   // https://www.playframework.com/documentation/2.5.x/ScalaCache
 
 
-  def requestServices(id: String): Unit = {
+  def requestServices(id: String): Future[Seq[String]] = {
     val queryUrl = nomadBaseUrl + s"/v1/job/$id"
     val jobRequest = ws.url(queryUrl)
     val jobResponse = jobRequest.get().map { response =>
@@ -135,8 +139,19 @@ class NomadService @Inject()(configuration: Configuration,
       }
     }
     val eventuallyJobServiceIds = jobResponse.map{ jsObject =>
-      val services = (jsObject \\ "Services").flatMap(_.as[JsArray].value.map(_.as[JsObject]))
-      services.flatMap {
+      val services = (jsObject \\ "Services")
+      val serviceObjects = services.flatMap {
+        serviceJson =>
+          val validatedServices = serviceJson.validate[JsArray].asEither
+          validatedServices match {
+            case Left(problem) =>
+              Logger.warn(s"Error when parsing service JSON in job $id: $problem")
+              List.empty
+            case Right(array) =>
+              array.value.map(_.as[JsObject])
+          }
+      }
+      serviceObjects.flatMap {
         serviceJsObject => serviceJsObject.value.get("Name").map(_.as[JsString].value)
       }
     }
@@ -144,11 +159,10 @@ class NomadService @Inject()(configuration: Configuration,
       case Success(jobServiceIds) =>
         Logger.debug(s"${jobRequest.uri} => ${jobServiceIds.mkString(", ")}")
         consulService.requestServiceStatus(id, jobServiceIds)
-        setNomadReachable()
       case Failure(throwable) =>
         Logger.error(s"Requesting services for $id failed: $throwable")
-        setNomadNotReachable()
     }
+    eventuallyJobServiceIds
   }
 
   def startJob(job: JsValue): Try[Unit] = {
