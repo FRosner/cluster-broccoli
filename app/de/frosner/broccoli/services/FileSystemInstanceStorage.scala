@@ -68,7 +68,9 @@ case class FileSystemInstanceStorage(storageDirectory: File) extends InstanceSto
       val tryInstance = readInstanceImpl(id)
       tryInstance match {
         case Success(instance) => instance
-        case Failure(throwable) => throw throwable
+        case Failure(throwable) =>
+          Logger.error(s"Failed to parse instance $id: $throwable")
+          throw throwable
       }
     }.toSet)
   }
