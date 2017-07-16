@@ -160,14 +160,15 @@ class NomadService @Inject()(configuration: Configuration, consulService: Consul
         serviceJsObject.value.get("Name").map(_.as[JsString].value)
       }
     }
-    eventuallyJobServiceIds.onComplete {
-      case Success(jobServiceIds) =>
+    val eventuallyRequestedServices = eventuallyJobServiceIds.map { jobServiceIds =>
         Logger.debug(s"${jobRequest.uri} => ${jobServiceIds.mkString(", ")}")
         consulService.requestServiceStatus(id, jobServiceIds)
-      case Failure(throwable) =>
+        jobServiceIds
+    }
+    eventuallyRequestedServices.onFailure { case throwable =>
         Logger.error(s"Requesting services for $id failed: $throwable")
     }
-    eventuallyJobServiceIds
+    eventuallyRequestedServices
   }
 
   def startJob(job: JsValue): Try[Unit] = {
