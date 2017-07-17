@@ -161,11 +161,12 @@ class NomadService @Inject()(configuration: Configuration, consulService: Consul
       }
     }
     val eventuallyRequestedServices = eventuallyJobServiceIds.map { jobServiceIds =>
-        Logger.debug(s"${jobRequest.uri} => ${jobServiceIds.mkString(", ")}")
-        consulService.requestServiceStatus(id, jobServiceIds)
-        jobServiceIds
+      Logger.debug(s"${jobRequest.uri} => ${jobServiceIds.mkString(", ")}")
+      consulService.requestServiceStatus(id, jobServiceIds)
+      jobServiceIds
     }
-    eventuallyRequestedServices.onFailure { case throwable =>
+    eventuallyRequestedServices.onFailure {
+      case throwable =>
         Logger.error(s"Requesting services for $id failed: $throwable")
     }
     eventuallyRequestedServices
