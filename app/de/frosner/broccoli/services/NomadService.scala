@@ -8,8 +8,9 @@ import javax.xml.ws.http.HTTPException
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.JobStatus._
 import de.frosner.broccoli.models.{Instance, JobStatus, PeriodicRun}
+import de.frosner.broccoli.nomad.models.Job
 import de.frosner.broccoli.util.Logging
-import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
+import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.Configuration
 
@@ -139,26 +140,16 @@ class NomadService @Inject()(configuration: Configuration, consulService: Consul
     val jobRequest = ws.url(queryUrl)
     val jobResponse = jobRequest.get().map { response =>
       if (response.status == 200) {
-        response.json.as[JsObject]
+        response.json.as[Job]
       } else {
         throw new Exception(s"Received ${response.statusText} (${response.status})")
       }
     }
-    val eventuallyJobServiceIds = jobResponse.map { jsObject =>
-      val services = (jsObject \\ "Services")
-      val serviceObjects = services.flatMap { serviceJson =>
-        val validatedServices = serviceJson.validate[JsArray].asEither
-        validatedServices match {
-          case Left(problem) =>
-            Logger.warn(s"Error when parsing service JSON in job $id: $problem")
-            List.empty
-          case Right(array) =>
-            array.value.map(_.as[JsObject])
-        }
-      }
-      serviceObjects.flatMap { serviceJsObject =>
-        serviceJsObject.value.get("Name").map(_.as[JsString].value)
-      }
+    val eventuallyJobServiceIds = jobResponse.map { job =>
+      val taskGroups = job.taskGroups.getOrElse(Seq.empty)
+      val tasks = taskGroups.flatMap(_.tasks.getOrElse(Seq.empty))
+      val services = tasks.flatMap(_.services.getOrElse(Seq.empty))
+      services.map(_.name)
     }
     val eventuallyRequestedServices = eventuallyJobServiceIds.map { jobServiceIds =>
       Logger.debug(s"${jobRequest.uri} => ${jobServiceIds.mkString(", ")}")
