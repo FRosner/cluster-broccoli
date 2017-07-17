@@ -19,7 +19,8 @@ else
   echo "Converting instances format in $instanceDir from Broccoli <0.6.0 to 0.7.0."
   for instanceFile in "$instanceDir"/*.json; do
     echo "- Converting $instanceFile"
-    tmpInstanceFile="$(mktemp -t $(basename $instanceFile))"
+    instanceFileName=$(basename "$instanceFile")
+    tmpInstanceFile=$(mktemp -t "$instanceFileName")
     jq '.template.parameterInfos = (.template.parameterInfos | with_entries(.value.id = .value.name))' < "$instanceFile" > "$tmpInstanceFile"
     mv "$tmpInstanceFile" "$instanceFile"
   done
