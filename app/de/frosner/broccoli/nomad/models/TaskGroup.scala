@@ -1,6 +1,12 @@
 package de.frosner.broccoli.nomad.models
 
-/**
-  * Created by frosneraz on 17.07.17.
-  */
-class TaskGroup {}
+import play.api.libs.json.{JsPath, Json, Reads, Writes}
+
+case class TaskGroup(tasks: Option[Seq[Task]])
+
+object TaskGroup {
+
+  implicit val taskGroupReads: Reads[TaskGroup] =
+    (JsPath \ "Tasks").readNullable[Seq[Task]].map(TaskGroup.apply)
+
+}
