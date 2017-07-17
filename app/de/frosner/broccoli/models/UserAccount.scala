@@ -26,10 +26,7 @@ sealed trait Account extends Credentials {
 
 }
 
-case class UserAccount(name: String,
-                       password: String,
-                       instanceRegex: String,
-                       role: Role) extends Account
+case class UserAccount(name: String, password: String, instanceRegex: String, role: Role) extends Account
 
 case object Anonymous extends Account {
 
@@ -42,4 +39,3 @@ case object Anonymous extends Account {
   val role = Role.Administrator
 
 }
-

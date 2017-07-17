@@ -13,11 +13,8 @@ import play.api.Configuration
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
-
-
 @Singleton()
-class ConsulService @Inject()(configuration: Configuration,
-                              ws: WSClient) extends Logging {
+class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extends Logging {
 
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -38,10 +35,12 @@ class ConsulService @Inject()(configuration: Configuration,
           }
           val tryConsulDomain = Try(Await.result(eventuallyConsulDomain, Duration(5, TimeUnit.SECONDS))).recoverWith {
             case throwable =>
-              Logger.warn(s"Cannot reach Consul to read the configuration from $requestUrl, falling back to IP based lookup: $throwable")
+              Logger.warn(
+                s"Cannot reach Consul to read the configuration from $requestUrl, falling back to IP based lookup: $throwable")
               Failure(throwable)
           }
-          tryConsulDomain.foreach(domain => Logger.info(s"Advertising Consul entities through DNS using '$domain' as the domain."))
+          tryConsulDomain.foreach(domain =>
+            Logger.info(s"Advertising Consul entities through DNS using '$domain' as the domain."))
           tryConsulDomain.toOption
         }
       }
@@ -49,21 +48,20 @@ class ConsulService @Inject()(configuration: Configuration,
         Logger.info("Advertising Consul entities through IP addresses.")
         None
       case default =>
-        throw new IllegalArgumentException(s"Configuration property ${conf.CONSUL_LOOKUP_METHOD_KEY} = $default is invalid.")
+        throw new IllegalArgumentException(
+          s"Configuration property ${conf.CONSUL_LOOKUP_METHOD_KEY} = $default is invalid.")
     }
   }
 
-  def getServiceStatusesOrDefault(id: String): Iterable[Service] = {
+  def getServiceStatusesOrDefault(id: String): Iterable[Service] =
     serviceStatuses.getOrElse(id, Iterable.empty)
-  }
 
   @volatile
   private var consulReachable: Boolean = false
 
   // TODO see why it is true although consul is not even running????
-  def isConsulReachable: Boolean = {
+  def isConsulReachable: Boolean =
     consulReachable
-  }
 
   def requestServiceStatus(jobId: String, serviceNames: Iterable[String]) = {
     val serviceResponses: Iterable[Future[Seq[Service]]] = serviceNames.map { name =>
@@ -72,39 +70,43 @@ class ConsulService @Inject()(configuration: Configuration,
       val healthQueryUrl = consulBaseUrl + s"/v1/health/service/$name?passing"
       val healthRequest = ws.url(healthQueryUrl)
       val requests = Future.sequence(List(catalogRequest.get(), healthRequest.get()))
-      requests.map { case List(catalogResponse, healthResponse) =>
-        val catalogResponseJson = catalogResponse.json
-        val healthResponseJson = healthResponse.json
-        Logger.debug(s"${catalogRequest.uri} => $catalogResponseJson")
-        Logger.debug(s"${healthRequest.uri} => $healthResponseJson")
-        val responseJsonArray = catalogResponseJson.as[JsArray]
-        responseJsonArray.value.map { serviceJson =>
-          val fields = serviceJson.as[JsObject].value
-          // TODO proper JSON parsing with exception handling
-          val serviceName = fields("ServiceName").as[JsString].value
-          val serviceProtocol = ConsulService.extractProtocolFromTags(fields("ServiceTags")) match {
-            case Some(protocol) => protocol
-            case None => Logger.warn("Service did not specify a single protocol tag (e.g. protocol-https). Assuming https.")
-              "https"
+      requests.map {
+        case List(catalogResponse, healthResponse) =>
+          val catalogResponseJson = catalogResponse.json
+          val healthResponseJson = healthResponse.json
+          Logger.debug(s"${catalogRequest.uri} => $catalogResponseJson")
+          Logger.debug(s"${healthRequest.uri} => $healthResponseJson")
+          val responseJsonArray = catalogResponseJson.as[JsArray]
+          responseJsonArray.value.map { serviceJson =>
+            val fields = serviceJson.as[JsObject].value
+            // TODO proper JSON parsing with exception handling
+            val serviceName = fields("ServiceName").as[JsString].value
+            val serviceProtocol = ConsulService.extractProtocolFromTags(fields("ServiceTags")) match {
+              case Some(protocol) => protocol
+              case None =>
+                Logger.warn("Service did not specify a single protocol tag (e.g. protocol-https). Assuming https.")
+                "https"
+            }
+            val serviceAddress = consulDomain
+              .map { domain =>
+                fields("ServiceName").as[JsString].value + ".service." + domain
+              }
+              .getOrElse {
+                fields("ServiceAddress").as[JsString].value
+              }
+            val servicePort = fields("ServicePort").as[JsNumber].value.toInt
+            val serviceStatus = {
+              val healthyServiceInstances = healthResponseJson.as[JsArray]
+              if (healthyServiceInstances.value.isEmpty) ServiceStatus.Failing else ServiceStatus.Passing
+            }
+            Service(
+              name = serviceName,
+              protocol = serviceProtocol,
+              address = serviceAddress,
+              port = servicePort,
+              status = serviceStatus
+            )
           }
-          val serviceAddress = consulDomain.map { domain =>
-            fields("ServiceName").as[JsString].value + ".service." + domain
-          }.getOrElse {
-            fields("ServiceAddress").as[JsString].value
-          }
-          val servicePort = fields("ServicePort").as[JsNumber].value.toInt
-          val serviceStatus = {
-            val healthyServiceInstances = healthResponseJson.as[JsArray]
-            if (healthyServiceInstances.value.isEmpty) ServiceStatus.Failing else ServiceStatus.Passing
-          }
-          Service(
-            name = serviceName,
-            protocol = serviceProtocol,
-            address = serviceAddress,
-            port = servicePort,
-            status = serviceStatus
-          )
-        }
       }
     }
     val serviceResponse = Try(Await.result(Future.sequence(serviceResponses), Duration(5, TimeUnit.SECONDS)))
@@ -141,10 +143,9 @@ object ConsulService {
     val protocolTags = tags.filter(_.startsWith("protocol-"))
     val protocols = protocolTags.map(_.split('-')(1))
     protocols.size match {
-      case 1 => Some(protocols.head)
+      case 1      => Some(protocols.head)
       case others => None
     }
   }
 
 }
-

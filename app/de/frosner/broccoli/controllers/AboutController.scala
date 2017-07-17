@@ -10,9 +10,9 @@ import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
 import play.api.libs.json.{JsBoolean, JsObject, JsString, Json}
 import play.api.mvc.{Action, AnyContent, Controller}
 
-case class AboutController @Inject() ( aboutInfoService: AboutInfoService
-                                     , override val securityService: SecurityService
-                                     ) extends Controller with BroccoliSimpleAuthorization {
+case class AboutController @Inject()(aboutInfoService: AboutInfoService, override val securityService: SecurityService)
+    extends Controller
+    with BroccoliSimpleAuthorization {
 
   def about: Action[AnyContent] = StackAction { implicit request =>
     Ok(Json.toJson(AboutController.about(aboutInfoService, loggedIn)))
@@ -22,8 +22,7 @@ case class AboutController @Inject() ( aboutInfoService: AboutInfoService
 
 object AboutController {
 
-  def about(aboutInfoService: AboutInfoService, loggedIn: Account) = {
+  def about(aboutInfoService: AboutInfoService, loggedIn: Account) =
     aboutInfoService.aboutInfo(loggedIn)
-  }
 
 }

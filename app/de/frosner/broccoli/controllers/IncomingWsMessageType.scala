@@ -11,6 +11,7 @@ object IncomingWsMessageType extends Enumeration {
   val DeleteInstance = Value("deleteInstance")
   val UpdateInstance = Value("updateInstance")
 
-  implicit val webSocketMessageTypeReads: Reads[IncomingWsMessageType] = Reads(_.validate[String].map(IncomingWsMessageType.withName))
+  implicit val webSocketMessageTypeReads: Reads[IncomingWsMessageType] = Reads(
+    _.validate[String].map(IncomingWsMessageType.withName))
 
 }

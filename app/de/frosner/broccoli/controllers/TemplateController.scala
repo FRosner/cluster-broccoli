@@ -8,9 +8,9 @@ import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Controller}
 
-case class TemplateController @Inject() (templateService: TemplateService,
-                                         override val securityService: SecurityService)
-  extends Controller with BroccoliSimpleAuthorization {
+case class TemplateController @Inject()(templateService: TemplateService, override val securityService: SecurityService)
+    extends Controller
+    with BroccoliSimpleAuthorization {
 
   private val templates = templateService.getTemplates
 
@@ -26,8 +26,7 @@ case class TemplateController @Inject() (templateService: TemplateService,
 
 object TemplateController {
 
-  def list(templateService: TemplateService) = {
+  def list(templateService: TemplateService) =
     templateService.getTemplates
-  }
 
 }
