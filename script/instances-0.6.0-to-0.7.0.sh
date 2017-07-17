@@ -17,7 +17,7 @@ else
   echo "Backing up $instanceDir to $backupDir."
   cp -r "$instanceDir" "$backupDir"
   echo "Converting instances format in $instanceDir from Broccoli <0.6.0 to 0.7.0."
-  for instanceFile in "$instanceDir/*.json"; do
+  for instanceFile in "$instanceDir"/*.json; do
     echo "- Converting $instanceFile"
     tmpInstanceFile="$instanceFile.tmp"
     jq '.template.parameterInfos = (.template.parameterInfos | with_entries(.value.id = .value.name))' < "$instanceFile" > "$tmpInstanceFile"
