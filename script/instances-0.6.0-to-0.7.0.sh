@@ -20,7 +20,7 @@ else
   for instanceFile in "$instanceDir/*.json"; do
     echo "- Converting $instanceFile"
     tmpInstanceFile="$instanceFile.tmp"
-    cat "$instanceFile" | jq '.template.parameterInfos = (.template.parameterInfos | with_entries(.value.id = .value.name))' > "$tmpInstanceFile"
+    jq '.template.parameterInfos = (.template.parameterInfos | with_entries(.value.id = .value.name))' < "$instanceFile" > "$tmpInstanceFile"
     mv "$tmpInstanceFile" "$instanceFile"
   done
 
