@@ -20,6 +20,7 @@ jobs:
       script:
         - ./scalafmt --test
         - sbt test:compile
+        - sbt it:compile
         - sbt test
     # Frontend tests
     - stage: test

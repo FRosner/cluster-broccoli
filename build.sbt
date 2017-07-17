@@ -14,6 +14,10 @@ lazy val server = project
       specs2 % IntegrationTest,
       Dependencies.scalaguice
     ),
+    libraryDependencies ++= Dependencies.enumeratum,
+    libraryDependencies ++= Dependencies.specs2.map(_ % Test),
+    libraryDependencies ++= Dependencies.specs2.map(_ % IntegrationTest),
+    libraryDependencies += Dependencies.scalacheck % Test,
     libraryDependencies ++= Dependencies.play2auth,
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.frosner.broccoli.build",
