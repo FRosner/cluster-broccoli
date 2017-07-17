@@ -5,7 +5,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, 
 import org.specs2.mutable.Specification
 import play.api.libs.json.Json
 
-import Template.{templatePersistenceReads, templateApiWrites}
+import Template.{templateApiWrites, templatePersistenceReads}
 
 class TemplateSpec extends Specification {
 
@@ -44,7 +44,10 @@ class TemplateSpec extends Specification {
     }
 
     "result in different template versions if the template JSON differs" in {
-      Template("test", "template JSON", "desc", Map.empty).version !== Template("test", "template JSONs", "desc", Map.empty).version
+      Template("test", "template JSON", "desc", Map.empty).version !== Template("test",
+                                                                                "template JSONs",
+                                                                                "desc",
+                                                                                Map.empty).version
     }
 
     "result in different template versions if the template parameter info differs" in {
@@ -53,13 +56,12 @@ class TemplateSpec extends Specification {
         template = "template JSON {{id}}",
         description = "desc",
         parameterInfos = Map.empty
-      ).version !== Template(
-        id = "test",
-        template = "template JSON {{id}}",
-        description = "desc",
-        parameterInfos = Map(
-          "id" -> ParameterInfo("id", None, None, secret = Some(false))
-        )).version
+      ).version !== Template(id = "test",
+                             template = "template JSON {{id}}",
+                             description = "desc",
+                             parameterInfos = Map(
+                               "id" -> ParameterInfo("id", None, None, secret = Some(false))
+                             )).version
     }
 
   }
@@ -91,7 +93,9 @@ class TemplateSpec extends Specification {
         description = "d",
         parameterInfos = Map.empty
       )
-      Json.fromJson(Json.toJson(template)(Template.templatePersistenceWrites))(Template.templatePersistenceReads).get === template
+      Json
+        .fromJson(Json.toJson(template)(Template.templatePersistenceWrites))(Template.templatePersistenceReads)
+        .get === template
     }
 
   }

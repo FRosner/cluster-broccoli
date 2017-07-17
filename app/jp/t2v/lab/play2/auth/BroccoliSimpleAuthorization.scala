@@ -17,28 +17,29 @@ trait BroccoliSimpleAuthorization extends StackableController with AsyncAuth wit
 
   private[auth] case object AuthKey extends RequestAttributeKey[User]
 
-  override def proceed[A](req: RequestWithAttributes[A])(f: RequestWithAttributes[A] => Future[Result]): Future[Result] = {
+  override def proceed[A](req: RequestWithAttributes[A])(
+      f: RequestWithAttributes[A] => Future[Result]): Future[Result] = {
     implicit val (r, ctx) = (req, StackActionExecutionContext(req))
-     securityService.authMode match {
-       case conf.AUTH_MODE_CONF => {
-         restoreUser recover {
-           case _ => None -> identity[Result] _
-         } flatMap {
-           case (Some(u), cookieUpdater) => super.proceed(req.set(AuthKey, u))(f).map(cookieUpdater)
-           case (None, _) => authenticationFailed(req)
-         }
-       }
-       case conf.AUTH_MODE_NONE => {
-         super.proceed(req)(f)
-       }
-       case other => throw new IllegalStateException(s"Unrecognized auth mode: ${securityService.authMode}")
+    securityService.authMode match {
+      case conf.AUTH_MODE_CONF => {
+        restoreUser recover {
+          case _ => None -> identity[Result] _
+        } flatMap {
+          case (Some(u), cookieUpdater) => super.proceed(req.set(AuthKey, u))(f).map(cookieUpdater)
+          case (None, _)                => authenticationFailed(req)
+        }
+      }
+      case conf.AUTH_MODE_NONE => {
+        super.proceed(req)(f)
+      }
+      case other => throw new IllegalStateException(s"Unrecognized auth mode: ${securityService.authMode}")
     }
   }
 
   implicit def loggedIn(implicit req: RequestWithAttributes[_]): User = securityService.authMode match {
-    case conf.AUTH_MODE_CONF => req.get (AuthKey).get
+    case conf.AUTH_MODE_CONF => req.get(AuthKey).get
     case conf.AUTH_MODE_NONE => Anonymous.asInstanceOf[User]
-    case other => throw new IllegalStateException(s"Unrecognized auth mode: ${securityService.authMode}")
+    case other               => throw new IllegalStateException(s"Unrecognized auth mode: ${securityService.authMode}")
   }
 
   def getSessionId(request: RequestHeader): Option[AuthenticityToken] = extractToken(request)

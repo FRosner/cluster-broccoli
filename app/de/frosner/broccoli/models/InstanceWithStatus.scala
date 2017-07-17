@@ -10,7 +10,8 @@ import scala.util.Try
 case class InstanceWithStatus(instance: Instance,
                               status: JobStatus,
                               services: Iterable[Service],
-                              periodicRuns: Iterable[PeriodicRun]) extends Serializable
+                              periodicRuns: Iterable[PeriodicRun])
+    extends Serializable
 
 object InstanceWithStatus {
 
@@ -20,12 +21,12 @@ object InstanceWithStatus {
       (JsPath \ "status").write[JobStatus] and
       (JsPath \ "services").write[Iterable[Service]] and
       (JsPath \ "periodicRuns").write[Iterable[PeriodicRun]]
-    writePath((instanceWithStatus: InstanceWithStatus) =>
-      (instanceWithStatus.instance,
-        instanceWithStatus.status,
-        instanceWithStatus.services,
-        instanceWithStatus.periodicRuns)
-    )
+    writePath(
+      (instanceWithStatus: InstanceWithStatus) =>
+        (instanceWithStatus.instance,
+         instanceWithStatus.status,
+         instanceWithStatus.services,
+         instanceWithStatus.periodicRuns))
   }
 
 }

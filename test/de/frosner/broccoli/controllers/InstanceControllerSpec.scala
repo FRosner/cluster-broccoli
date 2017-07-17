@@ -74,17 +74,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
   "list" should {
 
     "list all instances" in new WithApplication {
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances),
           securityService = securityService
         )
-      } {
-        controller => controller.list(None)
-      } {
-        request => request
-      } {
-        (controller, result) => (status(result) must be equalTo 200) and
+      } { controller =>
+        controller.list(None)
+      } { request =>
+        request
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(instances))
       }
     }
@@ -97,17 +97,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           )
         )
       )
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances ++ List(notMatchingInstance)),
           securityService = securityService
         )
-      } {
-        controller => controller.list(Some(instanceWithStatus.instance.template.id))
-      } {
-        request => request
-      } {
-        (controller, result) => (status(result) must be equalTo 200) and
+      } { controller =>
+        controller.list(Some(instanceWithStatus.instance.template.id))
+      } { request =>
+        request
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(instances))
       }
     }
@@ -116,17 +116,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       // TODO helper function to test against multiple roles (allowed and not allowed ones)
       testWithAllAuths {
         operator
-      } {
-        securityService => InstanceController(
+      } { securityService =>
+        InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances),
           securityService = securityService
         )
-      } {
-        controller => controller.list(Some(instanceWithStatus.instance.template.id))
-      } {
-        request => request
-      } {
-        (controller, result) => (status(result) must be equalTo 200) and
+      } { controller =>
+        controller.list(Some(instanceWithStatus.instance.template.id))
+      } { request =>
+        request
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and
           (contentAsJson(result).toString must not contain "thisshouldnotappearanywhere")
       }
     }
@@ -135,17 +135,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       // TODO helper function to test against multiple roles (allowed and not allowed ones)
       testWithAllAuths {
         user
-      } {
-        securityService => InstanceController(
+      } { securityService =>
+        InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances),
           securityService = securityService
         )
-      } {
-        controller => controller.list(Some(instanceWithStatus.instance.template.id))
-      } {
-        request => request
-      } {
-        (controller, result) => (status(result) must be equalTo 200) and
+      } { controller =>
+        controller.list(Some(instanceWithStatus.instance.template.id))
+      } { request =>
+        request
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and
           (contentAsJson(result).toString must not contain "thisshouldnotappearanywhere")
       }
     }
@@ -158,17 +158,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       )
       testWithAllAuths {
         accountWithRegex
-      } {
-        securityService => InstanceController(
+      } { securityService =>
+        InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances ++ List(matchingInstance)),
           securityService = securityService
         )
-      } {
-        controller => controller.list(None)
-      } {
-        request => request
-      } {
-        (controller, result) => (status(result) must be equalTo 200) and
+      } { controller =>
+        controller.list(None)
+      } { request =>
+        request
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(List(matchingInstance)))
       }
     }
@@ -178,17 +178,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
   "show" should {
 
     "return the requested instance if it exists" in new WithApplication {
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances),
           securityService = securityService
         )
-      } {
-        controller => controller.show(instanceWithStatus.instance.id)
-      } {
-        request => request
-      } {
-        (controller, result) => (status(result) must be equalTo 200) and
+      } { controller =>
+        controller.show(instanceWithStatus.instance.id)
+      } { request =>
+        request
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(instanceWithStatus))
       }
     }
@@ -197,17 +197,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       val notExisting = "id"
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
       when(instanceService.getInstance(notExisting)).thenReturn(None)
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.show(notExisting)
-      } {
-        request => request
-      } {
-        (controller, result) => status(result) must be equalTo 404
+      } { controller =>
+        controller.show(notExisting)
+      } { request =>
+        request
+      } { (controller, result) =>
+        status(result) must be equalTo 404
       }
     }
 
@@ -215,17 +215,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       // TODO helper function (see above)
       testWithAllAuths {
         operator
-      } {
-        securityService => InstanceController(
+      } { securityService =>
+        InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances),
           securityService = securityService
         )
-      } {
-        controller => controller.show(instanceWithStatus.instance.id)
-      } {
-        request => request
-      } {
-        (controller, result) => (status(result) must be equalTo 200) and
+      } { controller =>
+        controller.show(instanceWithStatus.instance.id)
+      } { request =>
+        request
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and
           (contentAsJson(result).toString must not contain "thisshouldnotappearanywhere")
       }
     }
@@ -234,17 +234,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       // TODO helper function (see above)
       testWithAllAuths {
         user
-      } {
-        securityService => InstanceController(
+      } { securityService =>
+        InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances),
           securityService = securityService
         )
-      } {
-        controller => controller.show(instanceWithStatus.instance.id)
-      } {
-        request => request
-      } {
-        (controller, result) => (status(result) must be equalTo 200) and
+      } { controller =>
+        controller.show(instanceWithStatus.instance.id)
+      } { request =>
+        request
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and
           (contentAsJson(result).toString must not contain "thisshouldnotappearanywhere")
       }
     }
@@ -252,17 +252,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     "return 404 if the instance does not match the account regex" in new WithApplication {
       testWithAllAuths {
         accountWithRegex
-      } {
-        securityService => InstanceController(
+      } { securityService =>
+        InstanceController(
           instanceService = withInstances(mock(classOf[InstanceService]), instances),
           securityService = securityService
         )
-      } {
-        controller => controller.show(instanceWithStatus.instance.id)
-      } {
-        request => request
-      } {
-        (controller, result) => status(result) must be equalTo 404
+      } { controller =>
+        controller.show(instanceWithStatus.instance.id)
+      } { request =>
+        request
+      } { (controller, result) =>
+        status(result) must be equalTo 404
       }
     }
 
@@ -279,17 +279,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       )
       when(instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.create
-      } {
-        request => request.withJsonBody(Json.toJson(instanceCreation))
-      } {
-        (controller, result) => (status(result) must be equalTo 201) and
+      } { controller =>
+        controller.create
+      } { request =>
+        request.withJsonBody(Json.toJson(instanceCreation))
+      } { (controller, result) =>
+        (status(result) must be equalTo 201) and
           (headers(result).get(HeaderNames.LOCATION) === Some(s"/api/v1/instances/${instanceWithStatus.instance.id}")) and
           (contentAsJson(result) must be equalTo Json.toJson(instanceWithStatus))
       }
@@ -297,33 +297,33 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
 
     "fail if the creation request is not a valid JSON" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.create
-      } {
-        request => request.withTextBody("yup")
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { controller =>
+        controller.create
+      } { request =>
+        request.withTextBody("yup")
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
     "fail if the creation request is valid JSON but does not contain all required fields" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.create
-      } {
-        request => request.withJsonBody(JsObject(Map("x" -> JsString("y"))))
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { controller =>
+        controller.create
+      } { request =>
+        request.withJsonBody(JsObject(Map("x" -> JsString("y"))))
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
@@ -337,17 +337,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       )
       when(instanceService.addInstance(instanceCreation)).thenReturn(Failure(new IllegalArgumentException("")))
 
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.create
-      } {
-        request => request.withJsonBody(Json.toJson(instanceCreation))
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { controller =>
+        controller.create
+      } { request =>
+        request.withJsonBody(Json.toJson(instanceCreation))
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
@@ -362,17 +362,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       when(instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
       testWithAllAuths {
         accountWithRegex
-      } {
-        securityService => InstanceController(
+      } { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.create
-      } {
-        request => request.withJsonBody(Json.toJson(instanceCreation))
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { controller =>
+        controller.create
+      } { request =>
+        request.withJsonBody(Json.toJson(instanceCreation))
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
@@ -388,17 +388,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
 
       testWithAllAuths {
         operator
-      } {
-        securityService => InstanceController(
+      } { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.create
-      } {
-        request => request.withJsonBody(Json.toJson(instanceCreation))
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { controller =>
+        controller.create
+      } { request =>
+        request.withJsonBody(Json.toJson(instanceCreation))
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
@@ -414,17 +414,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
 
       testWithAllAuths {
         user
-      } {
-        securityService => InstanceController(
+      } { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.create
-      } {
-        request => request.withJsonBody(Json.toJson(instanceCreation))
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { controller =>
+        controller.create
+      } { request =>
+        request.withJsonBody(Json.toJson(instanceCreation))
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
@@ -434,307 +434,324 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
 
     "update the instance status correctly" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
-      when(instanceService.updateInstance(
-        id = instanceWithStatus.instance.id,
-        statusUpdater = Some(JobStatus.Running),
-        parameterValuesUpdater = None,
-        templateSelector = None
-      )).thenReturn(Success(instanceWithStatus))
+      when(
+        instanceService.updateInstance(
+          id = instanceWithStatus.instance.id,
+          statusUpdater = Some(JobStatus.Running),
+          parameterValuesUpdater = None,
+          templateSelector = None
+        )).thenReturn(Success(instanceWithStatus))
 
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.update(instanceWithStatus.instance.id)
-      } {
-        request => request.withJsonBody(
-          JsObject(Map(
-            "status" -> Json.toJson(JobStatus.Running)
-          ))
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withJsonBody(
+          JsObject(
+            Map(
+              "status" -> Json.toJson(JobStatus.Running)
+            ))
         )
-      } {
-        (controller, result) => (status(result) must be equalTo 200) and
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(instanceWithStatus))
       }
     }
 
     "update the instance parameters correctly" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
-      when(instanceService.updateInstance(
-        id = instanceWithStatus.instance.id,
-        statusUpdater = None,
-        parameterValuesUpdater = Some(Map(
-          "id" -> "new"
-        )),
-        templateSelector = None
-      )).thenReturn(Success(instanceWithStatus))
+      when(
+        instanceService.updateInstance(
+          id = instanceWithStatus.instance.id,
+          statusUpdater = None,
+          parameterValuesUpdater = Some(
+            Map(
+              "id" -> "new"
+            )),
+          templateSelector = None
+        )).thenReturn(Success(instanceWithStatus))
 
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.update(instanceWithStatus.instance.id)
-      } {
-        request => request.withJsonBody(
-          JsObject(Map(
-            "parameterValues" -> JsObject(Map(
-              "id" -> JsString("new")
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withJsonBody(
+          JsObject(
+            Map(
+              "parameterValues" -> JsObject(Map(
+                "id" -> JsString("new")
+              ))
             ))
-          ))
         )
-      } {
-        (controller, result) => (status(result) must be equalTo 200) and
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(instanceWithStatus))
       }
     }
 
     "update the instance template correctly" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
-      when(instanceService.updateInstance(
-        id = instanceWithStatus.instance.id,
-        statusUpdater = None,
-        parameterValuesUpdater = None,
-        templateSelector = Some("newTemplate")
-      )).thenReturn(Success(instanceWithStatus))
+      when(
+        instanceService.updateInstance(
+          id = instanceWithStatus.instance.id,
+          statusUpdater = None,
+          parameterValuesUpdater = None,
+          templateSelector = Some("newTemplate")
+        )).thenReturn(Success(instanceWithStatus))
 
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.update(instanceWithStatus.instance.id)
-      } {
-        request => request.withJsonBody(
-          JsObject(Map(
-            "selectedTemplate" -> JsString("newTemplate")
-          ))
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withJsonBody(
+          JsObject(
+            Map(
+              "selectedTemplate" -> JsString("newTemplate")
+            ))
         )
-      } {
-        (controller, result) => (status(result) must be equalTo 200) and
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(instanceWithStatus))
       }
     }
 
     "fail if the instance does not exist" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
-      when(instanceService.updateInstance(
-        id = instanceWithStatus.instance.id,
-        statusUpdater = None,
-        parameterValuesUpdater = None,
-        templateSelector = Some("newTemplate")
-      )).thenReturn(Failure(InstanceNotFoundException(instanceWithStatus.instance.id)))
+      when(
+        instanceService.updateInstance(
+          id = instanceWithStatus.instance.id,
+          statusUpdater = None,
+          parameterValuesUpdater = None,
+          templateSelector = Some("newTemplate")
+        )).thenReturn(Failure(InstanceNotFoundException(instanceWithStatus.instance.id)))
 
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.update(instanceWithStatus.instance.id)
-      } {
-        request => request.withJsonBody(
-          JsObject(Map(
-            "selectedTemplate" -> JsString("newTemplate")
-          ))
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withJsonBody(
+          JsObject(
+            Map(
+              "selectedTemplate" -> JsString("newTemplate")
+            ))
         )
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
     "fail if the instance does not match the account instance prefix" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
-      when(instanceService.updateInstance(
-        id = instanceWithStatus.instance.id,
-        statusUpdater = Some(JobStatus.Running),
-        parameterValuesUpdater = None,
-        templateSelector = None
-      )).thenReturn(Success(instanceWithStatus))
+      when(
+        instanceService.updateInstance(
+          id = instanceWithStatus.instance.id,
+          statusUpdater = Some(JobStatus.Running),
+          parameterValuesUpdater = None,
+          templateSelector = None
+        )).thenReturn(Success(instanceWithStatus))
 
       testWithAllAuths {
         accountWithRegex
-      } {
-        securityService => InstanceController(
+      } { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.update(instanceWithStatus.instance.id)
-      } {
-        request => request.withJsonBody(
-          JsObject(Map(
-            "status" -> Json.toJson(JobStatus.Running)
-          ))
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withJsonBody(
+          JsObject(
+            Map(
+              "status" -> Json.toJson(JobStatus.Running)
+            ))
         )
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
     "fail if the request is not JSON" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.update(instanceWithStatus.instance.id)
-      } {
-        request => request.withTextBody("bla")
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withTextBody("bla")
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
     "fail if the request is an empty object" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
 
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.update(instanceWithStatus.instance.id)
-      } {
-        request => request.withJsonBody(
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withJsonBody(
           JsObject(Map.empty[String, JsValue])
         )
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
     "fail if the instance status request is not valid" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
 
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.update(instanceWithStatus.instance.id)
-      } {
-        request => request.withJsonBody(
-          JsObject(Map(
-            "status" -> JsObject(Map.empty[String, JsValue])
-          ))
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withJsonBody(
+          JsObject(
+            Map(
+              "status" -> JsObject(Map.empty[String, JsValue])
+            ))
         )
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
     "fail if the instance parameter request is not valid" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
 
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.update(instanceWithStatus.instance.id)
-      } {
-        request => request.withJsonBody(
-          JsObject(Map(
-            "parameterValues" -> JsObject(Map(
-              "id" -> JsObject(Map.empty[String, JsValue])
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withJsonBody(
+          JsObject(
+            Map(
+              "parameterValues" -> JsObject(Map(
+                "id" -> JsObject(Map.empty[String, JsValue])
+              ))
             ))
-          ))
         )
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
     "fail if the instance template request is not valid" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
 
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.update(instanceWithStatus.instance.id)
-      } {
-        request => request.withJsonBody(
-          JsObject(Map(
-            "selectedTemplate" -> JsObject(Map.empty[String, JsValue])
-          ))
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withJsonBody(
+          JsObject(
+            Map(
+              "selectedTemplate" -> JsObject(Map.empty[String, JsValue])
+            ))
         )
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
     "not allow instance status updates if not running in admin or operator mode" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
 
-      testWithAllAuths(user) {
-        securityService => InstanceController(
+      testWithAllAuths(user) { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.update(instanceWithStatus.instance.id)
-      } {
-        request => request.withJsonBody(
-          JsObject(Map(
-            "status" -> Json.toJson(JobStatus.Running)
-          ))
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withJsonBody(
+          JsObject(
+            Map(
+              "status" -> Json.toJson(JobStatus.Running)
+            ))
         )
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
     "not allow instance parameter updates if not running in administrator mode" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
 
-      val operatorMatchers = testWithAllAuths(operator) {
-        securityService => InstanceController(
+      val operatorMatchers = testWithAllAuths(operator) { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.update(instanceWithStatus.instance.id)
-      } {
-        request => request.withJsonBody(
-          JsObject(Map(
-            "parameterValues" -> JsObject(Map(
-              "id" -> JsString("new")
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withJsonBody(
+          JsObject(
+            Map(
+              "parameterValues" -> JsObject(Map(
+                "id" -> JsString("new")
+              ))
             ))
-          ))
         )
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
-      val userMatchers = testWithAllAuths(user) {
-        securityService => InstanceController(
+      val userMatchers = testWithAllAuths(user) { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.update(instanceWithStatus.instance.id)
-      } {
-        request => request.withJsonBody(
-          JsObject(Map(
-            "parameterValues" -> JsObject(Map(
-              "id" -> JsString("new")
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withJsonBody(
+          JsObject(
+            Map(
+              "parameterValues" -> JsObject(Map(
+                "id" -> JsString("new")
+              ))
             ))
-          ))
         )
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
       operatorMatchers and userMatchers
     }
@@ -742,37 +759,39 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     "not allow template updates if not running in administrator mode" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
 
-      val operatorMatchers = testWithAllAuths(operator) {
-        securityService => InstanceController(
+      val operatorMatchers = testWithAllAuths(operator) { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.update(instanceWithStatus.instance.id)
-      } {
-        request => request.withJsonBody(
-          JsObject(Map(
-            "selectedTemplate" -> JsString("newTemplate")
-          ))
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withJsonBody(
+          JsObject(
+            Map(
+              "selectedTemplate" -> JsString("newTemplate")
+            ))
         )
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
-      val userMatchers = testWithAllAuths(user) {
-        securityService => InstanceController(
+      val userMatchers = testWithAllAuths(user) { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.update(instanceWithStatus.instance.id)
-      } {
-        request => request.withJsonBody(
-          JsObject(Map(
-            "selectedTemplate" -> JsString("newTemplate")
-          ))
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withJsonBody(
+          JsObject(
+            Map(
+              "selectedTemplate" -> JsString("newTemplate")
+            ))
         )
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
       operatorMatchers and userMatchers
     }
@@ -785,17 +804,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       val instanceService = withInstances(mock(classOf[InstanceService]), instances)
       when(instanceService.deleteInstance(instanceWithStatus.instance.id)).thenReturn(Success(instanceWithStatus))
 
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.delete(instanceWithStatus.instance.id)
-      } {
-        request => request
-      } {
-        (controller, result) => (status(result) must be equalTo 200) and
+      } { controller =>
+        controller.delete(instanceWithStatus.instance.id)
+      } { request =>
+        request
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(instanceWithStatus))
       }
     }
@@ -805,17 +824,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       when(instanceService.deleteInstance(instanceWithStatus.instance.id))
         .thenReturn(Failure(InstanceNotFoundException(instanceWithStatus.instance.id)))
 
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.delete(instanceWithStatus.instance.id)
-      } {
-        request => request
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { controller =>
+        controller.delete(instanceWithStatus.instance.id)
+      } { request =>
+        request
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
@@ -824,17 +843,17 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       when(instanceService.deleteInstance(instanceWithStatus.instance.id))
         .thenReturn(Failure(new Exception("")))
 
-      testWithAllAuths {
-        securityService => InstanceController(
+      testWithAllAuths { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.delete(instanceWithStatus.instance.id)
-      } {
-        request => request
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { controller =>
+        controller.delete(instanceWithStatus.instance.id)
+      } { request =>
+        request
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
@@ -844,46 +863,46 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
 
       testWithAllAuths {
         accountWithRegex
-      } {
-        securityService => InstanceController(
+      } { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.delete(instanceWithStatus.instance.id)
-      } {
-        request => request
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { controller =>
+        controller.delete(instanceWithStatus.instance.id)
+      } { request =>
+        request
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
     }
 
     "should only be allowed in administrator mode" in new WithApplication {
       val instanceService = withInstances(mock(classOf[InstanceService]), instances)
 
-      val operatorMatcher = testWithAllAuths(operator) {
-        securityService => InstanceController(
+      val operatorMatcher = testWithAllAuths(operator) { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.delete(instanceWithStatus.instance.id)
-      } {
-        request => request
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { controller =>
+        controller.delete(instanceWithStatus.instance.id)
+      } { request =>
+        request
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
-      val userMatcher = testWithAllAuths(user) {
-        securityService => InstanceController(
+      val userMatcher = testWithAllAuths(user) { securityService =>
+        InstanceController(
           instanceService = instanceService,
           securityService = securityService
         )
-      } {
-        controller => controller.delete(instanceWithStatus.instance.id)
-      } {
-        request => request
-      } {
-        (controller, result) => status(result) must be equalTo 400
+      } { controller =>
+        controller.delete(instanceWithStatus.instance.id)
+      } { request =>
+        request
+      } { (controller, result) =>
+        status(result) must be equalTo 400
       }
       operatorMatcher and userMatcher
     }

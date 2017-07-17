@@ -6,7 +6,7 @@ import java.nio.file.Paths
 import java.util.UUID
 
 import de.frosner.broccoli.models.{Instance, Template}
-import Instance.{instancePersistenceWrites, instancePersistenceReads}
+import Instance.{instancePersistenceReads, instancePersistenceWrites}
 import org.specs2.mutable.Specification
 
 import play.core.server.Server
@@ -19,12 +19,11 @@ import play.api.test._
 import scala.io.Source
 import scala.util.{Failure, Success, Try}
 
-
 class CouchDBInstanceStorageSpec extends Specification {
 
   val instance = Instance(
     id = "prefix-id",
-    template = Template(id = "t", template = "{{id}}" ,description = "d", parameterInfos = Map.empty),
+    template = Template(id = "t", template = "{{id}}", description = "d", parameterInfos = Map.empty),
     parameterValues = Map(
       "id" -> "prefix-id"
     )
@@ -34,51 +33,62 @@ class CouchDBInstanceStorageSpec extends Specification {
 
     "succeed if the database already exists" in {
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should beAnInstanceOf[CouchDBInstanceStorage]
+          CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should beAnInstanceOf[
+            CouchDBInstanceStorage]
         }
       }
     }
 
     "succeed if the database does not exist but can be created" in {
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.NotFound
-        }
-        case PUT(p"/broccoli_instances") => Action {
-          Results.Created
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.NotFound
+          }
+        case PUT(p"/broccoli_instances") =>
+          Action {
+            Results.Created
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should beAnInstanceOf[CouchDBInstanceStorage]
+          CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should beAnInstanceOf[
+            CouchDBInstanceStorage]
         }
       }
     }
 
     "fail if the database does not exist but cannot be created" in {
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.NotFound
-        }
-        case PUT(p"/broccoli_instances") => Action {
-          Results.InternalServerError
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.NotFound
+          }
+        case PUT(p"/broccoli_instances") =>
+          Action {
+            Results.InternalServerError
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should throwA[IllegalArgumentException]
+          CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should throwA[
+            IllegalArgumentException]
         }
       }
     }
@@ -92,13 +102,15 @@ class CouchDBInstanceStorageSpec extends Specification {
     "lock the database" in {
       var locked = false
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          locked = true
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            locked = true
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
@@ -109,15 +121,18 @@ class CouchDBInstanceStorageSpec extends Specification {
 
     "fail if the database is already locked" in {
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString("lock"))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString("lock"))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should throwA[IllegalArgumentException]
+          CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should throwA[
+            IllegalArgumentException]
         }
       }
     }
@@ -129,16 +144,19 @@ class CouchDBInstanceStorageSpec extends Specification {
     "release the lock" in {
       var released = false
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
-        case DELETE(p"/_config/broccoli/broccoli_instances") => Action {
-          released = true
-          Results.Ok
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
+        case DELETE(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            released = true
+            Results.Ok
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client).close()
@@ -153,25 +171,28 @@ class CouchDBInstanceStorageSpec extends Specification {
 
     "work" in {
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case GET(p"/broccoli_instances/_all_docs") => Action {
-          val docJson = JsObject(Json.toJson(instance).as[JsObject].value.updated("_id", JsString(instance.id)))
-          Results.Ok(
-            Json.obj(
-              "offset" -> 0,
-              "rows" -> Json.arr(
-                Json.obj(
-                  "doc" -> docJson
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case GET(p"/broccoli_instances/_all_docs") =>
+          Action {
+            val docJson = JsObject(Json.toJson(instance).as[JsObject].value.updated("_id", JsString(instance.id)))
+            Results.Ok(
+              Json.obj(
+                "offset" -> 0,
+                "rows" -> Json.arr(
+                  Json.obj(
+                    "doc" -> docJson
+                  )
                 )
               )
             )
-          )
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
@@ -182,25 +203,28 @@ class CouchDBInstanceStorageSpec extends Specification {
 
     "filter instances not matching the additional filter" in {
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case GET(p"/broccoli_instances/_all_docs") => Action {
-          val docJson = JsObject(Json.toJson(instance).as[JsObject].value.updated("_id", JsString(instance.id)))
-          Results.Ok(
-            Json.obj(
-              "offset" -> 0,
-              "rows" -> Json.arr(
-                Json.obj(
-                  "doc" -> docJson
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case GET(p"/broccoli_instances/_all_docs") =>
+          Action {
+            val docJson = JsObject(Json.toJson(instance).as[JsObject].value.updated("_id", JsString(instance.id)))
+            Results.Ok(
+              Json.obj(
+                "offset" -> 0,
+                "rows" -> Json.arr(
+                  Json.obj(
+                    "doc" -> docJson
+                  )
                 )
               )
             )
-          )
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
@@ -211,25 +235,29 @@ class CouchDBInstanceStorageSpec extends Specification {
 
     "fail if an instance ID does not match the document ID" in {
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case GET(p"/broccoli_instances/_all_docs") => Action {
-          val docJson = JsObject(Json.toJson(instance).as[JsObject].value.updated("_id", JsString(instance.id + "xxx")))
-          Results.Ok(
-            Json.obj(
-              "offset" -> 0,
-              "rows" -> Json.arr(
-                Json.obj(
-                  "doc" -> docJson
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case GET(p"/broccoli_instances/_all_docs") =>
+          Action {
+            val docJson =
+              JsObject(Json.toJson(instance).as[JsObject].value.updated("_id", JsString(instance.id + "xxx")))
+            Results.Ok(
+              Json.obj(
+                "offset" -> 0,
+                "rows" -> Json.arr(
+                  Json.obj(
+                    "doc" -> docJson
+                  )
                 )
               )
             )
-          )
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
@@ -240,15 +268,18 @@ class CouchDBInstanceStorageSpec extends Specification {
 
     "fail if _all_docs is not reachable" in {
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case GET(p"/broccoli_instances/_all_docs") => Action {
-          Results.NotFound
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case GET(p"/broccoli_instances/_all_docs") =>
+          Action {
+            Results.NotFound
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
@@ -270,15 +301,18 @@ class CouchDBInstanceStorageSpec extends Specification {
 
     "work" in {
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case GET(p"/broccoli_instances/prefix-id") => Action {
-          Results.Ok(JsObject(Json.toJson(instance).as[JsObject].value.updated("_id", JsString(instance.id))))
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case GET(p"/broccoli_instances/prefix-id") =>
+          Action {
+            Results.Ok(JsObject(Json.toJson(instance).as[JsObject].value.updated("_id", JsString(instance.id))))
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
@@ -289,15 +323,18 @@ class CouchDBInstanceStorageSpec extends Specification {
 
     "fail if the instance does not exist" in {
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case GET(p"/broccoli_instances/prefix-id") => Action {
-          Results.NotFound
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case GET(p"/broccoli_instances/prefix-id") =>
+          Action {
+            Results.NotFound
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
@@ -308,15 +345,19 @@ class CouchDBInstanceStorageSpec extends Specification {
 
     "fail if the document is not a valid instance JSON" in {
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case GET(p"/broccoli_instances/prefix-id") => Action {
-          Results.Ok(JsObject(Json.toJson(instance).as[JsObject].value.updated("_id", JsString(instance.id)).-("template")))
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case GET(p"/broccoli_instances/prefix-id") =>
+          Action {
+            Results.Ok(
+              JsObject(Json.toJson(instance).as[JsObject].value.updated("_id", JsString(instance.id)).-("template")))
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
@@ -327,15 +368,18 @@ class CouchDBInstanceStorageSpec extends Specification {
 
     "fail if the instance ID does not match the document ID" in {
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case GET(p"/broccoli_instances/prefix-id") => Action {
-          Results.Ok(JsObject(Json.toJson(instance).as[JsObject].value.updated("_id", JsString(instance.id + "a"))))
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case GET(p"/broccoli_instances/prefix-id") =>
+          Action {
+            Results.Ok(JsObject(Json.toJson(instance).as[JsObject].value.updated("_id", JsString(instance.id + "a"))))
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
@@ -350,18 +394,22 @@ class CouchDBInstanceStorageSpec extends Specification {
 
     "work for newly created instances" in {
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case GET(p"/broccoli_instances/prefix-id") => Action {
-          Results.NotFound
-        }
-        case PUT(p"/broccoli_instances/prefix-id") => Action {
-          Results.Created
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case GET(p"/broccoli_instances/prefix-id") =>
+          Action {
+            Results.NotFound
+          }
+        case PUT(p"/broccoli_instances/prefix-id") =>
+          Action {
+            Results.Created
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
@@ -373,19 +421,24 @@ class CouchDBInstanceStorageSpec extends Specification {
     "work for instances overwriting another one" in {
       val revision = "1-revision"
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case GET(p"/broccoli_instances/prefix-id") => Action {
-          Results.Ok(JsObject(Json.toJson(instance).as[JsObject].value.updated("_rev", JsString(revision))))
-        }
-        case PUT(p"/broccoli_instances/prefix-id") => Action { request =>
-          require(request.body.asJson.get.as[JsObject].value("_rev") == JsString(revision), "Revision needs to be put as well.")
-          Results.Created
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case GET(p"/broccoli_instances/prefix-id") =>
+          Action {
+            Results.Ok(JsObject(Json.toJson(instance).as[JsObject].value.updated("_rev", JsString(revision))))
+          }
+        case PUT(p"/broccoli_instances/prefix-id") =>
+          Action { request =>
+            require(request.body.asJson.get.as[JsObject].value("_rev") == JsString(revision),
+                    "Revision needs to be put as well.")
+            Results.Created
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
@@ -396,15 +449,18 @@ class CouchDBInstanceStorageSpec extends Specification {
 
     "fail if checking whether the instance exists fails (neither 404 nor 200)" in {
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case GET(p"/broccoli_instances/prefix-id") => Action {
-          Results.InternalServerError
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case GET(p"/broccoli_instances/prefix-id") =>
+          Action {
+            Results.InternalServerError
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
@@ -415,18 +471,22 @@ class CouchDBInstanceStorageSpec extends Specification {
 
     "fail if writing the instance failed" in {
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case GET(p"/broccoli_instances/prefix-id") => Action {
-          Results.NotFound
-        }
-        case PUT(p"/broccoli_instances/prefix-id") => Action {
-          Results.InternalServerError
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case GET(p"/broccoli_instances/prefix-id") =>
+          Action {
+            Results.NotFound
+          }
+        case PUT(p"/broccoli_instances/prefix-id") =>
+          Action {
+            Results.InternalServerError
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
@@ -442,18 +502,22 @@ class CouchDBInstanceStorageSpec extends Specification {
     "work" in {
       val revision = "1-revision"
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case GET(p"/broccoli_instances/prefix-id") => Action {
-          Results.Ok(JsObject(Json.toJson(instance).as[JsObject].value.updated("_rev", JsString(revision))))
-        }
-        case DELETE(p"/broccoli_instances/prefix-id") => Action {
-          Results.Ok
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case GET(p"/broccoli_instances/prefix-id") =>
+          Action {
+            Results.Ok(JsObject(Json.toJson(instance).as[JsObject].value.updated("_rev", JsString(revision))))
+          }
+        case DELETE(p"/broccoli_instances/prefix-id") =>
+          Action {
+            Results.Ok
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
@@ -465,18 +529,22 @@ class CouchDBInstanceStorageSpec extends Specification {
     "fail if deleting the instance failed" in {
       val revision = "1-revision"
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case GET(p"/broccoli_instances/prefix-id") => Action {
-          Results.Ok(JsObject(Json.toJson(instance).as[JsObject].value.updated("_rev", JsString(revision))))
-        }
-        case DELETE(p"/broccoli_instances/prefix-id") => Action {
-          Results.InternalServerError
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case GET(p"/broccoli_instances/prefix-id") =>
+          Action {
+            Results.Ok(JsObject(Json.toJson(instance).as[JsObject].value.updated("_rev", JsString(revision))))
+          }
+        case DELETE(p"/broccoli_instances/prefix-id") =>
+          Action {
+            Results.InternalServerError
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
@@ -488,15 +556,18 @@ class CouchDBInstanceStorageSpec extends Specification {
     "fail if the instance does not exist" in {
       val revision = "1-revision"
       Server.withRouter() {
-        case GET(p"/broccoli_instances") => Action {
-          Results.Ok
-        }
-        case GET(p"/broccoli_instances/prefix-id") => Action {
-          Results.NotFound
-        }
-        case PUT(p"/_config/broccoli/broccoli_instances") => Action {
-          Results.Ok(JsString(""))
-        }
+        case GET(p"/broccoli_instances") =>
+          Action {
+            Results.Ok
+          }
+        case GET(p"/broccoli_instances/prefix-id") =>
+          Action {
+            Results.NotFound
+          }
+        case PUT(p"/_config/broccoli/broccoli_instances") =>
+          Action {
+            Results.Ok(JsString(""))
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)

@@ -8,11 +8,10 @@ sealed trait InstanceDeletionResult {
   val instanceId: String
 }
 
-case class InstanceDeletionSuccess(instanceId: String,
-                                   instanceWithStatus: InstanceWithStatus) extends InstanceDeletionResult
+case class InstanceDeletionSuccess(instanceId: String, instanceWithStatus: InstanceWithStatus)
+    extends InstanceDeletionResult
 
-case class InstanceDeletionFailure(instanceId: String,
-                                   reason: String) extends InstanceDeletionResult
+case class InstanceDeletionFailure(instanceId: String, reason: String) extends InstanceDeletionResult
 
 object InstanceDeletionSuccess {
 

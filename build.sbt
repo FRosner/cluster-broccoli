@@ -13,11 +13,13 @@ lazy val root = project
     ),
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.frosner.broccoli.build"
-  ).settings(
-  inThisBuild(Seq(
-    version := "0.7.0-SNAPSHOT",
-    scalaVersion := "2.11.11",
-    resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
-    parallelExecution in Test := false
-  ))
-)
+  )
+  .settings(
+    inThisBuild(
+      Seq(
+        version := "0.7.0-SNAPSHOT",
+        scalaVersion := "2.11.11",
+        resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
+        parallelExecution in Test := false
+      ))
+  )

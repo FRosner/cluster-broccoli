@@ -54,10 +54,12 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
     periodicRuns = Iterable.empty
   )
 
-  private def wrap(messageType: IncomingWsMessageType, payload: JsValue): JsValue = JsObject(Map(
-    "messageType" -> Json.toJson(messageType),
-    "payload" -> payload
-  ))
+  private def wrap(messageType: IncomingWsMessageType, payload: JsValue): JsValue =
+    JsObject(
+      Map(
+        "messageType" -> Json.toJson(messageType),
+        "payload" -> payload
+      ))
 
   private implicit val incomingWsMessagesWrites: Writes[IncomingWsMessage] = Writes {
     case IncomingWsMessage(IncomingWsMessageType.AddInstance, payload: InstanceCreation) =>
@@ -67,33 +69,41 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
     case IncomingWsMessage(IncomingWsMessageType.UpdateInstance, payload: InstanceUpdate) =>
       wrap(IncomingWsMessageType.UpdateInstance, Json.toJson(payload))
   }
-  
-  private def testWs(controllerSetup: SecurityService => WebSocketController, inMsg: IncomingWsMessage, expectations: Map[Option[(String, Role)], OutgoingWsMessage]) = {
-    expectations.foreach { 
+
+  private def testWs(controllerSetup: SecurityService => WebSocketController,
+                     inMsg: IncomingWsMessage,
+                     expectations: Map[Option[(String, Role)], OutgoingWsMessage]) =
+    expectations.foreach {
       case (maybeInstanceRegexAndRole, outMsg) =>
         val maybeAccount = maybeInstanceRegexAndRole.map {
           case (instanceRegex, role) => UserAccount("user", "pass", instanceRegex, role)
         }
-        val securityService = maybeAccount.map {
-          account => withAuthConf(mock(classOf[SecurityService]), List(account))
-        }.getOrElse {
-          withAuthNone(mock(classOf[SecurityService]))
-        }
+        val securityService = maybeAccount
+          .map { account =>
+            withAuthConf(mock(classOf[SecurityService]), List(account))
+          }
+          .getOrElse {
+            withAuthNone(mock(classOf[SecurityService]))
+          }
         val controller = controllerSetup(securityService)
-        when(controller.webSocketService.newConnection(anyString(), any(classOf[Account]))).thenReturn(Enumerator.empty[Msg])
-        when(controller.webSocketService.newConnection(any(classOf[Account]))).thenReturn(("session_id", Enumerator.empty[Msg]))
-        val result = maybeAccount.map {
-          account => controller.requestToSocket(FakeRequest().withLoggedIn(controller)(account.name))
-        }.getOrElse {
-          controller.requestToSocket(FakeRequest())
-        }
+        when(controller.webSocketService.newConnection(anyString(), any(classOf[Account])))
+          .thenReturn(Enumerator.empty[Msg])
+        when(controller.webSocketService.newConnection(any(classOf[Account])))
+          .thenReturn(("session_id", Enumerator.empty[Msg]))
+        val result = maybeAccount
+          .map { account =>
+            controller.requestToSocket(FakeRequest().withLoggedIn(controller)(account.name))
+          }
+          .getOrElse {
+            controller.requestToSocket(FakeRequest())
+          }
         WsTestUtil.wrapConnection(result) match {
           case Right((incoming, outgoing)) =>
             incoming.feed(Json.toJson(inMsg)(incomingWsMessagesWrites)).end
-            verify(controller.webSocketService).send(anyString(), Matchers.eq(Json.toJson(outMsg)(OutgoingWsMessage.outgoingWsMessageWrites)))
+            verify(controller.webSocketService)
+              .send(anyString(), Matchers.eq(Json.toJson(outMsg)(OutgoingWsMessage.outgoingWsMessageWrites)))
         }
     }
-  }
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
@@ -167,7 +177,8 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
             (messages should contain(
               Json.toJson(OutgoingWsMessage(OutgoingWsMessageType.ListTemplatesMsg, templates)),
               Json.toJson(OutgoingWsMessage(OutgoingWsMessageType.ListInstancesMsg, instances)),
-              Json.toJson(OutgoingWsMessage(OutgoingWsMessageType.AboutInfoMsg, controller.aboutService.aboutInfo(null)))
+              Json.toJson(
+                OutgoingWsMessage(OutgoingWsMessageType.AboutInfoMsg, controller.aboutService.aboutInfo(null)))
             ))
       }
     }
@@ -205,7 +216,8 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
             )
           )
           incoming.feed(Json.toJson(creationMsg)(incomingWsMessagesWrites)).end
-          verify(controller.webSocketService).send(id, Json.toJson(resultMsg)(OutgoingWsMessage.outgoingWsMessageWrites))
+          verify(controller.webSocketService).send(id,
+                                                   Json.toJson(resultMsg)(OutgoingWsMessage.outgoingWsMessageWrites))
       }
     }
 
@@ -216,7 +228,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           "id" -> "blib"
         )
       )
-      
+
       val success = OutgoingWsMessage(
         OutgoingWsMessageType.InstanceCreationSuccessMsg,
         InstanceCreationSuccess(
@@ -238,19 +250,18 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           "Only allowed to create instances matching bla"
         )
       )
-      
+
       testWs(
-        controllerSetup = {
-          securityService =>
-            val controller = WebSocketController(
-              webSocketService = mock(classOf[WebSocketService]),
-              templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-              instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
-              aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-              securityService = securityService
-            )
-            when(controller.instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
-            controller
+        controllerSetup = { securityService =>
+          val controller = WebSocketController(
+            webSocketService = mock(classOf[WebSocketService]),
+            templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
+            instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+            aboutService = withDummyValues(mock(classOf[AboutInfoService])),
+            securityService = securityService
+          )
+          when(controller.instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
+          controller
         },
         inMsg = IncomingWsMessage(
           IncomingWsMessageType.AddInstance,
@@ -292,17 +303,16 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       )
 
       testWs(
-        controllerSetup = {
-          securityService =>
-            val controller = WebSocketController(
-              webSocketService = mock(classOf[WebSocketService]),
-              templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-              instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
-              aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-              securityService = securityService
-            )
-            when(controller.instanceService.deleteInstance(instanceDeletion)).thenReturn(Success(instanceWithStatus))
-            controller
+        controllerSetup = { securityService =>
+          val controller = WebSocketController(
+            webSocketService = mock(classOf[WebSocketService]),
+            templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
+            instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+            aboutService = withDummyValues(mock(classOf[AboutInfoService])),
+            securityService = securityService
+          )
+          when(controller.instanceService.deleteInstance(instanceDeletion)).thenReturn(Success(instanceWithStatus))
+          controller
         },
         inMsg = IncomingWsMessage(
           IncomingWsMessageType.DeleteInstance,
@@ -338,22 +348,22 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         )
       )
       testWs(
-        controllerSetup = {
-          securityService =>
-            val controller = WebSocketController(
-              webSocketService = mock(classOf[WebSocketService]),
-              templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-              instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
-              aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-              securityService = securityService
-            )
-            when(controller.instanceService.updateInstance(
+        controllerSetup = { securityService =>
+          val controller = WebSocketController(
+            webSocketService = mock(classOf[WebSocketService]),
+            templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
+            instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+            aboutService = withDummyValues(mock(classOf[AboutInfoService])),
+            securityService = securityService
+          )
+          when(
+            controller.instanceService.updateInstance(
               id = instanceUpdate.instanceId.get,
               statusUpdater = instanceUpdate.status,
               parameterValuesUpdater = instanceUpdate.parameterValues,
               templateSelector = instanceUpdate.selectedTemplate
             )).thenReturn(Success(instanceWithStatus))
-            controller
+          controller
         },
         inMsg = IncomingWsMessage(
           IncomingWsMessageType.UpdateInstance,
@@ -403,22 +413,22 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         )
       )
       testWs(
-        controllerSetup = {
-          securityService =>
-            val controller = WebSocketController(
-              webSocketService = mock(classOf[WebSocketService]),
-              templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-              instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
-              aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-              securityService = securityService
-            )
-            when(controller.instanceService.updateInstance(
+        controllerSetup = { securityService =>
+          val controller = WebSocketController(
+            webSocketService = mock(classOf[WebSocketService]),
+            templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
+            instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+            aboutService = withDummyValues(mock(classOf[AboutInfoService])),
+            securityService = securityService
+          )
+          when(
+            controller.instanceService.updateInstance(
               id = instanceUpdate.instanceId.get,
               statusUpdater = instanceUpdate.status,
               parameterValuesUpdater = instanceUpdate.parameterValues,
               templateSelector = instanceUpdate.selectedTemplate
             )).thenReturn(Success(instanceWithStatus))
-            controller
+          controller
         },
         inMsg = IncomingWsMessage(
           IncomingWsMessageType.UpdateInstance,
@@ -462,22 +472,22 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         )
       )
       testWs(
-        controllerSetup = {
-          securityService =>
-            val controller = WebSocketController(
-              webSocketService = mock(classOf[WebSocketService]),
-              templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-              instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
-              aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-              securityService = securityService
-            )
-            when(controller.instanceService.updateInstance(
+        controllerSetup = { securityService =>
+          val controller = WebSocketController(
+            webSocketService = mock(classOf[WebSocketService]),
+            templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
+            instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+            aboutService = withDummyValues(mock(classOf[AboutInfoService])),
+            securityService = securityService
+          )
+          when(
+            controller.instanceService.updateInstance(
               id = instanceUpdate.instanceId.get,
               statusUpdater = instanceUpdate.status,
               parameterValuesUpdater = instanceUpdate.parameterValues,
               templateSelector = instanceUpdate.selectedTemplate
             )).thenReturn(Success(instanceWithStatus))
-            controller
+          controller
         },
         inMsg = IncomingWsMessage(
           IncomingWsMessageType.UpdateInstance,

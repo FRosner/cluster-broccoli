@@ -10,7 +10,8 @@ import scala.collection.mutable.ArrayBuffer
 
 import ParameterInfo.parameterInfoWrites
 
-case class Template(id: String, template: String, description: String, parameterInfos: Map[String, ParameterInfo]) extends Serializable {
+case class Template(id: String, template: String, description: String, parameterInfos: Map[String, ParameterInfo])
+    extends Serializable {
 
   @transient
   lazy val parameters: Set[String] = {
@@ -20,7 +21,8 @@ case class Template(id: String, template: String, description: String, parameter
       variables += matcher.group(1)
     }
     val uniqueVariables = variables.toSet
-    require(uniqueVariables.contains("id"),
+    require(
+      uniqueVariables.contains("id"),
       s"There needs to be an 'id' field in the template for Broccoli to work. Parameters defined: ${uniqueVariables}")
     uniqueVariables
   }
@@ -40,7 +42,8 @@ object Template {
       (JsPath \ "parameters").write[Set[String]] and
       (JsPath \ "parameterInfos").write[Map[String, ParameterInfo]] and
       (JsPath \ "version").write[String]
-    )((template: Template) => (template.id, template.description, template.parameters, template.parameterInfos, template.version))
+  )((template: Template) =>
+    (template.id, template.description, template.parameters, template.parameterInfos, template.version))
 
   implicit val templatePersistenceReads: Reads[Template] = Json.reads[Template]
 

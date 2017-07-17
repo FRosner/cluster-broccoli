@@ -35,9 +35,11 @@ object OutgoingWsMessage {
       wrap(InstanceUpdateFailureMsg, Json.toJson(instanceUpdateResult))
   }
 
-  private def wrap(messageType: OutgoingWsMessageType, payload: JsValue): JsValue = JsObject(Map(
-    "messageType" -> Json.toJson(messageType),
-    "payload" -> payload
-  ))
+  private def wrap(messageType: OutgoingWsMessageType, payload: JsValue): JsValue =
+    JsObject(
+      Map(
+        "messageType" -> Json.toJson(messageType),
+        "payload" -> payload
+      ))
 
 }

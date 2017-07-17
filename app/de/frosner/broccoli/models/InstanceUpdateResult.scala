@@ -8,11 +8,10 @@ sealed trait InstanceUpdateResult {
   val instanceUpdate: InstanceUpdate
 }
 
-case class InstanceUpdateSuccess(instanceUpdate: InstanceUpdate,
-                                 instanceWithStatus: InstanceWithStatus) extends InstanceUpdateResult
+case class InstanceUpdateSuccess(instanceUpdate: InstanceUpdate, instanceWithStatus: InstanceWithStatus)
+    extends InstanceUpdateResult
 
-case class InstanceUpdateFailure(instanceUpdate: InstanceUpdate,
-                                 reason: String) extends InstanceUpdateResult
+case class InstanceUpdateFailure(instanceUpdate: InstanceUpdate, reason: String) extends InstanceUpdateResult
 
 object InstanceUpdateSuccess {
 

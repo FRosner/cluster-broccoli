@@ -1,6 +1,6 @@
 package de.frosner.broccoli.models
 
-import de.frosner.broccoli.models.ParameterInfo.{parameterInfoWrites, parameterInfoReads}
+import de.frosner.broccoli.models.ParameterInfo.{parameterInfoReads, parameterInfoWrites}
 import org.specs2.mutable.Specification
 import play.api.libs.json.Json
 

@@ -26,16 +26,16 @@ object WsTestUtil {
   }
 
   case class Outgoing(enum: Enumerator[Msg]) {
-    private val messages = enum(Iteratee.fold(List[Msg]()) {
-      (l, jsValue) => jsValue :: l
+    private val messages = enum(Iteratee.fold(List[Msg]()) { (l, jsValue) =>
+      jsValue :: l
     }).flatMap(_.run)
 
-    def get: List[Msg] = {
+    def get: List[Msg] =
       Await.result(messages, waitTime)
-    }
   }
 
-  def wrapConnection(connection: => Future[Either[Result, (Iteratee[Msg, _], Enumerator[Msg])]]): Either[Result, (Incoming, Outgoing)] = {
+  def wrapConnection(connection: => Future[Either[Result, (Iteratee[Msg, _], Enumerator[Msg])]])
+    : Either[Result, (Incoming, Outgoing)] = {
     val future = connection.map {
       _.right.map {
         case (iteratee, enumerator) => (Incoming(iteratee), Outgoing(enumerator))

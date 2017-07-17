@@ -13,18 +13,20 @@ import collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 @Singleton()
-case class SecurityService @Inject() (configuration: Configuration) extends Logging {
+case class SecurityService @Inject()(configuration: Configuration) extends Logging {
 
   // TODO check if setting it wrong will exit also in production
   private lazy val sessionTimeOutString: Option[String] = configuration.getString(conf.AUTH_SESSION_TIMEOUT_KEY)
   private lazy val sessionTimeOutTry: Try[Int] = sessionTimeOutString match {
-    case Some(string) => Try(string.toInt).flatMap {
-      int => if (int >= 1) Success(int) else Failure(new Exception())
-    }
+    case Some(string) =>
+      Try(string.toInt).flatMap { int =>
+        if (int >= 1) Success(int) else Failure(new Exception())
+      }
     case None => Success(conf.AUTH_SESSION_TIMEOUT_DEFAULT)
   }
   if (sessionTimeOutTry.isFailure) {
-    Logger.error(s"Invalid ${conf.AUTH_SESSION_TIMEOUT_DEFAULT} specified: '${sessionTimeOutString.get}'. Needs to be a positive integer.")
+    Logger.error(
+      s"Invalid ${conf.AUTH_SESSION_TIMEOUT_DEFAULT} specified: '${sessionTimeOutString.get}'. Needs to be a positive integer.")
     System.exit(1)
   }
   lazy val sessionTimeoutInSeconds = sessionTimeOutTry.get
@@ -108,12 +110,13 @@ case class SecurityService @Inject() (configuration: Configuration) extends Logg
   def isAllowedToAuthenticate(credentials: Credentials): Boolean = {
     val credentialsFailedLoginAttempts = failedLoginAttempts.getOrElse(credentials.name, 0)
     val allowed = if (credentialsFailedLoginAttempts <= allowedFailedLogins) {
-      accounts.exists {
-        account => account.name == credentials.name && account.password == credentials.password
+      accounts.exists { account =>
+        account.name == credentials.name && account.password == credentials.password
       }
     } else {
-      Logger.warn(s"Credentials for '${credentials.name}' exceeded the allowed number of failed logins: " +
-        s"$allowedFailedLogins (has $credentialsFailedLoginAttempts)")
+      Logger.warn(
+        s"Credentials for '${credentials.name}' exceeded the allowed number of failed logins: " +
+          s"$allowedFailedLogins (has $credentialsFailedLoginAttempts)")
       false
     }
     if (!allowed) {
@@ -129,36 +132,48 @@ case class SecurityService @Inject() (configuration: Configuration) extends Logg
 object SecurityService {
 
   private[services] def tryAllowMultiLogin(configuration: Configuration): Try[Boolean] = Try {
-    configuration.getBoolean(conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_KEY).getOrElse(conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_DEFAULT)
+    configuration
+      .getBoolean(conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_KEY)
+      .getOrElse(conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_DEFAULT)
   }
 
   private[services] def tryAccounts(configuration: Configuration): Try[Iterable[Account]] = Try {
-    configuration.getList(conf.AUTH_MODE_CONF_ACCOUNTS_KEY).map { users =>
-      users.asScala.map { potentialUserObject =>
-        potentialUserObject.valueType() match {
-          case ConfigValueType.OBJECT => {
-            val userObject = potentialUserObject.asInstanceOf[ConfigObject]
-            UserAccount(
-              name = userObject.get(conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY).unwrapped().asInstanceOf[String],
-              password = userObject.get(conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY).unwrapped().asInstanceOf[String],
-              instanceRegex = userObject.getOrDefault(
-                conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY,
-                ConfigValueFactory.fromAnyRef(conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_DEFAULT)
-              ).unwrapped().asInstanceOf[String],
-              role = Role.withName(
-                userObject.getOrDefault(
-                  conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY,
-                  ConfigValueFactory.fromAnyRef(conf.AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT.toString)
-                ).unwrapped().asInstanceOf[String]
+    configuration
+      .getList(conf.AUTH_MODE_CONF_ACCOUNTS_KEY)
+      .map { users =>
+        users.asScala.map { potentialUserObject =>
+          potentialUserObject.valueType() match {
+            case ConfigValueType.OBJECT => {
+              val userObject = potentialUserObject.asInstanceOf[ConfigObject]
+              UserAccount(
+                name = userObject.get(conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY).unwrapped().asInstanceOf[String],
+                password = userObject.get(conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY).unwrapped().asInstanceOf[String],
+                instanceRegex = userObject
+                  .getOrDefault(
+                    conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY,
+                    ConfigValueFactory.fromAnyRef(conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_DEFAULT)
+                  )
+                  .unwrapped()
+                  .asInstanceOf[String],
+                role = Role.withName(
+                  userObject
+                    .getOrDefault(
+                      conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY,
+                      ConfigValueFactory.fromAnyRef(conf.AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT.toString)
+                    )
+                    .unwrapped()
+                    .asInstanceOf[String]
+                )
               )
-            )
-          }
-          case valueType => {
-            throw new IllegalConfigException(conf.AUTH_MODE_CONF_ACCOUNTS_KEY, s"Expected ${ConfigValueType.OBJECT} but got $valueType")
+            }
+            case valueType => {
+              throw new IllegalConfigException(conf.AUTH_MODE_CONF_ACCOUNTS_KEY,
+                                               s"Expected ${ConfigValueType.OBJECT} but got $valueType")
+            }
           }
         }
       }
-    }.getOrElse(conf.AUTH_MODE_CONF_ACCOUNTS_DEFAULT)
+      .getOrElse(conf.AUTH_MODE_CONF_ACCOUNTS_DEFAULT)
   }
 
   private[services] def tryCookieSecure(configuration: Configuration): Try[Boolean] = Try {
