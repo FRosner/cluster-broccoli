@@ -1,12 +1,15 @@
 package de.frosner.broccoli.nomad.models
 
-import play.api.libs.json.{JsPath, Json, Reads, Writes}
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 case class TaskGroup(tasks: Option[Seq[Task]])
 
 object TaskGroup {
 
-  implicit val taskGroupReads: Reads[TaskGroup] =
-    (JsPath \ "Tasks").readNullable[Seq[Task]].map(TaskGroup.apply)
+  implicit val taskGroupFormat: Format[TaskGroup] =
+    (__ \ "Tasks")
+      .formatNullable[Seq[Task]]
+      .inmap(tasks => TaskGroup(tasks), (taskGroup: TaskGroup) => taskGroup.tasks)
 
 }
