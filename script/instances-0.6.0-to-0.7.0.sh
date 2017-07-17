@@ -8,19 +8,9 @@ fi
 set -euo pipefail
 
 jq_version="$(jq --version 2>&1)" # redirecting stderr https://github.com/stedolan/jq/issues/1452
-continue=0
 if [[ $jq_version != *"1.5"* ]]; then
-  echo "WARNING: This script was tested against jq-1.5 and should be run against that as well."
-  read -p "WARNING: Looks like you are using $jq_version. Continue anyway? [y/n] " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    continue=1
-  fi
+  echo "ERROR: This script was tested against jq-1.5 and should be run against that as well."
 else
-  continue=1
-fi
-
-if [[ "$continue" == 1 ]]; then
   instanceDir="$1"
   backupDir="$instanceDir.bak_$(date +%s)"
 
