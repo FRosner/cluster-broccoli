@@ -9,7 +9,7 @@ COPY ./ /cluster-broccoli
 WORKDIR /cluster-broccoli
 RUN activator dist
 
-RUN unzip target/universal/cluster-broccoli-*.zip
+RUN unzip server/target/universal/cluster-broccoli-*.zip
 RUN mv cluster-broccoli-* dist
 
 EXPOSE 9000

@@ -1,8 +1,9 @@
 package de.frosner.broccoli.services
 
-import java.io.{File, FileNotFoundException, FileOutputStream, PrintStream}
+import java.io._
 import java.lang.IllegalArgumentException
-import java.nio.file.Paths
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file._
 import java.util.UUID
 
 import com.fasterxml.jackson.core.JsonParseException
@@ -16,26 +17,32 @@ import scala.util.{Failure, Success, Try}
 
 class FileSystemInstanceStorageSpec extends Specification {
 
-  val testRoot = new File("test/resources/de/frosner/broccoli/services")
-  require(
-    testRoot.isDirectory && testRoot.canRead && testRoot.canWrite,
-    s"Cannot use '$testRoot' properly. Current working dir is '${Paths.get("").toAbsolutePath()}'."
-  )
+  val testRoot = Files.createTempDirectory(getClass.getName)
 
-  def usingTempFolder[T](f: File => T): T = {
-    val tempFolder = new File(testRoot, UUID.randomUUID().toString)
-    val mkdir = Try(tempFolder.mkdir())
-    def deleteRecursively(file: File): Unit = {
-      if (file.isDirectory)
-        file.listFiles.foreach(deleteRecursively)
-      if (file.exists && !file.delete)
-        throw new Exception(s"Unable to delete ${file.getAbsolutePath}")
-    }
-    val result = mkdir.map(_ => f(tempFolder))
-    deleteRecursively(tempFolder)
-    result match {
-      case Success(r) => r
-      case Failure(t) => throw t
+  def withTempDirectory[T](f: Path => T): T = {
+    val tempDirectory = Files.createTempDirectory(getClass.getName)
+    try {
+      f(tempDirectory)
+    } finally {
+      Files.walkFileTree(
+        tempDirectory,
+        new FileVisitor[Path] {
+          override def postVisitDirectory(dir: Path, exc: IOException): FileVisitResult = {
+            Files.delete(dir)
+            FileVisitResult.CONTINUE
+          }
+
+          override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult = {
+            Files.delete(file)
+            FileVisitResult.CONTINUE
+          }
+
+          override def visitFileFailed(file: Path, exc: IOException): FileVisitResult = throw exc
+
+          override def preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult =
+            FileVisitResult.CONTINUE
+        }
+      )
     }
   }
 
@@ -54,23 +61,23 @@ class FileSystemInstanceStorageSpec extends Specification {
     }
 
     "fail if the storage directory is already locked" in {
-      usingTempFolder { folder =>
-        FileSystemInstanceStorage(folder)
-        FileSystemInstanceStorage(folder) should throwA[IllegalStateException]
+      withTempDirectory { folder =>
+        FileSystemInstanceStorage(folder.toFile)
+        FileSystemInstanceStorage(folder.toFile) should throwA[IllegalStateException]
       }
     }
 
     "lock the storage directory" in {
-      usingTempFolder { folder =>
-        FileSystemInstanceStorage(folder)
-        new File(folder, ".lock").isFile === true
+      withTempDirectory { folder =>
+        FileSystemInstanceStorage(folder.toFile)
+        new File(folder.toFile, ".lock").isFile === true
       }
     }
 
     "unlock the storage directory on close" in {
-      usingTempFolder { folder =>
-        FileSystemInstanceStorage(folder).close()
-        new File(folder, ".lock").isFile === false
+      withTempDirectory { folder =>
+        FileSystemInstanceStorage(folder.toFile).close()
+        new File(folder.toFile, ".lock").isFile === false
       }
     }
 
@@ -79,28 +86,28 @@ class FileSystemInstanceStorageSpec extends Specification {
   "Writing and reading an instance" should {
 
     "work" in {
-      usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder)
+      withTempDirectory { folder =>
+        val storage = FileSystemInstanceStorage(folder.toFile)
         storage.writeInstance(instance)
         storage.readInstance(instance.id) === Success(instance)
       }
     }
 
     "fail if the file is not readable" in {
-      usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder)
+      withTempDirectory { folder =>
+        val storage = FileSystemInstanceStorage(folder.toFile)
         storage.writeInstance(instance)
-        val instanceFile = new File(folder, instance.id + ".json")
+        val instanceFile = new File(folder.toFile, instance.id + ".json")
         instanceFile.setReadable(false)
         storage.readInstance(instance.id).failed.get should beAnInstanceOf[FileNotFoundException]
       }
     }
 
     "fail if the file is not a valid JSON" in {
-      usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder)
+      withTempDirectory { folder =>
+        val storage = FileSystemInstanceStorage(folder.toFile)
         storage.writeInstance(instance)
-        val instanceFile = new File(folder, instance.id + ".json")
+        val instanceFile = new File(folder.toFile, instance.id + ".json")
         val writer = new PrintStream(new FileOutputStream(instanceFile))
         writer.println("}")
         writer.close()
@@ -109,10 +116,10 @@ class FileSystemInstanceStorageSpec extends Specification {
     }
 
     "fail if the instance ID does not match the file name" in {
-      usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder)
+      withTempDirectory { folder =>
+        val storage = FileSystemInstanceStorage(folder.toFile)
         storage.writeInstance(instance)
-        val instanceFile = new File(folder, instance.id + ".json")
+        val instanceFile = new File(folder.toFile, instance.id + ".json")
         val fileContent = Source
           .fromFile(instanceFile)
           .getLines()
@@ -130,8 +137,8 @@ class FileSystemInstanceStorageSpec extends Specification {
   "Writing and reading all instances" should {
 
     "not apply an additional filter if called without one" in {
-      usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder)
+      withTempDirectory { folder =>
+        val storage = FileSystemInstanceStorage(folder.toFile)
         val instance2 = instance.copy(id = instance.id + "2")
         storage.writeInstance(instance)
         storage.writeInstance(instance2)
@@ -141,8 +148,8 @@ class FileSystemInstanceStorageSpec extends Specification {
     }
 
     "apply an additional filter if specified" in {
-      usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder)
+      withTempDirectory { folder =>
+        val storage = FileSystemInstanceStorage(folder.toFile)
         val instance2 = instance.copy(id = instance.id + "2")
         storage.writeInstance(instance)
         storage.writeInstance(instance2)
@@ -152,19 +159,19 @@ class FileSystemInstanceStorageSpec extends Specification {
     }
 
     "filter out non .json files from the directory" in {
-      usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder)
-        val newFile = new File(folder, "notJson.exe")
+      withTempDirectory { folder =>
+        val storage = FileSystemInstanceStorage(folder.toFile)
+        val newFile = new File(folder.toFile, "notJson.exe")
         newFile.createNewFile()
         storage.readInstances === Success(Set.empty[Instance])
       }
     }
 
     "fail if reading any of the instances fails" in {
-      usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder)
+      withTempDirectory { folder =>
+        val storage = FileSystemInstanceStorage(folder.toFile)
         storage.writeInstance(instance)
-        val instanceFile = new File(folder, instance.id + ".json")
+        val instanceFile = new File(folder.toFile, instance.id + ".json")
         instanceFile.setReadable(false)
         storage.readInstances.failed.get should beAnInstanceOf[FileNotFoundException]
       }
@@ -175,8 +182,8 @@ class FileSystemInstanceStorageSpec extends Specification {
   "Deleting an instance" should {
 
     "work" in {
-      usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder)
+      withTempDirectory { folder =>
+        val storage = FileSystemInstanceStorage(folder.toFile)
         storage.writeInstance(instance)
         storage.deleteInstance(instance)
         storage.readInstance(instance.id).isFailure === true
@@ -184,8 +191,8 @@ class FileSystemInstanceStorageSpec extends Specification {
     }
 
     "fail if the file does not exist" in {
-      usingTempFolder { folder =>
-        val storage = FileSystemInstanceStorage(folder)
+      withTempDirectory { folder =>
+        val storage = FileSystemInstanceStorage(folder.toFile)
         storage.deleteInstance(instance).failed.get should beAnInstanceOf[FileNotFoundException]
       }
     }
