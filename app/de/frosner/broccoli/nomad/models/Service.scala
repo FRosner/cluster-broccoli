@@ -3,7 +3,7 @@ package de.frosner.broccoli.nomad.models
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-case class Service(name: String)
+final case class Service(name: String)
 
 object Service {
 

@@ -3,7 +3,7 @@ package de.frosner.broccoli.nomad.models
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-case class Job(taskGroups: Option[Seq[TaskGroup]])
+final case class Job(taskGroups: Option[Seq[TaskGroup]])
 
 object Job {
 
