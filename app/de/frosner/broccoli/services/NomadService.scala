@@ -121,12 +121,11 @@ class NomadService @Inject()(configuration: Configuration, consulService: Consul
       }
       case Failure(throwable: ConnectException) => {
         Logger.error(
-          s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
+          s"Nomad did not respond when requesting services for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
         setNomadNotReachable()
       }
       case Failure(throwable) => {
-        Logger.error(
-          s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
+        Logger.warn(s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
       }
     }
   }
