@@ -1,5 +1,6 @@
 package de.frosner.broccoli.services
 
+import java.net.ConnectException
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Named, Singleton}
 import javax.xml.ws.http.HTTPException
@@ -7,12 +8,13 @@ import javax.xml.ws.http.HTTPException
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.JobStatus._
 import de.frosner.broccoli.models.{Instance, JobStatus, PeriodicRun}
+import de.frosner.broccoli.nomad.models.Job
 import de.frosner.broccoli.util.Logging
-import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
+import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.Configuration
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 
@@ -117,10 +119,13 @@ class NomadService @Inject()(configuration: Configuration, consulService: Consul
         jobStatuses = idsAndStatusesWithPeriodic.toMap
         filteredIdsAndStatuses.map { case (key, value) => key }.foreach(requestServices)
       }
-      case Failure(throwable) => {
+      case Failure(throwable: ConnectException) => {
         Logger.error(
-          s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
+          s"Nomad did not respond when requesting services for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
         setNomadNotReachable()
+      }
+      case Failure(throwable) => {
+        Logger.warn(s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
       }
     }
   }
@@ -129,31 +134,32 @@ class NomadService @Inject()(configuration: Configuration, consulService: Consul
   // TODO something is stopped (i.e. not present in Nomad). Or we use a cache that let's the stuff expire if you don't get an answer from Nomad
   // https://www.playframework.com/documentation/2.5.x/ScalaCache
 
-  def requestServices(id: String): Unit = {
+  def requestServices(id: String): Future[Seq[String]] = {
     val queryUrl = nomadBaseUrl + s"/v1/job/$id"
     val jobRequest = ws.url(queryUrl)
     val jobResponse = jobRequest.get().map { response =>
       if (response.status == 200) {
-        response.json.as[JsObject]
+        response.json.as[Job]
       } else {
         throw new Exception(s"Received ${response.statusText} (${response.status})")
       }
     }
-    val eventuallyJobServiceIds = jobResponse.map { jsObject =>
-      val services = (jsObject \\ "Services").flatMap(_.as[JsArray].value.map(_.as[JsObject]))
-      services.flatMap { serviceJsObject =>
-        serviceJsObject.value.get("Name").map(_.as[JsString].value)
-      }
+    val eventuallyJobServiceIds = jobResponse.map { job =>
+      val taskGroups = job.taskGroups.getOrElse(Seq.empty)
+      val tasks = taskGroups.flatMap(_.tasks.getOrElse(Seq.empty))
+      val services = tasks.flatMap(_.services.getOrElse(Seq.empty))
+      services.map(_.name)
     }
-    eventuallyJobServiceIds.onComplete {
-      case Success(jobServiceIds) =>
-        Logger.debug(s"${jobRequest.uri} => ${jobServiceIds.mkString(", ")}")
-        consulService.requestServiceStatus(id, jobServiceIds)
-        setNomadReachable()
-      case Failure(throwable) =>
+    val eventuallyRequestedServices = eventuallyJobServiceIds.map { jobServiceIds =>
+      Logger.debug(s"${jobRequest.uri} => ${jobServiceIds.mkString(", ")}")
+      consulService.requestServiceStatus(id, jobServiceIds)
+      jobServiceIds
+    }
+    eventuallyRequestedServices.onFailure {
+      case throwable =>
         Logger.error(s"Requesting services for $id failed: $throwable")
-        setNomadNotReachable()
     }
+    eventuallyRequestedServices
   }
 
   def startJob(job: JsValue): Try[Unit] = {
