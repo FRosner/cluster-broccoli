@@ -6,7 +6,7 @@ rm -rf cluster-broccoli-*
 rm -rf docker/test/cluster-broccoli-dist
 rm -rf docker/prod/cluster-broccoli-dist
 . build-dist.sh
-unzip target/universal/cluster-broccoli*.zip
+unzip server/target/universal/cluster-broccoli*.zip
 cp -R cluster-broccoli-* docker/test/cluster-broccoli-dist
 cp -R cluster-broccoli-* docker/prod/cluster-broccoli-dist
 cp -R templates docker/test/
