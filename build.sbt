@@ -24,7 +24,6 @@ lazy val root = project
       List(
         version := "0.7.0-SNAPSHOT",
         scalaVersion := "2.11.11",
-        resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
         // Build settings
         scalacOptions ++= List(
           // Code encoding
