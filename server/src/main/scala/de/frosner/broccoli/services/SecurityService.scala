@@ -138,42 +138,25 @@ object SecurityService {
   }
 
   private[services] def tryAccounts(configuration: Configuration): Try[Iterable[Account]] = Try {
-    configuration
-      .getList(conf.AUTH_MODE_CONF_ACCOUNTS_KEY)
-      .map { users =>
-        users.asScala.map { potentialUserObject =>
-          potentialUserObject.valueType() match {
-            case ConfigValueType.OBJECT => {
-              val userObject = potentialUserObject.asInstanceOf[ConfigObject]
-              UserAccount(
-                name = userObject.get(conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY).unwrapped().asInstanceOf[String],
-                password = userObject.get(conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY).unwrapped().asInstanceOf[String],
-                instanceRegex = userObject
-                  .getOrDefault(
-                    conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY,
-                    ConfigValueFactory.fromAnyRef(conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_DEFAULT)
-                  )
-                  .unwrapped()
-                  .asInstanceOf[String],
-                role = Role.withName(
-                  userObject
-                    .getOrDefault(
-                      conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY,
-                      ConfigValueFactory.fromAnyRef(conf.AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT.toString)
-                    )
-                    .unwrapped()
-                    .asInstanceOf[String]
-                )
-              )
+    if (configuration.underlying.hasPath(conf.AUTH_MODE_CONF_ACCOUNTS_KEY)) {
+      configuration.underlying
+        .getConfigList(conf.AUTH_MODE_CONF_ACCOUNTS_KEY)
+        .asScala
+        .map { account =>
+          UserAccount(
+            name = account.getString(conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY),
+            password = account.getString(conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY),
+            instanceRegex = account.getString(conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY),
+            role = if (account.hasPath(conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY)) {
+              Role.withName(account.getString(conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY))
+            } else {
+              conf.AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT
             }
-            case valueType => {
-              throw new IllegalConfigException(conf.AUTH_MODE_CONF_ACCOUNTS_KEY,
-                                               s"Expected ${ConfigValueType.OBJECT} but got $valueType")
-            }
-          }
+          )
         }
-      }
-      .getOrElse(conf.AUTH_MODE_CONF_ACCOUNTS_DEFAULT)
+    } else {
+      conf.AUTH_MODE_CONF_ACCOUNTS_DEFAULT
+    }
   }
 
   private[services] def tryCookieSecure(configuration: Configuration): Try[Boolean] = Try {
