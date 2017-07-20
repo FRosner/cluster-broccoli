@@ -1,10 +1,9 @@
 package de.frosner.broccoli.services
 
-import com.google.common.collect.{ImmutableMap, Iterables, Lists, Maps}
-import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
+import com.google.common.collect.{ImmutableMap}
+import com.typesafe.config.{ConfigException, ConfigFactory, ConfigValueFactory}
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.conf.IllegalConfigException
-import de.frosner.broccoli.models.{Role, UserAccount}
+import de.frosner.broccoli.models.{Account, Role, UserAccount}
 import org.specs2.mutable.Specification
 import play.api.Configuration
 
@@ -109,7 +108,8 @@ class SecurityServiceSpec extends Specification {
           conf.AUTH_MODE_CONF_ACCOUNTS_KEY,
           ConfigValueFactory.fromIterable(accountsJava)
         )
-      SecurityService.tryAccounts(Configuration(config)) === Success(Iterable(account))
+      SecurityService.tryAccounts(Configuration(config)) should beSuccessfulTry.withValue(
+        contain(exactly(account: Account)))
     }
 
     "not require the optional parameters" in {
@@ -127,13 +127,15 @@ class SecurityServiceSpec extends Specification {
           conf.AUTH_MODE_CONF_ACCOUNTS_KEY,
           ConfigValueFactory.fromIterable(accountsJava)
         )
-      SecurityService.tryAccounts(Configuration(config)) === Success(
-        Iterable(UserAccount(
-          name = account.name,
-          password = account.password,
-          instanceRegex = conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_DEFAULT,
-          role = conf.AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT
-        )))
+
+      val userAccount: Account = UserAccount(
+        name = account.name,
+        password = account.password,
+        instanceRegex = ".*",
+        role = conf.AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT
+      )
+      SecurityService.tryAccounts(Configuration(config)) should beFailedTry.withThrowable[ConfigException.Missing](
+        ".*instanceRegex.*")
     }
 
     "fail if the accounts are not a config list" in {
@@ -143,7 +145,7 @@ class SecurityServiceSpec extends Specification {
           conf.AUTH_MODE_CONF_ACCOUNTS_KEY,
           ConfigValueFactory.fromAnyRef("blub")
         )
-      SecurityService.tryAccounts(Configuration(config)).failed.get should beAnInstanceOf[Exception]
+      SecurityService.tryAccounts(Configuration(config)) should beFailedTry
     }
 
     "fail if each accounts element is not a config object" in {
@@ -153,18 +155,18 @@ class SecurityServiceSpec extends Specification {
           conf.AUTH_MODE_CONF_ACCOUNTS_KEY,
           ConfigValueFactory.fromAnyRef("blub")
         )
-      SecurityService.tryAccounts(Configuration(config)).failed.get should beAnInstanceOf[Exception]
+      SecurityService.tryAccounts(Configuration(config)) should beFailedTry
     }
 
-    "if the username is not a string" in {
+    "if the role does not exist" in {
       val accountsJava = Iterable {
         ImmutableMap.of(
           conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY,
-          5,
+          account.name,
           conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY,
           account.password,
           conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY,
-          account.role.toString,
+          "foo",
           conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY,
           account.instanceRegex
         )
@@ -175,73 +177,8 @@ class SecurityServiceSpec extends Specification {
           conf.AUTH_MODE_CONF_ACCOUNTS_KEY,
           ConfigValueFactory.fromIterable(accountsJava)
         )
-      SecurityService.tryAccounts(Configuration(config)).failed.get should beAnInstanceOf[Exception]
-    }
-
-    "if the password is not a string" in {
-      val accountsJava = Iterable {
-        ImmutableMap.of(
-          conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY,
-          account.name,
-          conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY,
-          5,
-          conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY,
-          account.role.toString,
-          conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY,
-          account.instanceRegex
-        )
-      }.asJava
-      val config = ConfigFactory
-        .empty()
-        .withValue(
-          conf.AUTH_MODE_CONF_ACCOUNTS_KEY,
-          ConfigValueFactory.fromIterable(accountsJava)
-        )
-      SecurityService.tryAccounts(Configuration(config)).failed.get should beAnInstanceOf[Exception]
-    }
-
-    "if the instance regex is not a string" in {
-      val accountsJava = Iterable {
-        ImmutableMap.of(
-          conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY,
-          account.name,
-          conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY,
-          account.password,
-          conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY,
-          account.role.toString,
-          conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY,
-          5
-        )
-      }.asJava
-      val config = ConfigFactory
-        .empty()
-        .withValue(
-          conf.AUTH_MODE_CONF_ACCOUNTS_KEY,
-          ConfigValueFactory.fromIterable(accountsJava)
-        )
-      SecurityService.tryAccounts(Configuration(config)).failed.get should beAnInstanceOf[Exception]
-    }
-
-    "if the role is not a string" in {
-      val accountsJava = Iterable {
-        ImmutableMap.of(
-          conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY,
-          account.name,
-          conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY,
-          account.password,
-          conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY,
-          5,
-          conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY,
-          account.instanceRegex
-        )
-      }.asJava
-      val config = ConfigFactory
-        .empty()
-        .withValue(
-          conf.AUTH_MODE_CONF_ACCOUNTS_KEY,
-          ConfigValueFactory.fromIterable(accountsJava)
-        )
-      SecurityService.tryAccounts(Configuration(config)).failed.get should beAnInstanceOf[Exception]
+      SecurityService.tryAccounts(Configuration(config)) should beFailedTry.withThrowable[NoSuchElementException](
+        "No value found for 'foo'")
     }
 
   }
@@ -265,7 +202,7 @@ class SecurityServiceSpec extends Specification {
           conf.AUTH_COOKIE_SECURE_KEY,
           ConfigValueFactory.fromAnyRef("bla")
         )
-      SecurityService.tryCookieSecure(Configuration(config)).failed.get should beAnInstanceOf[Exception]
+      SecurityService.tryCookieSecure(Configuration(config)) should beFailedTry
     }
 
     "take the default if the field is not defined" in {
@@ -294,7 +231,7 @@ class SecurityServiceSpec extends Specification {
           conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_KEY,
           ConfigValueFactory.fromAnyRef("bla")
         )
-      SecurityService.tryAllowMultiLogin(Configuration(config)).failed.get should beAnInstanceOf[Exception]
+      SecurityService.tryAllowMultiLogin(Configuration(config)) should beFailedTry
     }
 
     "take the default if the field is not defined" in {

@@ -58,7 +58,6 @@ package object conf {
   val AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY = "username"
   val AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY = "password"
   val AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY = "instanceRegex"
-  val AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_DEFAULT = ".*"
   val AUTH_MODE_CONF_ACCOUNT_ROLE_KEY = "role"
   val AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT = Role.Administrator
 
@@ -67,7 +66,7 @@ package object conf {
     UserAccount(
       name = "administrator",
       password = "broccoli",
-      instanceRegex = AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_DEFAULT,
+      instanceRegex = ".*",
       role = AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT
     ))
 
