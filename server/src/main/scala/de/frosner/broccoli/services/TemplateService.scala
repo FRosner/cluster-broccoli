@@ -1,18 +1,18 @@
 package de.frosner.broccoli.services
 
-import java.io.{File, FileNotFoundException}
+import java.nio.file.{FileSystems, Files}
 import javax.inject.Inject
 import javax.inject.Singleton
 
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.{ParameterInfo, Template}
+import de.frosner.broccoli.models.{Meta, ParameterInfo, Template}
 import de.frosner.broccoli.util.Logging
 import play.api.Configuration
-import play.libs.Json
+import play.api.libs.json.Json
 
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters._
 import scala.io.Source
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 @Singleton
 class TemplateService @Inject()(configuration: Configuration) extends Logging {
@@ -38,84 +38,70 @@ class TemplateService @Inject()(configuration: Configuration) extends Logging {
   }
 
   private lazy val templates: Seq[Template] = {
-    if (templatesStorageType == conf.TEMPLATES_STORAGE_TYPE_FILESYSTEM) {
-      val templatesDirectory = new File(templatesUrl)
-      Logger.info(s"Looking for templates in $templatesUrl")
-      val templateDirectories = if (templatesDirectory.exists && templatesDirectory.isDirectory) {
-        templatesDirectory.listFiles.filter(_.isDirectory).toSeq
-      } else {
-        Logger.error(s"Templates directory $templatesUrl is not a directory")
-        Seq.empty
-      }
-      Logger.info(s"Found ${templateDirectories.size} template directories: ${templateDirectories.mkString(", ")}")
-
-      val templates = templateDirectories.flatMap(templateDirectory => {
-        val tryTemplate = Try {
-          val templateFile = new File(templateDirectory, "template.json")
-          val templateFileContent = Source.fromFile(templateFile).getLines.mkString("\n")
-          val templateId = templateDirectory.getName
-          val metaFile = new File(templateDirectory, "meta.json")
-          val metaFileContent = Try(Source.fromFile(metaFile).getLines.mkString("\n"))
-          val metaInformation = metaFileContent.map(content => Json.parse(content))
-          val defaultDescription = s"$templateId template"
-          val description = metaInformation
-            .flatMap { information =>
-              if (information.has("description"))
-                Success(information.get("description").asText)
-              else
-                Failure(new IllegalArgumentException(
-                  s"No 'description' field specified in $metaFile. Using default template description."))
-            }
-            .recover {
-              case fileNotFound: FileNotFoundException =>
-                Logger.warn(s"No $metaFile file specified. Using default template description. $fileNotFound")
-                defaultDescription
-              case throwable =>
-                Logger.warn(throwable.toString)
-                defaultDescription
-            }
-            .get
-          val defaultParameterInfos = Map.empty[String, ParameterInfo]
-          val parameterInfos: Map[String, ParameterInfo] =
-            metaInformation
-              .flatMap {
-                information =>
-                  if (information.has("parameters")) {
-                    val fields = JavaConversions.asScalaIterator(information.get("parameters").fields()).toIterable
-                    val parameterInfoMap = fields.map { entry =>
-                      val id = entry.getKey
-                      val entryValue = entry.getValue
-                      val name = if (entryValue.has("name")) Some(entryValue.get("name").asText) else None
-                      val default = if (entryValue.has("default")) Some(entryValue.get("default").asText) else None
-                      val secret = if (entryValue.has("secret")) Some(entryValue.get("secret").asBoolean()) else None
-                      (id, ParameterInfo(id, name, default, secret))
-                    }.toMap
-                    Success(parameterInfoMap)
-                  } else {
-                    Failure(new IllegalArgumentException(
-                      s"No 'parameters' field in $metaFile. Not parsing any additional parameter information."))
-                  }
-              }
-              .recover {
-                case fileNotFound: FileNotFoundException =>
-                  Logger.warn(
-                    s"No 'meta.json' file specified. Not parsing any additional parameter information. $fileNotFound")
-                  defaultParameterInfos
-                case throwable =>
-                  Logger.warn(throwable.toString)
-                  defaultParameterInfos
-              }
-              .get
-          Template(templateId, templateFileContent, description, parameterInfos)
-        }
-        tryTemplate.failed.map(throwable => Logger.error(s"Parsing template '$templateDirectory' failed: $throwable"))
-        tryTemplate.toOption
-      })
-      Logger.info(s"Successfully parsed ${templates.size} templates: ${templates.map(_.id).mkString(", ")}")
-      templates.sortBy(_.id)
-    } else {
+    if (templatesStorageType != conf.TEMPLATES_STORAGE_TYPE_FILESYSTEM) {
       throw new IllegalStateException(s"$templatesStorageType not supported")
     }
+
+    val rootTemplatesDirectory = FileSystems.getDefault.getPath(templatesUrl)
+
+    if (!Files.isDirectory(rootTemplatesDirectory)) {
+      throw new IllegalStateException(s"Templates directory $templatesUrl is not a directory")
+    }
+
+    Logger.info(s"Looking for templates in $templatesUrl")
+
+    val templateDirectories = Files.list(rootTemplatesDirectory).iterator().asScala.filter(Files.isDirectory(_)).toSeq
+
+    Logger.info(s"Found ${templateDirectories.length} template directories: ${templateDirectories.mkString(", ")}")
+
+    val templates = templateDirectories.flatMap(templateDirectory => {
+      val tryTemplate = Try {
+        val templateFileContent = Source.fromFile(templateDirectory.resolve("template.json").toString).mkString
+        val templateId = templateDirectory.getFileName.toString
+        val metaFile = templateDirectory.resolve("meta.json")
+        val metaFileContent = Try(Source.fromFile(metaFile.toString).mkString)
+        val metaInformation = metaFileContent.map(content => Json.fromJson[Meta](Json.parse(content)).get)
+        val defaultDescription = s"$templateId template"
+        val description = metaInformation
+          .map(_.description.getOrElse {
+            Logger.warn(s"No description for $metaFile. Using default template description.")
+            defaultDescription
+          })
+          .recover {
+            case throwable =>
+              Logger.warn(
+                s"Failed to get description of $metaFile: ${throwable.getMessage}. Using default template description.",
+                throwable)
+              defaultDescription
+          }
+          .get
+
+        val parameterInfos: Map[String, ParameterInfo] =
+          metaInformation
+            .map(meta =>
+              meta.parameters
+                .getOrElse {
+                  Logger.warn(s"No parameters for $metaFile. Using default parameters.")
+                  Map.empty[String, Meta.Parameter]
+                }
+                .map {
+                  case (id, parameter) => id -> ParameterInfo.fromMetaParameter(id, parameter)
+              })
+            .recover {
+              case throwable =>
+                Logger.warn(
+                  s"Failed to get parameters of $metaFile: ${throwable.getMessage}. Using default parameters.",
+                  throwable)
+                Map.empty[String, ParameterInfo]
+            }
+            .get
+        Template(templateId, templateFileContent, description, parameterInfos)
+      }
+      tryTemplate.failed.map(throwable => Logger.error(s"Parsing template '$templateDirectory' failed: $throwable"))
+      tryTemplate.toOption
+    })
+    Logger.info(s"Successfully parsed ${templates.length} templates: ${templates.map(_.id).mkString(", ")}")
+    templates.sortBy(_.id)
   }
 
   def getTemplates: Seq[Template] = templates
