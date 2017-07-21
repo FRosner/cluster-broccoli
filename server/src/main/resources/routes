@@ -12,6 +12,7 @@ GET     /api/v1/instances/:id  @de.frosner.broccoli.controllers.InstanceControll
 POST    /api/v1/instances      @de.frosner.broccoli.controllers.InstanceController.create
 POST    /api/v1/instances/:id  @de.frosner.broccoli.controllers.InstanceController.update(id: String)
 DELETE  /api/v1/instances/:id  @de.frosner.broccoli.controllers.InstanceController.delete(id: String)
+GET  /api/v1/instances/:id/tasks  @de.frosner.broccoli.controllers.InstanceController.tasks(id: String)
 
 # About
 GET     /api/v1/about  @de.frosner.broccoli.controllers.AboutController.about

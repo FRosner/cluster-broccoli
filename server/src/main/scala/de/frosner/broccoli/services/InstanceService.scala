@@ -13,12 +13,14 @@ import play.api.libs.ws.WSClient
 
 import scala.util.{Failure, Success, Try}
 import de.frosner.broccoli.conf
+import de.frosner.broccoli.nomad.NomadClient
 import play.api.inject.ApplicationLifecycle
 
 import scala.concurrent.Future
 
 @Singleton
-class InstanceService @Inject()(templateService: TemplateService,
+class InstanceService @Inject()(nomadClient: NomadClient,
+                                templateService: TemplateService,
                                 nomadService: NomadService,
                                 consulService: ConsulService,
                                 ws: WSClient,
@@ -306,4 +308,19 @@ class InstanceService @Inject()(templateService: TemplateService,
     tryDelete.map(addStatuses)
   }
 
+  def getInstanceTasks(id: String): Future[Seq[Task]] =
+    for {
+      allocations <- nomadClient.getAllocationsForJob(id)
+    } yield {
+      allocations.payload
+        .flatMap(allocation => allocation.taskStates.mapValues(_ -> allocation.id))
+        .groupBy(_._1)
+        .map {
+          case (taskId, items) =>
+            Task(taskId, items.map {
+              case (_, (events, allocationId)) => Task.Allocation(allocationId, events.state)
+            })
+        }
+        .toSeq
+    }
 }

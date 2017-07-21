@@ -8,6 +8,7 @@ import play.api.test._
 import Instance.instanceApiWrites
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
 import play.api.http.HeaderNames
+import play.api.libs.concurrent.Execution.Implicits._
 
 import scala.util.{Failure, Success}
 

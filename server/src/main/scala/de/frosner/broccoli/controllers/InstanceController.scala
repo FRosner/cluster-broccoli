@@ -3,24 +3,22 @@ package de.frosner.broccoli.controllers
 import java.io.FileNotFoundException
 import javax.inject.Inject
 
-import de.frosner.broccoli.models.JobStatusJson._
-import de.frosner.broccoli.models.JobStatus.JobStatus
+import de.frosner.broccoli.models.InstanceCreation.instanceCreationReads
+import de.frosner.broccoli.models.InstanceUpdate.instanceUpdateReads
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.conf
-import Instance.instanceApiWrites
-import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
-import InstanceUpdate.{instanceUpdateReads, instanceUpdateWrites}
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
-import play.api.http.ContentTypes
-import play.api.libs.json.{JsObject, JsString, JsValue, Json}
-import play.api.mvc.{Action, Controller, Results}
+import play.api.libs.json.{JsObject, Json}
+import play.api.mvc.{Controller, Results}
 import play.mvc.Http.HeaderNames
 
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success}
 
-case class InstanceController @Inject()(instanceService: InstanceService, override val securityService: SecurityService)
+case class InstanceController @Inject()(
+    instanceService: InstanceService,
+    override val securityService: SecurityService)(implicit context: ExecutionContext)
     extends Controller
     with Logging
     with BroccoliSimpleAuthorization {
@@ -99,6 +97,12 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
       case InstanceDeletionFailure(id, reason) =>
         Results.BadRequest(s"Deleting $id failed: $reason")
     }
+  }
+
+  def tasks(id: String) = AsyncStack { implicit request =>
+    for {
+      tasks <- instanceService.getInstanceTasks(id)
+    } yield Results.Ok(Json.toJson(tasks))
   }
 
 }
