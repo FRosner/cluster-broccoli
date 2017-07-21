@@ -9,6 +9,7 @@ lazy val server = project
       ws,
       cache,
       specs2 % Test,
+      Dependencies.scalaguice
     ),
     libraryDependencies ++= Dependencies.play2auth,
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),

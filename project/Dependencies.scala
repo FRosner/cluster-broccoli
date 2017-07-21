@@ -6,7 +6,12 @@ object Dependencies {
   }
 
   /**
-    * Play authentication framework.
+    * Scala syntax for Guice, to declare custom modules
+    */
+  val scalaguice: ModuleID = "net.codingwell" %% "scala-guice" % "4.1.0"
+
+  /**
+    * Authentication framework for Play
     */
   val play2auth: Seq[ModuleID] = Seq(
     "jp.t2v" %% "play2-auth" % Versions.play2auth,
