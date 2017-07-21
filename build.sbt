@@ -2,6 +2,8 @@ lazy val server = project
   .in(file("server"))
   .enablePlugins(PlayScala, BuildInfoPlugin)
   .disablePlugins(PlayLayoutPlugin)
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings)
   .settings(
     name := "Cluster Broccoli",
     routesGenerator := InjectedRoutesGenerator,
@@ -9,6 +11,7 @@ lazy val server = project
       ws,
       cache,
       specs2 % Test,
+      specs2 % IntegrationTest,
       Dependencies.scalaguice
     ),
     libraryDependencies ++= Dependencies.play2auth,
