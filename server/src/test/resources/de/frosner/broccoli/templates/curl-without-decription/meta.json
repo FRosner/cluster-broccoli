@@ -1,0 +1,10 @@
+{
+  "parameters": {
+    "URL": {
+      "default": "localhost:8000"
+    },
+    "enabled": {
+      "default": "true"
+    }
+  }
+}

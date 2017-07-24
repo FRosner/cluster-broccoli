@@ -12,8 +12,6 @@ case class TemplateController @Inject()(templateService: TemplateService, overri
     extends Controller
     with BroccoliSimpleAuthorization {
 
-  private val templates = templateService.getTemplates
-
   def list: Action[AnyContent] = StackAction { implicit request =>
     Ok(Json.toJson(TemplateController.list(templateService)))
   }
