@@ -8,6 +8,7 @@ import javax.xml.ws.http.HTTPException
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.JobStatus._
 import de.frosner.broccoli.models.{Instance, JobStatus, PeriodicRun}
+import de.frosner.broccoli.nomad.NomadConfiguration
 import de.frosner.broccoli.nomad.models.Job
 import de.frosner.broccoli.util.Logging
 import play.api.libs.json._
@@ -19,11 +20,12 @@ import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 
 @Singleton
-class NomadService @Inject()(configuration: Configuration, consulService: ConsulService, ws: WSClient) extends Logging {
+class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulService: ConsulService, ws: WSClient)
+    extends Logging {
 
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  private lazy val nomadBaseUrl = configuration.getString(conf.NOMAD_URL_KEY).getOrElse(conf.NOMAD_URL_DEFAULT)
+  private val nomadBaseUrl = nomadConfiguration.url
 
   @volatile
   var jobStatuses: Map[String, (JobStatus, Iterable[PeriodicRun])] = Map.empty

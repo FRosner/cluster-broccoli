@@ -13,8 +13,8 @@ import play.api.mvc._
 import play.api.routing.sird._
 import play.api.test._
 import play.core.server.Server
-
 import Job.jobFormat
+import de.frosner.broccoli.nomad.NomadConfiguration
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -38,10 +38,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val configuration = Configuration.from(
-            Map(
-              conf.NOMAD_URL_KEY -> s"http://localhost:$port"
-            ))
+          val configuration = NomadConfiguration(url = s"http://localhost:$port")
           val nomadService = new NomadService(configuration, consulService, client)
           val jobId = "my-job"
           val result = Await.result(nomadService.requestServices(jobId), Duration(5, TimeUnit.SECONDS))
@@ -66,10 +63,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val configuration = Configuration.from(
-            Map(
-              conf.NOMAD_URL_KEY -> s"http://localhost:$port"
-            ))
+          val configuration = NomadConfiguration(url = s"http://localhost:$port")
           val nomadService = new NomadService(configuration, consulService, client)
           val jobId = "my-job"
           val result = Await.result(nomadService.requestServices(jobId), Duration(5, TimeUnit.SECONDS))

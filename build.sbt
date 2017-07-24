@@ -2,6 +2,8 @@ lazy val server = project
   .in(file("server"))
   .enablePlugins(PlayScala, BuildInfoPlugin)
   .disablePlugins(PlayLayoutPlugin)
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings)
   .settings(
     name := "Cluster Broccoli",
     routesGenerator := InjectedRoutesGenerator,
@@ -9,9 +11,10 @@ lazy val server = project
       ws,
       cache,
       specs2 % Test,
-      "jp.t2v" %% "play2-auth" % "0.14.2",
-      "jp.t2v" %% "play2-auth-test" % "0.14.2" % "test"
+      specs2 % IntegrationTest,
+      Dependencies.scalaguice
     ),
+    libraryDependencies ++= Dependencies.play2auth,
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.frosner.broccoli.build",
     PlayKeys.playMonitoredFiles ++= (sourceDirectories in (Compile, TwirlKeys.compileTemplates)).value
