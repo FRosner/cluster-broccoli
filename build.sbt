@@ -29,7 +29,12 @@ lazy val server = project
     libraryDependencies ++= Dependencies.play2auth,
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.frosner.broccoli.build",
-    PlayKeys.playMonitoredFiles ++= (sourceDirectories in (Compile, TwirlKeys.compileTemplates)).value
+    PlayKeys.playMonitoredFiles ++= (sourceDirectories in (Compile, TwirlKeys.compileTemplates)).value,
+    // Do not run integration tests in parallel, because these spawn docker containers and thus depend on global state
+    parallelExecution in IntegrationTest := false,
+    // Do not run unit tests in parallel either because Play doesn't like it
+    // Play doesn't like parallel tests with all its state
+    parallelExecution in Test := false
   )
   .dependsOn(webui)
 
@@ -63,9 +68,7 @@ lazy val root = project
           "-Ywarn-nullary-override",
           // Warn when numerics are unintentionally widened
           "-Ywarn-numeric-widen"
-        ),
-        // Play doesn't like parallel tests with all its state
-        parallelExecution in Test := false
+        )
       ))
   )
   .aggregate(webui, server)
