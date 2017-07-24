@@ -9,7 +9,18 @@ object Dependencies {
     val specs2 = "3.6.6"
 
     val play2auth = "0.14.2"
+
+    val cats = "0.9.0"
   }
+
+  /**
+    * Functional programming data types and type classes.
+    */
+  val cats: Seq[ModuleID] = Seq(
+    "macros",
+    "kernel",
+    "core"
+  ).map(module => "org.typelevel" %% s"cats-$module" % Versions.cats)
 
   /**
     * A powerful enumeration type for Scala.

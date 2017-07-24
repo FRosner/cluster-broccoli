@@ -14,6 +14,7 @@ lazy val server = project
       specs2 % IntegrationTest,
       Dependencies.scalaguice
     ),
+    libraryDependencies ++= Dependencies.cats.map(_ % IntegrationTest),
     libraryDependencies ++= Dependencies.enumeratum,
     libraryDependencies ++= Dependencies.specs2.map(_ % Test),
     libraryDependencies ++= Dependencies.specs2.map(_ % IntegrationTest),
