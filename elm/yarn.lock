@@ -1569,6 +1569,12 @@ elm-github-install@1.0.1:
     tar-fs "1.15.0"
     tmp "^0.0.31"
 
+elm-hot-loader@^0.5.4:
+  version "0.5.4"
+  resolved "https://registry.yarnpkg.com/elm-hot-loader/-/elm-hot-loader-0.5.4.tgz#5fd9d9058f6efeac2f5fcf83aeef81cf3984312e"
+  dependencies:
+    loader-utils "^0.2.12"
+
 elm-test@0.18.2:
   version "0.18.2"
   resolved "https://registry.yarnpkg.com/elm-test/-/elm-test-0.18.2.tgz#1e94bd292de42a4960c6fdbe64eacee30669040a"
@@ -2651,7 +2657,7 @@ loader-runner@^2.3.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/loader-runner/-/loader-runner-2.3.0.tgz#f482aea82d543e07921700d5a46ef26fdac6b8a2"
 
-loader-utils@^0.2.16:
+loader-utils@^0.2.12, loader-utils@^0.2.16:
   version "0.2.17"
   resolved "https://registry.yarnpkg.com/loader-utils/-/loader-utils-0.2.17.tgz#f86e6374d43205a6e6c60e9196f17c0299bfb348"
   dependencies:

@@ -25,7 +25,9 @@ module.exports = {
         target: 'ws://localhost:9000/',
         ws: true
       }
-    }
+    },
+    // Enable HMR for dev server
+    hot: true
   },
   plugins: [
     // Provide jquery to bootstrap
@@ -65,7 +67,9 @@ module.exports = {
           rel: 'shortcut icon',
         }
       ]
-    })
+    }),
+    // Enable hot module replacement
+    new webpack.HotModuleReplacementPlugin(),
   ],
   module: {
     rules: [
@@ -85,6 +89,7 @@ module.exports = {
         test: /\.elm$/,
         exclude: [/elm-stuff/, /node-modules/],
         use: [
+          { loader: 'elm-hot-loader' },
           {
             loader: 'babel-loader',
             options: {
