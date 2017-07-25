@@ -3,6 +3,11 @@ package de.frosner.broccoli.templates
 import de.frosner.broccoli.models.Template
 import javax.inject.Singleton
 
+/**
+  * The template source that wraps another template source and caches loaded templates of the latter
+  *
+  * @param source The template source that will be cached
+  */
 @Singleton
 class CachedTemplateSource(source: TemplateSource) extends TemplateSource {
   @volatile private var templatesCache: Option[Seq[Template]] = None

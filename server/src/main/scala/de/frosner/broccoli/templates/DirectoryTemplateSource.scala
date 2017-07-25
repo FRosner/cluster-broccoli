@@ -10,7 +10,16 @@ import scala.io.Source
 import scala.util.Try
 import scala.collection.JavaConverters._
 
+/**
+  * The template source that loads templates from a directory
+  *
+  * @param directory The path to the directory with templates
+  */
 class DirectoryTemplateSource(directory: String) extends TemplateSource with Logging {
+
+  /**
+    * @return The sequence of templates found in the directory
+    */
   def loadTemplates(): Seq[Template] = {
     val rootTemplatesDirectory = FileSystems.getDefault.getPath(directory)
 
