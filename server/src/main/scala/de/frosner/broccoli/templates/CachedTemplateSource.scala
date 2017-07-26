@@ -8,7 +8,6 @@ import javax.inject.Singleton
   *
   * @param source The template source that will be cached
   */
-@Singleton
 class CachedTemplateSource(source: TemplateSource) extends TemplateSource {
   @volatile private var templatesCache: Option[Seq[Template]] = None
 

@@ -10,7 +10,6 @@ import sun.misc.{Signal, SignalHandler}
   *
   * @param source The CachedTemplateSource that will be wrapped
   */
-@Singleton
 class SignalRefreshedTemplateSource(source: CachedTemplateSource) extends TemplateSource {
   Signal.handle(new Signal("USR2"), new SignalHandler() {
     def handle(sig: Signal) {
