@@ -4,7 +4,7 @@ import de.frosner.broccoli.models.Template
 import javax.inject.Singleton
 
 /**
-  * The template source that wraps another template source and caches loaded templates of the latter
+  * The template source that wraps another template source and caches loaded templates of that source
   *
   * @param source The template source that will be cached
   */
