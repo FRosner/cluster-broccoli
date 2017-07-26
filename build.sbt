@@ -1,5 +1,5 @@
-lazy val webUi = project
-  .in(file("elm"))
+lazy val webui = project
+  .in(file("webui"))
   .enablePlugins(YarnPlugin)
   .settings(
     name := "Cluster Broccoli Web UI"
@@ -27,7 +27,7 @@ lazy val server = project
     buildInfoPackage := "de.frosner.broccoli.build",
     PlayKeys.playMonitoredFiles ++= (sourceDirectories in (Compile, TwirlKeys.compileTemplates)).value
   )
-  .dependsOn(webUi)
+  .dependsOn(webui)
 
 lazy val root = project
   .in(file("."))
@@ -64,4 +64,4 @@ lazy val root = project
         parallelExecution in Test := false
       ))
   )
-  .aggregate(webUi, server)
+  .aggregate(webui, server)
