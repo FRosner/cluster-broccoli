@@ -5,7 +5,7 @@ set -e
 rm -rf cluster-broccoli-*
 rm -rf docker/test/cluster-broccoli-dist
 rm -rf docker/prod/cluster-broccoli-dist
-. build-dist.sh
+sbt clean && sbt dist
 unzip server/target/universal/cluster-broccoli*.zip
 cp -R cluster-broccoli-* docker/test/cluster-broccoli-dist
 cp -R cluster-broccoli-* docker/prod/cluster-broccoli-dist
