@@ -21,13 +21,13 @@ class DirectoryTemplateSource(directory: String) extends TemplateSource with Log
     * @return The sequence of templates found in the directory
     */
   def loadTemplates(): Seq[Template] = {
-    val rootTemplatesDirectory = FileSystems.getDefault.getPath(directory)
+    val rootTemplatesDirectory = FileSystems.getDefault.getPath(directory).toAbsolutePath
 
     if (!Files.isDirectory(rootTemplatesDirectory)) {
-      throw new IllegalStateException(s"Templates directory $directory is not a directory")
+      throw new IllegalStateException(s"Templates directory ${rootTemplatesDirectory} is not a directory")
     }
 
-    Logger.info(s"Looking for templates in $directory")
+    Logger.info(s"Looking for templates in $rootTemplatesDirectory")
 
     val templateDirectories = Files.list(rootTemplatesDirectory).iterator().asScala.filter(Files.isDirectory(_)).toSeq
 

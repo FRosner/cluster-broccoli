@@ -1,6 +1,6 @@
 package de.frosner.broccoli.templates
 
-import java.nio.file.Path
+import java.nio.file.{FileSystems, Files, Path}
 
 import de.frosner.broccoli.models.{ParameterInfo, Template}
 import org.specs2.mutable.Specification
@@ -11,8 +11,11 @@ class DirectoryTemplateSourceSpec extends Specification with TemporaryTemplatesC
   "Loading templates from a directory" should {
 
     "fail if the passed directory is not directory" in {
-      new DirectoryTemplateSource("not-a-directory").loadTemplates must throwA(
-        new IllegalStateException("Templates directory not-a-directory is not a directory"))
+      val directory = FileSystems.getDefault.getPath("not-a-directory")
+      Files.exists(directory) must beFalse
+
+      new DirectoryTemplateSource(directory.toString).loadTemplates must throwA(
+        new IllegalStateException(s"Templates directory ${directory.toAbsolutePath} is not a directory"))
     }
 
     "parse fully specified templates correctly" in { templatesDirectory: Path =>
