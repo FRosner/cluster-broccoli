@@ -1,3 +1,10 @@
+lazy val webui = project
+  .in(file("webui"))
+  .enablePlugins(YarnPlugin)
+  .settings(
+    name := "Cluster Broccoli Web UI"
+  )
+
 lazy val server = project
   .in(file("server"))
   .enablePlugins(PlayScala, BuildInfoPlugin)
@@ -12,6 +19,7 @@ lazy val server = project
       cache,
       specs2 % Test,
       specs2 % IntegrationTest,
+      Dependencies.commonsIO % Test,
       Dependencies.scalaguice
     ),
     libraryDependencies ++= Dependencies.cats.map(_ % IntegrationTest),
@@ -29,6 +37,7 @@ lazy val server = project
     // Play doesn't like parallel tests with all its state
     parallelExecution in Test := false
   )
+  .dependsOn(webui)
 
 lazy val root = project
   .in(file("."))
@@ -63,4 +72,4 @@ lazy val root = project
         )
       ))
   )
-  .aggregate(server)
+  .aggregate(webui, server)

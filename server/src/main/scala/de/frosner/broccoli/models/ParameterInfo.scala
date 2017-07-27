@@ -11,4 +11,6 @@ object ParameterInfo {
 
   implicit val parameterInfoReads = Json.reads[ParameterInfo]
 
+  def fromMetaParameter(id: String, parameter: Meta.Parameter): ParameterInfo =
+    ParameterInfo(id, parameter.name, parameter.default, parameter.secret)
 }

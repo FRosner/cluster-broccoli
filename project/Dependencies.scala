@@ -55,4 +55,10 @@ object Dependencies {
     "jp.t2v" %% "play2-auth-test" % Versions.play2auth % Test,
     "jp.t2v" %% "play2-auth-test" % Versions.play2auth % IntegrationTest
   )
+
+  /**
+    * Apache Commons IO to provide additional functionality for IO like copying directories recursively
+    */
+  val commonsIO: ModuleID = "commons-io" % "commons-io" % "2.5"
+
 }
