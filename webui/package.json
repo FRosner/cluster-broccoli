@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "dependencies": {},
+  "private": true,
   "devDependencies": {
     "@panosoft/elm-native-helpers": "^0.1.10",
     "animate.css": "^3.5.2",
