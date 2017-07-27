@@ -1,5 +1,6 @@
 package de.frosner.broccoli.templates
 
+import de.frosner.broccoli.signal.UnixSignalManager
 import org.mockito.Mockito.{times, verify}
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -8,8 +9,9 @@ import sun.misc.Signal
 class SignalRefreshedTemplateSourceSpec extends Specification with Mockito {
   "Receiving a SIGUSR2 signal" should {
     "update the cache" in {
+      val signalManager = new UnixSignalManager()
       val testTemplateSource = mock[CachedTemplateSource]
-      val signalRefreshedTemplateSource = new SignalRefreshedTemplateSource(testTemplateSource)
+      val signalRefreshedTemplateSource = new SignalRefreshedTemplateSource(testTemplateSource, signalManager)
 
       there was no(testTemplateSource).refresh()
       there was no(testTemplateSource).loadTemplates()
