@@ -1,8 +1,8 @@
 package de.frosner.broccoli.util
 
 import java.io.IOException
-import java.nio.file.{FileVisitResult, FileVisitor, Files, Path}
 import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.{FileVisitResult, FileVisitor, Files, Path}
 
 import org.specs2.execute.{AsResult, Result}
 import org.specs2.specification.ForEach

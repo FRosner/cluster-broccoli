@@ -64,7 +64,6 @@ case class Instance(id: String, template: Template, parameterValues: Map[String,
 }
 
 object Instance {
-
   implicit val instanceApiWrites: Writes[Instance] = {
     import JobStatusJson.jobStatusWrites
     import Template.templateApiWrites

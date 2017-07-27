@@ -30,6 +30,6 @@ RUN echo "#!/bin/bash" > /usr/bin/consul && \
 # put cluster broccoli
 ADD cluster-broccoli-dist /cluster-broccoli-dist
 
-ADD templates /templates
+ADD templates /cluster-broccoli-dist/templates
 RUN mkdir /instances
 RUN ln -s /cluster-broccoli-dist/bin/cluster-broccoli /usr/bin/cluster-broccoli

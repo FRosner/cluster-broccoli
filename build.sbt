@@ -12,6 +12,7 @@ lazy val server = project
       cache,
       specs2 % Test,
       specs2 % IntegrationTest,
+      Dependencies.commonsIO % Test,
       Dependencies.scalaguice
     ),
     libraryDependencies ++= Dependencies.play2auth,
