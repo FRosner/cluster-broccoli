@@ -24,11 +24,10 @@ class UnixSignalManagerSpec extends Specification with Mockito {
 
     "fail if the signal is already registered" in {
       val manager = new UnixSignalManager()
-      val signal = new Signal("USR2")
       val handler = mock[SignalHandler]
-      manager.register(signal, handler)
-      manager.register(signal, handler) must throwA(
-        new IllegalArgumentException(s"Signal $signal is already registered"))
+      manager.register(new Signal("USR2"), handler)
+      manager.register(new Signal("USR2"), handler) must throwA(
+        new IllegalArgumentException(s"Signal ${new Signal("USR2")} is already registered"))
 
     }
   }
