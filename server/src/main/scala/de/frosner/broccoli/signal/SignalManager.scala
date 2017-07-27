@@ -8,7 +8,8 @@ import sun.misc.{Signal, SignalHandler}
 trait SignalManager {
 
   /**
-    * Registers signal handler for the given signal
+    * Registers signal handler for the given signal.
+    *
     * @param signal
     * @param handler
     * @throws IllegalArgumentException if a signal is already registered or reserved by JDK or OS
@@ -18,6 +19,7 @@ trait SignalManager {
 
   /**
     * Unregisters the signal
+    *
     * @param signal
     */
   def unregister(signal: Signal): Unit
