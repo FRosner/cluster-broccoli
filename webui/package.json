@@ -2,7 +2,6 @@
   "name": "webui",
   "version": "1.0.0",
   "description": "",
-  "main": "webpack.config.js",
   "dependencies": {},
   "devDependencies": {
     "@panosoft/elm-native-helpers": "^0.1.10",
