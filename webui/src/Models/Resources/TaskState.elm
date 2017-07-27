@@ -6,9 +6,9 @@ import Json.Decode exposing (Decoder, string, fail, succeed, andThen)
 {-| The state of a task within an allocation.
 -}
 type TaskState
-    = Dead
-    | Running
-    | Pending
+    = TaskDead
+    | TaskRunning
+    | TaskPending
 
 
 {-| Decode a task state from JSON.
@@ -20,13 +20,13 @@ decoder =
             (\name ->
                 case name of
                     "dead" ->
-                        succeed Dead
+                        succeed TaskDead
 
                     "running" ->
-                        succeed Running
+                        succeed TaskRunning
 
                     "pending" ->
-                        succeed Pending
+                        succeed TaskPending
 
                     _ ->
                         fail ("Unknown task state " ++ name)

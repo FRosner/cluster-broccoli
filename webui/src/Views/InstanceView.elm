@@ -3,6 +3,7 @@ module Views.InstanceView exposing (view)
 import Models.Resources.ServiceStatus exposing (..)
 import Models.Resources.JobStatus as JobStatus exposing (..)
 import Models.Resources.Role as Role exposing (Role(..))
+import Models.Resources.Task as Task exposing (..)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 import Views.ParameterFormView as ParameterFormView
@@ -38,7 +39,7 @@ jobControlsColumnWidth =
     200
 
 
-view instances selectedInstances expandedInstances instanceParameterForms visibleSecrets templates maybeRole attemptedDeleteInstances =
+view instances selectedInstances expandedInstances instanceParameterForms visibleSecrets tasks templates maybeRole attemptedDeleteInstances =
     let
         instancesIds =
             instances
@@ -125,6 +126,7 @@ view instances selectedInstances expandedInstances instanceParameterForms visibl
                                 instanceParameterForms
                                 visibleSecrets
                                 templates
+                                tasks
                                 maybeRole
                                 attemptedDeleteInstances
                             )
@@ -132,13 +134,16 @@ view instances selectedInstances expandedInstances instanceParameterForms visibl
                 ]
 
 
-instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates maybeRole attemptedDeleteInstances instance =
+instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates tasks maybeRole attemptedDeleteInstances instance =
     let
         instanceExpanded =
             Set.member instance.id expandedInstances
 
         instanceParameterForm =
             Dict.get instance.id instanceParameterForms
+
+        instanceTasks =
+            Dict.get instance.id tasks
 
         toDelete =
             attemptedDeleteInstances
@@ -276,6 +281,7 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
             (if (instanceExpanded) then
                 [ instanceDetailView
                     instance
+                    instanceTasks
                     instanceParameterForm
                     visibleSecrets
                     templates
@@ -296,7 +302,7 @@ expandedTdStyle =
 -- TODO as "id" is special we should treat it also special
 
 
-instanceDetailView instance maybeInstanceParameterForm visibleSecrets templates maybeRole =
+instanceDetailView instance instanceTasks maybeInstanceParameterForm visibleSecrets templates maybeRole =
     let
         periodicRuns =
             List.reverse (List.sortBy .utcSeconds instance.periodicRuns)
@@ -315,19 +321,38 @@ instanceDetailView instance maybeInstanceParameterForm visibleSecrets templates 
                         [ ( "padding-right", "40px" ) ]
                     )
                 ]
-                (List.append
-                    [ ParameterFormView.editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole
-                    ]
-                    (if (List.isEmpty periodicRuns) then
+                (List.concat
+                    [ [ ParameterFormView.editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole
+                      ]
+                    , (if (List.isEmpty periodicRuns) then
                         []
-                     else
+                       else
                         [ h5 [] [ text "Periodic Runs" ]
                         , ul []
                             (List.map periodicRunView periodicRuns)
                         ]
-                    )
+                      )
+                    , instanceTasksView instanceTasks
+                    ]
                 )
             ]
+
+
+instanceTasksView : Maybe (List Task) -> List (Html msg)
+instanceTasksView task =
+    case task of
+        Nothing ->
+            [ h5 []
+                [ text "Loading tasks and allocations "
+                , i [ class "fa fa-spinner fa-spin" ] []
+                ]
+            ]
+
+        Just [] ->
+            [ h5 [] [ text "No tasks" ] ]
+
+        Just tasks ->
+            [ h5 [] [ text "Tasks and allocations" ] ]
 
 
 periodicRunView periodicRun =

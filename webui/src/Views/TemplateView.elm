@@ -5,6 +5,7 @@ import Views.InstanceView
 import Views.ParameterFormView as ParameterFormView
 import Updates.Messages exposing (..)
 import Models.Resources.Instance exposing (Instance, InstanceId)
+import Models.Resources.Task exposing (Task)
 import Models.Resources.Role as Role exposing (Role(..))
 import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
 import Models.Ui.BodyUiModel exposing (BodyUiModel)
@@ -15,8 +16,8 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 
 
-view : Dict InstanceId Instance -> Dict TemplateId Template -> BodyUiModel -> Maybe Role -> Template -> Html UpdateBodyViewMsg
-view instances templates bodyUiModel maybeRole template =
+view : Dict InstanceId Instance -> Dict InstanceId (List Task) -> Dict TemplateId Template -> BodyUiModel -> Maybe Role -> Template -> Html UpdateBodyViewMsg
+view instances tasks templates bodyUiModel maybeRole template =
     let
         templateInstances =
             Dict.filter (\k i -> i.template.id == template.id) instances
@@ -185,6 +186,7 @@ view instances templates bodyUiModel maybeRole template =
                         bodyUiModel.expandedInstances
                         bodyUiModel.instanceParameterForms
                         bodyUiModel.visibleEditInstanceSecrets
+                        tasks
                         templates
                         maybeRole
                         attemptedDeleteInstances
