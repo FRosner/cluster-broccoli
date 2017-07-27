@@ -1,10 +1,13 @@
 package de.frosner.broccoli.signal
 
+import javax.inject.Singleton
+
 import org.apache.commons.lang3.SystemUtils
 import sun.misc.{Signal, SignalHandler}
 
 import scala.collection.mutable
 
+@Singleton
 class UnixSignalManager extends SignalManager {
   private val signals = mutable.HashMap.empty[Signal, SignalHandler]
 
