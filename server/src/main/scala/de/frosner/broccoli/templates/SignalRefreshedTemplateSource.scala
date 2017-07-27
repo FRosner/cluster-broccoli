@@ -1,7 +1,7 @@
 package de.frosner.broccoli.templates
 
 import de.frosner.broccoli.models.Template
-import de.frosner.broccoli.signal.UnixSignalManager
+import de.frosner.broccoli.signal.SignalManager
 import sun.misc.{Signal, SignalHandler}
 
 /**
@@ -9,8 +9,7 @@ import sun.misc.{Signal, SignalHandler}
   *
   * @param source The CachedTemplateSource that will be wrapped
   */
-class SignalRefreshedTemplateSource(source: CachedTemplateSource, signalManager: UnixSignalManager)
-    extends TemplateSource {
+class SignalRefreshedTemplateSource(source: CachedTemplateSource, signalManager: SignalManager) extends TemplateSource {
   signalManager.register(new Signal("USR2"), new SignalHandler() {
     def handle(sig: Signal) {
       source.refresh()
