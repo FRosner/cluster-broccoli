@@ -28,15 +28,6 @@ class UnixSignalManagerSpec extends Specification with Mockito {
       manager.register(new Signal("USR2"), handler)
       manager.register(new Signal("USR2"), handler) must throwA(
         new IllegalArgumentException(s"Signal ${new Signal("USR2")} is already registered"))
-
-    }
-  }
-
-  "Unregistering a signal" should {
-    "fail if the signal was not registered" in {
-      val manager = new UnixSignalManager()
-      val signal = new Signal("USR1")
-      manager.unregister(signal) must throwA(new IllegalArgumentException(s"Signal $signal is not registered"))
     }
   }
 }

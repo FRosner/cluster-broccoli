@@ -26,7 +26,5 @@ class UnixSignalManager extends SignalManager {
         override def handle(signal: Signal): Unit = {}
       })
       signals.remove(signal)
-    } else {
-      throw new IllegalArgumentException(s"Signal $signal is not registered")
     }
 }
