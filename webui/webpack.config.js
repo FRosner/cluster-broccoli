@@ -1,21 +1,16 @@
 const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const template = require('html-webpack-template');
-
-const outputPath = 'dist';
 
 module.exports = {
   entry: './src/index.js',
   output: {
-    path: path.resolve(__dirname, outputPath),
+    path: path.resolve(__dirname, 'dist'),
     filename: '[name]-[hash].js'
   },
   devServer: {
-    // Serve from content base
-    contentBase: outputPath,
     // We have a single-page application so do not navigate
     historyApiFallback: true,
     // Forward API requests to the running backend
@@ -45,8 +40,6 @@ module.exports = {
     new ExtractTextPlugin({
       filename: '[name]-[contenthash].css'
     }),
-    // Clean our distribution folder on every build to only include fresh files
-    new CleanWebpackPlugin([outputPath]),
     // Generate an index.html to serve our application
     new HtmlWebpackPlugin({
       // Required settings

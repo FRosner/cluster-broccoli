@@ -37,7 +37,7 @@
     "test": "elm-test",
     "compile": "elm-make",
     "setup": "elm-install; cd tests; elm-install",
-    "package": "webpack --config webpack.config.prod.js; rm -rf ../server/src/main/resources/public; cp -R dist ../server/src/main/resources/public",
+    "dist": "webpack --config webpack.config.prod.js",
     "start": "webpack-dev-server"
   },
   "author": "",
