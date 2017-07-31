@@ -1,3 +1,10 @@
+lazy val webui = project
+  .in(file("webui"))
+  .enablePlugins(YarnPlugin)
+  .settings(
+    name := "Cluster Broccoli Web UI"
+  )
+
 lazy val server = project
   .in(file("server"))
   .enablePlugins(PlayScala, BuildInfoPlugin)
@@ -20,6 +27,7 @@ lazy val server = project
     buildInfoPackage := "de.frosner.broccoli.build",
     PlayKeys.playMonitoredFiles ++= (sourceDirectories in (Compile, TwirlKeys.compileTemplates)).value
   )
+  .dependsOn(webui)
 
 lazy val root = project
   .in(file("."))
@@ -56,4 +64,4 @@ lazy val root = project
         parallelExecution in Test := false
       ))
   )
-  .aggregate(server)
+  .aggregate(webui, server)

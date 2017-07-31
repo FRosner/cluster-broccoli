@@ -25,7 +25,7 @@ jobs:
     # Frontend tests
     - stage: test
       install:
-        - cd elm
+        - cd webui
         - yarn install
         - yarn setup
       script:
@@ -68,9 +68,9 @@ cache:
     - $HOME/.ivy2/cache
     # Cache ELM stuff. In particular build-artifacts for tests to avoid needless
     # rebuilds
-    - elm/elm-stuff/packages
-    - elm/tests/elm-stuff/packages
-    - elm/tests/elm-stuff/build-artifacts
+    - webui/elm-stuff/packages
+    - webui/tests/elm-stuff/packages
+    - webui/tests/elm-stuff/build-artifacts
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
