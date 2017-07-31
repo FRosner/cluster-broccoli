@@ -1,4 +1,4 @@
-package de.frosner.broccoli.services
+package de.frosner.broccoli.instances
 
 import de.frosner.broccoli.logging
 import de.frosner.broccoli.models.Instance

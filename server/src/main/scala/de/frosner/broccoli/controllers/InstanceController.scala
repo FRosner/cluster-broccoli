@@ -7,6 +7,7 @@ import cats.instances.future._
 import cats.syntax.either._
 import de.frosner.broccoli.http.ToHTTPResult.ops._
 import de.frosner.broccoli.instances.NomadInstances
+import de.frosner.broccoli.instances.InstanceNotFoundException
 import de.frosner.broccoli.models.InstanceCreation.instanceCreationReads
 import de.frosner.broccoli.models.InstanceUpdate.instanceUpdateReads
 import de.frosner.broccoli.models.Role.syntax._

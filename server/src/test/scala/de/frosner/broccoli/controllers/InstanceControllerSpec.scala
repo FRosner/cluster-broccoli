@@ -4,9 +4,10 @@ import cats.data.EitherT
 import cats.instances.future._
 import de.frosner.broccoli.http.ToHTTPResult
 import de.frosner.broccoli.instances.NomadInstances
+import de.frosner.broccoli.instances.InstanceNotFoundException
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad
-import de.frosner.broccoli.services.{InstanceNotFoundException, InstanceService, SecurityService}
+import de.frosner.broccoli.services.{InstanceService, SecurityService}
 import jp.t2v.lab.play2.auth.test.{Helpers => AuthHelpers}
 import org.mockito.Matchers
 import org.mockito.Mockito._

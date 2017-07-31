@@ -1,5 +1,6 @@
 package de.frosner.broccoli.services
 
+import de.frosner.broccoli.instances.InstanceStorage
 import de.frosner.broccoli.models.{Instance, ParameterInfo, Template}
 import org.specs2.mutable.Specification
 import play.api.Logger

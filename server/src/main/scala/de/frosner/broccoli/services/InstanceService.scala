@@ -8,10 +8,10 @@ import javax.inject.{Inject, Singleton}
 import cats.data.EitherT
 import cats.instances.future._
 import de.frosner.broccoli.conf
+import de.frosner.broccoli.instances._
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.NomadClient
-import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.ws.WSClient
@@ -27,24 +27,9 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                                 consulService: ConsulService,
                                 ws: WSClient,
                                 applicationLifecycle: ApplicationLifecycle,
-                                configuration: Configuration) {
-
+                                instanceConfiguration: InstanceConfiguration) {
   private val log = play.api.Logger(getClass)
-
-  private lazy val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
-  private lazy val pollingFrequencySecondsTry = pollingFrequencySecondsString match {
-    case Some(string) =>
-      Try(string.toInt).flatMap { int =>
-        if (int >= 1) Success(int) else Failure(new Exception())
-      }
-    case None => Success(conf.POLLING_FREQUENCY_DEFAULT)
-  }
-  if (pollingFrequencySecondsTry.isFailure) {
-    log.error(
-      s"Invalid ${conf.POLLING_FREQUENCY_KEY} specified: '${pollingFrequencySecondsString.get}'. Needs to be a positive integer.")
-    System.exit(1)
-  }
-  private lazy val pollingFrequencySeconds = pollingFrequencySecondsTry.get
+  private lazy val pollingFrequencySeconds = instanceConfiguration.pollingFrequency
   log.info(s"Nomad/Consul polling frequency set to $pollingFrequencySeconds seconds")
 
   private val scheduler = new ScheduledThreadPoolExecutor(1)
@@ -61,49 +46,17 @@ class InstanceService @Inject()(nomadClient: NomadClient,
 
   @volatile
   private lazy val instanceStorage: InstanceStorage = {
-    val instanceStorageType = {
-      val storageType =
-        configuration.getString(conf.INSTANCES_STORAGE_TYPE_KEY).getOrElse(conf.INSTANCES_STORAGE_TYPE_DEFAULT)
-      val allowedStorageTypes = Set(conf.INSTANCES_STORAGE_TYPE_FS, conf.INSTANCES_STORAGE_TYPE_COUCHDB)
-      if (!allowedStorageTypes.contains(storageType)) {
-        log.error(
-          s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType is invalid. Only ${allowedStorageTypes.mkString(", ")} supported.")
-        System.exit(1)
-      }
-      log.info(s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType")
-      storageType
-    }
-
-    val maybeInstanceStorage = instanceStorageType match {
+    val storageConfiguration = instanceConfiguration.storageConfiguration
+    val storageType = storageConfiguration.storageType
+    val maybeInstanceStorage = storageType match {
       case conf.INSTANCES_STORAGE_TYPE_FS => {
-        val instanceDir = {
-          if (configuration.getString("broccoli.instancesFile").isDefined)
-            log.warn(s"broccoli.instancesFile ignored. Use ${conf.INSTANCES_STORAGE_FS_URL_KEY} instead.")
-          val url =
-            configuration.getString(conf.INSTANCES_STORAGE_FS_URL_KEY).getOrElse(conf.INSTANCES_STORAGE_FS_URL_DEFAULT)
-          log.info(s"${conf.INSTANCES_STORAGE_FS_URL_KEY}=$url")
-          url
-        }
-        Try(FileSystemInstanceStorage(new File(instanceDir)))
+        Try(FileSystemInstanceStorage(new File(storageConfiguration.fsConfig.url)))
       }
       case conf.INSTANCES_STORAGE_TYPE_COUCHDB => {
-        val couchDbUrl = {
-          val url = configuration
-            .getString(conf.INSTANCES_STORAGE_COUCHDB_URL_KEY)
-            .getOrElse(conf.INSTANCES_STORAGE_COUCHDB_URL_DEFAULT)
-          log.info(s"${conf.INSTANCES_STORAGE_COUCHDB_URL_KEY}=$url")
-          url
-        }
-        val couchDbName = {
-          val name = configuration
-            .getString(conf.INSTANCES_STORAGE_COUCHDB_DBNAME_KEY)
-            .getOrElse(conf.INSTANCES_STORAGE_COUCHDB_DBNAME_DEFAULT)
-          log.info(s"${conf.INSTANCES_STORAGE_COUCHDB_DBNAME_KEY}=$name")
-          name
-        }
-        Try(CouchDBInstanceStorage(couchDbUrl, couchDbName, ws))
+        val couchDBConfiguration = storageConfiguration.couchDBConfig
+        Try(CouchDBInstanceStorage(couchDBConfiguration.url, couchDBConfiguration.dbName, ws))
       }
-      case default => throw new IllegalStateException(s"Illegal storage type '$instanceStorageType")
+      case default => throw new IllegalStateException(s"Illegal storage type '$storageType")
     }
     val instanceStorage = maybeInstanceStorage match {
       case Success(storage) => storage
