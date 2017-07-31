@@ -6,7 +6,6 @@ import javax.inject.Inject
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.services.WebSocketService.Msg
-import de.frosner.broccoli.controllers.OutgoingWsMessageType._
 import de.frosner.broccoli.util.Logging
 import de.frosner.broccoli.models.Template.templateApiWrites
 import de.frosner.broccoli.models.Instance.instanceApiWrites
@@ -42,66 +41,39 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
 
       // TODO receive string and try json decoding here because I can handle the error better
       val in = Iteratee
-        .foreach[Msg] { jsMsg =>
-          val msg = Json.fromJson(jsMsg)(IncomingWsMessage.incomingWsMessageReads)
-          val result = msg
+        .foreach[Msg] { incomingMessage =>
+          val outgoingMessage = Json
+            .fromJson[IncomingWsMessage](incomingMessage)
             .map {
-              case IncomingWsMessage(IncomingWsMessageType.AddInstance, instanceCreation: InstanceCreation) =>
-                InstanceController.create(instanceCreation, user, instanceService) match {
-                  case success: InstanceCreationSuccess =>
-                    OutgoingWsMessage(OutgoingWsMessageType.InstanceCreationSuccessMsg, success)
-                  case failure: InstanceCreationFailure =>
-                    OutgoingWsMessage(OutgoingWsMessageType.InstanceCreationFailureMsg, failure)
-                }
-              case IncomingWsMessage(IncomingWsMessageType.DeleteInstance, instanceId: String) =>
-                InstanceController.delete(instanceId, user, instanceService) match {
-                  case success: InstanceDeletionSuccess =>
-                    OutgoingWsMessage(OutgoingWsMessageType.InstanceDeletionSuccessMsg, success)
-                  case failure: InstanceDeletionFailure =>
-                    OutgoingWsMessage(OutgoingWsMessageType.InstanceDeletionFailureMsg, failure)
-                }
-              case IncomingWsMessage(IncomingWsMessageType.UpdateInstance, instanceUpdate: InstanceUpdate) =>
-                InstanceController.update(instanceUpdate.instanceId.get, instanceUpdate, user, instanceService) match {
-                  case success: InstanceUpdateSuccess =>
-                    OutgoingWsMessage(OutgoingWsMessageType.InstanceUpdateSuccessMsg, success)
-                  case failure: InstanceUpdateFailure =>
-                    OutgoingWsMessage(OutgoingWsMessageType.InstanceUpdateFailureMsg, failure)
-                }
+              case IncomingWsMessage.AddInstance(instanceCreation) =>
+                OutgoingWsMessage.fromResult(InstanceController.create(instanceCreation, user, instanceService))
+              case IncomingWsMessage.DeleteInstance(instanceId) =>
+                OutgoingWsMessage.fromResult(InstanceController.delete(instanceId, user, instanceService))
+              case IncomingWsMessage.UpdateInstance(instanceUpdate: InstanceUpdate) =>
+                OutgoingWsMessage.fromResult(
+                  InstanceController.update(instanceUpdate.instanceId.get, instanceUpdate, user, instanceService))
             }
-            .getOrElse {
-              Logger.warn(s"Can't parse a message from $connectionId: $msg")
-              OutgoingWsMessage(OutgoingWsMessageType.ErrorMsg, "Received unparsable message")
+            .recoverTotal { error =>
+              Logger.warn(s"Can't parse a message from $connectionId: $error")
+              OutgoingWsMessage.Error(s"Failed to parse message message: $error")
             }
-          webSocketService.send(connectionId, Json.toJson(result))
+          webSocketService.send(connectionId, Json.toJson(outgoingMessage))
         }
         .map { _ =>
           webSocketService.closeConnections(connectionId)
           Logger.info(s"Closed connection $connectionLogString")
         }
 
-      val aboutEnumerator = Enumerator[Msg](
-        Json.toJson(
-          OutgoingWsMessage(
-            OutgoingWsMessageType.AboutInfoMsg,
-            AboutController.about(aboutService, user)
-          )
-        ))
+      val aboutEnumerator =
+        Enumerator[Msg](Json.toJson(OutgoingWsMessage.AboutInfoMsg(AboutController.about(aboutService, user))))
 
       val templateEnumerator = Enumerator[Msg](
         Json.toJson(
-          OutgoingWsMessage(
-            OutgoingWsMessageType.ListTemplatesMsg,
-            TemplateController.list(templateService)
-          )
+          OutgoingWsMessage.ListTemplates(TemplateController.list(templateService))
         ))
 
       val instanceEnumerator = Enumerator[Msg](
-        Json.toJson(
-          OutgoingWsMessage(
-            OutgoingWsMessageType.ListInstancesMsg,
-            InstanceController.list(None, user, instanceService)
-          )
-        ))
+        Json.toJson(OutgoingWsMessage.ListInstances(InstanceController.list(None, user, instanceService))))
       (in, aboutEnumerator.andThen(templateEnumerator).andThen(instanceEnumerator).andThen(connectionEnumerator))
     }
 

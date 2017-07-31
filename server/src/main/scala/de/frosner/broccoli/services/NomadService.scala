@@ -15,6 +15,7 @@ import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.Configuration
 
+import scala.collection.immutable
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
@@ -28,7 +29,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
   private val nomadBaseUrl = nomadConfiguration.url
 
   @volatile
-  var jobStatuses: Map[String, (JobStatus, Iterable[PeriodicRun])] = Map.empty
+  var jobStatuses: Map[String, (JobStatus, Seq[PeriodicRun])] = Map.empty
 
   def getJobStatusOrDefault(id: String): JobStatus =
     if (nomadReachable) {
@@ -37,8 +38,8 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
       JobStatus.Unknown
     }
 
-  def getPeriodicRunsOrDefault(id: String): Iterable[PeriodicRun] = {
-    val periodicRuns = jobStatuses.get(id).map { case (status, periodic) => periodic }.getOrElse(Iterable.empty)
+  def getPeriodicRunsOrDefault(id: String): Seq[PeriodicRun] = {
+    val periodicRuns = jobStatuses.get(id).map { case (status, periodic) => periodic }.getOrElse(Seq.empty)
     if (nomadReachable) {
       periodicRuns
     } else {
@@ -110,16 +111,16 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
                     utcSeconds = NomadService.extractUtcSeconds(periodicJobName).getOrElse(0),
                     jobName = periodicJobName
                   )
-              }
+              }.toSeq
               (instanceId, periodic)
           }
         val idsAndStatusesWithPeriodic = filteredIdsAndStatusesAlsoWithoutNomad.map {
           case (instanceId, instanceStatus) =>
-            (instanceId, (instanceStatus, periodicStatuses.getOrElse(instanceId, Iterable.empty)))
+            (instanceId, (instanceStatus, periodicStatuses.getOrElse(instanceId, Seq.empty)))
         }
         setNomadReachable()
         jobStatuses = idsAndStatusesWithPeriodic.toMap
-        filteredIdsAndStatuses.map { case (key, value) => key }.foreach(requestServices)
+        filteredIdsAndStatuses.foreach(p => requestServices(p._1))
       }
       case Failure(throwable: ConnectException) => {
         Logger.error(

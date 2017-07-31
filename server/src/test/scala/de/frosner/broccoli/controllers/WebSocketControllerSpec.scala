@@ -11,8 +11,6 @@ import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import ParameterInfo.{parameterInfoReads, parameterInfoWrites}
-import de.frosner.broccoli.controllers.IncomingWsMessageType.IncomingWsMessageType
-import de.frosner.broccoli.controllers.OutgoingWsMessageType.OutgoingWsMessageType
 import de.frosner.broccoli.models.Role.Role
 import org.mockito.Matchers
 
@@ -51,24 +49,15 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         status = ServiceStatus.Unknown
       )
     ),
-    periodicRuns = Iterable.empty
+    periodicRuns = Seq.empty
   )
 
-  private def wrap(messageType: IncomingWsMessageType, payload: JsValue): JsValue =
+  private def wrap(messageType: IncomingWsMessage.Type, payload: JsValue): JsValue =
     JsObject(
       Map(
         "messageType" -> Json.toJson(messageType),
         "payload" -> payload
       ))
-
-  private implicit val incomingWsMessagesWrites: Writes[IncomingWsMessage] = Writes {
-    case IncomingWsMessage(IncomingWsMessageType.AddInstance, payload: InstanceCreation) =>
-      wrap(IncomingWsMessageType.AddInstance, Json.toJson(payload))
-    case IncomingWsMessage(IncomingWsMessageType.DeleteInstance, payload: String) =>
-      wrap(IncomingWsMessageType.DeleteInstance, Json.toJson(payload))
-    case IncomingWsMessage(IncomingWsMessageType.UpdateInstance, payload: InstanceUpdate) =>
-      wrap(IncomingWsMessageType.UpdateInstance, Json.toJson(payload))
-  }
 
   private def testWs(controllerSetup: SecurityService => WebSocketController,
                      inMsg: IncomingWsMessage,
@@ -99,7 +88,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           }
         WsTestUtil.wrapConnection(result) match {
           case Right((incoming, outgoing)) =>
-            incoming.feed(Json.toJson(inMsg)(incomingWsMessagesWrites)).end
+            incoming.feed(Json.toJson(inMsg)).end
             verify(controller.webSocketService)
               .send(anyString(), Matchers.eq(Json.toJson(outMsg)(OutgoingWsMessage.outgoingWsMessageWrites)))
         }
@@ -175,10 +164,9 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           val messages = outgoing.get
           (messages should haveSize(3)) and
             (messages should contain(
-              Json.toJson(OutgoingWsMessage(OutgoingWsMessageType.ListTemplatesMsg, templates)),
-              Json.toJson(OutgoingWsMessage(OutgoingWsMessageType.ListInstancesMsg, instances)),
-              Json.toJson(
-                OutgoingWsMessage(OutgoingWsMessageType.AboutInfoMsg, controller.aboutService.aboutInfo(null)))
+              Json.toJson(OutgoingWsMessage.ListTemplates(templates)),
+              Json.toJson(OutgoingWsMessage.ListInstances(instances)),
+              Json.toJson(OutgoingWsMessage.AboutInfoMsg(controller.aboutService.aboutInfo(null)))
             ))
       }
     }
@@ -204,20 +192,14 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       val maybeConnection = WsTestUtil.wrapConnection(result)
       maybeConnection match {
         case Right((incoming, outgoing)) =>
-          val creationMsg = IncomingWsMessage(
-            IncomingWsMessageType.AddInstance,
-            instanceCreation
-          )
-          val resultMsg = OutgoingWsMessage(
-            OutgoingWsMessageType.InstanceCreationSuccessMsg,
+          val resultMsg = OutgoingWsMessage.AddInstanceSuccess(
             InstanceCreationSuccess(
               instanceCreation,
               instanceWithStatus
             )
           )
-          incoming.feed(Json.toJson(creationMsg)(incomingWsMessagesWrites)).end
-          verify(controller.webSocketService).send(id,
-                                                   Json.toJson(resultMsg)(OutgoingWsMessage.outgoingWsMessageWrites))
+          incoming.feed(Json.toJson(IncomingWsMessage.AddInstance(instanceCreation))).end
+          verify(controller.webSocketService).send(id, Json.toJson(resultMsg))
       }
     }
 
@@ -229,22 +211,19 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         )
       )
 
-      val success = OutgoingWsMessage(
-        OutgoingWsMessageType.InstanceCreationSuccessMsg,
+      val success = OutgoingWsMessage.AddInstanceSuccess(
         InstanceCreationSuccess(
           instanceCreation,
           instanceWithStatus
         )
       )
-      val roleFailure = OutgoingWsMessage(
-        OutgoingWsMessageType.InstanceCreationFailureMsg,
+      val roleFailure = OutgoingWsMessage.AddInstanceError(
         InstanceCreationFailure(
           instanceCreation,
           "Only administrators are allowed to create new instances"
         )
       )
-      val regexFailure = OutgoingWsMessage(
-        OutgoingWsMessageType.InstanceCreationFailureMsg,
+      val regexFailure = OutgoingWsMessage.AddInstanceError(
         InstanceCreationFailure(
           instanceCreation,
           "Only allowed to create instances matching bla"
@@ -263,10 +242,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           when(controller.instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
           controller
         },
-        inMsg = IncomingWsMessage(
-          IncomingWsMessageType.AddInstance,
-          instanceCreation
-        ),
+        inMsg = IncomingWsMessage.AddInstance(instanceCreation),
         expectations = Map(
           None -> success,
           Some((".*", Role.Administrator)) -> success,
@@ -280,22 +256,19 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
     "process instance deletion correctly" in new WithApplication {
       val instanceDeletion = "id"
 
-      val success = OutgoingWsMessage(
-        OutgoingWsMessageType.InstanceDeletionSuccessMsg,
+      val success = OutgoingWsMessage.DeleteInstanceSuccess(
         InstanceDeletionSuccess(
           instanceDeletion,
           instanceWithStatus
         )
       )
-      val roleFailure = OutgoingWsMessage(
-        OutgoingWsMessageType.InstanceDeletionFailureMsg,
+      val roleFailure = OutgoingWsMessage.DeleteInstanceError(
         InstanceDeletionFailure(
           instanceDeletion,
           "Only administrators are allowed to delete instances"
         )
       )
-      val regexFailure = OutgoingWsMessage(
-        OutgoingWsMessageType.InstanceDeletionFailureMsg,
+      val regexFailure = OutgoingWsMessage.DeleteInstanceError(
         InstanceDeletionFailure(
           instanceDeletion,
           "Only allowed to delete instances matching bla"
@@ -314,10 +287,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           when(controller.instanceService.deleteInstance(instanceDeletion)).thenReturn(Success(instanceWithStatus))
           controller
         },
-        inMsg = IncomingWsMessage(
-          IncomingWsMessageType.DeleteInstance,
-          instanceDeletion
-        ),
+        inMsg = IncomingWsMessage.DeleteInstance(instanceDeletion),
         expectations = Map(
           None -> success,
           Some((".*", Role.Administrator)) -> success,
@@ -340,8 +310,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         selectedTemplate = None
       )
 
-      val success = OutgoingWsMessage(
-        OutgoingWsMessageType.InstanceUpdateSuccessMsg,
+      val success = OutgoingWsMessage.UpdateInstanceSuccess(
         InstanceUpdateSuccess(
           instanceUpdate,
           instanceWithStatus
@@ -365,29 +334,23 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
             )).thenReturn(Success(instanceWithStatus))
           controller
         },
-        inMsg = IncomingWsMessage(
-          IncomingWsMessageType.UpdateInstance,
-          instanceUpdate
-        ),
+        inMsg = IncomingWsMessage.UpdateInstance(instanceUpdate),
         expectations = Map(
           None -> success,
           Some((".*", Role.Administrator)) -> success,
-          Some(("bla", Role.Administrator)) -> OutgoingWsMessage(
-            OutgoingWsMessageType.InstanceUpdateFailureMsg,
+          Some(("bla", Role.Administrator)) -> OutgoingWsMessage.UpdateInstanceError(
             InstanceUpdateFailure(
               instanceUpdate,
               "Only allowed to update instances matching bla"
             )
           ),
-          Some((".*", Role.Operator)) -> OutgoingWsMessage(
-            OutgoingWsMessageType.InstanceUpdateFailureMsg,
+          Some((".*", Role.Operator)) -> OutgoingWsMessage.UpdateInstanceError(
             InstanceUpdateFailure(
               instanceUpdate,
               "Updating parameter values or templates only allowed for administrators."
             )
           ),
-          Some((".*", Role.NormalUser)) -> OutgoingWsMessage(
-            OutgoingWsMessageType.InstanceUpdateFailureMsg,
+          Some((".*", Role.NormalUser)) -> OutgoingWsMessage.UpdateInstanceError(
             InstanceUpdateFailure(
               instanceUpdate,
               "Only administrators and operators are allowed to update instances"
@@ -405,8 +368,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         selectedTemplate = None
       )
 
-      val success = OutgoingWsMessage(
-        OutgoingWsMessageType.InstanceUpdateSuccessMsg,
+      val success = OutgoingWsMessage.UpdateInstanceSuccess(
         InstanceUpdateSuccess(
           instanceUpdate,
           instanceWithStatus
@@ -430,23 +392,18 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
             )).thenReturn(Success(instanceWithStatus))
           controller
         },
-        inMsg = IncomingWsMessage(
-          IncomingWsMessageType.UpdateInstance,
-          instanceUpdate
-        ),
+        inMsg = IncomingWsMessage.UpdateInstance(instanceUpdate),
         expectations = Map(
           None -> success,
           Some((".*", Role.Administrator)) -> success,
-          Some(("bla", Role.Administrator)) -> OutgoingWsMessage(
-            OutgoingWsMessageType.InstanceUpdateFailureMsg,
+          Some(("bla", Role.Administrator)) -> OutgoingWsMessage.UpdateInstanceError(
             InstanceUpdateFailure(
               instanceUpdate,
               "Only allowed to update instances matching bla"
             )
           ),
           Some((".*", Role.Operator)) -> success,
-          Some((".*", Role.NormalUser)) -> OutgoingWsMessage(
-            OutgoingWsMessageType.InstanceUpdateFailureMsg,
+          Some((".*", Role.NormalUser)) -> OutgoingWsMessage.UpdateInstanceError(
             InstanceUpdateFailure(
               instanceUpdate,
               "Only administrators and operators are allowed to update instances"
@@ -464,8 +421,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         selectedTemplate = Some("templateId")
       )
 
-      val success = OutgoingWsMessage(
-        OutgoingWsMessageType.InstanceUpdateSuccessMsg,
+      val success = OutgoingWsMessage.UpdateInstanceSuccess(
         InstanceUpdateSuccess(
           instanceUpdate,
           instanceWithStatus
@@ -489,29 +445,23 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
             )).thenReturn(Success(instanceWithStatus))
           controller
         },
-        inMsg = IncomingWsMessage(
-          IncomingWsMessageType.UpdateInstance,
-          instanceUpdate
-        ),
+        inMsg = IncomingWsMessage.UpdateInstance(instanceUpdate),
         expectations = Map(
           None -> success,
           Some((".*", Role.Administrator)) -> success,
-          Some(("bla", Role.Administrator)) -> OutgoingWsMessage(
-            OutgoingWsMessageType.InstanceUpdateFailureMsg,
+          Some(("bla", Role.Administrator)) -> OutgoingWsMessage.UpdateInstanceError(
             InstanceUpdateFailure(
               instanceUpdate,
               "Only allowed to update instances matching bla"
             )
           ),
-          Some((".*", Role.Operator)) -> OutgoingWsMessage(
-            OutgoingWsMessageType.InstanceUpdateFailureMsg,
+          Some((".*", Role.Operator)) -> OutgoingWsMessage.UpdateInstanceError(
             InstanceUpdateFailure(
               instanceUpdate,
               "Updating parameter values or templates only allowed for administrators."
             )
           ),
-          Some((".*", Role.NormalUser)) -> OutgoingWsMessage(
-            OutgoingWsMessageType.InstanceUpdateFailureMsg,
+          Some((".*", Role.NormalUser)) -> OutgoingWsMessage.UpdateInstanceError(
             InstanceUpdateFailure(
               instanceUpdate,
               "Only administrators and operators are allowed to update instances"
