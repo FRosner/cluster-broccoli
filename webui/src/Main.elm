@@ -30,9 +30,9 @@ init location =
 update : AnyMsg -> Model -> ( Model, Cmd AnyMsg )
 update msg model =
     case msg of
-        SendWsMsg jsonObject wsMsgType ->
+        SendWsMsg message ->
             ( model
-            , Ws.send model.location jsonObject wsMsgType
+            , Ws.send model.location message
             )
 
         AttemptReconnect ->

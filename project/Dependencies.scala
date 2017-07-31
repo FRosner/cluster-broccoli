@@ -6,6 +6,15 @@ object Dependencies {
   }
 
   /**
+    * A powerful enumeration type for Scala.
+    */
+  val enumeratum: Seq[ModuleID] = Seq(
+    "com.beachape" %% "enumeratum" % "1.5.12",
+    // Keep this version at 1.5.11 for compatibility with Play 2.5; later versions depend on Play 2.6 already
+    "com.beachape" %% "enumeratum-play-json" % "1.5.11"
+  )
+
+  /**
     * Scala syntax for Guice, to declare custom modules
     */
   val scalaguice: ModuleID = "net.codingwell" %% "scala-guice" % "4.1.0"

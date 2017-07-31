@@ -185,13 +185,12 @@ object InstanceController {
       )
     }
 
-  def list(maybeTemplateId: Option[String], loggedIn: Account, instanceService: InstanceService) = {
-    val instances = instanceService.getInstances
-    val filteredInstances = maybeTemplateId
+  def list(templateId: Option[String], loggedIn: Account, instanceService: InstanceService): Seq[InstanceWithStatus] = {
+    val filteredInstances = templateId
       .map(
-        id => instances.filter(_.instance.template.id == id)
+        id => instanceService.getInstances.filter(_.instance.template.id == id)
       )
-      .getOrElse(instances)
+      .getOrElse(instanceService.getInstances)
       .filter(_.instance.id.matches(loggedIn.instanceRegex))
     val anonymizedInstances = if (loggedIn.role != Role.Administrator) {
       filteredInstances.map(removeSecretVariables)

@@ -22,6 +22,7 @@ lazy val server = project
       Dependencies.commonsIO % Test,
       Dependencies.scalaguice
     ),
+    libraryDependencies ++= Dependencies.enumeratum,
     libraryDependencies ++= Dependencies.play2auth,
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.frosner.broccoli.build",
