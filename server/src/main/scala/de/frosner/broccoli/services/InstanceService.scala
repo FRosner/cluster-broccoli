@@ -16,7 +16,7 @@ import de.frosner.broccoli.conf
 import de.frosner.broccoli.nomad.NomadClient
 import play.api.inject.ApplicationLifecycle
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class InstanceService @Inject()(nomadClient: NomadClient,
@@ -25,7 +25,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                                 consulService: ConsulService,
                                 ws: WSClient,
                                 applicationLifecycle: ApplicationLifecycle,
-                                configuration: Configuration)
+                                configuration: Configuration)(implicit val executionContext: ExecutionContext)
     extends Logging {
 
   private lazy val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
@@ -165,8 +165,6 @@ class InstanceService @Inject()(nomadClient: NomadClient,
       periodicRuns = nomadService.getPeriodicRunsOrDefault(instanceId)
     )
   }
-
-  implicit val executionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   def getInstances: Seq[InstanceWithStatus] =
     instances.values.map(addStatuses).toSeq
@@ -308,11 +306,19 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     tryDelete.map(addStatuses)
   }
 
-  def getInstanceTasks(id: String): Future[Seq[Task]] =
+  /**
+    * Get the tasks of an instance.
+    *
+    * @param id The instance ID
+    * @return The (possibly empty) list of tasks for the instance
+    */
+  def getInstanceTasks(id: String): Future[InstanceTasks] =
     for {
       allocations <- nomadClient.getAllocationsForJob(id)
     } yield {
-      allocations.payload
+      // In nomad the order hierarchy is "allocation -> task", but we reverse it to "task -> allocation".  Tasks have
+      // human-readable names whereas allocations have UUIDs; hence tasks serve better as top-level hierarchy in the UI.
+      val tasks = allocations.payload
         .flatMap(allocation => allocation.taskStates.mapValues(_ -> allocation.id))
         .groupBy(_._1)
         .map {
@@ -322,5 +328,6 @@ class InstanceService @Inject()(nomadClient: NomadClient,
             })
         }
         .toSeq
+      InstanceTasks(id, tasks)
     }
 }

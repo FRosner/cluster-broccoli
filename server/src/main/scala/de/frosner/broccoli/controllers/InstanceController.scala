@@ -101,8 +101,8 @@ case class InstanceController @Inject()(
 
   def tasks(id: String) = AsyncStack { implicit request =>
     for {
-      tasks <- instanceService.getInstanceTasks(id)
-    } yield Results.Ok(Json.toJson(tasks))
+      instanceTasks <- instanceService.getInstanceTasks(id)
+    } yield Results.Ok(Json.toJson(instanceTasks.tasks))
   }
 
 }

@@ -34,6 +34,7 @@ object OutgoingWsMessage {
     case object DeleteInstanceError extends Type
     case object UpdateInstanceSuccess extends Type
     case object UpdateInstanceError extends Type
+    case object GetInstanceTasksSuccess extends Type
   }
 
   final case class ListTemplates(templates: Seq[Template]) extends OutgoingWsMessage
@@ -47,6 +48,7 @@ object OutgoingWsMessage {
   final case class DeleteInstanceError(result: InstanceDeletionFailure) extends OutgoingWsMessage
   final case class UpdateInstanceSuccess(result: InstanceUpdateSuccess) extends OutgoingWsMessage
   final case class UpdateInstanceError(result: InstanceUpdateFailure) extends OutgoingWsMessage
+  final case class GetInstanceTasksSuccess(tasks: InstanceTasks) extends OutgoingWsMessage
 
   def fromResult(result: InstanceCreationResult): OutgoingWsMessage = result match {
     case create: InstanceCreationSuccess => AddInstanceSuccess(create)
@@ -72,17 +74,18 @@ object OutgoingWsMessage {
     */
   implicit val outgoingWsMessageWrites: Writes[OutgoingWsMessage] =
     Writes {
-      case ListTemplates(templates)      => write(Type.ListTemplates, templates)
-      case ListInstances(instances)      => write(Type.ListInstances, instances)
-      case AboutInfoMsg(info)            => write(Type.AboutInfo, info)
-      case Error(error)                  => write(Type.Error, error)
-      case Notification(message)         => write(Type.Notification, message)
-      case AddInstanceSuccess(result)    => write(Type.AddInstanceSuccess, result)
-      case AddInstanceError(result)      => write(Type.AddInstanceError, result)
-      case DeleteInstanceSuccess(result) => write(Type.DeleteInstanceSuccess, result)
-      case DeleteInstanceError(result)   => write(Type.DeleteInstanceError, result)
-      case UpdateInstanceSuccess(result) => write(Type.UpdateInstanceSuccess, result)
-      case UpdateInstanceError(result)   => write(Type.UpdateInstanceError, result)
+      case ListTemplates(templates)       => write(Type.ListTemplates, templates)
+      case ListInstances(instances)       => write(Type.ListInstances, instances)
+      case AboutInfoMsg(info)             => write(Type.AboutInfo, info)
+      case Error(error)                   => write(Type.Error, error)
+      case Notification(message)          => write(Type.Notification, message)
+      case AddInstanceSuccess(result)     => write(Type.AddInstanceSuccess, result)
+      case AddInstanceError(result)       => write(Type.AddInstanceError, result)
+      case DeleteInstanceSuccess(result)  => write(Type.DeleteInstanceSuccess, result)
+      case DeleteInstanceError(result)    => write(Type.DeleteInstanceError, result)
+      case UpdateInstanceSuccess(result)  => write(Type.UpdateInstanceSuccess, result)
+      case UpdateInstanceError(result)    => write(Type.UpdateInstanceError, result)
+      case GetInstanceTasksSuccess(tasks) => write(Type.GetInstanceTasksSuccess, tasks)
     }
 
   private def write[P](`type`: Type, payload: P)(implicit writesP: Writes[P]): JsObject =
