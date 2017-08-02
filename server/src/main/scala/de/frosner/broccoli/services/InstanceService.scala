@@ -1,20 +1,17 @@
 package de.frosner.broccoli.services
 
-import java.io._
 import java.net.ConnectException
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import javax.inject.{Inject, Singleton}
 
 import cats.data.EitherT
-import cats.instances.future._
-import de.frosner.broccoli.conf
+import cats.instances.future.{getClass, _}
 import de.frosner.broccoli.instances._
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.NomadClient
 import play.api.inject.ApplicationLifecycle
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.ws.WSClient
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -25,9 +22,9 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                                 templateService: TemplateService,
                                 nomadService: NomadService,
                                 consulService: ConsulService,
-                                ws: WSClient,
                                 applicationLifecycle: ApplicationLifecycle,
-                                instanceConfiguration: InstanceConfiguration) {
+                                instanceConfiguration: InstanceConfiguration,
+                                instanceStorage: InstanceStorage) {
   private val log = play.api.Logger(getClass)
   private lazy val pollingFrequencySeconds = instanceConfiguration.pollingFrequency
   log.info(s"Nomad/Consul polling frequency set to $pollingFrequencySeconds seconds")
@@ -42,43 +39,6 @@ class InstanceService @Inject()(nomadClient: NomadClient,
   sys.addShutdownHook {
     scheduledTask.cancel(false)
     scheduler.shutdown()
-  }
-
-  @volatile
-  private lazy val instanceStorage: InstanceStorage = {
-    val storageConfiguration = instanceConfiguration.storageConfiguration
-    val storageType = storageConfiguration.storageType
-    val maybeInstanceStorage = storageType match {
-      case conf.INSTANCES_STORAGE_TYPE_FS => {
-        Try(FileSystemInstanceStorage(new File(storageConfiguration.fsConfig.url)))
-      }
-      case conf.INSTANCES_STORAGE_TYPE_COUCHDB => {
-        val couchDBConfiguration = storageConfiguration.couchDBConfig
-        Try(CouchDBInstanceStorage(couchDBConfiguration.url, couchDBConfiguration.dbName, ws))
-      }
-      case default => throw new IllegalStateException(s"Illegal storage type '$storageType")
-    }
-    val instanceStorage = maybeInstanceStorage match {
-      case Success(storage) => storage
-      case Failure(throwable) =>
-        log.error(s"Cannot start instance storage: $throwable")
-        System.exit(1)
-        throw throwable
-    }
-    sys.addShutdownHook {
-      log.info("Closing instanceStorage (shutdown hook)")
-      if (!instanceStorage.isClosed) {
-        instanceStorage.close()
-      }
-    }
-    applicationLifecycle.addStopHook(() =>
-      Future {
-        log.info("Closing instanceStorage (stop hook)")
-        if (!instanceStorage.isClosed) {
-          instanceStorage.close()
-        }
-    })
-    instanceStorage
   }
 
   @volatile
