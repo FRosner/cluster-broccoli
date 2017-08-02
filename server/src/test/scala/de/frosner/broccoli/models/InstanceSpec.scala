@@ -7,8 +7,7 @@ import de.frosner.broccoli.RemoveSecrets.ToRemoveSecretsOps
 import org.scalacheck.Gen
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
-import org.specs2.mutable._
-import play.api.libs.json.{JsString, Json}
+import play.api.libs.json.JsString
 
 class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries with ToRemoveSecretsOps {
 
@@ -53,11 +52,26 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos = Map("age" -> ParameterInfo("age", None, Some("50"), secret = Some(false)))
+          parameterInfos = Map("age" -> ParameterInfo("age", None, Some("50"), secret = Some(false), `type` = None))
         ),
         parameterValues = Map("id" -> "Frank")
       )
       instance.templateJson === JsString("Frank 50")
+    }
+
+    "parse the template correctly when it has String parameters" in {
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = "{{id}}",
+          description = "desc",
+          parameterInfos =
+            Map("id" -> ParameterInfo("id", None, None, secret = Some(false), `type` = Some(ParameterType.String)))
+        ),
+        parameterValues = Map("id" -> "Frank")
+      )
+      instance.templateJson === JsString("Frank")
     }
 
     "parse the template correctly when it contains regex stuff that breacks with replaceAll" in {
@@ -81,7 +95,7 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos = Map("age" -> ParameterInfo("age", None, None, secret = Some(false)))
+          parameterInfos = Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = None))
         ),
         parameterValues = Map("id" -> "Frank", "age" -> "50")
       )
@@ -95,7 +109,7 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos = Map("age" -> ParameterInfo("age", None, None, secret = Some(false)))
+          parameterInfos = Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = None))
         ),
         parameterValues = Map("id" -> "Frank")
       ) must throwA[IllegalArgumentException]
