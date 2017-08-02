@@ -7,6 +7,7 @@ import javax.inject.{Inject, Singleton}
 import cats.data.EitherT
 import cats.instances.future.{getClass, _}
 import de.frosner.broccoli.instances._
+import de.frosner.broccoli.templates.TemplateRenderer
 import de.frosner.broccoli.instances.conf.InstanceConfiguration
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models._
@@ -161,12 +162,14 @@ class InstanceService @Inject()(nomadClient: NomadClient,
           Success(instance)
         }
       }
+
+      val templateRenderer = new TemplateRenderer()
       val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
         statusUpdater
           .map {
             // Update the instance status
             case JobStatus.Running =>
-              nomadService.startJob(instance.templateJson).map(_ => instance)
+              nomadService.startJob(templateRenderer.templateJson(instance)).map(_ => instance)
             case JobStatus.Stopped =>
               nomadService.deleteJob(instance.id).map(_ => instance)
             case other =>

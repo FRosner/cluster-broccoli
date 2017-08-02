@@ -45,31 +45,6 @@ case class Instance(id: String, template: Template, parameterValues: Map[String,
       )
     }
 
-  def templateJson: JsValue = {
-    val parameterInfos = template.parameterInfos
-    def sanitize(parameter: String, value: String) = {
-      val parameterType = parameterInfos.get(parameter).flatMap(_.`type`).getOrElse(ParameterType.Raw) // TODO get this from config
-      val sanitized = parameterType match {
-        case ParameterType.Raw    => value
-        case ParameterType.String => JsString(value)
-      }
-      sanitized.toString
-    }
-
-    val templateWithValues = parameterValues.foldLeft(template.template) {
-      case (intermediateTemplate, (parameter, value)) =>
-        intermediateTemplate.replaceAllLiterally(s"{{$parameter}}", sanitize(parameter, value))
-    }
-    val parameterDefaults = parameterInfos.flatMap {
-      case (parameterId, parameterInfo) => parameterInfo.default.map(default => (parameterId, default))
-    }
-    val templateWithDefaults = parameterDefaults.foldLeft(templateWithValues) {
-      case (intermediateTemplate, (parameter, value)) =>
-        intermediateTemplate.replaceAllLiterally(s"{{$parameter}}", sanitize(parameter, value))
-    }
-    Json.parse(templateWithDefaults)
-  }
-
 }
 
 object Instance {
