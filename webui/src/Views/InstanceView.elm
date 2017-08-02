@@ -2,8 +2,10 @@ module Views.InstanceView exposing (view)
 
 import Models.Resources.ServiceStatus exposing (..)
 import Models.Resources.JobStatus as JobStatus exposing (..)
-import Models.Resources.Role as Role exposing (Role(..))
-import Models.Resources.Task as Task exposing (..)
+import Models.Resources.Role exposing (Role(..))
+import Models.Resources.Task exposing (Task)
+import Models.Resources.TaskState exposing (TaskState(..))
+import Models.Resources.Allocation as Allocation exposing (Allocation)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 import Views.ParameterFormView as ParameterFormView
@@ -332,27 +334,60 @@ instanceDetailView instance instanceTasks maybeInstanceParameterForm visibleSecr
                             (List.map periodicRunView periodicRuns)
                         ]
                       )
-                    , instanceTasksView instanceTasks
+                    , [ instanceTasksView instanceTasks ]
                     ]
                 )
             ]
 
 
-instanceTasksView : Maybe (List Task) -> List (Html msg)
+instanceTasksView : Maybe (List Task) -> Html msg
 instanceTasksView task =
     case task of
         Nothing ->
-            [ h5 []
+            h5 []
                 [ text "Loading tasks and allocations "
                 , i [ class "fa fa-spinner fa-spin" ] []
                 ]
-            ]
 
         Just [] ->
-            [ h5 [] [ text "No tasks" ] ]
+            h5 [] [ text "No tasks" ]
 
         Just tasks ->
-            [ h5 [] [ text "Tasks and allocations" ] ]
+            table [ class "table table-condensed table-hover" ]
+                [ caption [] [ text "Tasks and allocations of this instance" ]
+                , thead []
+                    [ tr []
+                        [ th [] [ text "Task" ]
+                        , th [] [ text "Allocation" ]
+                        , th [] [ text "State" ]
+                        ]
+                    ]
+                , tbody []
+                    (List.concatMap (\task -> List.map ((,) task.name) task.allocations) tasks
+                        |> List.indexedMap instanceAllocationRow
+                    )
+                ]
+
+
+instanceAllocationRow : Int -> ( String, Allocation ) -> Html msg
+instanceAllocationRow index ( taskName, allocation ) =
+    let
+        ( description, labelKind ) =
+            case allocation.state of
+                TaskDead ->
+                    ( "dead", "label-danger" )
+
+                TaskPending ->
+                    ( "pending", "label-warning" )
+
+                TaskRunning ->
+                    ( "running", "label-success" )
+    in
+        tr []
+            [ th [ scope <| toString (index + 1) ] [ text taskName ]
+            , td [] [ code [] [ text allocation.id ] ]
+            , td [] [ span [ class ("label " ++ labelKind) ] [ text description ] ]
+            ]
 
 
 periodicRunView periodicRun =

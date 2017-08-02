@@ -15,6 +15,7 @@ import Models.Resources.InstanceDeletionSuccess exposing (InstanceDeletionSucces
 import Models.Resources.InstanceDeletionFailure exposing (InstanceDeletionFailure)
 import Models.Resources.InstanceUpdateSuccess exposing (InstanceUpdateSuccess)
 import Models.Resources.InstanceUpdateFailure exposing (InstanceUpdateFailure)
+import Models.Resources.InstanceTasks exposing (InstanceTasks)
 
 
 type AnyMsg
@@ -51,6 +52,7 @@ type IncomingWsMessage
     | DeleteInstanceErrorMessage InstanceDeletionFailure
     | UpdateInstanceSuccessMessage InstanceUpdateSuccess
     | UpdateInstanceErrorMessage InstanceUpdateFailure
+    | GetInstanceTasksSuccess InstanceTasks
     | ErrorMessage String
 
 
@@ -60,3 +62,4 @@ type OutgoingWsMessage
     = AddInstanceMessage InstanceCreation
     | DeleteInstanceMessage InstanceId
     | UpdateInstanceMessage InstanceUpdate
+    | GetInstanceTasks InstanceId
