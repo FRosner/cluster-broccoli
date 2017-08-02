@@ -4,6 +4,7 @@ import java.nio.file.FileSystems
 import javax.inject.Singleton
 
 import com.google.inject.{AbstractModule, Provides}
+import de.frosner.broccoli.instances.conf.InstanceConfiguration
 import net.codingwell.scalaguice.ScalaModule
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle

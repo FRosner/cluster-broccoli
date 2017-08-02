@@ -1,6 +1,7 @@
-package de.frosner.broccoli.instances
+package de.frosner.broccoli.instances.conf
 
 import com.typesafe.config.Config
+import de.frosner.broccoli.instances.StorageType
 
 final case class InstanceStorageConfiguration(storageType: StorageType,
                                               fsConfig: FileSystemInstanceStorageConfiguration,
