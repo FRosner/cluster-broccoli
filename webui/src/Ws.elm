@@ -14,12 +14,12 @@ import Models.Resources.InstanceUpdateSuccess as InstanceUpdateSuccess
 import Models.Resources.InstanceUpdateFailure as InstanceUpdateFailure
 import Model exposing (Model)
 import Navigation exposing (Location)
-import Utils.MaybeUtils as MaybeUtils
 import Updates.Messages exposing (..)
 import Messages exposing (..)
 import Array exposing (Array)
 import Set
 import Dict
+import Maybe.Extra exposing (isJust)
 import Websocket
 import Json.Encode as Encode
 import Utils.CmdUtils as CmdUtils
@@ -165,8 +165,8 @@ updateFromMessage model message =
                 | instances = Dict.insert result.instance.id result.instance model.instances
               }
             , if
-                (MaybeUtils.isDefined result.instanceUpdate.selectedTemplate
-                    || MaybeUtils.isDefined result.instanceUpdate.parameterValues
+                (isJust result.instanceUpdate.selectedTemplate
+                    || isJust result.instanceUpdate.parameterValues
                 )
               then
                 CmdUtils.sendMsg (UpdateBodyViewMsg (DiscardParameterValueChanges result.instance.id))
