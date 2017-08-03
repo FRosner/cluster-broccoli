@@ -12,7 +12,7 @@ import play.api.libs.json.{JsString, JsValue, Json}
   * @param instanceConfiguration
   */
 class TemplateRenderer @Inject()(instanceConfiguration: InstanceConfiguration) {
-  def templateJson(instance: Instance): JsValue = {
+  def renderJson(instance: Instance): JsValue = {
     val template = instance.template
     val parameterInfos = template.parameterInfos
     val parameterValues = instance.parameterValues

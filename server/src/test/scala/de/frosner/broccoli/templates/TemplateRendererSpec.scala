@@ -26,13 +26,13 @@ class TemplateRendererSpec extends Specification with Mockito {
 
     "render the template correctly when an instance contains a single parameter" in {
       val instance = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Frank"))
-      templateRenderer.templateJson(instance) === JsString("Frank")
+      templateRenderer.renderJson(instance) === JsString("Frank")
     }
 
     "parse the template correctly when it contains multiple parameters" in {
       val instance =
         Instance("1", Template("1", "\"{{id}} {{age}}\"", "desc", Map.empty), Map("id" -> "Frank", "age" -> "5"))
-      templateRenderer.templateJson(instance) === JsString("Frank 5")
+      templateRenderer.renderJson(instance) === JsString("Frank 5")
     }
 
     "parse the template correctly when it contains a defined default parameter" in {
@@ -46,7 +46,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> "Frank")
       )
-      templateRenderer.templateJson(instance) === JsString("Frank 50")
+      templateRenderer.renderJson(instance) === JsString("Frank 50")
     }
 
     "parse the template correctly when it has String parameters" in {
@@ -61,7 +61,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> "Frank")
       )
-      templateRenderer.templateJson(instance) === JsString("Frank")
+      templateRenderer.renderJson(instance) === JsString("Frank")
     }
 
     "parse the template correctly when it contains regex stuff that breacks with replaceAll" in {
@@ -75,7 +75,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> "^.*$")
       )
-      templateRenderer.templateJson(instance) === JsString("^.*$")
+      templateRenderer.renderJson(instance) === JsString("^.*$")
     }
 
     "parse the template correctly when it contains an undefined default parameter" in {
@@ -89,7 +89,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> "Frank", "age" -> "50")
       )
-      templateRenderer.templateJson(instance) === JsString("Frank 50")
+      templateRenderer.renderJson(instance) === JsString("Frank 50")
     }
   }
 }

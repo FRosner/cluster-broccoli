@@ -169,7 +169,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
           .map {
             // Update the instance status
             case JobStatus.Running =>
-              nomadService.startJob(templateRenderer.templateJson(instance)).map(_ => instance)
+              nomadService.startJob(templateRenderer.renderJson(instance)).map(_ => instance)
             case JobStatus.Stopped =>
               nomadService.deleteJob(instance.id).map(_ => instance)
             case other =>
