@@ -41,7 +41,6 @@ class InstanceModule extends AbstractModule with ScalaModule {
         val config = instanceConfig.storageConfiguration.couchDBConfig
         Try(CouchDBInstanceStorage(config.url, config.dbName, ws))
       }
-      case invalidStorageType => throw new IllegalArgumentException("Wrong instance storage type")
     }
 
     val instanceStorage = maybeInstanceStorage match {
