@@ -163,7 +163,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
         }
       }
 
-      val templateRenderer = new TemplateRenderer()
+      val templateRenderer = new TemplateRenderer(instanceConfiguration)
       val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
         statusUpdater
           .map {

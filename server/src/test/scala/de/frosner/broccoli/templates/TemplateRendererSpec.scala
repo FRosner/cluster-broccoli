@@ -1,12 +1,28 @@
 package de.frosner.broccoli.templates
 
+import de.frosner.broccoli.instances.StorageType
+import de.frosner.broccoli.instances.conf.{
+  CouchDBInstanceStorageConfiguration,
+  FileSystemInstanceStorageConfiguration,
+  InstanceConfiguration,
+  InstanceStorageConfiguration
+}
 import de.frosner.broccoli.models.{Instance, ParameterInfo, ParameterType, Template}
+import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import play.api.libs.json.JsString
 
-class TemplateRendererSpec extends Specification {
+class TemplateRendererSpec extends Specification with Mockito {
   "TemplateRenderer" should {
-    val templateRenderer = new TemplateRenderer()
+    val templateRenderer =
+      new TemplateRenderer(
+        InstanceConfiguration(
+          1,
+          ParameterType.Raw,
+          InstanceStorageConfiguration(StorageType.FileSystem,
+                                       FileSystemInstanceStorageConfiguration("path"),
+                                       CouchDBInstanceStorageConfiguration("path", "dbname"))
+        ))
 
     "render the template correctly when an instance contains a single parameter" in {
       val instance = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Frank"))

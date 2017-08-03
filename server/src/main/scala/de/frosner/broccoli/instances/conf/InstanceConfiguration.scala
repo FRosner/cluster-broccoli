@@ -1,8 +1,11 @@
 package de.frosner.broccoli.instances.conf
 
 import com.typesafe.config.Config
+import de.frosner.broccoli.models.ParameterType
 
-final case class InstanceConfiguration(pollingFrequency: Long, storageConfiguration: InstanceStorageConfiguration)
+final case class InstanceConfiguration(pollingFrequency: Long,
+                                       defaultParameterType: ParameterType,
+                                       storageConfiguration: InstanceStorageConfiguration)
 
 object InstanceConfiguration {
   protected val log = play.api.Logger(getClass)
@@ -16,7 +19,9 @@ object InstanceConfiguration {
 
     log.info(s"Nomad/Consul polling frequency set to $pollingFrequency seconds")
 
+    val defaultParameterType = ParameterType.withName(config.getString("parameters.defaultType"))
+
     val storageConfiguration = InstanceStorageConfiguration.fromConfig(config.getConfig("storage"))
-    InstanceConfiguration(pollingFrequency, storageConfiguration)
+    InstanceConfiguration(pollingFrequency, defaultParameterType, storageConfiguration)
   }
 }
