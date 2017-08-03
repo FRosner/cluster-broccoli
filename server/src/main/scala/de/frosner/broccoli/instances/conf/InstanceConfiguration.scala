@@ -2,6 +2,7 @@ package de.frosner.broccoli.instances.conf
 
 import com.typesafe.config.Config
 import de.frosner.broccoli.models.ParameterType
+import play.api.Logger
 
 /**
   * Instance Configuration
@@ -15,7 +16,7 @@ final case class InstanceConfiguration(pollingFrequency: Long,
                                        storageConfiguration: InstanceStorageConfiguration)
 
 object InstanceConfiguration {
-  protected val log = play.api.Logger(getClass)
+  private val log = Logger(getClass)
 
   def fromConfig(config: Config): InstanceConfiguration = {
     val pollingFrequency = config.getLong("polling.frequency")

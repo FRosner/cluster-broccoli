@@ -1,6 +1,7 @@
 package de.frosner.broccoli.instances.conf
 
 import com.typesafe.config.Config
+import play.api.Logger
 
 /**
   * Configuration for CouchDBInstanceStorage
@@ -11,7 +12,7 @@ import com.typesafe.config.Config
 final case class CouchDBInstanceStorageConfiguration(url: String, dbName: String)
 
 object CouchDBInstanceStorageConfiguration {
-  protected val log = play.api.Logger(getClass)
+  private val log = Logger(getClass)
 
   def fromConfig(config: Config): CouchDBInstanceStorageConfiguration = {
     val url = config.getString("url")

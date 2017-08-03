@@ -6,7 +6,7 @@ import javax.inject.Singleton
 import com.google.inject.{AbstractModule, Provides}
 import de.frosner.broccoli.instances.conf.InstanceConfiguration
 import net.codingwell.scalaguice.ScalaModule
-import play.api.Configuration
+import play.api.{Configuration, Logger}
 import play.api.inject.ApplicationLifecycle
 import play.api.libs.ws.WSClient
 
@@ -17,7 +17,8 @@ import scala.util.{Failure, Success, Try}
   * Provide Instance and InstanceStorage configuration from the Play configuration
   */
 class InstanceModule extends AbstractModule with ScalaModule {
-  protected val log = play.api.Logger(getClass)
+  private val log = Logger(getClass)
+
   override def configure(): Unit = {}
 
   @Provides

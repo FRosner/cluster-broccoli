@@ -1,6 +1,7 @@
 package de.frosner.broccoli.instances.conf
 
 import com.typesafe.config.Config
+import play.api.Logger
 
 /**
   * Configuration for FileSystemInstanceStorage
@@ -10,7 +11,7 @@ import com.typesafe.config.Config
 final case class FileSystemInstanceStorageConfiguration(url: String)
 
 object FileSystemInstanceStorageConfiguration {
-  protected val log = play.api.Logger(getClass)
+  private val log = Logger(getClass)
 
   def fromConfig(config: Config): FileSystemInstanceStorageConfiguration = {
     val url = config.getString("url")
