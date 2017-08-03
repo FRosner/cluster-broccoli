@@ -7,7 +7,7 @@ import enumeratum.{Enum, EnumEntry, PlayJsonEnum}
   *
   * @param entryName type name used in the Play configuration
   */
-sealed abstract class StorageType(override val entryName: String) extends EnumEntry with EnumEntry.Lowercase
+sealed abstract class StorageType(override val entryName: String) extends EnumEntry
 
 object StorageType extends Enum[StorageType] with PlayJsonEnum[StorageType] {
   val values = findValues
