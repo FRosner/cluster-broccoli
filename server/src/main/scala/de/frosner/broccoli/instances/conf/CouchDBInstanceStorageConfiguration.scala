@@ -2,6 +2,12 @@ package de.frosner.broccoli.instances.conf
 
 import com.typesafe.config.Config
 
+/**
+  * Configuration for CouchDBInstanceStorage
+  *
+  * @param url database address
+  * @param dbName database name where the instance information will be stored
+  */
 final case class CouchDBInstanceStorageConfiguration(url: String, dbName: String)
 
 object CouchDBInstanceStorageConfiguration {

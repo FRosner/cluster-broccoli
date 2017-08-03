@@ -6,6 +6,11 @@ import de.frosner.broccoli.instances.conf.InstanceConfiguration
 import de.frosner.broccoli.models.{Instance, ParameterType}
 import play.api.libs.json.{JsString, JsValue, Json}
 
+/**
+  * Renders json representation of the passed instance
+  *
+  * @param instanceConfiguration
+  */
 class TemplateRenderer @Inject()(instanceConfiguration: InstanceConfiguration) {
   def templateJson(instance: Instance): JsValue = {
     val template = instance.template

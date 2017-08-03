@@ -3,6 +3,13 @@ package de.frosner.broccoli.instances.conf
 import com.typesafe.config.Config
 import de.frosner.broccoli.models.ParameterType
 
+/**
+  * Instance Configuration
+  *
+  * @param pollingFrequency Integer (seconds) to control the time between asking Nomad and Consul for job and service status
+  * @param defaultParameterType The parameter type to be used by default for the instance parameters
+  * @param storageConfiguration Configuration specific to the instance storage type
+  */
 final case class InstanceConfiguration(pollingFrequency: Long,
                                        defaultParameterType: ParameterType,
                                        storageConfiguration: InstanceStorageConfiguration)

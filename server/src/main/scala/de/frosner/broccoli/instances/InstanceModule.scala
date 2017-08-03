@@ -13,6 +13,9 @@ import play.api.libs.ws.WSClient
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
+/**
+  * Provide Instance and InstanceStorage configuration from the Play configuration
+  */
 class InstanceModule extends AbstractModule with ScalaModule {
   protected val log = play.api.Logger(getClass)
   override def configure(): Unit = {}
