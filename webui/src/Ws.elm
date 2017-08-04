@@ -131,7 +131,10 @@ updateFromMessage model message =
                         |> List.map (\i -> ( i.id, i ))
                         |> Dict.fromList
               }
-            , Cmd.none
+            , model.bodyUiModel.expandedInstances
+                |> Set.toList
+                |> List.map (GetInstanceTasks >> SendWsMsg >> CmdUtils.sendMsg)
+                |> Cmd.batch
             )
 
         AddInstanceSuccessMessage result ->
