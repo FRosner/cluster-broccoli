@@ -319,12 +319,12 @@ class InstanceService @Inject()(nomadClient: NomadClient,
       // In nomad the order hierarchy is "allocation -> task", but we reverse it to "task -> allocation".  Tasks have
       // human-readable names whereas allocations have UUIDs; hence tasks serve better as top-level hierarchy in the UI.
       val tasks = allocations.payload
-        .flatMap(allocation => allocation.taskStates.mapValues(_ -> allocation.id))
+        .flatMap(allocation => allocation.taskStates.mapValues(_ -> allocation))
         .groupBy(_._1)
         .map {
           case (taskId, items) =>
             Task(taskId, items.map {
-              case (_, (events, allocationId)) => Task.Allocation(allocationId, events.state)
+              case (_, (events, allocation)) => Task.Allocation(allocation.id, allocation.clientStatus, events.state)
             })
         }
         .toSeq

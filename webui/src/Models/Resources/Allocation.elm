@@ -2,6 +2,7 @@ module Models.Resources.Allocation exposing (..)
 
 import Json.Decode as Decode exposing (field)
 import Models.Resources.TaskState as TaskState exposing (TaskState)
+import Models.Resources.ClientStatus as ClientStatus exposing (ClientStatus)
 
 
 {-| The type for the ID of an allocation.
@@ -14,7 +15,8 @@ type alias AllocationId =
 -}
 type alias Allocation =
     { id : AllocationId
-    , state : TaskState
+    , clientStatus : ClientStatus
+    , taskState : TaskState
     }
 
 
@@ -22,6 +24,7 @@ type alias Allocation =
 -}
 decoder : Decode.Decoder Allocation
 decoder =
-    Decode.map2 Allocation
+    Decode.map3 Allocation
         (field "id" Decode.string)
-        (field "state" TaskState.decoder)
+        (field "clientStatus" ClientStatus.decoder)
+        (field "taskState" TaskState.decoder)

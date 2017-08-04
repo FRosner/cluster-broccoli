@@ -5,6 +5,7 @@ import Models.Resources.JobStatus as JobStatus exposing (..)
 import Models.Resources.Role exposing (Role(..))
 import Models.Resources.Task exposing (Task)
 import Models.Resources.TaskState exposing (TaskState(..))
+import Models.Resources.ClientStatus exposing (ClientStatus(ClientComplete))
 import Models.Resources.Allocation as Allocation exposing (Allocation)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
@@ -340,9 +341,29 @@ instanceDetailView instance instanceTasks maybeInstanceParameterForm visibleSecr
             ]
 
 
+{-| Get active, ie, non-complete tasks of an allocation.
+
+Filter all complete allocations and attach the task name to every allocation.
+
+We remove complete allocations because Nomad 0.5.x (possibly other versions as
+well) returns all complete and thus dead allocations for stopped jobs, whereas
+it only returns non-complete allocations for running jobs.
+
+If we did not filter complete allocations the user would see dead allocations
+suddenly popping up in the UI when they stopped the task—which would be
+somewhat confusing.
+
+-}
+getActiveAllocations : Task -> List ( String, Allocation )
+getActiveAllocations task =
+    task.allocations
+        |> List.filter (.clientStatus >> (/=) ClientComplete)
+        |> List.map ((,) task.name)
+
+
 instanceTasksView : Maybe (List Task) -> Html msg
-instanceTasksView task =
-    case task of
+instanceTasksView instanceTasks =
+    case Maybe.map (List.concatMap getActiveAllocations) instanceTasks of
         Nothing ->
             h5 []
                 [ text "Loading tasks and allocations "
@@ -352,7 +373,7 @@ instanceTasksView task =
         Just [] ->
             h5 [] [ text "No tasks" ]
 
-        Just tasks ->
+        Just allocations ->
             table [ class "table table-condensed table-hover" ]
                 [ caption [] [ text "Tasks and allocations of this instance" ]
                 , thead []
@@ -362,10 +383,7 @@ instanceTasksView task =
                         , th [] [ text "State" ]
                         ]
                     ]
-                , tbody []
-                    (List.concatMap (\task -> List.map ((,) task.name) task.allocations) tasks
-                        |> List.indexedMap instanceAllocationRow
-                    )
+                , tbody [] <| List.indexedMap instanceAllocationRow allocations
                 ]
 
 
@@ -373,7 +391,7 @@ instanceAllocationRow : Int -> ( String, Allocation ) -> Html msg
 instanceAllocationRow index ( taskName, allocation ) =
     let
         ( description, labelKind ) =
-            case allocation.state of
+            case allocation.taskState of
                 TaskDead ->
                     ( "dead", "label-danger" )
 

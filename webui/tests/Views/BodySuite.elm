@@ -7,6 +7,7 @@ import Models.Resources.Instance as Instance exposing (Instance, InstanceId)
 import Models.Resources.JobStatus exposing (JobStatus(..))
 import Models.Resources.Task exposing (Task)
 import Models.Resources.TaskState exposing (TaskState(..))
+import Models.Resources.ClientStatus exposing (ClientStatus(..))
 import Models.Ui.BodyUiModel as BodyUiModel exposing (BodyUiModel)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Test exposing (test, describe, Test)
@@ -537,7 +538,10 @@ defaultTasks =
     , ( "i2"
       , [ { name = "t1"
           , allocations =
-                [ { id = "a1", state = TaskRunning }
+                [ { id = "a1"
+                  , taskState = TaskRunning
+                  , clientStatus = ClientRunning
+                  }
                 ]
           }
         ]

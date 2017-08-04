@@ -1,6 +1,6 @@
 package de.frosner.broccoli.models
 
-import de.frosner.broccoli.nomad.models.TaskState
+import de.frosner.broccoli.nomad.models.{ClientStatus, TaskState}
 import play.api.libs.json.{Json, Writes}
 
 /**
@@ -18,9 +18,10 @@ object Task {
     * A single allocation for a Task
     *
     * @param id The ID of the allocation
+    * @param clientStatus The client (=instance) status of this allocation
     * @param state The state of the task in this allocation
     */
-  final case class Allocation(id: String, state: TaskState)
+  final case class Allocation(id: String, clientStatus: ClientStatus, taskState: TaskState)
 
   object Allocation {
     implicit val allocationWrites: Writes[Allocation] = Json.writes[Allocation]
