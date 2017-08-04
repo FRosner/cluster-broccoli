@@ -12,5 +12,6 @@ object Allocation {
   implicit val allocationReads: Reads[Allocation] =
     ((JsPath \ "ID").read[String] and
       (JsPath \ "NodeID").read[String] and
-      (JsPath \ "TaskStates").read[Map[String, TaskStateEvents]])(Allocation.apply _)
+      (JsPath \ "TaskStates").readNullable[Map[String, TaskStateEvents]].map(_.getOrElse(Map.empty)))(
+      Allocation.apply _)
 }
