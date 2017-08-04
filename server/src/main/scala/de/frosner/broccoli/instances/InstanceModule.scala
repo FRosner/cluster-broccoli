@@ -31,23 +31,16 @@ class InstanceModule extends AbstractModule with ScalaModule {
   def provideInstanceStorage(instanceConfig: InstanceConfiguration,
                              ws: WSClient,
                              applicationLifecycle: ApplicationLifecycle): InstanceStorage = {
-    val maybeInstanceStorage = instanceConfig.storageConfiguration.storageType match {
+    val instanceStorage = instanceConfig.storageConfiguration.storageType match {
       case StorageType.FileSystem => {
         val config = instanceConfig.storageConfiguration.fsConfig
         val path = FileSystems.getDefault.getPath(config.url).toAbsolutePath
-        Try(FileSystemInstanceStorage(path.toFile))
+        FileSystemInstanceStorage(path.toFile)
       }
       case StorageType.CouchDB => {
         val config = instanceConfig.storageConfiguration.couchDBConfig
-        Try(CouchDBInstanceStorage(config.url, config.dbName, ws))
+        CouchDBInstanceStorage(config.url, config.dbName, ws)
       }
-    }
-
-    val instanceStorage = maybeInstanceStorage match {
-      case Success(storage) => storage
-      case Failure(throwable) =>
-        log.error(s"Cannot start instance storage: $throwable")
-        throw throwable
     }
 
     sys.addShutdownHook {
