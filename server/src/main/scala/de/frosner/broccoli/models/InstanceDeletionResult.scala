@@ -4,6 +4,7 @@ import play.api.libs.json.Json
 
 import InstanceWithStatus.{instanceWithStatusWrites}
 
+@deprecated("Replace with Either[InstanceError, InstanceDeletionSuccess]")
 sealed trait InstanceDeletionResult {
   val instanceId: String
 }
@@ -11,6 +12,7 @@ sealed trait InstanceDeletionResult {
 case class InstanceDeletionSuccess(instanceId: String, instanceWithStatus: InstanceWithStatus)
     extends InstanceDeletionResult
 
+@deprecated("Replace with generic InstanceError")
 case class InstanceDeletionFailure(instanceId: String, reason: String) extends InstanceDeletionResult
 
 object InstanceDeletionSuccess {
