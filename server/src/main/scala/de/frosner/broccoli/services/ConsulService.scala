@@ -19,7 +19,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   @volatile
-  var serviceStatuses: Map[String, Iterable[Service]] = Map.empty
+  var serviceStatuses: Map[String, Seq[Service]] = Map.empty
 
   private lazy val consulBaseUrl = configuration.getString(conf.CONSUL_URL_KEY).getOrElse(conf.CONSUL_URL_DEFAULT)
   private lazy val consulDomain: Option[String] = {
@@ -53,8 +53,8 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
     }
   }
 
-  def getServiceStatusesOrDefault(id: String): Iterable[Service] =
-    serviceStatuses.getOrElse(id, Iterable.empty)
+  def getServiceStatusesOrDefault(id: String): Seq[Service] =
+    serviceStatuses.getOrElse(id, Seq.empty)
 
   @volatile
   private var consulReachable: Boolean = false
@@ -63,8 +63,8 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
   def isConsulReachable: Boolean =
     consulReachable
 
-  def requestServiceStatus(jobId: String, serviceNames: Iterable[String]) = {
-    val serviceResponses: Iterable[Future[Seq[Service]]] = serviceNames.map { name =>
+  def requestServiceStatus(jobId: String, serviceNames: Seq[String]) = {
+    val serviceResponses = serviceNames.map { name =>
       val catalogQueryUrl = consulBaseUrl + s"/v1/catalog/service/$name"
       val catalogRequest = ws.url(catalogQueryUrl)
       val healthQueryUrl = consulBaseUrl + s"/v1/health/service/$name?passing"
@@ -118,7 +118,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
       status = ServiceStatus.Unknown
     )
     serviceResponse match {
-      case Success(services: Iterable[Seq[Service]]) => {
+      case Success(services) => {
         val healthyOrUnhealthyServices = services.flatten.map(service => (service.name, service)).toMap
         val allServices = serviceNames.map { name =>
           healthyOrUnhealthyServices.getOrElse(name, unknownService(name))

@@ -88,7 +88,7 @@ trait ServiceMocks {
     templateService
   }
 
-  def withInstances(instanceService: InstanceService, instances: Iterable[InstanceWithStatus]): InstanceService = {
+  def withInstances(instanceService: InstanceService, instances: Seq[InstanceWithStatus]): InstanceService = {
     requireMock(instanceService)
     when(instanceService.getInstances).thenReturn(instances)
     instances.foreach { instance =>

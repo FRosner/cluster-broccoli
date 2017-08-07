@@ -42,7 +42,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
           val nomadService = new NomadService(configuration, consulService, client)
           val jobId = "my-job"
           val result = Await.result(nomadService.requestServices(jobId), Duration(5, TimeUnit.SECONDS))
-          verify(consulService).requestServiceStatus(jobId, Iterable(service1.name))
+          verify(consulService).requestServiceStatus(jobId, Seq(service1.name))
           result === Seq(service1.name)
         }
       }
@@ -67,7 +67,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
           val nomadService = new NomadService(configuration, consulService, client)
           val jobId = "my-job"
           val result = Await.result(nomadService.requestServices(jobId), Duration(5, TimeUnit.SECONDS))
-          verify(consulService).requestServiceStatus(jobId, Iterable(service1.name))
+          verify(consulService).requestServiceStatus(jobId, Seq(service1.name))
           result === Seq(service1.name)
         }
       }

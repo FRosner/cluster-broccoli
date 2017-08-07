@@ -166,8 +166,8 @@ class InstanceService @Inject()(templateService: TemplateService,
 
   implicit val executionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  def getInstances: Iterable[InstanceWithStatus] =
-    instances.values.map(addStatuses)
+  def getInstances: Seq[InstanceWithStatus] =
+    instances.values.map(addStatuses).toSeq
 
   def getInstance(id: String): Option[InstanceWithStatus] =
     instances.get(id).map(addStatuses)

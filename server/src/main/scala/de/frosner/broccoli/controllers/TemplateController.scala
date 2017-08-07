@@ -2,6 +2,7 @@ package de.frosner.broccoli.controllers
 
 import javax.inject.Inject
 
+import de.frosner.broccoli.models.Template
 import de.frosner.broccoli.models.Template.templateApiWrites
 import de.frosner.broccoli.services.{SecurityService, TemplateService}
 import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
@@ -24,7 +25,7 @@ case class TemplateController @Inject()(templateService: TemplateService, overri
 
 object TemplateController {
 
-  def list(templateService: TemplateService) =
+  def list(templateService: TemplateService): Seq[Template] =
     templateService.getTemplates
 
 }
