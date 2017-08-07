@@ -3,24 +3,23 @@ package de.frosner.broccoli.controllers
 import java.io.FileNotFoundException
 import javax.inject.Inject
 
-import de.frosner.broccoli.models.JobStatusJson._
-import de.frosner.broccoli.models.JobStatus.JobStatus
+import de.frosner.broccoli.http.ToHttpResult.ops._
+import de.frosner.broccoli.models.InstanceCreation.instanceCreationReads
+import de.frosner.broccoli.models.InstanceUpdate.instanceUpdateReads
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.conf
-import Instance.instanceApiWrites
-import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
-import InstanceUpdate.{instanceUpdateReads, instanceUpdateWrites}
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
-import play.api.http.ContentTypes
-import play.api.libs.json.{JsObject, JsString, JsValue, Json}
-import play.api.mvc.{Action, Controller, Results}
+import play.api.libs.json.Json
+import play.api.mvc.{Controller, Results}
 import play.mvc.Http.HeaderNames
 
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success}
 
-case class InstanceController @Inject()(instanceService: InstanceService, override val securityService: SecurityService)
+case class InstanceController @Inject()(
+    instanceService: InstanceService,
+    override val securityService: SecurityService)(implicit context: ExecutionContext)
     extends Controller
     with Logging
     with BroccoliSimpleAuthorization {
@@ -74,7 +73,6 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
   }
 
   def update(id: String) = StackAction { implicit request =>
-    val maybeJsObject = request.body.asJson.map(_.as[JsObject])
     val maybeInstanceUpdate = request.body.asJson.map(_.validate[InstanceUpdate])
     maybeInstanceUpdate
       .map { instanceUpdateResult =>
@@ -101,6 +99,12 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
     }
   }
 
+  def tasks(id: String) = AsyncStack { implicit request =>
+    instanceService
+      .getInstanceTasks(loggedIn)(id)
+      .fold(error => error.toHttpResult, i => Results.Ok(Json.toJson(i.tasks)))
+  }
+
 }
 
 object InstanceController {
@@ -112,7 +116,7 @@ object InstanceController {
     val parameterInfos = template.parameterInfos
     val newParameterValues = instance.parameterValues.map {
       case (parameter, value) =>
-        val possiblyCensoredValue = if (parameterInfos.get(parameter).exists(_.secret == Some(true))) {
+        val possiblyCensoredValue = if (parameterInfos.get(parameter).flatMap(_.secret).getOrElse(false)) {
           null.asInstanceOf[String]
         } else {
           value
@@ -185,13 +189,12 @@ object InstanceController {
       )
     }
 
-  def list(maybeTemplateId: Option[String], loggedIn: Account, instanceService: InstanceService) = {
-    val instances = instanceService.getInstances
-    val filteredInstances = maybeTemplateId
+  def list(templateId: Option[String], loggedIn: Account, instanceService: InstanceService): Seq[InstanceWithStatus] = {
+    val filteredInstances = templateId
       .map(
-        id => instances.filter(_.instance.template.id == id)
+        id => instanceService.getInstances.filter(_.instance.template.id == id)
       )
-      .getOrElse(instances)
+      .getOrElse(instanceService.getInstances)
       .filter(_.instance.id.matches(loggedIn.instanceRegex))
     val anonymizedInstances = if (loggedIn.role != Role.Administrator) {
       filteredInstances.map(removeSecretVariables)

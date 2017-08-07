@@ -1,300 +1,206 @@
 module Ws exposing (update, listen, send, connect, disconnect)
 
-import Json.Decode as Decode exposing (field)
+import Json.Decode as Decode exposing (Decoder, field, andThen)
 import Models.Resources.AboutInfo as AboutInfo
 import Models.Resources.Template as Template
 import Models.Resources.Instance as Instance
+import Models.Resources.InstanceCreation as InstanceCreation
+import Models.Resources.InstanceUpdate as InstanceUpdate
 import Models.Resources.InstanceCreationSuccess as InstanceCreationSuccess
 import Models.Resources.InstanceCreationFailure as InstanceCreationFailure
 import Models.Resources.InstanceDeletionSuccess as InstanceDeletionSuccess
 import Models.Resources.InstanceDeletionFailure as InstanceDeletionFailure
 import Models.Resources.InstanceUpdateSuccess as InstanceUpdateSuccess
 import Models.Resources.InstanceUpdateFailure as InstanceUpdateFailure
-import Utils.MaybeUtils as MaybeUtils
+import Models.Resources.InstanceTasks as InstanceTasks
+import Model exposing (Model)
+import Navigation exposing (Location)
 import Updates.Messages exposing (..)
 import Messages exposing (..)
-import Array
+import Array exposing (Array)
 import Set
 import Dict
+import Maybe.Extra exposing (isJust)
 import Websocket
 import Json.Encode as Encode
 import Utils.CmdUtils as CmdUtils
 
 
-payloadFieldName =
-    "payload"
-
-
+wsRelativePath : String
 wsRelativePath =
     "/ws"
 
 
-update msg model =
-    let
-        msgType =
-            Decode.decodeString typeDecoder msg
-    in
-        case msgType of
-            Ok SetAboutInfoMsgType ->
-                let
-                    aboutInfoResult =
-                        Decode.decodeString (field payloadFieldName AboutInfo.decoder) msg
-                in
-                    case aboutInfoResult of
-                        Ok aboutInfo ->
-                            ( { model | aboutInfo = Just aboutInfo }
-                            , Cmd.none
-                            )
-
-                        Err error ->
-                            ( { model | aboutInfo = Nothing }
-                            , showError "Failed to decode about info: " error
-                            )
-
-            Ok ListTemplatesMsgType ->
-                let
-                    templatesResult =
-                        Decode.decodeString (field payloadFieldName (Decode.array Template.decoder)) msg
-                in
-                    case templatesResult of
-                        Ok templates ->
-                            let
-                                templatesDict =
-                                    templates
-                                        |> Array.toList
-                                        |> List.map (\t -> ( t.id, t ))
-                                        |> Dict.fromList
-                            in
-                                ( { model | templates = templatesDict }
-                                , Cmd.none
-                                )
-
-                        Err error ->
-                            ( { model | templates = Dict.empty }
-                            , showError "Failed to decode templates: " error
-                            )
-
-            Ok ListInstancesMsgType ->
-                let
-                    instancesResult =
-                        Decode.decodeString (field payloadFieldName (Decode.array Instance.decoder)) msg
-                in
-                    case instancesResult of
-                        Ok instances ->
-                            let
-                                instanceDict =
-                                    instances
-                                        |> Array.toList
-                                        |> List.map (\i -> ( i.id, i ))
-                                        |> Dict.fromList
-                            in
-                                ( { model | instances = instanceDict }
-                                , Cmd.none
-                                )
-
-                        Err error ->
-                            ( { model | instances = Dict.empty }
-                            , showError "Failed to decode instances: " error
-                            )
-
-            Ok InstanceCreationSuccessMsgType ->
-                let
-                    instanceCreationSuccessResult =
-                        Decode.decodeString (field payloadFieldName InstanceCreationSuccess.decoder) msg
-                in
-                    case instanceCreationSuccessResult of
-                        Ok instanceCreationSuccess ->
-                            let
-                                newInstances =
-                                    Dict.insert instanceCreationSuccess.instance.id instanceCreationSuccess.instance model.instances
-                            in
-                                ( { model | instances = newInstances }
-                                , CmdUtils.sendMsg
-                                    (UpdateBodyViewMsg
-                                        (ExpandNewInstanceForm False instanceCreationSuccess.instanceCreation.templateId)
-                                    )
-                                )
-
-                        Err error ->
-                            ( model
-                            , showError "Failed to decode the instance creation result: " error
-                            )
-
-            Ok InstanceCreationFailureMsgType ->
-                let
-                    instanceCreationFailureResult =
-                        Decode.decodeString (field payloadFieldName InstanceCreationFailure.decoder) msg
-                in
-                    case instanceCreationFailureResult of
-                        Ok instanceCreationFailure ->
-                            ( model
-                            , showError "Failed to create instance: " (toString instanceCreationFailure.reason)
-                            )
-
-                        Err error ->
-                            ( model
-                            , showError "Failed to decode the instance creation result: " error
-                            )
-
-            Ok InstanceDeletionSuccessMsgType ->
-                let
-                    instanceDeletionSuccessResult =
-                        Decode.decodeString (field payloadFieldName InstanceDeletionSuccess.decoder) msg
-                in
-                    case instanceDeletionSuccessResult of
-                        Ok instanceDeletionSuccess ->
-                            let
-                                bodyUiModel =
-                                    model.bodyUiModel
-                            in
-                                let
-                                    ( newBodyUiModel, newInstances ) =
-                                        ( { bodyUiModel | selectedInstances = (Set.remove instanceDeletionSuccess.instanceId model.bodyUiModel.selectedInstances) }
-                                        , Dict.remove instanceDeletionSuccess.instance.id model.instances
-                                        )
-                                in
-                                    ( { model
-                                        | bodyUiModel = newBodyUiModel
-                                        , instances = newInstances
-                                      }
-                                    , Cmd.none
-                                    )
-
-                        Err error ->
-                            ( model
-                            , showError "Failed to decode the instance deletion result: " error
-                            )
-
-            Ok InstanceDeletionFailureMsgType ->
-                let
-                    instanceDeletionFailureResult =
-                        Decode.decodeString (field payloadFieldName InstanceDeletionFailure.decoder) msg
-                in
-                    case instanceDeletionFailureResult of
-                        Ok instanceDeletionFailure ->
-                            ( model
-                            , showError "Failed to delete instance: " (toString instanceDeletionFailure.reason)
-                            )
-
-                        Err error ->
-                            ( model
-                            , showError "Failed to decode the instance deletion result: " error
-                            )
-
-            Ok InstanceUpdateSuccessMsgType ->
-                let
-                    instanceUpdateSuccessResult =
-                        Decode.decodeString (field payloadFieldName InstanceUpdateSuccess.decoder) msg
-                in
-                    case instanceUpdateSuccessResult of
-                        Ok instanceUpdateSuccess ->
-                            ( { model
-                                | instances = Dict.insert instanceUpdateSuccess.instance.id instanceUpdateSuccess.instance model.instances
-                              }
-                            , if
-                                (MaybeUtils.isDefined instanceUpdateSuccess.instanceUpdate.selectedTemplate
-                                    || MaybeUtils.isDefined instanceUpdateSuccess.instanceUpdate.parameterValues
-                                )
-                              then
-                                CmdUtils.sendMsg (UpdateBodyViewMsg (DiscardParameterValueChanges instanceUpdateSuccess.instance.id))
-                              else
-                                Cmd.none
-                            )
-
-                        Err error ->
-                            ( model
-                            , showError "Failed to decode the instance update result: " error
-                            )
-
-            Ok InstanceUpdateFailureMsgType ->
-                let
-                    instanceUpdateFailureResult =
-                        Decode.decodeString (field payloadFieldName InstanceUpdateFailure.decoder) msg
-                in
-                    case instanceUpdateFailureResult of
-                        Ok instanceUpdateFailure ->
-                            ( model
-                            , showError "Failed to update instance: " (toString instanceUpdateFailure.reason)
-                            )
-
-                        Err error ->
-                            ( model
-                            , showError "Failed to decode the instance update result: " error
-                            )
-
-            Ok ErrorMsgType ->
-                let
-                    errorResult =
-                        Decode.decodeString (field payloadFieldName (Decode.string)) msg
-                in
-                    case errorResult of
-                        Ok error ->
-                            ( model
-                            , showError "An error occured: " error
-                            )
-
-                        Err error ->
-                            ( model
-                            , showError "Failed to decode an error message: " error
-                            )
-
-            Err error ->
-                ( model
-                , showError "Failed to decode web socket message: " error
-                )
-
-            Ok (UnknownMsgType unknown) ->
-                ( model
-                , showError "Unknown message type: " unknown
-                )
+{-| Decode an incoming websocket message from JSON.
+-}
+incomingWsMessageDecoder : Decoder IncomingWsMessage
+incomingWsMessageDecoder =
+    field "messageType" Decode.string
+        |> andThen (field "payload" << payloadDecoder)
 
 
-typeDecoder =
-    field "messageType" typeDecoderDecoder
+{-| Decode the payload of a websocket message from JSON.
 
+Decode according to the message type.
 
-typeDecoderDecoder =
-    Decode.andThen
-        (\typeString -> Decode.succeed (stringToIncomingType typeString))
-        Decode.string
-
-
-stringToIncomingType s =
-    case s of
+-}
+payloadDecoder : String -> Decoder IncomingWsMessage
+payloadDecoder t =
+    case t of
         "aboutInfo" ->
-            SetAboutInfoMsgType
+            Decode.map SetAboutInfoMessage AboutInfo.decoder
 
         "listTemplates" ->
-            ListTemplatesMsgType
+            Decode.map ListTemplatesMessage <| Decode.array Template.decoder
 
         "listInstances" ->
-            ListInstancesMsgType
+            Decode.map ListInstancesMessage <| Decode.array Instance.decoder
 
         "error" ->
-            ErrorMsgType
+            Decode.map ErrorMessage Decode.string
 
         "addInstanceSuccess" ->
-            InstanceCreationSuccessMsgType
+            Decode.map AddInstanceSuccessMessage InstanceCreationSuccess.decoder
 
         "addInstanceError" ->
-            InstanceCreationFailureMsgType
+            Decode.map AddInstanceErrorMessage InstanceCreationFailure.decoder
 
         "deleteInstanceSuccess" ->
-            InstanceDeletionSuccessMsgType
+            Decode.map DeleteInstanceSuccessMessage InstanceDeletionSuccess.decoder
 
         "deleteInstanceError" ->
-            InstanceDeletionFailureMsgType
+            Decode.map DeleteInstanceErrorMessage InstanceDeletionFailure.decoder
 
         "updateInstanceSuccess" ->
-            InstanceUpdateSuccessMsgType
+            Decode.map UpdateInstanceSuccessMessage InstanceUpdateSuccess.decoder
 
         "updateInstanceError" ->
-            InstanceUpdateFailureMsgType
+            Decode.map UpdateInstanceErrorMessage InstanceUpdateFailure.decoder
 
-        anything ->
-            UnknownMsgType anything
+        "getInstanceTasksSuccess" ->
+            Decode.map GetInstanceTasksSuccess InstanceTasks.decoder
+
+        s ->
+            Decode.fail <| "Unknown message type: " ++ s
 
 
+{-| Update the given model from a raw incoming websocket message.
+
+Decode the incoming websocket message from the given JSON string and update the
+given model according to the message.
+
+Return the new model and a subsequent command to run.
+
+-}
+update : String -> Model -> ( Model, Cmd AnyMsg )
+update msg model =
+    case Decode.decodeString incomingWsMessageDecoder msg of
+        Ok message ->
+            updateFromMessage model message
+
+        Err error ->
+            ( model
+            , showError "Failed to decode web socket message: " error
+            )
+
+
+updateFromMessage : Model -> IncomingWsMessage -> ( Model, Cmd AnyMsg )
+updateFromMessage model message =
+    case message of
+        SetAboutInfoMessage info ->
+            ( { model | aboutInfo = Just info }
+            , Cmd.none
+            )
+
+        ListTemplatesMessage templates ->
+            ( { model
+                | templates =
+                    templates
+                        |> Array.toList
+                        |> List.map (\t -> ( t.id, t ))
+                        |> Dict.fromList
+              }
+            , Cmd.none
+            )
+
+        ListInstancesMessage instances ->
+            ( { model
+                | instances =
+                    instances
+                        |> Array.toList
+                        |> List.map (\i -> ( i.id, i ))
+                        |> Dict.fromList
+              }
+            , model.bodyUiModel.expandedInstances
+                |> Set.toList
+                |> List.map (GetInstanceTasks >> SendWsMsg >> CmdUtils.sendMsg)
+                |> Cmd.batch
+            )
+
+        AddInstanceSuccessMessage result ->
+            ( { model | instances = Dict.insert result.instance.id result.instance model.instances }
+            , CmdUtils.sendMsg
+                (UpdateBodyViewMsg
+                    (ExpandNewInstanceForm False result.instanceCreation.templateId)
+                )
+            )
+
+        AddInstanceErrorMessage error ->
+            ( model
+            , showError "Failed to create instance: " (toString error.reason)
+            )
+
+        DeleteInstanceSuccessMessage result ->
+            let
+                bodyUiModel =
+                    model.bodyUiModel
+            in
+                ( { model
+                    | bodyUiModel = { bodyUiModel | selectedInstances = (Set.remove result.instanceId model.bodyUiModel.selectedInstances) }
+                    , instances = Dict.remove result.instance.id model.instances
+                  }
+                , Cmd.none
+                )
+
+        DeleteInstanceErrorMessage error ->
+            ( model
+            , showError "Failed to delete instance: " (toString error.reason)
+            )
+
+        UpdateInstanceSuccessMessage result ->
+            ( { model
+                | instances = Dict.insert result.instance.id result.instance model.instances
+              }
+            , if
+                (isJust result.instanceUpdate.selectedTemplate
+                    || isJust result.instanceUpdate.parameterValues
+                )
+              then
+                CmdUtils.sendMsg (UpdateBodyViewMsg (DiscardParameterValueChanges result.instance.id))
+              else
+                Cmd.none
+            )
+
+        UpdateInstanceErrorMessage error ->
+            ( model
+            , showError "Failed to update instance: " (toString error.reason)
+            )
+
+        GetInstanceTasksSuccess result ->
+            ( { model | tasks = Dict.insert result.instanceId result.tasks model.tasks }, Cmd.none )
+
+        GetInstanceTasksFailure error ->
+            ( model
+            , showError "Failed to get tasks of the instance" (error.reason)
+            )
+
+        ErrorMessage error ->
+            ( model
+            , showError "An error occured: " error
+            )
+
+
+showError : String -> String -> Cmd AnyMsg
 showError prefix error =
     CmdUtils.sendMsg
         (UpdateErrorsMsg
@@ -304,44 +210,56 @@ showError prefix error =
         )
 
 
+connect : Location -> Cmd AnyMsg
 connect location =
     Websocket.connect WsConnectError WsConnect (locationToWsUrl location)
 
 
+disconnect : Location -> Cmd AnyMsg
 disconnect location =
     Websocket.disconnect WsErrorDisconnect WsSuccessDisconnect (locationToWsUrl location)
 
 
+listen : Location -> Sub AnyMsg
 listen location =
     Websocket.listen WsListenError WsMessage WsConnectionLost (locationToWsUrl location)
 
 
-send location object messageType =
+{-| Encode an outgoing websocket message to JSON.
+-}
+encodeOutgoingWsMessage : OutgoingWsMessage -> Encode.Value
+encodeOutgoingWsMessage message =
     let
-        wrappedMessage =
-            Encode.object [ ( "messageType", Encode.string (outgoingTypeToString messageType) ), ( "payload", object ) ]
+        ( messageType, payload ) =
+            case message of
+                AddInstanceMessage creation ->
+                    ( "addInstance", InstanceCreation.encoder creation )
 
-        -- putting a line break here fucks up the compiler???
+                DeleteInstanceMessage id ->
+                    ( "deleteInstance", Encode.string id )
+
+                UpdateInstanceMessage update ->
+                    ( "updateInstance", InstanceUpdate.encoder update )
+
+                GetInstanceTasks id ->
+                    ( "getInstanceTasks", Encode.string id )
     in
-        Websocket.send
-            WsSendError
-            WsSent
-            (locationToWsUrl location)
-            (Encode.encode 0 wrappedMessage)
+        Encode.object
+            [ ( "messageType", Encode.string messageType )
+            , ( "payload", payload )
+            ]
 
 
-outgoingTypeToString t =
-    case t of
-        CreateInstanceMsgType ->
-            "addInstance"
-
-        DeleteInstanceMsgType ->
-            "deleteInstance"
-
-        UpdateInstanceMsgType ->
-            "updateInstance"
+send : Location -> OutgoingWsMessage -> Cmd AnyMsg
+send location message =
+    Websocket.send
+        WsSendError
+        WsSent
+        (locationToWsUrl location)
+        (encodeOutgoingWsMessage message |> Encode.encode 0)
 
 
+locationToWsUrl : Location -> String
 locationToWsUrl location =
     let
         wsProtocol =

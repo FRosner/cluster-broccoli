@@ -10,7 +10,6 @@ import Utils.CmdUtils as CmdUtils
 import Messages exposing (..)
 import Dict exposing (Dict)
 import Set exposing (Set)
-import Json.Encode as Encode
 
 
 updateBodyView : UpdateBodyViewMsg -> BodyUiModel -> ( BodyUiModel, Cmd AnyMsg )
@@ -67,24 +66,38 @@ updateBodyView message oldBodyUiModel =
                 let
                     newExpandedInstances =
                         insertOrRemove expanded instanceId oldExpandedInstances
+
+                    command =
+                        if expanded then
+                            CmdUtils.sendMsg (SendWsMsg (GetInstanceTasks instanceId))
+                        else
+                            Cmd.none
                 in
                     ( { oldBodyUiModel
                         | expandedInstances = newExpandedInstances
                         , attemptedDeleteInstances = Nothing
                       }
-                    , Cmd.none
+                    , command
                     )
 
             AllInstancesExpanded instanceIds expanded ->
                 let
                     newExpandedInstances =
                         unionOrDiff expanded oldExpandedInstances instanceIds
+
+                    command =
+                        if expanded then
+                            Set.toList instanceIds
+                                |> List.map (GetInstanceTasks >> SendWsMsg >> CmdUtils.sendMsg)
+                                |> Cmd.batch
+                        else
+                            Cmd.none
                 in
                     ( { oldBodyUiModel
                         | expandedInstances = newExpandedInstances
                         , attemptedDeleteInstances = Nothing
                       }
-                    , Cmd.none
+                    , command
                     )
 
             EnterEditInstanceParameterValue instance parameter value ->
@@ -145,7 +158,7 @@ updateBodyView message oldBodyUiModel =
 
             ApplyParameterValueChanges instance maybeInstanceParameterForm template ->
                 let
-                    instanceUpdateJson =
+                    message =
                         (InstanceUpdate
                             instance.id
                             Nothing
@@ -160,13 +173,11 @@ updateBodyView message oldBodyUiModel =
                             )
                             (Maybe.andThen (\f -> (Maybe.map (\t -> t.id)) f.selectedTemplate) maybeInstanceParameterForm)
                         )
-                            |> InstanceUpdate.encoder
                 in
                     ( { oldBodyUiModel
                         | attemptedDeleteInstances = Nothing
                       }
-                    , CmdUtils.sendMsg (SendWsMsg instanceUpdateJson UpdateInstanceMsgType)
-                      -- TODO avoid this by wrapping directly based on the message type
+                    , CmdUtils.sendMsg (SendWsMsg (UpdateInstanceMessage message))
                     )
 
             ToggleEditInstanceSecretVisibility instanceId parameter ->
@@ -222,43 +233,37 @@ updateBodyView message oldBodyUiModel =
 
             SubmitNewInstanceCreation templateId parameterValues ->
                 let
-                    instanceCreationJson =
+                    message =
                         parameterValues
                             |> Dict.map (\k v -> Maybe.withDefault "" v)
                             |> InstanceCreation templateId
-                            |> InstanceCreation.encoder
                 in
                     ( { oldBodyUiModel
                         | attemptedDeleteInstances = Nothing
                       }
-                    , CmdUtils.sendMsg (SendWsMsg instanceCreationJson CreateInstanceMsgType)
-                      -- TODO avoid this by wrapping directly based on the message type
+                    , CmdUtils.sendMsg (SendWsMsg (AddInstanceMessage message))
                     )
 
             StartInstance instanceId ->
                 let
-                    instanceUpdateJson =
+                    message =
                         (InstanceUpdate instanceId (Just JobStatus.JobRunning) Nothing Nothing)
-                            |> InstanceUpdate.encoder
                 in
                     ( { oldBodyUiModel
                         | attemptedDeleteInstances = Nothing
                       }
-                    , CmdUtils.sendMsg (SendWsMsg instanceUpdateJson UpdateInstanceMsgType)
-                      -- TODO avoid this by wrapping directly based on the message type
+                    , CmdUtils.sendMsg (SendWsMsg (UpdateInstanceMessage message))
                     )
 
             StopInstance instanceId ->
                 let
-                    instanceUpdateJson =
+                    message =
                         (InstanceUpdate instanceId (Just JobStatus.JobStopped) Nothing Nothing)
-                            |> InstanceUpdate.encoder
                 in
                     ( { oldBodyUiModel
                         | attemptedDeleteInstances = Nothing
                       }
-                    , CmdUtils.sendMsg (SendWsMsg instanceUpdateJson UpdateInstanceMsgType)
-                      -- TODO avoid this by wrapping directly based on the message type
+                    , CmdUtils.sendMsg (SendWsMsg (UpdateInstanceMessage message))
                     )
 
             DiscardNewInstanceCreation templateId ->
@@ -275,7 +280,7 @@ updateBodyView message oldBodyUiModel =
                   }
                 , selectedInstances
                     |> Set.toList
-                    |> List.map (\id -> CmdUtils.sendMsg (SendWsMsg (Encode.string id) DeleteInstanceMsgType))
+                    |> List.map (\id -> CmdUtils.sendMsg (SendWsMsg (DeleteInstanceMessage id)))
                     |> Cmd.batch
                 )
 
@@ -292,7 +297,7 @@ updateBodyView message oldBodyUiModel =
                   }
                 , selectedInstances
                     |> Set.toList
-                    |> List.map (\id -> CmdUtils.sendMsg (SendWsMsg (InstanceUpdate.encoder (InstanceUpdate id (Just JobStatus.JobRunning) Nothing Nothing)) UpdateInstanceMsgType))
+                    |> List.map (\id -> CmdUtils.sendMsg (SendWsMsg (UpdateInstanceMessage (InstanceUpdate id (Just JobStatus.JobRunning) Nothing Nothing))))
                     |> Cmd.batch
                 )
 
@@ -302,7 +307,7 @@ updateBodyView message oldBodyUiModel =
                   }
                 , selectedInstances
                     |> Set.toList
-                    |> List.map (\id -> CmdUtils.sendMsg (SendWsMsg (InstanceUpdate.encoder (InstanceUpdate id (Just JobStatus.JobStopped) Nothing Nothing)) UpdateInstanceMsgType))
+                    |> List.map (\id -> CmdUtils.sendMsg (SendWsMsg (UpdateInstanceMessage (InstanceUpdate id (Just JobStatus.JobStopped) Nothing Nothing))))
                     |> Cmd.batch
                 )
 

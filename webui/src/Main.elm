@@ -30,9 +30,9 @@ init location =
 update : AnyMsg -> Model -> ( Model, Cmd AnyMsg )
 update msg model =
     case msg of
-        SendWsMsg jsonObject wsMsgType ->
+        SendWsMsg message ->
             ( model
-            , Ws.send model.location jsonObject wsMsgType
+            , Ws.send model.location message
             )
 
         AttemptReconnect ->
@@ -176,6 +176,7 @@ view model =
             (Views.Body.view
                 (Dict.filter (\k v -> String.contains model.templateFilter k) model.templates)
                 (Dict.filter (\k v -> String.contains model.instanceFilter k) model.instances)
+                model.tasks
                 model.bodyUiModel
                 (Maybe.map (\i -> i.authInfo.userInfo.role) model.aboutInfo)
             )

@@ -25,30 +25,13 @@ class WebSocketService @Inject()(templateService: TemplateService,
   private val task = new Runnable {
     def run() = {
       broadcast { user =>
-        Json.toJson(
-          OutgoingWsMessage(
-            OutgoingWsMessageType.AboutInfoMsg,
-            AboutController.about(aboutInfoService, user)
-          )
-        )
+        Json.toJson(OutgoingWsMessage.AboutInfoMsg(AboutController.about(aboutInfoService, user)))
       }
-
-      broadcast { user =>
-        Json.toJson(
-          OutgoingWsMessage(
-            OutgoingWsMessageType.ListTemplatesMsg,
-            TemplateController.list(templateService)
-          )
-        )
+      broadcast { _ =>
+        Json.toJson(OutgoingWsMessage.ListTemplates(TemplateController.list(templateService)))
       }
-
       broadcast { user =>
-        Json.toJson(
-          OutgoingWsMessage(
-            OutgoingWsMessageType.ListInstancesMsg,
-            InstanceController.list(None, user, instanceService)
-          )
-        )
+        Json.toJson(OutgoingWsMessage.ListInstances(InstanceController.list(None, user, instanceService)))
       }
     }
   }

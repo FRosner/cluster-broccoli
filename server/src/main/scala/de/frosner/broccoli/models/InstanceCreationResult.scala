@@ -5,6 +5,7 @@ import play.api.libs.json.Json
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
 import InstanceWithStatus.{instanceWithStatusWrites}
 
+@deprecated("Replace with Either[InstanceError, InstanceCreationSuccess]")
 sealed trait InstanceCreationResult {
   val instanceCreation: InstanceCreation
 }
@@ -12,6 +13,7 @@ sealed trait InstanceCreationResult {
 case class InstanceCreationSuccess(instanceCreation: InstanceCreation, instanceWithStatus: InstanceWithStatus)
     extends InstanceCreationResult
 
+@deprecated("Replace with generic InstanceError")
 case class InstanceCreationFailure(instanceCreation: InstanceCreation, reason: String) extends InstanceCreationResult
 
 object InstanceCreationSuccess {

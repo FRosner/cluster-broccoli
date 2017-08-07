@@ -8,6 +8,7 @@ import play.api.test._
 import Instance.instanceApiWrites
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
 import play.api.http.HeaderNames
+import play.api.libs.concurrent.Execution.Implicits._
 
 import scala.util.{Failure, Success}
 
@@ -67,7 +68,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         status = ServiceStatus.Unknown
       )
     ),
-    periodicRuns = Iterable.empty
+    periodicRuns = Seq.empty
   )
   val instances = Seq(instanceWithStatus)
 
@@ -934,8 +935,8 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           )
         ),
         status = JobStatus.Unknown,
-        services = Iterable.empty,
-        periodicRuns = Iterable.empty
+        services = Seq.empty,
+        periodicRuns = Seq.empty
       )
       val expectedInstance = InstanceWithStatus(
         instance = Instance(
@@ -959,8 +960,8 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           )
         ),
         status = JobStatus.Unknown,
-        services = Iterable.empty,
-        periodicRuns = Iterable.empty
+        services = Seq.empty,
+        periodicRuns = Seq.empty
       )
       InstanceController.removeSecretVariables(originalInstance) === expectedInstance
     }
@@ -994,8 +995,8 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           )
         ),
         status = JobStatus.Unknown,
-        services = Iterable.empty,
-        periodicRuns = Iterable.empty
+        services = Seq.empty,
+        periodicRuns = Seq.empty
       )
       val expectedInstance = InstanceWithStatus(
         instance = Instance(
@@ -1025,8 +1026,8 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           )
         ),
         status = JobStatus.Unknown,
-        services = Iterable.empty,
-        periodicRuns = Iterable.empty
+        services = Seq.empty,
+        periodicRuns = Seq.empty
       )
       InstanceController.removeSecretVariables(originalInstance) === expectedInstance
     }

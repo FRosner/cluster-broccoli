@@ -1,0 +1,50 @@
+[
+  {
+    "ID": "520bc6c3-53c9-fd2e-5bea-7d0b9dbef254",
+    "EvalID": "2da4bad2-9047-f64f-07c9-456e3913dc5f",
+    "Name": "tvftarcxrPoy9wNhghqQogihjha.http-group[0]",
+    "NodeID": "cf3338e9-5ed0-88ef-df7b-9dd9708130c8",
+    "JobID": "tvftarcxrPoy9wNhghqQogihjha",
+    "TaskGroup": "http-group",
+    "DesiredStatus": "run",
+    "DesiredDescription": "",
+    "ClientStatus": "running",
+    "ClientDescription": "",
+    "TaskStates": {
+      "http-task": {
+        "State": "running",
+        "Events": [
+          {
+            "Type": "Received",
+            "Time": 1500896396933247233,
+            "RestartReason": "",
+            "DriverError": "",
+            "ExitCode": 0,
+            "Signal": 0,
+            "Message": "",
+            "KillError": "",
+            "StartDelay": 0,
+            "DownloadError": "",
+            "ValidationError": ""
+          },
+          {
+            "Type": "Started",
+            "Time": 1500896396967924930,
+            "RestartReason": "",
+            "DriverError": "",
+            "ExitCode": 0,
+            "Signal": 0,
+            "Message": "",
+            "KillError": "",
+            "StartDelay": 0,
+            "DownloadError": "",
+            "ValidationError": ""
+          }
+        ]
+      }
+    },
+    "CreateIndex": 8,
+    "ModifyIndex": 10,
+    "CreateTime": 1500896396923430455
+  }
+]

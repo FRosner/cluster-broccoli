@@ -5,25 +5,28 @@ import java.net.ConnectException
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import javax.inject.{Inject, Singleton}
 
-import de.frosner.broccoli.models._
+import cats.data.EitherT
+import cats.instances.future._
+import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.JobStatus.JobStatus
+import de.frosner.broccoli.models._
+import de.frosner.broccoli.nomad.NomadClient
 import de.frosner.broccoli.util.Logging
 import play.api.Configuration
+import play.api.inject.ApplicationLifecycle
 import play.api.libs.ws.WSClient
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
-import de.frosner.broccoli.conf
-import play.api.inject.ApplicationLifecycle
-
-import scala.concurrent.Future
 
 @Singleton
-class InstanceService @Inject()(templateService: TemplateService,
+class InstanceService @Inject()(nomadClient: NomadClient,
+                                templateService: TemplateService,
                                 nomadService: NomadService,
                                 consulService: ConsulService,
                                 ws: WSClient,
                                 applicationLifecycle: ApplicationLifecycle,
-                                configuration: Configuration)
+                                configuration: Configuration)(implicit val executionContext: ExecutionContext)
     extends Logging {
 
   private lazy val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
@@ -164,10 +167,8 @@ class InstanceService @Inject()(templateService: TemplateService,
     )
   }
 
-  implicit val executionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
-
-  def getInstances: Iterable[InstanceWithStatus] =
-    instances.values.map(addStatuses)
+  def getInstances: Seq[InstanceWithStatus] =
+    instances.values.map(addStatuses).toSeq
 
   def getInstance(id: String): Option[InstanceWithStatus] =
     instances.get(id).map(addStatuses)
@@ -306,4 +307,31 @@ class InstanceService @Inject()(templateService: TemplateService,
     tryDelete.map(addStatuses)
   }
 
+  /**
+    * Get the tasks of an instance.
+    *
+    * @param user The user who tries to access tasks
+    * @param id The instance ID
+    * @return The (possibly empty) list of tasks for the instance or an error if any
+    */
+  def getInstanceTasks(user: Account)(id: String): EitherT[Future, InstanceError, InstanceTasks] =
+    EitherT
+      .pure(id)
+      .ensure(InstanceError.NotFound(id): InstanceError)(_.matches(user.instanceRegex))
+      .semiflatMap(nomadClient.getAllocationsForJob)
+      .map { allocations =>
+        // In nomad the order hierarchy is "allocation -> task", but we reverse it to "task -> allocation".  Tasks have
+        // human-readable names whereas allocations have UUIDs; hence tasks serve better as top-level hierarchy in the UI.
+        val tasks = allocations.payload
+          .flatMap(allocation => allocation.taskStates.mapValues(_ -> allocation))
+          .groupBy(_._1)
+          .map {
+            case (taskId, items) =>
+              Task(taskId, items.map {
+                case (_, (events, allocation)) => Task.Allocation(allocation.id, allocation.clientStatus, events.state)
+              })
+          }
+          .toSeq
+        InstanceTasks(id, tasks)
+      }
 }

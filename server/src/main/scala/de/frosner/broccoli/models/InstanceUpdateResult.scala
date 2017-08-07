@@ -4,6 +4,7 @@ import play.api.libs.json.Json
 
 import InstanceWithStatus.{instanceWithStatusWrites}
 
+@deprecated("Replace Either[InstanceError, InstanceUpdateSuccess]")
 sealed trait InstanceUpdateResult {
   val instanceUpdate: InstanceUpdate
 }
@@ -11,6 +12,7 @@ sealed trait InstanceUpdateResult {
 case class InstanceUpdateSuccess(instanceUpdate: InstanceUpdate, instanceWithStatus: InstanceWithStatus)
     extends InstanceUpdateResult
 
+@deprecated("Replace with generic InstanceError")
 case class InstanceUpdateFailure(instanceUpdate: InstanceUpdate, reason: String) extends InstanceUpdateResult
 
 object InstanceUpdateSuccess {

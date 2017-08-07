@@ -1,14 +1,27 @@
 module Messages exposing (..)
 
 import Updates.Messages exposing (..)
-import Json.Decode
+import Array exposing (Array)
 import Navigation exposing (Location)
 import Websocket exposing (..)
+import Models.Resources.Instance exposing (Instance, InstanceId)
+import Models.Resources.InstanceError exposing (InstanceError)
+import Models.Resources.InstanceCreation exposing (InstanceCreation)
+import Models.Resources.InstanceUpdate exposing (InstanceUpdate)
+import Models.Resources.AboutInfo exposing (AboutInfo)
+import Models.Resources.Template exposing (Template)
+import Models.Resources.InstanceCreationSuccess exposing (InstanceCreationSuccess)
+import Models.Resources.InstanceCreationFailure exposing (InstanceCreationFailure)
+import Models.Resources.InstanceDeletionSuccess exposing (InstanceDeletionSuccess)
+import Models.Resources.InstanceDeletionFailure exposing (InstanceDeletionFailure)
+import Models.Resources.InstanceUpdateSuccess exposing (InstanceUpdateSuccess)
+import Models.Resources.InstanceUpdateFailure exposing (InstanceUpdateFailure)
+import Models.Resources.InstanceTasks exposing (InstanceTasks)
 
 
 type AnyMsg
     = UpdateErrorsMsg Updates.Messages.UpdateErrorsMsg
-    | SendWsMsg Json.Decode.Value OutgoingWsMsgType
+    | SendWsMsg OutgoingWsMessage
     | WsMessage ( Url, Message )
     | WsListenError ( Url, ErrorMessage )
     | WsConnectionLost Url
@@ -28,21 +41,27 @@ type AnyMsg
     | NoOp
 
 
-type IncomingWsMsgType
-    = SetAboutInfoMsgType
-    | ListTemplatesMsgType
-    | ListInstancesMsgType
-    | ErrorMsgType
-    | InstanceCreationSuccessMsgType
-    | InstanceCreationFailureMsgType
-    | InstanceDeletionSuccessMsgType
-    | InstanceDeletionFailureMsgType
-    | InstanceUpdateSuccessMsgType
-    | InstanceUpdateFailureMsgType
-    | UnknownMsgType String
+{-| Incoming web socket messages, send from the server to the client.
+-}
+type IncomingWsMessage
+    = SetAboutInfoMessage AboutInfo
+    | ListTemplatesMessage (Array Template)
+    | ListInstancesMessage (Array Instance)
+    | AddInstanceSuccessMessage InstanceCreationSuccess
+    | AddInstanceErrorMessage InstanceCreationFailure
+    | DeleteInstanceSuccessMessage InstanceDeletionSuccess
+    | DeleteInstanceErrorMessage InstanceDeletionFailure
+    | UpdateInstanceSuccessMessage InstanceUpdateSuccess
+    | UpdateInstanceErrorMessage InstanceUpdateFailure
+    | GetInstanceTasksSuccess InstanceTasks
+    | GetInstanceTasksFailure InstanceError
+    | ErrorMessage String
 
 
-type OutgoingWsMsgType
-    = CreateInstanceMsgType
-    | DeleteInstanceMsgType
-    | UpdateInstanceMsgType
+{-| The type of an outgoing websocket message.
+-}
+type OutgoingWsMessage
+    = AddInstanceMessage InstanceCreation
+    | DeleteInstanceMessage InstanceId
+    | UpdateInstanceMessage InstanceUpdate
+    | GetInstanceTasks InstanceId
