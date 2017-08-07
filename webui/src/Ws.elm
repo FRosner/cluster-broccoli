@@ -189,6 +189,11 @@ updateFromMessage model message =
         GetInstanceTasksSuccess result ->
             ( { model | tasks = Dict.insert result.instanceId result.tasks model.tasks }, Cmd.none )
 
+        GetInstanceTasksFailure error ->
+            ( model
+            , showError "Failed to get tasks of the instance" (error.reason)
+            )
+
         ErrorMessage error ->
             ( model
             , showError "An error occured: " error

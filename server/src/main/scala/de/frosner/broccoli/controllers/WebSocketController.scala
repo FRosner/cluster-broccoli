@@ -2,15 +2,14 @@ package de.frosner.broccoli.controllers
 
 import javax.inject.Inject
 
-import cats.instances.future._
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.BroccoliWebsocketSecurity
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee._
 import play.api.libs.json._
 import play.api.mvc._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
 
@@ -50,12 +49,7 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
             case IncomingWsMessage.GetInstanceTasks(instanceId) =>
               instanceService
                 .getInstanceTasks(user)(instanceId)
-                .map[OutgoingWsMessage](OutgoingWsMessage.GetInstanceTasksSuccess)
-                .getOrElse(
-                  OutgoingWsMessage.GetInstanceTasksFailure(
-                    instanceId = instanceId,
-                    message = "Instance not found"
-                  ))
+                .fold(OutgoingWsMessage.GetInstanceTasksFailure, OutgoingWsMessage.GetInstanceTasksSuccess)
           }
           .recoverTotal { error =>
             Logger.warn(s"Can't parse a message from $connectionId: $error")

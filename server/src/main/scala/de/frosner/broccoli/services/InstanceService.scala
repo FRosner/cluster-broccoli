@@ -5,20 +5,19 @@ import java.net.ConnectException
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import javax.inject.{Inject, Singleton}
 
-import cats.data.OptionT
+import cats.data.EitherT
 import cats.instances.future._
-import de.frosner.broccoli.models._
+import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.JobStatus.JobStatus
+import de.frosner.broccoli.models._
+import de.frosner.broccoli.nomad.NomadClient
 import de.frosner.broccoli.util.Logging
 import play.api.Configuration
+import play.api.inject.ApplicationLifecycle
 import play.api.libs.ws.WSClient
 
-import scala.util.{Failure, Success, Try}
-import de.frosner.broccoli.conf
-import de.frosner.broccoli.nomad.NomadClient
-import play.api.inject.ApplicationLifecycle
-
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
 @Singleton
 class InstanceService @Inject()(nomadClient: NomadClient,
@@ -313,12 +312,12 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     *
     * @param user The user who tries to access tasks
     * @param id The instance ID
-    * @return The (possibly empty) list of tasks for the instance
+    * @return The (possibly empty) list of tasks for the instance or an error if any
     */
-  def getInstanceTasks(user: Account)(id: String): OptionT[Future, InstanceTasks] =
-    OptionT
-      .pure[Future, String](id)
-      .filter(_.matches(user.instanceRegex))
+  def getInstanceTasks(user: Account)(id: String): EitherT[Future, InstanceError, InstanceTasks] =
+    EitherT
+      .pure(id)
+      .ensure(InstanceError.NotFound(id): InstanceError)(_.matches(user.instanceRegex))
       .semiflatMap(nomadClient.getAllocationsForJob)
       .map { allocations =>
         // In nomad the order hierarchy is "allocation -> task", but we reverse it to "task -> allocation".  Tasks have

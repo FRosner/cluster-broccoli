@@ -3,14 +3,14 @@ package de.frosner.broccoli.controllers
 import java.io.FileNotFoundException
 import javax.inject.Inject
 
-import cats.instances.future._
+import de.frosner.broccoli.http.ToHttpResult.ops._
 import de.frosner.broccoli.models.InstanceCreation.instanceCreationReads
 import de.frosner.broccoli.models.InstanceUpdate.instanceUpdateReads
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.Json
 import play.api.mvc.{Controller, Results}
 import play.mvc.Http.HeaderNames
 
@@ -102,8 +102,7 @@ case class InstanceController @Inject()(
   def tasks(id: String) = AsyncStack { implicit request =>
     instanceService
       .getInstanceTasks(loggedIn)(id)
-      .map(i => Results.Ok(Json.toJson(i.tasks)))
-      .getOrElse(NotFound(s"Instance $id not found."))
+      .fold(error => error.toHttpResult, i => Results.Ok(Json.toJson(i.tasks)))
   }
 
 }

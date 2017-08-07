@@ -5,6 +5,7 @@ import Array exposing (Array)
 import Navigation exposing (Location)
 import Websocket exposing (..)
 import Models.Resources.Instance exposing (Instance, InstanceId)
+import Models.Resources.InstanceError exposing (InstanceError)
 import Models.Resources.InstanceCreation exposing (InstanceCreation)
 import Models.Resources.InstanceUpdate exposing (InstanceUpdate)
 import Models.Resources.AboutInfo exposing (AboutInfo)
@@ -53,6 +54,7 @@ type IncomingWsMessage
     | UpdateInstanceSuccessMessage InstanceUpdateSuccess
     | UpdateInstanceErrorMessage InstanceUpdateFailure
     | GetInstanceTasksSuccess InstanceTasks
+    | GetInstanceTasksFailure InstanceError
     | ErrorMessage String
 
 

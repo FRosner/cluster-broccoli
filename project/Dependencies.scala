@@ -11,6 +11,8 @@ object Dependencies {
     val play2auth = "0.14.2"
 
     val cats = "0.9.0"
+
+    val simulacrum = "0.10.0"
   }
 
   /**
@@ -21,6 +23,11 @@ object Dependencies {
     "kernel",
     "core"
   ).map(module => "org.typelevel" %% s"cats-$module" % Versions.cats)
+
+  /**
+    * Type class syntax support for Scala.
+    */
+  val simulacrum: ModuleID = "com.github.mpilquist" %% "simulacrum" % Versions.simulacrum
 
   /**
     * A powerful enumeration type for Scala.

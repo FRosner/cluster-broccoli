@@ -1,10 +1,8 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.models.Template.templateApiWrites
-import enumeratum.EnumEntry.Camelcase
-import play.api.libs.json._
 import enumeratum._
+import play.api.libs.json._
 
 import scala.collection.immutable
 
@@ -50,7 +48,7 @@ object OutgoingWsMessage {
   final case class UpdateInstanceSuccess(result: InstanceUpdateSuccess) extends OutgoingWsMessage
   final case class UpdateInstanceError(result: InstanceUpdateFailure) extends OutgoingWsMessage
   final case class GetInstanceTasksSuccess(tasks: InstanceTasks) extends OutgoingWsMessage
-  final case class GetInstanceTasksFailure(instanceId: String, message: String) extends OutgoingWsMessage
+  final case class GetInstanceTasksFailure(error: InstanceError) extends OutgoingWsMessage
 
   def fromResult(result: InstanceCreationResult): OutgoingWsMessage = result match {
     case create: InstanceCreationSuccess => AddInstanceSuccess(create)
@@ -88,6 +86,7 @@ object OutgoingWsMessage {
       case UpdateInstanceSuccess(result)  => write(Type.UpdateInstanceSuccess, result)
       case UpdateInstanceError(result)    => write(Type.UpdateInstanceError, result)
       case GetInstanceTasksSuccess(tasks) => write(Type.GetInstanceTasksSuccess, tasks)
+      case GetInstanceTasksFailure(error) => write(Type.GetInstanceTasksFailure, error)
     }
 
   private def write[P](`type`: Type, payload: P)(implicit writesP: Writes[P]): JsObject =
