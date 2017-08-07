@@ -1,16 +1,18 @@
-.idea
-*target
-.DS_Store
-.sbtserver
-logs
-*.lock
+target/
+
+# Artifacts from building docker distributions
+/docker/test/cluster-broccoli-dist/
+/docker/test/templates
+/docker/prod/cluster-broccoli-dist/
+/docker/prod/templates
+
+# Docker process IDs generated when running integration tests
+/cluster-broccoli.did
+/nomad.did
+/consul.did
+
+# Instance storage for dev mode
+/instances/
+
+# results from HTTP API testing tool
 *run-*
-node_modules
-docker/test/cluster-broccoli-dist/
-docker/test/templates
-docker/prod/cluster-broccoli-dist/
-docker/prod/templates
-cluster-broccoli.did
-nomad.did
-consul.did
-instances

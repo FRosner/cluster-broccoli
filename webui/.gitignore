@@ -1,3 +1,7 @@
-elm-stuff
-dist
-!yarn.lock
+# Elm build artifacts and packages
+/elm-stuff/
+
+# Webpack build artifacts
+/dist/
+
+/node_modules/
