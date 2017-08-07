@@ -73,7 +73,6 @@ case class InstanceController @Inject()(
   }
 
   def update(id: String) = StackAction { implicit request =>
-    val maybeJsObject = request.body.asJson.map(_.as[JsObject])
     val maybeInstanceUpdate = request.body.asJson.map(_.validate[InstanceUpdate])
     maybeInstanceUpdate
       .map { instanceUpdateResult =>
@@ -118,7 +117,7 @@ object InstanceController {
     val parameterInfos = template.parameterInfos
     val newParameterValues = instance.parameterValues.map {
       case (parameter, value) =>
-        val possiblyCensoredValue = if (parameterInfos.get(parameter).exists(_.secret == Some(true))) {
+        val possiblyCensoredValue = if (parameterInfos.get(parameter).flatMap(_.secret).getOrElse(false)) {
           null.asInstanceOf[String]
         } else {
           value
