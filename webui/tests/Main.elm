@@ -1,6 +1,5 @@
 port module Main exposing (..)
 
-import Utils.MaybeUtilsSuite as MaybeUtilsSuite
 import Utils.ParameterUtilsSuite as ParameterUtilsSuite
 import Views.HeaderSuite as HeaderSuite
 import Views.NotificationsSuite as NotificationsSuite
@@ -17,8 +16,7 @@ main =
         emit
         (describe
             "Cluster Broccoli UI Tests"
-            [ MaybeUtilsSuite.tests
-            , ParameterUtilsSuite.tests
+            [ ParameterUtilsSuite.tests
             , HeaderSuite.tests
             , NotificationsSuite.tests
             , BodySuite.tests
