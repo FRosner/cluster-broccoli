@@ -3,6 +3,7 @@ package de.frosner.broccoli.controllers
 import java.io.FileNotFoundException
 import javax.inject.Inject
 
+import cats.instances.future._
 import de.frosner.broccoli.models.InstanceCreation.instanceCreationReads
 import de.frosner.broccoli.models.InstanceUpdate.instanceUpdateReads
 import de.frosner.broccoli.models._
@@ -100,9 +101,10 @@ case class InstanceController @Inject()(
   }
 
   def tasks(id: String) = AsyncStack { implicit request =>
-    for {
-      instanceTasks <- instanceService.getInstanceTasks(id)
-    } yield Results.Ok(Json.toJson(instanceTasks.tasks))
+    instanceService
+      .getInstanceTasks(loggedIn)(id)
+      .map(i => Results.Ok(Json.toJson(i.tasks)))
+      .getOrElse(NotFound(s"Instance $id not found."))
   }
 
 }

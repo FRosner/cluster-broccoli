@@ -5,6 +5,8 @@ import java.net.ConnectException
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import javax.inject.{Inject, Singleton}
 
+import cats.data.OptionT
+import cats.instances.future._
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.util.Logging
@@ -309,25 +311,28 @@ class InstanceService @Inject()(nomadClient: NomadClient,
   /**
     * Get the tasks of an instance.
     *
+    * @param user The user who tries to access tasks
     * @param id The instance ID
     * @return The (possibly empty) list of tasks for the instance
     */
-  def getInstanceTasks(id: String): Future[InstanceTasks] =
-    for {
-      allocations <- nomadClient.getAllocationsForJob(id)
-    } yield {
-      // In nomad the order hierarchy is "allocation -> task", but we reverse it to "task -> allocation".  Tasks have
-      // human-readable names whereas allocations have UUIDs; hence tasks serve better as top-level hierarchy in the UI.
-      val tasks = allocations.payload
-        .flatMap(allocation => allocation.taskStates.mapValues(_ -> allocation))
-        .groupBy(_._1)
-        .map {
-          case (taskId, items) =>
-            Task(taskId, items.map {
-              case (_, (events, allocation)) => Task.Allocation(allocation.id, allocation.clientStatus, events.state)
-            })
-        }
-        .toSeq
-      InstanceTasks(id, tasks)
-    }
+  def getInstanceTasks(user: Account)(id: String): OptionT[Future, InstanceTasks] =
+    OptionT
+      .pure[Future, String](id)
+      .filter(_.matches(user.instanceRegex))
+      .semiflatMap(nomadClient.getAllocationsForJob)
+      .map { allocations =>
+        // In nomad the order hierarchy is "allocation -> task", but we reverse it to "task -> allocation".  Tasks have
+        // human-readable names whereas allocations have UUIDs; hence tasks serve better as top-level hierarchy in the UI.
+        val tasks = allocations.payload
+          .flatMap(allocation => allocation.taskStates.mapValues(_ -> allocation))
+          .groupBy(_._1)
+          .map {
+            case (taskId, items) =>
+              Task(taskId, items.map {
+                case (_, (events, allocation)) => Task.Allocation(allocation.id, allocation.clientStatus, events.state)
+              })
+          }
+          .toSeq
+        InstanceTasks(id, tasks)
+      }
 }

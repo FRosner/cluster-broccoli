@@ -35,6 +35,7 @@ object OutgoingWsMessage {
     case object UpdateInstanceSuccess extends Type
     case object UpdateInstanceError extends Type
     case object GetInstanceTasksSuccess extends Type
+    case object GetInstanceTasksFailure extends Type
   }
 
   final case class ListTemplates(templates: Seq[Template]) extends OutgoingWsMessage
@@ -49,6 +50,7 @@ object OutgoingWsMessage {
   final case class UpdateInstanceSuccess(result: InstanceUpdateSuccess) extends OutgoingWsMessage
   final case class UpdateInstanceError(result: InstanceUpdateFailure) extends OutgoingWsMessage
   final case class GetInstanceTasksSuccess(tasks: InstanceTasks) extends OutgoingWsMessage
+  final case class GetInstanceTasksFailure(instanceId: String, message: String) extends OutgoingWsMessage
 
   def fromResult(result: InstanceCreationResult): OutgoingWsMessage = result match {
     case create: InstanceCreationSuccess => AddInstanceSuccess(create)

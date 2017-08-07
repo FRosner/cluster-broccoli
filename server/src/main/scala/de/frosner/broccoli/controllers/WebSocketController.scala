@@ -1,24 +1,18 @@
 package de.frosner.broccoli.controllers
 
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-import de.frosner.broccoli.conf
-import de.frosner.broccoli.services._
+import cats.instances.future._
 import de.frosner.broccoli.services.WebSocketService.Msg
+import de.frosner.broccoli.services._
 import de.frosner.broccoli.util.Logging
-import de.frosner.broccoli.models.Template.templateApiWrites
-import de.frosner.broccoli.models.Instance.instanceApiWrites
-import de.frosner.broccoli.models._
-import jp.t2v.lab.play2.auth.{BroccoliSimpleAuthorization, BroccoliWebsocketSecurity}
-import play.api.mvc._
+import jp.t2v.lab.play2.auth.BroccoliWebsocketSecurity
 import play.api.libs.iteratee._
 import play.api.libs.json._
+import play.api.mvc._
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
-import scala.util.Try
 
 case class WebSocketController @Inject()(webSocketService: WebSocketService,
                                          templateService: TemplateService,
@@ -54,7 +48,14 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
               Future.successful(OutgoingWsMessage.fromResult(
                 InstanceController.update(instanceUpdate.instanceId.get, instanceUpdate, user, instanceService)))
             case IncomingWsMessage.GetInstanceTasks(instanceId) =>
-              instanceService.getInstanceTasks(instanceId).map(OutgoingWsMessage.GetInstanceTasksSuccess)
+              instanceService
+                .getInstanceTasks(user)(instanceId)
+                .map[OutgoingWsMessage](OutgoingWsMessage.GetInstanceTasksSuccess)
+                .getOrElse(
+                  OutgoingWsMessage.GetInstanceTasksFailure(
+                    instanceId = instanceId,
+                    message = "Instance not found"
+                  ))
           }
           .recoverTotal { error =>
             Logger.warn(s"Can't parse a message from $connectionId: $error")
