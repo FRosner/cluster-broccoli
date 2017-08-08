@@ -320,7 +320,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { request =>
         request.withBody(instanceCreation)
       } { (controller, result) =>
-        status(result) must be equalTo 400
+        status(result) must be equalTo 403
       }
     }
 
@@ -346,7 +346,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { request =>
         request.withBody(instanceCreation)
       } { (controller, result) =>
-        status(result) must be equalTo 400
+        status(result) must be equalTo 403
       }
     }
 
@@ -372,7 +372,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { request =>
         request.withBody(instanceCreation)
       } { (controller, result) =>
-        status(result) must be equalTo 400
+        status(result) must be equalTo 403
       }
     }
 

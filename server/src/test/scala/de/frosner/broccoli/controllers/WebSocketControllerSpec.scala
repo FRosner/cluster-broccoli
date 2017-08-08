@@ -193,7 +193,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       maybeConnection match {
         case Right((incoming, outgoing)) =>
           val resultMsg = OutgoingWsMessage.AddInstanceSuccess(
-            InstanceCreationSuccess(
+            InstanceCreated(
               instanceCreation,
               instanceWithStatus
             )
@@ -212,23 +212,14 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       )
 
       val success = OutgoingWsMessage.AddInstanceSuccess(
-        InstanceCreationSuccess(
+        InstanceCreated(
           instanceCreation,
           instanceWithStatus
         )
       )
-      val roleFailure = OutgoingWsMessage.AddInstanceError(
-        InstanceCreationFailure(
-          instanceCreation,
-          "Only administrators are allowed to create new instances"
-        )
-      )
-      val regexFailure = OutgoingWsMessage.AddInstanceError(
-        InstanceCreationFailure(
-          instanceCreation,
-          "Only allowed to create instances matching bla"
-        )
-      )
+      val roleFailure = OutgoingWsMessage.AddInstanceError(InstanceError.AdministratorRequired)
+      val regexFailure =
+        OutgoingWsMessage.AddInstanceError(InstanceError.UserRegexDenied("blib", "bla"))
 
       testWs(
         controllerSetup = { securityService =>

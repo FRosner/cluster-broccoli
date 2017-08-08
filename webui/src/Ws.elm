@@ -7,8 +7,7 @@ import Models.Resources.Instance as Instance
 import Models.Resources.InstanceError as InstanceError
 import Models.Resources.InstanceCreation as InstanceCreation
 import Models.Resources.InstanceUpdate as InstanceUpdate
-import Models.Resources.InstanceCreationSuccess as InstanceCreationSuccess
-import Models.Resources.InstanceCreationFailure as InstanceCreationFailure
+import Models.Resources.InstanceCreated as InstanceCreated
 import Models.Resources.InstanceDeleted as InstanceDeleted
 import Models.Resources.InstanceUpdateSuccess as InstanceUpdateSuccess
 import Models.Resources.InstanceUpdateFailure as InstanceUpdateFailure
@@ -59,10 +58,10 @@ payloadDecoder t =
             Decode.map ErrorMessage Decode.string
 
         "addInstanceSuccess" ->
-            Decode.map AddInstanceSuccessMessage InstanceCreationSuccess.decoder
+            Decode.map AddInstanceSuccessMessage InstanceCreated.decoder
 
         "addInstanceError" ->
-            Decode.map AddInstanceErrorMessage InstanceCreationFailure.decoder
+            Decode.map AddInstanceErrorMessage InstanceError.decoder
 
         "deleteInstanceSuccess" ->
             Decode.map DeleteInstanceSuccessMessage InstanceDeleted.decoder

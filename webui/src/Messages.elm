@@ -10,8 +10,7 @@ import Models.Resources.InstanceCreation exposing (InstanceCreation)
 import Models.Resources.InstanceUpdate exposing (InstanceUpdate)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.Template exposing (Template)
-import Models.Resources.InstanceCreationSuccess exposing (InstanceCreationSuccess)
-import Models.Resources.InstanceCreationFailure exposing (InstanceCreationFailure)
+import Models.Resources.InstanceCreated exposing (InstanceCreated)
 import Models.Resources.InstanceDeleted exposing (InstanceDeleted)
 import Models.Resources.InstanceUpdateSuccess exposing (InstanceUpdateSuccess)
 import Models.Resources.InstanceUpdateFailure exposing (InstanceUpdateFailure)
@@ -45,8 +44,8 @@ type IncomingWsMessage
     = SetAboutInfoMessage AboutInfo
     | ListTemplatesMessage (Array Template)
     | ListInstancesMessage (Array Instance)
-    | AddInstanceSuccessMessage InstanceCreationSuccess
-    | AddInstanceErrorMessage InstanceCreationFailure
+    | AddInstanceSuccessMessage InstanceCreated
+    | AddInstanceErrorMessage InstanceError
     | DeleteInstanceSuccessMessage InstanceDeleted
     | DeleteInstanceErrorMessage InstanceError
     | UpdateInstanceSuccessMessage InstanceUpdateSuccess

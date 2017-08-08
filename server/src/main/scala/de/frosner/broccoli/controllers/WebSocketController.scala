@@ -47,7 +47,9 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
             .fromJson[IncomingWsMessage](incomingMessage)
             .map {
               case IncomingWsMessage.AddInstance(instanceCreation) =>
-                OutgoingWsMessage.fromResult(InstanceController.create(instanceCreation, user, instanceService))
+                InstanceController
+                  .create(instanceCreation, user, instanceService)
+                  .fold(AddInstanceError, AddInstanceSuccess)
               case IncomingWsMessage.DeleteInstance(instanceId) =>
                 InstanceController
                   .delete(instanceId, user, instanceService)

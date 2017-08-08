@@ -11,14 +11,13 @@ import Instance.instanceApiWrites
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
 import InstanceUpdate.{instanceUpdateReads, instanceUpdateWrites}
 import cats.syntax.either._
-import de.frosner.broccoli.http.ToHTTPResult
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.http.ToHTTPResult.ops._
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
 import play.api.http.ContentTypes
 import play.api.libs.json.{JsObject, JsString, JsValue, Json}
-import play.api.mvc.{Action, Controller, Results}
+import play.api.mvc.{Action, Controller, Request, Results}
 import play.mvc.Http.HeaderNames
 
 import scala.util.{Failure, Success, Try}
@@ -54,16 +53,15 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
   }
 
   def create = StackAction(parse.json[InstanceCreation]) { implicit request =>
-    InstanceController.create(request.body, loggedIn, instanceService) match {
-      case InstanceCreationSuccess(creation, instanceWithStatus) =>
-        Results
-          .Status(201)(Json.toJson(instanceWithStatus))
-          .withHeaders(
-            HeaderNames.LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
-          )
-      case InstanceCreationFailure(creation, reason) =>
-        Results.Status(400)(s"Creating ${request.body} failed: $reason")
-    }
+    InstanceController
+      .create(request.body, loggedIn, instanceService)
+      .fold(
+        _.toHTTPResult,
+        created =>
+          Results
+            .Created(Json.toJson(created.instanceWithStatus))
+            .withHeaders(HeaderNames.LOCATION -> s"/api/v1/instances/${created.instanceWithStatus.instance.id}")
+      )
   }
 
   def update(id: String) = StackAction(parse.json[InstanceUpdate]) { implicit request =>
@@ -108,39 +106,18 @@ object InstanceController {
 
   def create(instanceCreation: InstanceCreation,
              loggedIn: Account,
-             instanceService: InstanceService): InstanceCreationResult =
-    if (loggedIn.role == Role.Administrator) {
-      val maybeId = instanceCreation.parameters.get("id")
-      val instanceRegex = loggedIn.instanceRegex
-      maybeId match {
-        case Some(id) if id.matches(instanceRegex) =>
-          val tryNewInstance = instanceService.addInstance(instanceCreation)
-          tryNewInstance
-            .map { instanceWithStatus =>
-              InstanceCreationSuccess(instanceCreation, instanceWithStatus)
-            }
-            .recover {
-              case error =>
-                InstanceCreationFailure(instanceCreation, error.toString)
-            }
-            .get
-        case Some(id) =>
-          InstanceCreationFailure(
-            instanceCreation,
-            s"Only allowed to create instances matching $instanceRegex"
-          )
-        case None =>
-          InstanceCreationFailure(
-            instanceCreation,
-            s"Instance ID missing"
-          )
-      }
-    } else {
-      InstanceCreationFailure(
-        instanceCreation,
-        s"Only administrators are allowed to create new instances"
-      )
-    }
+             instanceService: InstanceService): Either[InstanceError, InstanceCreated] =
+    for {
+      user <- Either
+        .right[InstanceError, Account](loggedIn)
+        .ensure(InstanceError.AdministratorRequired: InstanceError)(_.role == Role.Administrator)
+      _ <- Either
+        .fromOption(instanceCreation.parameters.get("id"), InstanceError.IdMissing: InstanceError)
+        .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex): InstanceError)(_.matches(user.instanceRegex))
+      newInstance <- Either
+        .fromTry(instanceService.addInstance(instanceCreation))
+        .leftMap(InstanceError.Generic(_): InstanceError)
+    } yield InstanceCreated(instanceCreation, newInstance)
 
   def delete(
       id: String,
