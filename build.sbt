@@ -39,7 +39,14 @@ lazy val server = project
     parallelExecution in IntegrationTest := false,
     // Do not run unit tests in parallel either because Play doesn't like it
     // Play doesn't like parallel tests with all its state
-    parallelExecution in Test := false
+    parallelExecution in Test := false,
+    // Disable API documentation, see https://github.com/playframework/playframework/issues/6688#issuecomment-258080633.
+    // Scaladoc shouldn't break our build, and is known to trigger random errors for some code, see eg,
+    // https://stackoverflow.com/q/19315362/355252.
+    //
+    // FIXME: With Play 2.6, replace with the new includeDocumentation setting introduced in
+    // https://github.com/playframework/playframework/pull/6723
+    sources in (Compile, doc) := Seq.empty
   )
   .dependsOn(webui)
 
