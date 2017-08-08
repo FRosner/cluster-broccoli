@@ -10,7 +10,10 @@ import de.frosner.broccoli.conf
 import Instance.instanceApiWrites
 import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
 import InstanceUpdate.{instanceUpdateReads, instanceUpdateWrites}
+import cats.syntax.either._
+import de.frosner.broccoli.http.ToHTTPResult
 import de.frosner.broccoli.services._
+import de.frosner.broccoli.http.ToHTTPResult.ops._
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
 import play.api.http.ContentTypes
@@ -93,12 +96,9 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
   }
 
   def delete(id: String) = StackAction { implicit request =>
-    InstanceController.delete(id, loggedIn, instanceService) match {
-      case InstanceDeletionSuccess(id, instanceWithStatus) =>
-        Results.Ok(Json.toJson(instanceWithStatus))
-      case InstanceDeletionFailure(id, reason) =>
-        Results.BadRequest(s"Deleting $id failed: $reason")
-    }
+    InstanceController
+      .delete(id, loggedIn, instanceService)
+      .fold(_.toHTTPResult, deleted => Results.Ok(Json.toJson(deleted.instance)))
   }
 
 }
@@ -162,28 +162,22 @@ object InstanceController {
       )
     }
 
-  def delete(id: String, loggedIn: Account, instanceService: InstanceService): InstanceDeletionResult =
-    if (loggedIn.role == Role.Administrator) {
-      val instanceRegex = loggedIn.instanceRegex
-      if (id.matches(instanceRegex)) {
-        val maybeDeletedInstance = instanceService.deleteInstance(id)
-        maybeDeletedInstance
-          .map { instance =>
-            InstanceDeletionSuccess(id, instance)
-          }
-          .recover {
-            case throwable => InstanceDeletionFailure(id, throwable.toString)
-          }
-          .get
-      } else {
-        InstanceDeletionFailure(id, s"Only allowed to delete instances matching $instanceRegex")
-      }
-    } else {
-      InstanceDeletionFailure(
-        id,
-        s"Only administrators are allowed to delete instances"
-      )
-    }
+  def delete(
+      id: String,
+      loggedIn: Account,
+      instanceService: InstanceService
+  ): Either[InstanceError, InstanceDeleted] =
+    for {
+      user <- Either
+        .right[InstanceError, Account](loggedIn)
+        .ensure(InstanceError.AdministratorRequired: InstanceError)(_.role == Role.Administrator)
+      instanceId <- Either
+        .right[InstanceError, String](id)
+        .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex): InstanceError)(_.matches(user.instanceRegex))
+      deletedInstance <- Either
+        .fromTry(instanceService.deleteInstance(instanceId))
+        .leftMap(InstanceError.Generic(_): InstanceError)
+    } yield InstanceDeleted(instanceId, deletedInstance)
 
   def list(templateId: Option[String], loggedIn: Account, instanceService: InstanceService): Seq[InstanceWithStatus] = {
     val filteredInstances = templateId

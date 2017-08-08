@@ -257,23 +257,13 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       val instanceDeletion = "id"
 
       val success = OutgoingWsMessage.DeleteInstanceSuccess(
-        InstanceDeletionSuccess(
+        InstanceDeleted(
           instanceDeletion,
           instanceWithStatus
         )
       )
-      val roleFailure = OutgoingWsMessage.DeleteInstanceError(
-        InstanceDeletionFailure(
-          instanceDeletion,
-          "Only administrators are allowed to delete instances"
-        )
-      )
-      val regexFailure = OutgoingWsMessage.DeleteInstanceError(
-        InstanceDeletionFailure(
-          instanceDeletion,
-          "Only allowed to delete instances matching bla"
-        )
-      )
+      val roleFailure = OutgoingWsMessage.DeleteInstanceError(InstanceError.AdministratorRequired)
+      val regexFailure = OutgoingWsMessage.DeleteInstanceError(InstanceError.UserRegexDenied(instanceDeletion, "bla"))
 
       testWs(
         controllerSetup = { securityService =>

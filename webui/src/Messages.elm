@@ -5,14 +5,14 @@ import Array exposing (Array)
 import Navigation exposing (Location)
 import Websocket exposing (..)
 import Models.Resources.Instance exposing (Instance, InstanceId)
+import Models.Resources.InstanceError exposing (InstanceError)
 import Models.Resources.InstanceCreation exposing (InstanceCreation)
 import Models.Resources.InstanceUpdate exposing (InstanceUpdate)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.Template exposing (Template)
 import Models.Resources.InstanceCreationSuccess exposing (InstanceCreationSuccess)
 import Models.Resources.InstanceCreationFailure exposing (InstanceCreationFailure)
-import Models.Resources.InstanceDeletionSuccess exposing (InstanceDeletionSuccess)
-import Models.Resources.InstanceDeletionFailure exposing (InstanceDeletionFailure)
+import Models.Resources.InstanceDeleted exposing (InstanceDeleted)
 import Models.Resources.InstanceUpdateSuccess exposing (InstanceUpdateSuccess)
 import Models.Resources.InstanceUpdateFailure exposing (InstanceUpdateFailure)
 
@@ -47,8 +47,8 @@ type IncomingWsMessage
     | ListInstancesMessage (Array Instance)
     | AddInstanceSuccessMessage InstanceCreationSuccess
     | AddInstanceErrorMessage InstanceCreationFailure
-    | DeleteInstanceSuccessMessage InstanceDeletionSuccess
-    | DeleteInstanceErrorMessage InstanceDeletionFailure
+    | DeleteInstanceSuccessMessage InstanceDeleted
+    | DeleteInstanceErrorMessage InstanceError
     | UpdateInstanceSuccessMessage InstanceUpdateSuccess
     | UpdateInstanceErrorMessage InstanceUpdateFailure
     | ErrorMessage String

@@ -4,12 +4,12 @@ import Json.Decode as Decode exposing (Decoder, field, andThen)
 import Models.Resources.AboutInfo as AboutInfo
 import Models.Resources.Template as Template
 import Models.Resources.Instance as Instance
+import Models.Resources.InstanceError as InstanceError
 import Models.Resources.InstanceCreation as InstanceCreation
 import Models.Resources.InstanceUpdate as InstanceUpdate
 import Models.Resources.InstanceCreationSuccess as InstanceCreationSuccess
 import Models.Resources.InstanceCreationFailure as InstanceCreationFailure
-import Models.Resources.InstanceDeletionSuccess as InstanceDeletionSuccess
-import Models.Resources.InstanceDeletionFailure as InstanceDeletionFailure
+import Models.Resources.InstanceDeleted as InstanceDeleted
 import Models.Resources.InstanceUpdateSuccess as InstanceUpdateSuccess
 import Models.Resources.InstanceUpdateFailure as InstanceUpdateFailure
 import Model exposing (Model)
@@ -65,10 +65,10 @@ payloadDecoder t =
             Decode.map AddInstanceErrorMessage InstanceCreationFailure.decoder
 
         "deleteInstanceSuccess" ->
-            Decode.map DeleteInstanceSuccessMessage InstanceDeletionSuccess.decoder
+            Decode.map DeleteInstanceSuccessMessage InstanceDeleted.decoder
 
         "deleteInstanceError" ->
-            Decode.map DeleteInstanceErrorMessage InstanceDeletionFailure.decoder
+            Decode.map DeleteInstanceErrorMessage InstanceError.decoder
 
         "updateInstanceSuccess" ->
             Decode.map UpdateInstanceSuccessMessage InstanceUpdateSuccess.decoder

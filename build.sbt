@@ -23,6 +23,7 @@ lazy val server = project
       Dependencies.commonsIO % Test,
       Dependencies.scalaguice
     ),
+    libraryDependencies ++= Dependencies.cats,
     libraryDependencies ++= Dependencies.cats.map(_ % IntegrationTest),
     libraryDependencies ++= Dependencies.enumeratum,
     libraryDependencies ++= Dependencies.specs2.map(_ % Test),

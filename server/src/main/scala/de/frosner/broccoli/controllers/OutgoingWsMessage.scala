@@ -43,19 +43,14 @@ object OutgoingWsMessage {
   final case class Notification(message: String) extends OutgoingWsMessage
   final case class AddInstanceSuccess(result: InstanceCreationSuccess) extends OutgoingWsMessage
   final case class AddInstanceError(result: InstanceCreationFailure) extends OutgoingWsMessage
-  final case class DeleteInstanceSuccess(result: InstanceDeletionSuccess) extends OutgoingWsMessage
-  final case class DeleteInstanceError(result: InstanceDeletionFailure) extends OutgoingWsMessage
+  final case class DeleteInstanceSuccess(result: InstanceDeleted) extends OutgoingWsMessage
+  final case class DeleteInstanceError(error: InstanceError) extends OutgoingWsMessage
   final case class UpdateInstanceSuccess(result: InstanceUpdateSuccess) extends OutgoingWsMessage
   final case class UpdateInstanceError(result: InstanceUpdateFailure) extends OutgoingWsMessage
 
   def fromResult(result: InstanceCreationResult): OutgoingWsMessage = result match {
     case create: InstanceCreationSuccess => AddInstanceSuccess(create)
     case error: InstanceCreationFailure  => AddInstanceError(error)
-  }
-
-  def fromResult(result: InstanceDeletionResult): OutgoingWsMessage = result match {
-    case create: InstanceDeletionSuccess => DeleteInstanceSuccess(create)
-    case error: InstanceDeletionFailure  => DeleteInstanceError(error)
   }
 
   def fromResult(result: InstanceUpdateResult): OutgoingWsMessage = result match {

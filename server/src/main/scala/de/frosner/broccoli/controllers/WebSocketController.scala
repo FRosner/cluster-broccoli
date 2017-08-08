@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 import de.frosner.broccoli.conf
+import de.frosner.broccoli.controllers.OutgoingWsMessage._
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.util.Logging
@@ -48,7 +49,9 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
               case IncomingWsMessage.AddInstance(instanceCreation) =>
                 OutgoingWsMessage.fromResult(InstanceController.create(instanceCreation, user, instanceService))
               case IncomingWsMessage.DeleteInstance(instanceId) =>
-                OutgoingWsMessage.fromResult(InstanceController.delete(instanceId, user, instanceService))
+                InstanceController
+                  .delete(instanceId, user, instanceService)
+                  .fold(DeleteInstanceError, DeleteInstanceSuccess)
               case IncomingWsMessage.UpdateInstance(instanceUpdate: InstanceUpdate) =>
                 OutgoingWsMessage.fromResult(
                   InstanceController.update(instanceUpdate.instanceId.get, instanceUpdate, user, instanceService))
