@@ -2,8 +2,25 @@ import sbt._
 
 object Dependencies {
   object Versions {
+    // Note: Do not update to 1.13.x; specs2-scalacheck 3.6.6 requires Scalacheck 2.12.5 and does not work with 1.13.x
+    val scalacheck = "1.12.5"
+
+    // Note: Do not update; play2-specs requires specs2 3.6.6 and throws exceptions with newer versions
+    val specs2 = "3.6.6"
+
     val play2auth = "0.14.2"
+
+    val cats = "0.9.0"
   }
+
+  /**
+    * Functional programming data types and type classes.
+    */
+  val cats: Seq[ModuleID] = Seq(
+    "macros",
+    "kernel",
+    "core"
+  ).map(module => "org.typelevel" %% s"cats-$module" % Versions.cats)
 
   /**
     * A powerful enumeration type for Scala.
@@ -13,6 +30,17 @@ object Dependencies {
     // Keep this version at 1.5.11 for compatibility with Play 2.5; later versions depend on Play 2.6 already
     "com.beachape" %% "enumeratum-play-json" % "1.5.11"
   )
+
+  /**
+    * Property testing for Scala.
+    */
+  val scalacheck: ModuleID = "org.scalacheck" %% "scalacheck" % Versions.scalacheck
+
+  /**
+    * Specs2 test framework, with support for property testing.
+    */
+  val specs2: Seq[ModuleID] = Seq("core", "scalacheck")
+    .map(module => "org.specs2" %% s"specs2-$module" % Versions.specs2)
 
   /**
     * Scala syntax for Guice, to declare custom modules
