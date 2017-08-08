@@ -3,18 +3,15 @@ package de.frosner.broccoli.controllers
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.services._
+import jp.t2v.lab.play2.auth.test.Helpers._
+import org.mockito.Matchers
 import org.mockito.Matchers._
 import org.mockito.Mockito._
-import play.api.test._
-import jp.t2v.lab.play2.auth.test.Helpers._
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
-import play.api.libs.functional.syntax._
-import ParameterInfo.{parameterInfoReads, parameterInfoWrites}
-import de.frosner.broccoli.models.Role.Role
-import org.mockito.Matchers
+import play.api.test._
 
-import scala.util.{Failure, Success}
+import scala.util.Success
 
 class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
 
@@ -239,7 +236,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           Some((".*", Role.Administrator)) -> success,
           Some(("bla", Role.Administrator)) -> regexFailure,
           Some((".*", Role.Operator)) -> roleFailure,
-          Some((".*", Role.NormalUser)) -> roleFailure
+          Some((".*", Role.User)) -> roleFailure
         )
       )
     }
@@ -274,7 +271,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           Some((".*", Role.Administrator)) -> success,
           Some(("bla", Role.Administrator)) -> regexFailure,
           Some((".*", Role.Operator)) -> roleFailure,
-          Some((".*", Role.NormalUser)) -> roleFailure
+          Some((".*", Role.User)) -> roleFailure
         )
       )
     }
@@ -324,7 +321,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           Some((".*", Role.Operator)) -> OutgoingWsMessage.UpdateInstanceError(
             InstanceError.RolesRequired(Role.Administrator)
           ),
-          Some((".*", Role.NormalUser)) -> OutgoingWsMessage.UpdateInstanceError(
+          Some((".*", Role.User)) -> OutgoingWsMessage.UpdateInstanceError(
             InstanceError.RolesRequired(Role.Administrator, Role.Operator)
           )
         )
@@ -371,7 +368,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
             InstanceError.UserRegexDenied(instanceUpdate.instanceId.get, "bla")
           ),
           Some((".*", Role.Operator)) -> success,
-          Some((".*", Role.NormalUser)) -> OutgoingWsMessage.UpdateInstanceError(
+          Some((".*", Role.User)) -> OutgoingWsMessage.UpdateInstanceError(
             InstanceError.RolesRequired(Role.Administrator, Role.Operator)
           )
         )
@@ -420,7 +417,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           Some((".*", Role.Operator)) -> OutgoingWsMessage.UpdateInstanceError(
             InstanceError.RolesRequired(Role.Administrator)
           ),
-          Some((".*", Role.NormalUser)) -> OutgoingWsMessage.UpdateInstanceError(
+          Some((".*", Role.User)) -> OutgoingWsMessage.UpdateInstanceError(
             InstanceError.RolesRequired(Role.Administrator, Role.Operator)
           )
         )

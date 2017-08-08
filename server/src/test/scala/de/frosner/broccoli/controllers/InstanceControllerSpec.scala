@@ -33,7 +33,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     name = "User",
     password = "pass",
     instanceRegex = ".*",
-    role = Role.NormalUser
+    role = Role.User
   )
 
   val instanceWithStatus = InstanceWithStatus(

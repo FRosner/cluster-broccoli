@@ -1,7 +1,6 @@
 package de.frosner.broccoli.models
 
 import de.frosner.broccoli.http.ToHTTPResult
-import de.frosner.broccoli.models.Role.Role
 import play.api.libs.json.{Json, Writes}
 import play.api.mvc.Results
 

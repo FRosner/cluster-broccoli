@@ -50,7 +50,7 @@ trait ServiceMocks {
           enabled = false,
           user = AboutUser(
             name = "name",
-            role = "role",
+            role = Role.User,
             instanceRegex = "instances"
           )
         ),

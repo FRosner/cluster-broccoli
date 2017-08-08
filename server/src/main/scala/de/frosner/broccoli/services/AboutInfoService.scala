@@ -33,7 +33,7 @@ class AboutInfoService @Inject()(nomadService: NomadService,
       enabled = securityService.authMode != conf.AUTH_MODE_NONE,
       user = AboutUser(
         name = loggedIn.name,
-        role = loggedIn.role.toString,
+        role = loggedIn.role,
         instanceRegex = loggedIn.instanceRegex
       )
     ),

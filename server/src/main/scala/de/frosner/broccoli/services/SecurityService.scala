@@ -148,7 +148,7 @@ object SecurityService {
             password = account.getString(conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY),
             instanceRegex = account.getString(conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY),
             role = if (account.hasPath(conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY)) {
-              Role.withName(account.getString(conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY))
+              Role.withNameInsensitive(account.getString(conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY))
             } else {
               conf.AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT
             }

@@ -14,7 +14,7 @@ case class AboutAuth(enabled: Boolean, user: AboutUser)
 
 case class AboutServices(clusterManager: AboutClusterManager, serviceDiscovery: AboutServiceDiscovery)
 
-case class AboutUser(name: String, role: String, instanceRegex: String)
+case class AboutUser(name: String, role: Role, instanceRegex: String)
 
 case class AboutClusterManager(connected: Boolean)
 
