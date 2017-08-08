@@ -6,7 +6,6 @@ import Models.Resources.Role as Role exposing (Role(..))
 import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (InstanceParameterForm)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
-import Utils.MaybeUtils as MaybeUtils
 import Utils.ParameterUtils exposing (getOtherParameters)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -14,6 +13,7 @@ import Html.Events exposing (onClick, onCheck, onInput, onSubmit, on)
 import Dict exposing (..)
 import Set exposing (Set)
 import Maybe
+import Maybe.Extra exposing (isJust, join)
 import Json.Decode
 
 
@@ -31,7 +31,7 @@ editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole 
             Maybe.andThen (\f -> f.selectedTemplate) maybeInstanceParameterForm
 
         formIsBeingEdited =
-            MaybeUtils.isDefined maybeInstanceParameterForm
+            isJust maybeInstanceParameterForm
     in
         Html.form
             [ onSubmit <|
@@ -50,7 +50,7 @@ editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole 
                     instance.template
                     maybeInstanceParameterForm
                     visibleSecrets
-                    (not (MaybeUtils.isDefined selectedTemplate) && (maybeRole == Just Administrator))
+                    (not (isJust selectedTemplate) && (maybeRole == Just Administrator))
                 , selectedTemplate
                     |> Maybe.map (\t -> parametersView "New Parameters" instance t maybeInstanceParameterForm visibleSecrets True)
                     |> Maybe.withDefault []
@@ -197,7 +197,7 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
         ( maybeParameterValue, maybeParameterInfo, maybeEditedValue ) =
             ( Dict.get parameter parameterValues
             , Dict.get parameter parameterInfos
-            , MaybeUtils.concat (Maybe.andThen (\f -> (Dict.get parameter f.changedParameterValues)) maybeInstanceParameterForm)
+            , join (Maybe.andThen (\f -> (Dict.get parameter f.changedParameterValues)) maybeInstanceParameterForm)
             )
     in
         let
@@ -386,7 +386,7 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
     let
         ( maybeParameterInfo, maybeEditedValue ) =
             ( Dict.get parameter parameterInfos
-            , MaybeUtils.concat (Maybe.andThen (\f -> (Dict.get parameter f.changedParameterValues)) maybeInstanceParameterForm)
+            , join (Maybe.andThen (\f -> (Dict.get parameter f.changedParameterValues)) maybeInstanceParameterForm)
             )
     in
         let
