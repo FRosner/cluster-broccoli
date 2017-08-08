@@ -28,12 +28,11 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
     with Logging
     with BroccoliSimpleAuthorization {
 
-  def list(maybeTemplateId: Option[String]) = StackAction { implicit request =>
-    val instances = InstanceController.list(maybeTemplateId, loggedIn, instanceService)
-    Results.Ok(Json.toJson(instances))
+  def list(maybeTemplateId: Option[String]) = StackAction(parse.empty) { implicit request =>
+    Results.Ok(Json.toJson(InstanceController.list(maybeTemplateId, loggedIn, instanceService)))
   }
 
-  def show(id: String) = StackAction { implicit request =>
+  def show(id: String) = StackAction(parse.empty) { implicit request =>
     val notFound = NotFound(s"Instance $id not found.")
     val user = loggedIn
     if (id.matches(user.instanceRegex)) {
@@ -54,48 +53,29 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
     }
   }
 
-  def create = StackAction { implicit request =>
-    val maybeValidatedInstanceCreation = request.body.asJson.map(_.validate[InstanceCreation])
-    maybeValidatedInstanceCreation
-      .map { validatedInstanceCreation =>
-        validatedInstanceCreation
-          .map { instanceCreation =>
-            InstanceController.create(instanceCreation, loggedIn, instanceService) match {
-              case InstanceCreationSuccess(creation, instanceWithStatus) =>
-                Results
-                  .Status(201)(Json.toJson(instanceWithStatus))
-                  .withHeaders(
-                    HeaderNames.LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
-                  )
-              case InstanceCreationFailure(creation, reason) =>
-                Results.Status(400)(s"Creating $instanceCreation failed: $reason")
-            }
-          }
-          .getOrElse(Results.Status(400)("Expected JSON data"))
-      }
-      .getOrElse(Results.Status(400)("Expected JSON data"))
+  def create = StackAction(parse.json[InstanceCreation]) { implicit request =>
+    InstanceController.create(request.body, loggedIn, instanceService) match {
+      case InstanceCreationSuccess(creation, instanceWithStatus) =>
+        Results
+          .Status(201)(Json.toJson(instanceWithStatus))
+          .withHeaders(
+            HeaderNames.LOCATION -> s"/api/v1/instances/${instanceWithStatus.instance.id}" // TODO String constant
+          )
+      case InstanceCreationFailure(creation, reason) =>
+        Results.Status(400)(s"Creating ${request.body} failed: $reason")
+    }
   }
 
-  def update(id: String) = StackAction { implicit request =>
-    val maybeJsObject = request.body.asJson.map(_.as[JsObject])
-    val maybeInstanceUpdate = request.body.asJson.map(_.validate[InstanceUpdate])
-    maybeInstanceUpdate
-      .map { instanceUpdateResult =>
-        instanceUpdateResult
-          .map { instanceUpdate =>
-            InstanceController.update(id, instanceUpdate, loggedIn, instanceService) match {
-              case InstanceUpdateSuccess(update, updatedInstance) =>
-                Results.Ok(Json.toJson(updatedInstance))
-              case InstanceUpdateFailure(update, reason) =>
-                Results.Status(400)(s"Updating instance $id failed: $reason")
-            }
-          }
-          .getOrElse(Status(400)("Expected JSON data"))
-      }
-      .getOrElse(Status(400)("Expected JSON data"))
+  def update(id: String) = StackAction(parse.json[InstanceUpdate]) { implicit request =>
+    InstanceController.update(id, request.body, loggedIn, instanceService) match {
+      case InstanceUpdateSuccess(update, updatedInstance) =>
+        Results.Ok(Json.toJson(updatedInstance))
+      case InstanceUpdateFailure(update, reason) =>
+        Results.Status(400)(s"Updating instance $id failed: $reason")
+    }
   }
 
-  def delete(id: String) = StackAction { implicit request =>
+  def delete(id: String) = StackAction(parse.empty) { implicit request =>
     InstanceController
       .delete(id, loggedIn, instanceService)
       .fold(_.toHTTPResult, deleted => Results.Ok(Json.toJson(deleted.instance)))

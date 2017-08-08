@@ -14,7 +14,7 @@ case class AboutController @Inject()(aboutInfoService: AboutInfoService, overrid
     extends Controller
     with BroccoliSimpleAuthorization {
 
-  def about: Action[AnyContent] = StackAction { implicit request =>
+  def about = StackAction(parse.empty) { implicit request =>
     Ok(Json.toJson(AboutController.about(aboutInfoService, loggedIn)))
   }
 

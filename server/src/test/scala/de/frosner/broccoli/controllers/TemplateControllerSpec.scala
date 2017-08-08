@@ -30,9 +30,7 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.list
-      } {
-        identity
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         (status(result) must be equalTo 200) and {
           contentAsJson(result) must be equalTo JsArray(
             Seq(
@@ -74,9 +72,7 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.show("id")
-      } {
-        identity
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         (status(result) must be equalTo 200) and {
           contentAsJson(result) must be equalTo JsObject(
             Map(
@@ -101,9 +97,7 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.show("id")
-      } {
-        identity
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         status(result) must be equalTo 404
       }
     }

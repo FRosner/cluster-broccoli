@@ -81,9 +81,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.list(None)
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(instances))
       }
@@ -104,9 +102,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.list(Some(instanceWithStatus.instance.template.id))
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(instances))
       }
@@ -123,9 +119,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.list(Some(instanceWithStatus.instance.template.id))
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         (status(result) must be equalTo 200) and
           (contentAsJson(result).toString must not contain "thisshouldnotappearanywhere")
       }
@@ -142,9 +136,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.list(Some(instanceWithStatus.instance.template.id))
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         (status(result) must be equalTo 200) and
           (contentAsJson(result).toString must not contain "thisshouldnotappearanywhere")
       }
@@ -165,9 +157,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.list(None)
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(List(matchingInstance)))
       }
@@ -185,9 +175,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(instanceWithStatus))
       }
@@ -204,9 +192,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.show(notExisting)
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         status(result) must be equalTo 404
       }
     }
@@ -222,9 +208,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         (status(result) must be equalTo 200) and
           (contentAsJson(result).toString must not contain "thisshouldnotappearanywhere")
       }
@@ -241,9 +225,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         (status(result) must be equalTo 200) and
           (contentAsJson(result).toString must not contain "thisshouldnotappearanywhere")
       }
@@ -259,9 +241,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         status(result) must be equalTo 404
       }
     }
@@ -287,43 +267,11 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.create
       } { request =>
-        request.withJsonBody(Json.toJson(instanceCreation))
+        request.withBody(instanceCreation)
       } { (controller, result) =>
         (status(result) must be equalTo 201) and
           (headers(result).get(HeaderNames.LOCATION) === Some(s"/api/v1/instances/${instanceWithStatus.instance.id}")) and
           (contentAsJson(result) must be equalTo Json.toJson(instanceWithStatus))
-      }
-    }
-
-    "fail if the creation request is not a valid JSON" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
-      testWithAllAuths { securityService =>
-        InstanceController(
-          instanceService = instanceService,
-          securityService = securityService
-        )
-      } { controller =>
-        controller.create
-      } { request =>
-        request.withTextBody("yup")
-      } { (controller, result) =>
-        status(result) must be equalTo 400
-      }
-    }
-
-    "fail if the creation request is valid JSON but does not contain all required fields" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
-      testWithAllAuths { securityService =>
-        InstanceController(
-          instanceService = instanceService,
-          securityService = securityService
-        )
-      } { controller =>
-        controller.create
-      } { request =>
-        request.withJsonBody(JsObject(Map("x" -> JsString("y"))))
-      } { (controller, result) =>
-        status(result) must be equalTo 400
       }
     }
 
@@ -345,7 +293,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.create
       } { request =>
-        request.withJsonBody(Json.toJson(instanceCreation))
+        request.withBody(instanceCreation)
       } { (controller, result) =>
         status(result) must be equalTo 400
       }
@@ -370,7 +318,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.create
       } { request =>
-        request.withJsonBody(Json.toJson(instanceCreation))
+        request.withBody(instanceCreation)
       } { (controller, result) =>
         status(result) must be equalTo 400
       }
@@ -396,7 +344,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.create
       } { request =>
-        request.withJsonBody(Json.toJson(instanceCreation))
+        request.withBody(instanceCreation)
       } { (controller, result) =>
         status(result) must be equalTo 400
       }
@@ -422,7 +370,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.create
       } { request =>
-        request.withJsonBody(Json.toJson(instanceCreation))
+        request.withBody(instanceCreation)
       } { (controller, result) =>
         status(result) must be equalTo 400
       }
@@ -450,12 +398,13 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
       } { request =>
-        request.withJsonBody(
-          JsObject(
-            Map(
-              "status" -> Json.toJson(JobStatus.Running)
-            ))
-        )
+        request.withBody(
+          InstanceUpdate(
+            instanceId = None,
+            status = Some(JobStatus.Running),
+            parameterValues = None,
+            selectedTemplate = None
+          ))
       } { (controller, result) =>
         (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(instanceWithStatus))
@@ -483,14 +432,13 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
       } { request =>
-        request.withJsonBody(
-          JsObject(
-            Map(
-              "parameterValues" -> JsObject(Map(
-                "id" -> JsString("new")
-              ))
-            ))
-        )
+        request.withBody(
+          InstanceUpdate(
+            instanceId = None,
+            status = None,
+            parameterValues = Some(Map("id" -> "new")),
+            selectedTemplate = None
+          ))
       } { (controller, result) =>
         (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(instanceWithStatus))
@@ -515,12 +463,13 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
       } { request =>
-        request.withJsonBody(
-          JsObject(
-            Map(
-              "selectedTemplate" -> JsString("newTemplate")
-            ))
-        )
+        request.withBody(
+          InstanceUpdate(
+            instanceId = None,
+            status = None,
+            parameterValues = None,
+            selectedTemplate = Some("newTemplate")
+          ))
       } { (controller, result) =>
         (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(instanceWithStatus))
@@ -545,12 +494,13 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
       } { request =>
-        request.withJsonBody(
-          JsObject(
-            Map(
-              "selectedTemplate" -> JsString("newTemplate")
-            ))
-        )
+        request.withBody(
+          InstanceUpdate(
+            instanceId = None,
+            status = None,
+            parameterValues = None,
+            selectedTemplate = Some("newTemplate")
+          ))
       } { (controller, result) =>
         status(result) must be equalTo 400
       }
@@ -576,28 +526,13 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
       } { request =>
-        request.withJsonBody(
-          JsObject(
-            Map(
-              "status" -> Json.toJson(JobStatus.Running)
-            ))
-        )
-      } { (controller, result) =>
-        status(result) must be equalTo 400
-      }
-    }
-
-    "fail if the request is not JSON" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
-      testWithAllAuths { securityService =>
-        InstanceController(
-          instanceService = instanceService,
-          securityService = securityService
-        )
-      } { controller =>
-        controller.update(instanceWithStatus.instance.id)
-      } { request =>
-        request.withTextBody("bla")
+        request.withBody(
+          InstanceUpdate(
+            instanceId = None,
+            status = Some(JobStatus.Running),
+            parameterValues = None,
+            selectedTemplate = None
+          ))
       } { (controller, result) =>
         status(result) must be equalTo 400
       }
@@ -614,77 +549,13 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
       } { request =>
-        request.withJsonBody(
-          JsObject(Map.empty[String, JsValue])
-        )
-      } { (controller, result) =>
-        status(result) must be equalTo 400
-      }
-    }
-
-    "fail if the instance status request is not valid" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
-
-      testWithAllAuths { securityService =>
-        InstanceController(
-          instanceService = instanceService,
-          securityService = securityService
-        )
-      } { controller =>
-        controller.update(instanceWithStatus.instance.id)
-      } { request =>
-        request.withJsonBody(
-          JsObject(
-            Map(
-              "status" -> JsObject(Map.empty[String, JsValue])
-            ))
-        )
-      } { (controller, result) =>
-        status(result) must be equalTo 400
-      }
-    }
-
-    "fail if the instance parameter request is not valid" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
-
-      testWithAllAuths { securityService =>
-        InstanceController(
-          instanceService = instanceService,
-          securityService = securityService
-        )
-      } { controller =>
-        controller.update(instanceWithStatus.instance.id)
-      } { request =>
-        request.withJsonBody(
-          JsObject(
-            Map(
-              "parameterValues" -> JsObject(Map(
-                "id" -> JsObject(Map.empty[String, JsValue])
-              ))
-            ))
-        )
-      } { (controller, result) =>
-        status(result) must be equalTo 400
-      }
-    }
-
-    "fail if the instance template request is not valid" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
-
-      testWithAllAuths { securityService =>
-        InstanceController(
-          instanceService = instanceService,
-          securityService = securityService
-        )
-      } { controller =>
-        controller.update(instanceWithStatus.instance.id)
-      } { request =>
-        request.withJsonBody(
-          JsObject(
-            Map(
-              "selectedTemplate" -> JsObject(Map.empty[String, JsValue])
-            ))
-        )
+        request.withBody(
+          InstanceUpdate(
+            instanceId = None,
+            status = None,
+            parameterValues = None,
+            selectedTemplate = None
+          ))
       } { (controller, result) =>
         status(result) must be equalTo 400
       }
@@ -701,12 +572,13 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
       } { request =>
-        request.withJsonBody(
-          JsObject(
-            Map(
-              "status" -> Json.toJson(JobStatus.Running)
-            ))
-        )
+        request.withBody(
+          InstanceUpdate(
+            instanceId = None,
+            status = Some(JobStatus.Running),
+            parameterValues = None,
+            selectedTemplate = None
+          ))
       } { (controller, result) =>
         status(result) must be equalTo 400
       }
@@ -723,14 +595,14 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
       } { request =>
-        request.withJsonBody(
-          JsObject(
-            Map(
-              "parameterValues" -> JsObject(Map(
-                "id" -> JsString("new")
-              ))
-            ))
-        )
+        request.withBody(
+          InstanceUpdate(
+            instanceId = None,
+            status = None,
+            parameterValues = Some(Map("id" -> "new")),
+            selectedTemplate = None
+          ))
+
       } { (controller, result) =>
         status(result) must be equalTo 400
       }
@@ -742,14 +614,14 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
       } { request =>
-        request.withJsonBody(
-          JsObject(
-            Map(
-              "parameterValues" -> JsObject(Map(
-                "id" -> JsString("new")
-              ))
-            ))
-        )
+        request.withBody(
+          InstanceUpdate(
+            instanceId = None,
+            status = None,
+            parameterValues = Some(Map("id" -> "new")),
+            selectedTemplate = None
+          ))
+
       } { (controller, result) =>
         status(result) must be equalTo 400
       }
@@ -767,12 +639,13 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
       } { request =>
-        request.withJsonBody(
-          JsObject(
-            Map(
-              "selectedTemplate" -> JsString("newTemplate")
-            ))
-        )
+        request.withBody(
+          InstanceUpdate(
+            instanceId = None,
+            status = None,
+            parameterValues = None,
+            selectedTemplate = Some("newTemplate")
+          ))
       } { (controller, result) =>
         status(result) must be equalTo 400
       }
@@ -784,12 +657,13 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
       } { request =>
-        request.withJsonBody(
-          JsObject(
-            Map(
-              "selectedTemplate" -> JsString("newTemplate")
-            ))
-        )
+        request.withBody(
+          InstanceUpdate(
+            instanceId = None,
+            status = None,
+            parameterValues = None,
+            selectedTemplate = Some("newTemplate")
+          ))
       } { (controller, result) =>
         status(result) must be equalTo 400
       }
@@ -811,9 +685,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(instanceWithStatus))
       }
@@ -831,9 +703,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         status(result) must be equalTo 400
       }
     }
@@ -850,9 +720,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         status(result) must be equalTo 400
       }
     }
@@ -870,9 +738,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         status(result) must be equalTo 403
       }
     }
@@ -887,9 +753,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         status(result) must be equalTo 403
       }
       val userMatcher = testWithAllAuths(user) { securityService =>
@@ -899,9 +763,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
-      } { request =>
-        request
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         status(result) must be equalTo 403
       }
       operatorMatcher and userMatcher

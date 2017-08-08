@@ -22,9 +22,7 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.about
-      } {
-        identity
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         (status(result) must be equalTo 200) and {
           contentAsJson(result) must be equalTo Json.toJson(aboutInfoService.aboutInfo(account))
         }
@@ -38,7 +36,7 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
         aboutInfoService = aboutInfoService,
         securityService = withAuthNone(mock(classOf[SecurityService]))
       )
-      val result = controller.about(FakeRequest())
+      val result = controller.about(FakeRequest().withBody(()))
       status(result) must be equalTo 200 and {
         contentAsJson(result) must be equalTo Json.toJson(aboutInfoService.aboutInfo(account))
       }

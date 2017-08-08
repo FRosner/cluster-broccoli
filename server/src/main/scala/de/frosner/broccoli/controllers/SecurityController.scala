@@ -80,7 +80,7 @@ case class SecurityController @Inject()(override val securityService: SecuritySe
       )
   }
 
-  def logout = Action.async { implicit request =>
+  def logout = Action.async(parse.empty) { implicit request =>
     gotoLogoutSucceeded.andThen {
       case tryResult =>
         getSessionId(request).map(id => (id, webSocketService.closeConnections(id))) match {
@@ -91,9 +91,8 @@ case class SecurityController @Inject()(override val securityService: SecuritySe
     }
   }
 
-  def verify = StackAction { implicit request =>
-    val user = loggedIn
-    Ok(user.name)
+  def verify = StackAction(parse.empty) { implicit request =>
+    Ok(loggedIn.name)
   }
 
 }
