@@ -55,8 +55,9 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
                   .delete(instanceId, user, instanceService)
                   .fold(DeleteInstanceError, DeleteInstanceSuccess)
               case IncomingWsMessage.UpdateInstance(instanceUpdate: InstanceUpdate) =>
-                OutgoingWsMessage.fromResult(
-                  InstanceController.update(instanceUpdate.instanceId.get, instanceUpdate, user, instanceService))
+                InstanceController
+                  .update(instanceUpdate.instanceId.get, instanceUpdate, user, instanceService)
+                  .fold(UpdateInstanceError, UpdateInstanceSuccess)
             }
             .recoverTotal { error =>
               Logger.warn(s"Can't parse a message from $connectionId: $error")

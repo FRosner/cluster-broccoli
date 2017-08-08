@@ -502,7 +502,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
             selectedTemplate = Some("newTemplate")
           ))
       } { (controller, result) =>
-        status(result) must be equalTo 400
+        status(result) must be equalTo 404
       }
     }
 
@@ -534,7 +534,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
             selectedTemplate = None
           ))
       } { (controller, result) =>
-        status(result) must be equalTo 400
+        status(result) must be equalTo 403
       }
     }
 
@@ -580,7 +580,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
             selectedTemplate = None
           ))
       } { (controller, result) =>
-        status(result) must be equalTo 400
+        status(result) must be equalTo 403
       }
     }
 
@@ -604,7 +604,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           ))
 
       } { (controller, result) =>
-        status(result) must be equalTo 400
+        status(result) must be equalTo 403
       }
       val userMatchers = testWithAllAuths(user) { securityService =>
         InstanceController(
@@ -623,7 +623,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
           ))
 
       } { (controller, result) =>
-        status(result) must be equalTo 400
+        status(result) must be equalTo 403
       }
       operatorMatchers and userMatchers
     }
@@ -647,7 +647,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
             selectedTemplate = Some("newTemplate")
           ))
       } { (controller, result) =>
-        status(result) must be equalTo 400
+        status(result) must be equalTo 403
       }
       val userMatchers = testWithAllAuths(user) { securityService =>
         InstanceController(
@@ -665,7 +665,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
             selectedTemplate = Some("newTemplate")
           ))
       } { (controller, result) =>
-        status(result) must be equalTo 400
+        status(result) must be equalTo 403
       }
       operatorMatchers and userMatchers
     }

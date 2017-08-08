@@ -9,8 +9,7 @@ import Models.Resources.InstanceCreation as InstanceCreation
 import Models.Resources.InstanceUpdate as InstanceUpdate
 import Models.Resources.InstanceCreated as InstanceCreated
 import Models.Resources.InstanceDeleted as InstanceDeleted
-import Models.Resources.InstanceUpdateSuccess as InstanceUpdateSuccess
-import Models.Resources.InstanceUpdateFailure as InstanceUpdateFailure
+import Models.Resources.InstanceUpdated as InstanceUpdated
 import Model exposing (Model)
 import Navigation exposing (Location)
 import Updates.Messages exposing (..)
@@ -70,10 +69,10 @@ payloadDecoder t =
             Decode.map DeleteInstanceErrorMessage InstanceError.decoder
 
         "updateInstanceSuccess" ->
-            Decode.map UpdateInstanceSuccessMessage InstanceUpdateSuccess.decoder
+            Decode.map UpdateInstanceSuccessMessage InstanceUpdated.decoder
 
         "updateInstanceError" ->
-            Decode.map UpdateInstanceErrorMessage InstanceUpdateFailure.decoder
+            Decode.map UpdateInstanceErrorMessage InstanceError.decoder
 
         s ->
             Decode.fail <| "Unknown message type: " ++ s

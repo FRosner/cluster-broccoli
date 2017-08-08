@@ -217,7 +217,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           instanceWithStatus
         )
       )
-      val roleFailure = OutgoingWsMessage.AddInstanceError(InstanceError.AdministratorRequired)
+      val roleFailure = OutgoingWsMessage.AddInstanceError(InstanceError.RolesRequired(Role.Administrator))
       val regexFailure =
         OutgoingWsMessage.AddInstanceError(InstanceError.UserRegexDenied("blib", "bla"))
 
@@ -253,7 +253,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           instanceWithStatus
         )
       )
-      val roleFailure = OutgoingWsMessage.DeleteInstanceError(InstanceError.AdministratorRequired)
+      val roleFailure = OutgoingWsMessage.DeleteInstanceError(InstanceError.RolesRequired(Role.Administrator))
       val regexFailure = OutgoingWsMessage.DeleteInstanceError(InstanceError.UserRegexDenied(instanceDeletion, "bla"))
 
       testWs(
@@ -292,7 +292,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       )
 
       val success = OutgoingWsMessage.UpdateInstanceSuccess(
-        InstanceUpdateSuccess(
+        InstanceUpdated(
           instanceUpdate,
           instanceWithStatus
         )
@@ -320,22 +320,12 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           None -> success,
           Some((".*", Role.Administrator)) -> success,
           Some(("bla", Role.Administrator)) -> OutgoingWsMessage.UpdateInstanceError(
-            InstanceUpdateFailure(
-              instanceUpdate,
-              "Only allowed to update instances matching bla"
-            )
-          ),
+            InstanceError.UserRegexDenied(instanceUpdate.instanceId.get, "bla")),
           Some((".*", Role.Operator)) -> OutgoingWsMessage.UpdateInstanceError(
-            InstanceUpdateFailure(
-              instanceUpdate,
-              "Updating parameter values or templates only allowed for administrators."
-            )
+            InstanceError.RolesRequired(Role.Administrator)
           ),
           Some((".*", Role.NormalUser)) -> OutgoingWsMessage.UpdateInstanceError(
-            InstanceUpdateFailure(
-              instanceUpdate,
-              "Only administrators and operators are allowed to update instances"
-            )
+            InstanceError.RolesRequired(Role.Administrator, Role.Operator)
           )
         )
       )
@@ -350,7 +340,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       )
 
       val success = OutgoingWsMessage.UpdateInstanceSuccess(
-        InstanceUpdateSuccess(
+        InstanceUpdated(
           instanceUpdate,
           instanceWithStatus
         )
@@ -378,17 +368,11 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           None -> success,
           Some((".*", Role.Administrator)) -> success,
           Some(("bla", Role.Administrator)) -> OutgoingWsMessage.UpdateInstanceError(
-            InstanceUpdateFailure(
-              instanceUpdate,
-              "Only allowed to update instances matching bla"
-            )
+            InstanceError.UserRegexDenied(instanceUpdate.instanceId.get, "bla")
           ),
           Some((".*", Role.Operator)) -> success,
           Some((".*", Role.NormalUser)) -> OutgoingWsMessage.UpdateInstanceError(
-            InstanceUpdateFailure(
-              instanceUpdate,
-              "Only administrators and operators are allowed to update instances"
-            )
+            InstanceError.RolesRequired(Role.Administrator, Role.Operator)
           )
         )
       )
@@ -403,7 +387,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       )
 
       val success = OutgoingWsMessage.UpdateInstanceSuccess(
-        InstanceUpdateSuccess(
+        InstanceUpdated(
           instanceUpdate,
           instanceWithStatus
         )
@@ -431,22 +415,13 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           None -> success,
           Some((".*", Role.Administrator)) -> success,
           Some(("bla", Role.Administrator)) -> OutgoingWsMessage.UpdateInstanceError(
-            InstanceUpdateFailure(
-              instanceUpdate,
-              "Only allowed to update instances matching bla"
-            )
+            InstanceError.UserRegexDenied(instanceUpdate.instanceId.get, "bla")
           ),
           Some((".*", Role.Operator)) -> OutgoingWsMessage.UpdateInstanceError(
-            InstanceUpdateFailure(
-              instanceUpdate,
-              "Updating parameter values or templates only allowed for administrators."
-            )
+            InstanceError.RolesRequired(Role.Administrator)
           ),
           Some((".*", Role.NormalUser)) -> OutgoingWsMessage.UpdateInstanceError(
-            InstanceUpdateFailure(
-              instanceUpdate,
-              "Only administrators and operators are allowed to update instances"
-            )
+            InstanceError.RolesRequired(Role.Administrator, Role.Operator)
           )
         )
       )

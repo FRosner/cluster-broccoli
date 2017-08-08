@@ -65,12 +65,9 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
   }
 
   def update(id: String) = StackAction(parse.json[InstanceUpdate]) { implicit request =>
-    InstanceController.update(id, request.body, loggedIn, instanceService) match {
-      case InstanceUpdateSuccess(update, updatedInstance) =>
-        Results.Ok(Json.toJson(updatedInstance))
-      case InstanceUpdateFailure(update, reason) =>
-        Results.Status(400)(s"Updating instance $id failed: $reason")
-    }
+    InstanceController
+      .update(id, request.body, loggedIn, instanceService)
+      .fold(_.toHTTPResult, updated => Results.Ok(Json.toJson(updated.instanceWithStatus)))
   }
 
   def delete(id: String) = StackAction(parse.empty) { implicit request =>
@@ -110,7 +107,7 @@ object InstanceController {
     for {
       user <- Either
         .right[InstanceError, Account](loggedIn)
-        .ensure(InstanceError.AdministratorRequired: InstanceError)(_.role == Role.Administrator)
+        .ensure(InstanceError.RolesRequired(Role.Administrator): InstanceError)(_.role == Role.Administrator)
       _ <- Either
         .fromOption(instanceCreation.parameters.get("id"), InstanceError.IdMissing: InstanceError)
         .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex): InstanceError)(_.matches(user.instanceRegex))
@@ -127,7 +124,7 @@ object InstanceController {
     for {
       user <- Either
         .right[InstanceError, Account](loggedIn)
-        .ensure(InstanceError.AdministratorRequired: InstanceError)(_.role == Role.Administrator)
+        .ensure(InstanceError.RolesRequired(Role.Administrator): InstanceError)(_.role == Role.Administrator)
       instanceId <- Either
         .right[InstanceError, String](id)
         .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex): InstanceError)(_.matches(user.instanceRegex))
@@ -151,53 +148,39 @@ object InstanceController {
     anonymizedInstances
   }
 
-  def update(id: String,
-             instanceUpdate: InstanceUpdate,
-             loggedIn: Account,
-             instanceService: InstanceService): InstanceUpdateResult = {
-    val user = loggedIn
-    if (user.role == Role.Administrator || user.role == Role.Operator) {
-      val instanceRegex = user.instanceRegex
-      if (!id.matches(instanceRegex)) {
-        InstanceUpdateFailure(instanceUpdate, s"Only allowed to update instances matching $instanceRegex")
-      } else {
-        val maybeStatusUpdater = instanceUpdate.status
-        val maybeParameterValuesUpdater = instanceUpdate.parameterValues
-        val maybeTemplateSelector = instanceUpdate.selectedTemplate
-        if (maybeStatusUpdater.isEmpty && maybeParameterValuesUpdater.isEmpty && maybeTemplateSelector.isEmpty) {
-          InstanceUpdateFailure(instanceUpdate,
-                                "Invalid request to update an instance. Please refer to the API documentation.")
-        } else if ((maybeParameterValuesUpdater.isDefined || maybeTemplateSelector.isDefined) && user.role != Role.Administrator) {
-          InstanceUpdateFailure(instanceUpdate,
-                                s"Updating parameter values or templates only allowed for administrators.")
-        } else {
-          val maybeExistingAndChangedInstance = instanceService.updateInstance(
-            id = id,
-            statusUpdater = maybeStatusUpdater,
-            parameterValuesUpdater = maybeParameterValuesUpdater,
-            templateSelector = maybeTemplateSelector
-          )
-          maybeExistingAndChangedInstance match {
-            case Success(changedInstance) => InstanceUpdateSuccess(instanceUpdate, changedInstance)
-            case Failure(throwable: FileNotFoundException) =>
-              InstanceUpdateFailure(instanceUpdate, s"Instance not found: $throwable")
-            case Failure(throwable: InstanceNotFoundException) =>
-              InstanceUpdateFailure(instanceUpdate, s"Instance not found: $throwable")
-            case Failure(throwable: IllegalArgumentException) =>
-              InstanceUpdateFailure(instanceUpdate, s"Invalid request to update an instance: $throwable")
-            case Failure(throwable: TemplateNotFoundException) =>
-              InstanceUpdateFailure(instanceUpdate, s"Invalid request to update an instance: $throwable")
-            case Failure(throwable) =>
-              InstanceUpdateFailure(instanceUpdate, s"Something went wrong when updating the instance: $throwable")
-          }
+  def update(
+      id: String,
+      instanceUpdate: InstanceUpdate,
+      loggedIn: Account,
+      instanceService: InstanceService
+  ): Either[InstanceError, InstanceUpdated] =
+    for {
+      user <- Either
+        .right[InstanceError, Account](loggedIn)
+        .ensure(InstanceError.RolesRequired(Role.Administrator, Role.Operator))(u =>
+          u.role == Role.Administrator || u.role == Role.Operator)
+      instanceId <- Either
+        .right[InstanceError, String](id)
+        .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
+      update <- Either
+        .right[InstanceError, InstanceUpdate](instanceUpdate)
+        .ensure(InstanceError.InvalidParameters(
+          "Invalid request to update an instance. Please refer to the API documentation.")) { u =>
+          // Ensure that at least one parameter of the status update is set
+          u.status.orElse(u.parameterValues).orElse(u.selectedTemplate).isDefined
         }
-      }
-    } else {
-      InstanceUpdateFailure(
-        instanceUpdate,
-        s"Only administrators and operators are allowed to update instances"
-      )
-    }
-  }
-
+        .ensure(InstanceError.RolesRequired(Role.Administrator)) { u =>
+          // Ensure that only administrators can update parameter values or instance templates
+          user.role == Role.Administrator || (u.parameterValues.isEmpty && u.selectedTemplate.isEmpty)
+        }
+      updatedInstance <- Either
+        .fromTry(instanceService.updateInstance(id, update.status, update.parameterValues, update.selectedTemplate))
+        .leftMap {
+          case throwable: FileNotFoundException     => InstanceError.NotFound(id, Some(throwable))
+          case throwable: InstanceNotFoundException => InstanceError.NotFound(id, Some(throwable))
+          case throwable: IllegalArgumentException  => InstanceError.InvalidParameters(throwable.getMessage)
+          case throwable: TemplateNotFoundException => InstanceError.TemplateNotFound(throwable.id)
+          case throwable                            => InstanceError.Generic(throwable)
+        }
+    } yield InstanceUpdated(update, updatedInstance)
 }

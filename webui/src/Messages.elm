@@ -12,8 +12,7 @@ import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.Template exposing (Template)
 import Models.Resources.InstanceCreated exposing (InstanceCreated)
 import Models.Resources.InstanceDeleted exposing (InstanceDeleted)
-import Models.Resources.InstanceUpdateSuccess exposing (InstanceUpdateSuccess)
-import Models.Resources.InstanceUpdateFailure exposing (InstanceUpdateFailure)
+import Models.Resources.InstanceUpdated exposing (InstanceUpdated)
 
 
 type AnyMsg
@@ -48,8 +47,8 @@ type IncomingWsMessage
     | AddInstanceErrorMessage InstanceError
     | DeleteInstanceSuccessMessage InstanceDeleted
     | DeleteInstanceErrorMessage InstanceError
-    | UpdateInstanceSuccessMessage InstanceUpdateSuccess
-    | UpdateInstanceErrorMessage InstanceUpdateFailure
+    | UpdateInstanceSuccessMessage InstanceUpdated
+    | UpdateInstanceErrorMessage InstanceError
     | ErrorMessage String
 
 

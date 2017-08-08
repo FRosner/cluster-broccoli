@@ -45,13 +45,8 @@ object OutgoingWsMessage {
   final case class AddInstanceError(error: InstanceError) extends OutgoingWsMessage
   final case class DeleteInstanceSuccess(result: InstanceDeleted) extends OutgoingWsMessage
   final case class DeleteInstanceError(error: InstanceError) extends OutgoingWsMessage
-  final case class UpdateInstanceSuccess(result: InstanceUpdateSuccess) extends OutgoingWsMessage
-  final case class UpdateInstanceError(result: InstanceUpdateFailure) extends OutgoingWsMessage
-
-  def fromResult(result: InstanceUpdateResult): OutgoingWsMessage = result match {
-    case create: InstanceUpdateSuccess => UpdateInstanceSuccess(create)
-    case error: InstanceUpdateFailure  => UpdateInstanceError(error)
-  }
+  final case class UpdateInstanceSuccess(result: InstanceUpdated) extends OutgoingWsMessage
+  final case class UpdateInstanceError(error: InstanceError) extends OutgoingWsMessage
 
   /**
     * JSON writes for a message outgoing to a websocket.
