@@ -15,6 +15,7 @@ lazy val server = project
     name := "Cluster Broccoli",
     routesGenerator := InjectedRoutesGenerator,
     libraryDependencies ++= List(
+      Dependencies.simulacrum,
       ws,
       cache,
       specs2 % Test,
@@ -28,6 +29,8 @@ lazy val server = project
     libraryDependencies ++= Dependencies.specs2.map(_ % IntegrationTest),
     libraryDependencies += Dependencies.scalacheck % Test,
     libraryDependencies ++= Dependencies.play2auth,
+    // Macro support for Scala
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.frosner.broccoli.build",
     PlayKeys.playMonitoredFiles ++= (sourceDirectories in (Compile, TwirlKeys.compileTemplates)).value,

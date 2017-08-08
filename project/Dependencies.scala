@@ -14,6 +14,11 @@ object Dependencies {
   }
 
   /**
+    * Typeclass boilerplate for Scala
+    */
+  val simulacrum: ModuleID = "com.github.mpilquist" %% "simulacrum" % "0.10.0"
+
+  /**
     * Functional programming data types and type classes.
     */
   val cats: Seq[ModuleID] = Seq(
