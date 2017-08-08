@@ -1,3 +1,5 @@
+import com.typesafe.sbt.packager.docker._
+
 lazy val webui = project
   .in(file("webui"))
   .enablePlugins(YarnPlugin)
@@ -7,7 +9,7 @@ lazy val webui = project
 
 lazy val server = project
   .in(file("server"))
-  .enablePlugins(PlayScala, BuildInfoPlugin)
+  .enablePlugins(PlayScala, BuildInfoPlugin, DockerPlugin)
   .disablePlugins(PlayLayoutPlugin)
   .configs(IntegrationTest)
   .settings(Defaults.itSettings)
@@ -38,6 +40,57 @@ lazy val server = project
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.frosner.broccoli.build",
     PlayKeys.playMonitoredFiles ++= (sourceDirectories in (Compile, TwirlKeys.compileTemplates)).value,
+    // Docker build settings
+    packageName in Docker := "cluster-broccoli",
+    maintainer in Docker := "Frank Rosner",
+    // On Travis CI, use the commit hash as primary version of the docker image
+    version in Docker := Option(System.getenv("TRAVIS_COMMIT"))
+      .map(_.substring(0, 8))
+      .getOrElse((version in Compile).value),
+    dockerUsername := Some("frosner"),
+    // Build from OpenJDK
+    dockerBaseImage := "openjdk:8-jre",
+    // Upgrade the latest tag when we're building from master on Travis CI
+    dockerUpdateLatest := Option(System.getenv("TRAVIS_BRANCH")).exists(_ == "master"),
+    // Map the templates directory into the docker image build context
+    mappings in Docker := {
+      val templatesDirectory = baseDirectory.value.getParentFile / "templates"
+      val templates = templatesDirectory.***.get.collect {
+        case templateFile if templateFile.isFile =>
+          templateFile -> templateFile
+            .relativeTo(templatesDirectory)
+            .map(name => (file("/templates") / name.getPath).getPath)
+            .get
+      }
+      (mappings in Docker).value ++ templates
+    },
+    // Add the templates directory mapped above, and create a daemon-user writable directory to store instances
+    dockerCommands := {
+      val commands = dockerCommands.value
+      val user = (daemonUser in Docker).value
+      val group = (daemonGroup in Docker).value
+      val instanceAndTemplatesCommands = Seq(
+        Cmd("ADD", "templates", "/templates"),
+        ExecCmd("RUN", "mkdir", "/instances"),
+        ExecCmd("RUN", "chown", "-R", s"$user:$group", "/templates", "/instances"),
+        ExecCmd("RUN", "chmod", "0755", "/instances")
+      )
+      // Insert commands to create instances and add templates right after the working directory of the image is
+      // configured
+      val workdirIndex = commands.indexWhere {
+        case Cmd("WORKDIR", _*) => true
+        case _                  => false
+      }
+      commands.take(workdirIndex) ++ instanceAndTemplatesCommands ++ commands.drop(workdirIndex)
+    },
+    // Point broccoli to the /instances and /templates directories in the container
+    dockerCmd ++= Seq("-Dbroccoli.templates.storage.fs.url=/templates",
+                      "-Dbroccoli.instances.storage.fs.url=/instances"),
+    // Expose the application port
+    dockerExposedPorts := Seq(9000),
+    // Add additional labels to track docker images back to builds and branches
+    dockerLabels ++= Option(System.getenv("TRAVIS_BRANCH")).map("branch" -> _).toMap,
+    dockerLabels ++= Option(System.getenv("TRAVIS_BUILD_NUMBER")).map("travis-build-number" -> _).toMap,
     // Do not run integration tests in parallel, because these spawn docker containers and thus depend on global state
     parallelExecution in IntegrationTest := false,
     // Do not run unit tests in parallel either because Play doesn't like it

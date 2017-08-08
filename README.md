@@ -51,6 +51,8 @@ If you only need an image to run the Broccoli distribution, go with the JRE base
 
 ```
 docker run -p 9000:9000 frosner/cluster-broccoli \
+  -Dbroccoli.templates.storage.fs.url=/templates \
+  -Dbroccoli.instances.storage.fs.url=/instances \ 
   -Dbroccoli.nomad.url=<your-nomad-url> \
   -Dbroccoli.consul.url=<your-consul-url>
 ```
