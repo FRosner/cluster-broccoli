@@ -66,24 +66,38 @@ updateBodyView message oldBodyUiModel =
                 let
                     newExpandedInstances =
                         insertOrRemove expanded instanceId oldExpandedInstances
+
+                    command =
+                        if expanded then
+                            CmdUtils.sendMsg (SendWsMsg (GetInstanceTasks instanceId))
+                        else
+                            Cmd.none
                 in
                     ( { oldBodyUiModel
                         | expandedInstances = newExpandedInstances
                         , attemptedDeleteInstances = Nothing
                       }
-                    , Cmd.none
+                    , command
                     )
 
             AllInstancesExpanded instanceIds expanded ->
                 let
                     newExpandedInstances =
                         unionOrDiff expanded oldExpandedInstances instanceIds
+
+                    command =
+                        if expanded then
+                            Set.toList instanceIds
+                                |> List.map (GetInstanceTasks >> SendWsMsg >> CmdUtils.sendMsg)
+                                |> Cmd.batch
+                        else
+                            Cmd.none
                 in
                     ( { oldBodyUiModel
                         | expandedInstances = newExpandedInstances
                         , attemptedDeleteInstances = Nothing
                       }
-                    , Cmd.none
+                    , command
                     )
 
             EnterEditInstanceParameterValue instance parameter value ->
