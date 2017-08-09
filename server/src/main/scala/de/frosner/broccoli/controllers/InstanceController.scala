@@ -38,13 +38,7 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
       val maybeInstance = instanceService.getInstance(id)
       maybeInstance
         .map { instance =>
-          Ok(Json.toJson {
-            if (user.role == Role.Administrator) {
-              instance
-            } else {
-              InstanceController.removeSecretVariables(instance)
-            }
-          })
+          Ok(Json.toJson(InstanceWithStatus.filterSecretsForRole(user.role)(instance)))
         }
         .getOrElse(notFound)
     } else {
@@ -67,27 +61,6 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
 }
 
 object InstanceController {
-
-  def removeSecretVariables(instanceWithStatus: InstanceWithStatus): InstanceWithStatus = {
-    // FIXME "censoring" through setting the values null is ugly but using Option[String] gives me stupid Json errors
-    val instance = instanceWithStatus.instance
-    val template = instance.template
-    val parameterInfos = template.parameterInfos
-    val newParameterValues = instance.parameterValues.map {
-      case (parameter, value) =>
-        val possiblyCensoredValue = if (parameterInfos.get(parameter).exists(_.secret == Some(true))) {
-          null.asInstanceOf[String]
-        } else {
-          value
-        }
-        (parameter, possiblyCensoredValue)
-    }
-    instanceWithStatus.copy(
-      instance = instanceWithStatus.instance.copy(
-        parameterValues = newParameterValues
-      )
-    )
-  }
 
   def create(instanceCreation: InstanceCreation,
              loggedIn: Account,
@@ -121,20 +94,13 @@ object InstanceController {
         .leftMap(InstanceError.Generic(_): InstanceError)
     } yield InstanceDeleted(instanceId, deletedInstance)
 
-  def list(templateId: Option[String], loggedIn: Account, instanceService: InstanceService): Seq[InstanceWithStatus] = {
-    val filteredInstances = templateId
-      .map(
-        id => instanceService.getInstances.filter(_.instance.template.id == id)
-      )
+  def list(templateId: Option[String], loggedIn: Account, instanceService: InstanceService): Seq[InstanceWithStatus] =
+    templateId
+      .map(id => instanceService.getInstances.filter(_.instance.template.id == id))
       .getOrElse(instanceService.getInstances)
       .filter(_.instance.id.matches(loggedIn.instanceRegex))
-    val anonymizedInstances = if (loggedIn.role != Role.Administrator) {
-      filteredInstances.map(removeSecretVariables)
-    } else {
-      filteredInstances
-    }
-    anonymizedInstances
-  }
+      // Remove secrets from instances if the user may not see them
+      .map(InstanceWithStatus.filterSecretsForRole(loggedIn.role))
 
   def update(
       id: String,
