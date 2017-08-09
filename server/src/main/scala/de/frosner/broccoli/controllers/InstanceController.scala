@@ -32,18 +32,14 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
   }
 
   def show(id: String): Action[Unit] = StackAction(parse.empty) { implicit request =>
-    val notFound = NotFound(s"Instance $id not found.")
-    val user = loggedIn
-    if (id.matches(user.instanceRegex)) {
-      val maybeInstance = instanceService.getInstance(id)
-      maybeInstance
-        .map { instance =>
-          Ok(Json.toJson(InstanceWithStatus.filterSecretsForRole(user.role)(instance)))
-        }
-        .getOrElse(notFound)
-    } else {
-      notFound
-    }
+    Either
+      .right[InstanceError, String](id)
+      // Ensure that the user is allowed to access the instance based on its ID
+      .ensureOr(InstanceError.UserRegexDenied(_, loggedIn.instanceRegex))(_.matches(loggedIn.instanceRegex))
+      .flatMap(id => instanceService.getInstance(id).toRight(InstanceError.NotFound(id)))
+      // Remove secrets if the user may not see them
+      .map(InstanceWithStatus.filterSecretsForRole(loggedIn.role))
+      .fold(_.toHTTPResult, instance => Ok(Json.toJson(instance)))
   }
 
   def create: Action[InstanceCreation] = StackAction(parse.json[InstanceCreation]) { implicit request =>

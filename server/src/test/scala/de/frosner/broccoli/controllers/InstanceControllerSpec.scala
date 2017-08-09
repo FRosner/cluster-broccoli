@@ -231,7 +231,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       }
     }
 
-    "return 404 if the instance does not match the account regex" in new WithApplication {
+    "return 403 if the instance does not match the account regex" in new WithApplication {
       testWithAllAuths {
         accountWithRegex
       } { securityService =>
@@ -242,7 +242,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
       }(_.withBody(())) { (controller, result) =>
-        status(result) must be equalTo 404
+        status(result) must be equalTo 403
       }
     }
 
