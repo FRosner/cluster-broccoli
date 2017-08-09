@@ -1,7 +1,6 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.Role.Role
 import de.frosner.broccoli.models.{Account, Role}
 import de.frosner.broccoli.services.SecurityService
 import de.frosner.broccoli.util.Logging
@@ -55,8 +54,8 @@ trait AuthConfigImpl extends AuthConfig with Logging {
   def authorize(user: User, authority: Authority)(implicit ctx: ExecutionContext): Future[Boolean] = Future.successful {
     user.role match {
       case Role.Administrator => true
-      case Role.Operator      => authority == Role.Operator || authority == Role.NormalUser
-      case Role.NormalUser    => authority == Role.NormalUser
+      case Role.Operator      => authority == Role.Operator || authority == Role.User
+      case Role.User          => authority == Role.User
     }
   }
 

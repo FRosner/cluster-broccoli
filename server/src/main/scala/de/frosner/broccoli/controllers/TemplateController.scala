@@ -13,11 +13,11 @@ case class TemplateController @Inject()(templateService: TemplateService, overri
     extends Controller
     with BroccoliSimpleAuthorization {
 
-  def list: Action[AnyContent] = StackAction { implicit request =>
+  def list = StackAction(parse.empty) { implicit request =>
     Ok(Json.toJson(TemplateController.list(templateService)))
   }
 
-  def show(id: String): Action[AnyContent] = StackAction { implicit request =>
+  def show(id: String) = StackAction(parse.empty) { implicit request =>
     templateService.template(id).map(template => Ok(Json.toJson(template))).getOrElse(NotFound)
   }
 

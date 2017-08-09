@@ -4,14 +4,12 @@ import Json.Decode as Decode exposing (Decoder, field, andThen)
 import Models.Resources.AboutInfo as AboutInfo
 import Models.Resources.Template as Template
 import Models.Resources.Instance as Instance
+import Models.Resources.InstanceError as InstanceError
 import Models.Resources.InstanceCreation as InstanceCreation
 import Models.Resources.InstanceUpdate as InstanceUpdate
-import Models.Resources.InstanceCreationSuccess as InstanceCreationSuccess
-import Models.Resources.InstanceCreationFailure as InstanceCreationFailure
-import Models.Resources.InstanceDeletionSuccess as InstanceDeletionSuccess
-import Models.Resources.InstanceDeletionFailure as InstanceDeletionFailure
-import Models.Resources.InstanceUpdateSuccess as InstanceUpdateSuccess
-import Models.Resources.InstanceUpdateFailure as InstanceUpdateFailure
+import Models.Resources.InstanceCreated as InstanceCreated
+import Models.Resources.InstanceDeleted as InstanceDeleted
+import Models.Resources.InstanceUpdated as InstanceUpdated
 import Model exposing (Model)
 import Navigation exposing (Location)
 import Updates.Messages exposing (..)
@@ -59,22 +57,22 @@ payloadDecoder t =
             Decode.map ErrorMessage Decode.string
 
         "addInstanceSuccess" ->
-            Decode.map AddInstanceSuccessMessage InstanceCreationSuccess.decoder
+            Decode.map AddInstanceSuccessMessage InstanceCreated.decoder
 
         "addInstanceError" ->
-            Decode.map AddInstanceErrorMessage InstanceCreationFailure.decoder
+            Decode.map AddInstanceErrorMessage InstanceError.decoder
 
         "deleteInstanceSuccess" ->
-            Decode.map DeleteInstanceSuccessMessage InstanceDeletionSuccess.decoder
+            Decode.map DeleteInstanceSuccessMessage InstanceDeleted.decoder
 
         "deleteInstanceError" ->
-            Decode.map DeleteInstanceErrorMessage InstanceDeletionFailure.decoder
+            Decode.map DeleteInstanceErrorMessage InstanceError.decoder
 
         "updateInstanceSuccess" ->
-            Decode.map UpdateInstanceSuccessMessage InstanceUpdateSuccess.decoder
+            Decode.map UpdateInstanceSuccessMessage InstanceUpdated.decoder
 
         "updateInstanceError" ->
-            Decode.map UpdateInstanceErrorMessage InstanceUpdateFailure.decoder
+            Decode.map UpdateInstanceErrorMessage InstanceError.decoder
 
         s ->
             Decode.fail <| "Unknown message type: " ++ s

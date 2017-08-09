@@ -10,8 +10,13 @@ object Dependencies {
 
     val play2auth = "0.14.2"
 
-    val cats = "0.9.0"
+    val cats = "1.0.0-MF"
   }
+
+  /**
+    * Typeclass boilerplate for Scala
+    */
+  val simulacrum: ModuleID = "com.github.mpilquist" %% "simulacrum" % "0.10.0"
 
   /**
     * Functional programming data types and type classes.

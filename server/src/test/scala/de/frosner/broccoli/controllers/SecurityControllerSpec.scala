@@ -30,9 +30,7 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
         )
       } { controller =>
         controller.verify
-      } {
-        identity
-      } { (controller, result) =>
+      }(_.withBody(())) { (controller, result) =>
         status(result) must be equalTo 200
       }
     }
@@ -113,7 +111,7 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
         securityService = withAuthConf(mock(classOf[SecurityService]), List(account)),
         webSocketService = mock(classOf[WebSocketService])
       )
-      val result = controller.logout.apply(FakeRequest().withLoggedIn(controller)(account.name))
+      val result = controller.logout.apply(FakeRequest().withLoggedIn(controller)(account.name).withBody(()))
       (status(result) must be equalTo 200) and
         (header("Set-Cookie", result) should beSome.which((s: String) =>
           s.startsWith(s"${AuthConfigImpl.CookieName}=; ")))
@@ -124,7 +122,7 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
         securityService = withAuthConf(mock(classOf[SecurityService]), List(account)),
         webSocketService = mock(classOf[WebSocketService])
       )
-      val result = controller.logout.apply(FakeRequest().withLoggedIn(controller)(account.name))
+      val result = controller.logout.apply(FakeRequest().withLoggedIn(controller)(account.name).withBody(()))
       Await.ready(result, Duration(5, TimeUnit.SECONDS))
       verify(controller.webSocketService).closeConnections(anyString())
     }

@@ -41,27 +41,12 @@ object OutgoingWsMessage {
   final case class AboutInfoMsg(info: AboutInfo) extends OutgoingWsMessage
   final case class Error(error: String) extends OutgoingWsMessage
   final case class Notification(message: String) extends OutgoingWsMessage
-  final case class AddInstanceSuccess(result: InstanceCreationSuccess) extends OutgoingWsMessage
-  final case class AddInstanceError(result: InstanceCreationFailure) extends OutgoingWsMessage
-  final case class DeleteInstanceSuccess(result: InstanceDeletionSuccess) extends OutgoingWsMessage
-  final case class DeleteInstanceError(result: InstanceDeletionFailure) extends OutgoingWsMessage
-  final case class UpdateInstanceSuccess(result: InstanceUpdateSuccess) extends OutgoingWsMessage
-  final case class UpdateInstanceError(result: InstanceUpdateFailure) extends OutgoingWsMessage
-
-  def fromResult(result: InstanceCreationResult): OutgoingWsMessage = result match {
-    case create: InstanceCreationSuccess => AddInstanceSuccess(create)
-    case error: InstanceCreationFailure  => AddInstanceError(error)
-  }
-
-  def fromResult(result: InstanceDeletionResult): OutgoingWsMessage = result match {
-    case create: InstanceDeletionSuccess => DeleteInstanceSuccess(create)
-    case error: InstanceDeletionFailure  => DeleteInstanceError(error)
-  }
-
-  def fromResult(result: InstanceUpdateResult): OutgoingWsMessage = result match {
-    case create: InstanceUpdateSuccess => UpdateInstanceSuccess(create)
-    case error: InstanceUpdateFailure  => UpdateInstanceError(error)
-  }
+  final case class AddInstanceSuccess(result: InstanceCreated) extends OutgoingWsMessage
+  final case class AddInstanceError(error: InstanceError) extends OutgoingWsMessage
+  final case class DeleteInstanceSuccess(result: InstanceDeleted) extends OutgoingWsMessage
+  final case class DeleteInstanceError(error: InstanceError) extends OutgoingWsMessage
+  final case class UpdateInstanceSuccess(result: InstanceUpdated) extends OutgoingWsMessage
+  final case class UpdateInstanceError(error: InstanceError) extends OutgoingWsMessage
 
   /**
     * JSON writes for a message outgoing to a websocket.

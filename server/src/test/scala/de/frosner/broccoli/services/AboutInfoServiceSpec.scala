@@ -31,7 +31,7 @@ class AboutInfoServiceSpec extends Specification with ServiceMocks {
           enabled = false,
           user = AboutUser(
             name = account.name,
-            role = account.role.toString,
+            role = account.role,
             instanceRegex = account.instanceRegex
           )
         ),

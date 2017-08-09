@@ -10,8 +10,8 @@ import jp.t2v.lab.play2.auth.{BroccoliSimpleAuthorization, LoginLogout}
 import play.api.Configuration
 import play.api.data._
 import play.api.data.Forms._
-import play.api.libs.json.{JsBoolean, JsObject, JsString}
-import play.api.mvc.{Action, Controller, Results}
+import play.api.libs.json.{JsBoolean, JsObject, JsString, Json}
+import play.api.mvc.{Action, AnyContent, Controller, Results}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -32,7 +32,7 @@ case class SecurityController @Inject()(override val securityService: SecuritySe
     )(UserCredentials.apply)(UserCredentials.unapply)
   }
 
-  def login = Action.async { implicit request =>
+  def login: Action[AnyContent] = Action.async { implicit request =>
     getSessionId(request).map(id => (id, webSocketService.closeConnections(id))) match {
       case Some((id, true)) => Logger.info(s"Removing websocket connection of $id due to another login")
       case _                =>
@@ -44,33 +44,21 @@ case class SecurityController @Inject()(override val securityService: SecuritySe
         account => {
           if (securityService.isAllowedToAuthenticate(account)) {
             Logger.info(s"Login successful for user '${account.name}'.")
-            val eventuallyLoginSucceededResponse = gotoLoginSucceeded(account.name)
-            eventuallyLoginSucceededResponse.flatMap {
-              result =>
-                val user = resolveUser(account.name)
-                user.map {
-                  maybeUser =>
-                    val actualUser = maybeUser.get
-                    val userResult = Results.Ok(
-                      JsObject(
-                        Map(
-                          "name" -> JsString(actualUser.name),
-                          "role" -> JsString(actualUser.role.toString),
-                          "instanceRegex" -> JsString(actualUser.instanceRegex)
-                        ))
-                    )
-                    result.copy(
-                      header = result.header.copy(
-                        headers = userResult.header.headers
-                          .get("Content-Type")
-                          .map { contentType =>
-                            result.header.headers.updated("Content-Type", contentType)
-                          }
-                          .getOrElse(result.header.headers)
-                      ),
-                      body = userResult.body
-                    )
-                }
+            gotoLoginSucceeded(account.name).flatMap { result =>
+              resolveUser(account.name).map { maybeUser =>
+                val userResult = Results.Ok(Json.toJson(maybeUser.get))
+                result.copy(
+                  header = result.header.copy(
+                    headers = userResult.header.headers
+                      .get("Content-Type")
+                      .map { contentType =>
+                        result.header.headers.updated("Content-Type", contentType)
+                      }
+                      .getOrElse(result.header.headers)
+                  ),
+                  body = userResult.body
+                )
+              }
             }
           } else {
             Logger.info(s"Login failed for user '${account.name}'.")
@@ -80,7 +68,7 @@ case class SecurityController @Inject()(override val securityService: SecuritySe
       )
   }
 
-  def logout = Action.async { implicit request =>
+  def logout = Action.async(parse.empty) { implicit request =>
     gotoLogoutSucceeded.andThen {
       case tryResult =>
         getSessionId(request).map(id => (id, webSocketService.closeConnections(id))) match {
@@ -91,9 +79,8 @@ case class SecurityController @Inject()(override val securityService: SecuritySe
     }
   }
 
-  def verify = StackAction { implicit request =>
-    val user = loggedIn
-    Ok(user.name)
+  def verify = StackAction(parse.empty) { implicit request =>
+    Ok(loggedIn.name)
   }
 
 }

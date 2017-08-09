@@ -1,22 +1,29 @@
 package de.frosner.broccoli.models
 
-import de.frosner.broccoli.models.Role.Role
-import play.api.libs.json.{JsString, Reads, Writes}
+import enumeratum._
 
-object Role extends Enumeration {
+import scala.collection.immutable
 
-  type Role = Value
+/**
+  * A user role in the application
+  */
+sealed trait Role extends EnumEntry with EnumEntry.Lowercase
 
-  val Administrator = Value("administrator")
-  val Operator = Value("operator")
-  val NormalUser = Value("user")
+object Role extends Enum[Role] with PlayJsonEnum[Role] {
+  override def values: immutable.IndexedSeq[Role] = findValues
 
-}
+  /**
+    * Grants all privileges.
+    */
+  final case object Administrator extends Role
 
-object RoleJson {
+  /**
+    * Grants limited privileges to edit instances.
+    */
+  final case object Operator extends Role
 
-  implicit val roleWrites: Writes[Role] = Writes(value => JsString(value.toString))
-
-  implicit val roleReads: Reads[Role] = Reads(_.validate[String].map(Role.withName))
-
+  /**
+    * Grants use of instances but does not allow modification.
+    */
+  final case object User extends Role
 }

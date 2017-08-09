@@ -20,7 +20,7 @@ class SecurityServiceSpec extends Specification {
         conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY,
         account.password,
         conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY,
-        account.role.toString,
+        account.role.entryName,
         conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY,
         account.instanceRegex
       )
@@ -99,7 +99,7 @@ class SecurityServiceSpec extends Specification {
           conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY,
           account.instanceRegex,
           conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY,
-          account.role.toString
+          account.role.entryName
         )
       }.asJava
       val config = ConfigFactory
@@ -178,7 +178,7 @@ class SecurityServiceSpec extends Specification {
           ConfigValueFactory.fromIterable(accountsJava)
         )
       SecurityService.tryAccounts(Configuration(config)) should beFailedTry.withThrowable[NoSuchElementException](
-        "No value found for 'foo'")
+        "foo is not a member of Enum .*")
     }
 
   }

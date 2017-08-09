@@ -1,6 +1,6 @@
 package de.frosner.broccoli.models
 
-import de.frosner.broccoli.models.Role.Role
+import play.api.libs.json.{JsPath, Json, Writes}
 
 sealed trait Credentials {
 
@@ -24,6 +24,16 @@ sealed trait Account extends Credentials {
 
   override def toString: String = s"$name ($role)"
 
+}
+
+object Account {
+  implicit val accountWrites: Writes[Account] = Writes { account =>
+    Json.obj(
+      "name" -> account.name,
+      "instanceRegex" -> account.instanceRegex,
+      "role" -> account.role
+    )
+  }
 }
 
 case class UserAccount(name: String, password: String, instanceRegex: String, role: Role) extends Account

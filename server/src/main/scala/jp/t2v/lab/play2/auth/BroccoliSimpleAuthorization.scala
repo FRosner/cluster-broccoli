@@ -38,7 +38,7 @@ trait BroccoliSimpleAuthorization extends StackableController with AsyncAuth wit
 
   implicit def loggedIn(implicit req: RequestWithAttributes[_]): User = securityService.authMode match {
     case conf.AUTH_MODE_CONF => req.get(AuthKey).get
-    case conf.AUTH_MODE_NONE => Anonymous.asInstanceOf[User]
+    case conf.AUTH_MODE_NONE => Anonymous
     case other               => throw new IllegalStateException(s"Unrecognized auth mode: ${securityService.authMode}")
   }
 
