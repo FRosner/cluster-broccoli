@@ -16,19 +16,19 @@ lazy val server = project
     routesGenerator := InjectedRoutesGenerator,
     libraryDependencies ++= List(
       Dependencies.simulacrum,
+      Dependencies.scalaguice,
       ws,
       cache,
       specs2 % Test,
       specs2 % IntegrationTest,
-      Dependencies.commonsIO % Test,
-      Dependencies.scalaguice
+      Dependencies.scalacheck % Test,
+      Dependencies.commonsIO % Test
     ),
     libraryDependencies ++= Dependencies.cats,
     libraryDependencies ++= Dependencies.cats.map(_ % IntegrationTest),
     libraryDependencies ++= Dependencies.enumeratum,
     libraryDependencies ++= Dependencies.specs2.map(_ % Test),
     libraryDependencies ++= Dependencies.specs2.map(_ % IntegrationTest),
-    libraryDependencies += Dependencies.scalacheck % Test,
     libraryDependencies ++= Dependencies.play2auth,
     // Macro support for Scala
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),

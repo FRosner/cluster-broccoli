@@ -89,13 +89,22 @@ object InstanceError {
     Json.obj("reason" -> value.reason)
   }
 
-  implicit val instanceErrorToHTTPResult: ToHTTPResult[InstanceError] = ToHTTPResult.instance {
-    case value: NotFound          => Results.NotFound(value.reason)
-    case IdMissing                => Results.BadRequest(IdMissing.reason)
-    case value: TemplateNotFound  => Results.BadRequest(value.reason)
-    case value: InvalidParameters => Results.BadRequest(value.reason)
-    case value: UserRegexDenied   => Results.Forbidden(value.reason)
-    case value: RolesRequired     => Results.Forbidden(value.reason)
-    case value: Generic           => Results.BadRequest(value.reason)
+  /**
+    * Convert an instance error to the corresponding HTTP status
+    *
+    * @param error The error
+    * @return The corresponding HTTP status.
+    */
+  def toStatus(error: InstanceError): Results.Status = error match {
+    case _: NotFound          => Results.NotFound
+    case IdMissing            => Results.BadRequest
+    case _: TemplateNotFound  => Results.BadRequest
+    case _: InvalidParameters => Results.BadRequest
+    case _: UserRegexDenied   => Results.Forbidden
+    case _: RolesRequired     => Results.Forbidden
+    case _: Generic           => Results.BadRequest
   }
+
+  implicit val instanceErrorToHTTPResult: ToHTTPResult[InstanceError] =
+    ToHTTPResult.instance(error => toStatus(error)(Json.toJson(error)))
 }
