@@ -1,16 +1,15 @@
-package de.frosner.broccoli.controllers
+package de.frosner.broccoli.websocket
 
-import de.frosner.broccoli.models._
 import de.frosner.broccoli.models.Template.templateApiWrites
-import enumeratum.EnumEntry.Camelcase
-import play.api.libs.json._
+import de.frosner.broccoli.models._
 import enumeratum._
+import play.api.libs.json._
 
 import scala.collection.immutable
 
-sealed trait OutgoingWsMessage
+sealed trait OutgoingMessage
 
-object OutgoingWsMessage {
+object OutgoingMessage {
 
   /**
     * The type of an outgoing message on the web socket.
@@ -38,19 +37,19 @@ object OutgoingWsMessage {
     case object GetInstanceTasksFailure extends Type
   }
 
-  final case class ListTemplates(templates: Seq[Template]) extends OutgoingWsMessage
-  final case class ListInstances(instances: Seq[InstanceWithStatus]) extends OutgoingWsMessage
-  final case class AboutInfoMsg(info: AboutInfo) extends OutgoingWsMessage
-  final case class Error(error: String) extends OutgoingWsMessage
-  final case class Notification(message: String) extends OutgoingWsMessage
-  final case class AddInstanceSuccess(result: InstanceCreated) extends OutgoingWsMessage
-  final case class AddInstanceError(error: InstanceError) extends OutgoingWsMessage
-  final case class DeleteInstanceSuccess(result: InstanceDeleted) extends OutgoingWsMessage
-  final case class DeleteInstanceError(error: InstanceError) extends OutgoingWsMessage
-  final case class UpdateInstanceSuccess(result: InstanceUpdated) extends OutgoingWsMessage
-  final case class UpdateInstanceError(error: InstanceError) extends OutgoingWsMessage
-  final case class GetInstanceTasksSuccess(tasks: InstanceTasks) extends OutgoingWsMessage
-  final case class GetInstanceTasksError(error: InstanceError) extends OutgoingWsMessage
+  final case class ListTemplates(templates: Seq[Template]) extends OutgoingMessage
+  final case class ListInstances(instances: Seq[InstanceWithStatus]) extends OutgoingMessage
+  final case class AboutInfoMsg(info: AboutInfo) extends OutgoingMessage
+  final case class Error(error: String) extends OutgoingMessage
+  final case class Notification(message: String) extends OutgoingMessage
+  final case class AddInstanceSuccess(result: InstanceCreated) extends OutgoingMessage
+  final case class AddInstanceError(error: InstanceError) extends OutgoingMessage
+  final case class DeleteInstanceSuccess(result: InstanceDeleted) extends OutgoingMessage
+  final case class DeleteInstanceError(error: InstanceError) extends OutgoingMessage
+  final case class UpdateInstanceSuccess(result: InstanceUpdated) extends OutgoingMessage
+  final case class UpdateInstanceError(error: InstanceError) extends OutgoingMessage
+  final case class GetInstanceTasksSuccess(tasks: InstanceTasks) extends OutgoingMessage
+  final case class GetInstanceTasksError(error: InstanceError) extends OutgoingMessage
 
   /**
     * JSON writes for a message outgoing to a websocket.
@@ -59,7 +58,7 @@ object OutgoingWsMessage {
     * deserialize.  However, it maintains compatibility with the earlier implementation of OutgoingWsMessage that used
     * a dedicated "type" enum and an unsafe any-typed payload.
     */
-  implicit val outgoingWsMessageWrites: Writes[OutgoingWsMessage] =
+  implicit val outgoingMessageWrites: Writes[OutgoingMessage] =
     Writes {
       case ListTemplates(templates)        => write(Type.ListTemplates, templates)
       case ListInstances(instances)        => write(Type.ListInstances, instances)

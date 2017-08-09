@@ -8,6 +8,7 @@ import de.frosner.broccoli.controllers._
 import de.frosner.broccoli.models.{Account, Anonymous}
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.util.Logging
+import de.frosner.broccoli.websocket.OutgoingMessage
 import play.api.Configuration
 import play.api.libs.iteratee.{Concurrent, Enumerator}
 import play.api.libs.json.{JsValue, Json}
@@ -25,13 +26,13 @@ class WebSocketService @Inject()(templateService: TemplateService,
   private val task = new Runnable {
     def run() = {
       broadcast { user =>
-        Json.toJson(OutgoingWsMessage.AboutInfoMsg(AboutController.about(aboutInfoService, user)))
+        Json.toJson(OutgoingMessage.AboutInfoMsg(AboutController.about(aboutInfoService, user)))
       }
       broadcast { _ =>
-        Json.toJson(OutgoingWsMessage.ListTemplates(TemplateController.list(templateService)))
+        Json.toJson(OutgoingMessage.ListTemplates(TemplateController.list(templateService)))
       }
       broadcast { user =>
-        Json.toJson(OutgoingWsMessage.ListInstances(InstanceController.list(None, user, instanceService)))
+        Json.toJson(OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService)))
       }
     }
   }

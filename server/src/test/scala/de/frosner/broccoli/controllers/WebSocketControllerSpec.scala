@@ -3,6 +3,8 @@ package de.frosner.broccoli.controllers
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.services._
+import de.frosner.broccoli.nomad
+import de.frosner.broccoli.websocket.{BroccoliMessageHandler, IncomingMessage, OutgoingMessage}
 import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Matchers
 import org.mockito.Matchers._
@@ -10,10 +12,15 @@ import org.mockito.Mockito._
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
 import play.api.test._
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.util.Success
 
-class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
+class WebSocketControllerSpec
+    extends PlaySpecification
+    with AuthUtils
+    with ModelArbitraries
+    with nomad.ModelArbitraries {
 
   val instanceWithStatus = InstanceWithStatus(
     instance = Instance(
@@ -49,7 +56,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
     periodicRuns = Seq.empty
   )
 
-  private def wrap(messageType: IncomingWsMessage.Type, payload: JsValue): JsValue =
+  private def wrap(messageType: IncomingMessage.Type, payload: JsValue): JsValue =
     JsObject(
       Map(
         "messageType" -> Json.toJson(messageType),
@@ -57,8 +64,8 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       ))
 
   private def testWs(controllerSetup: SecurityService => WebSocketController,
-                     inMsg: IncomingWsMessage,
-                     expectations: Map[Option[(String, Role)], OutgoingWsMessage]) =
+                     inMsg: IncomingMessage,
+                     expectations: Map[Option[(String, Role)], OutgoingMessage]) =
     expectations.foreach {
       case (maybeInstanceRegexAndRole, outMsg) =>
         val maybeAccount = maybeInstanceRegexAndRole.map {
@@ -87,7 +94,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           case Right((incoming, outgoing)) =>
             incoming.feed(Json.toJson(inMsg)).end
             verify(controller.webSocketService)
-              .send(anyString(), Matchers.eq(Json.toJson(outMsg)(OutgoingWsMessage.outgoingWsMessageWrites)))
+              .send(anyString(), Matchers.eq(Json.toJson(outMsg)))
         }
     }
 
@@ -97,12 +104,14 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
 
     "establish a websocket connection correctly (with authentication)" in new WithApplication {
       val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty)
       val controller = WebSocketController(
         webSocketService = mock(classOf[WebSocketService]),
         templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-        instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+        instanceService = instanceService,
         aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-        securityService = withAuthConf(mock(classOf[SecurityService]), List(account))
+        securityService = withAuthConf(mock(classOf[SecurityService]), List(account)),
+        messageHandler = new BroccoliMessageHandler(instanceService)
       )
       val result = controller.requestToSocket(FakeRequest().withLoggedIn(controller)(account.name))
       val maybeConnection = WsTestUtil.wrapConnection(result)
@@ -111,12 +120,14 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
 
     "establish a websocket connection correctly (without authentication)" in new WithApplication {
       val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty)
       val controller = WebSocketController(
         webSocketService = mock(classOf[WebSocketService]),
         templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-        instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+        instanceService = instanceService,
         aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-        securityService = withAuthNone(mock(classOf[SecurityService]))
+        securityService = withAuthNone(mock(classOf[SecurityService])),
+        messageHandler = new BroccoliMessageHandler(instanceService)
       )
       when(controller.webSocketService.newConnection(any(classOf[Account]))).thenReturn(("id", null))
       val result = controller.requestToSocket(FakeRequest())
@@ -126,12 +137,14 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
 
     "decline the websocket connection if not authenticated" in new WithApplication {
       val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty)
       val controller = WebSocketController(
         webSocketService = mock(classOf[WebSocketService]),
         templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-        instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+        instanceService = instanceService,
         aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-        securityService = withAuthConf(mock(classOf[SecurityService]), List(account))
+        securityService = withAuthConf(mock(classOf[SecurityService]), List(account)),
+        messageHandler = new BroccoliMessageHandler(instanceService)
       )
       val result = controller.requestToSocket(FakeRequest())
       val maybeConnection = WsTestUtil.wrapConnection(result)
@@ -146,12 +159,14 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         instanceWithStatus
       )
       val templates = Seq.empty[Template]
+      private val instanceService = withInstances(mock(classOf[InstanceService]), instances)
       val controller = WebSocketController(
         webSocketService = mock(classOf[WebSocketService]),
         templateService = withTemplates(mock(classOf[TemplateService]), templates),
-        instanceService = withInstances(mock(classOf[InstanceService]), instances),
+        instanceService = instanceService,
         aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-        securityService = withAuthNone(mock(classOf[SecurityService]))
+        securityService = withAuthNone(mock(classOf[SecurityService])),
+        messageHandler = new BroccoliMessageHandler(instanceService)
       )
       when(controller.webSocketService.newConnection(any(classOf[Account]))).thenReturn(("id", Enumerator.empty[Msg]))
       val result = controller.requestToSocket(FakeRequest())
@@ -161,21 +176,23 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
           val messages = outgoing.get
           (messages should haveSize(3)) and
             (messages should contain(
-              Json.toJson(OutgoingWsMessage.ListTemplates(templates)),
-              Json.toJson(OutgoingWsMessage.ListInstances(instances)),
-              Json.toJson(OutgoingWsMessage.AboutInfoMsg(controller.aboutService.aboutInfo(null)))
+              Json.toJson(OutgoingMessage.ListTemplates(templates)),
+              Json.toJson(OutgoingMessage.ListInstances(instances)),
+              Json.toJson(OutgoingMessage.AboutInfoMsg(controller.aboutService.aboutInfo(null)))
             ))
       }
     }
 
     "process instance addition requests if no auth is enabled" in new WithApplication {
       val id = "id"
+      val instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty)
       val controller = WebSocketController(
         webSocketService = mock(classOf[WebSocketService]),
         templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-        instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+        instanceService = instanceService,
         aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-        securityService = withAuthNone(mock(classOf[SecurityService]))
+        securityService = withAuthNone(mock(classOf[SecurityService])),
+        messageHandler = new BroccoliMessageHandler(instanceService)
       )
       when(controller.webSocketService.newConnection(any(classOf[Account]))).thenReturn((id, Enumerator.empty[Msg]))
       val instanceCreation = InstanceCreation(
@@ -189,13 +206,13 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       val maybeConnection = WsTestUtil.wrapConnection(result)
       maybeConnection match {
         case Right((incoming, outgoing)) =>
-          val resultMsg = OutgoingWsMessage.AddInstanceSuccess(
+          val resultMsg = OutgoingMessage.AddInstanceSuccess(
             InstanceCreated(
               instanceCreation,
               instanceWithStatus
             )
           )
-          incoming.feed(Json.toJson(IncomingWsMessage.AddInstance(instanceCreation))).end
+          incoming.feed(Json.toJson(IncomingMessage.AddInstance(instanceCreation))).end
           verify(controller.webSocketService).send(id, Json.toJson(resultMsg))
       }
     }
@@ -208,29 +225,31 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         )
       )
 
-      val success = OutgoingWsMessage.AddInstanceSuccess(
+      val success = OutgoingMessage.AddInstanceSuccess(
         InstanceCreated(
           instanceCreation,
           instanceWithStatus
         )
       )
-      val roleFailure = OutgoingWsMessage.AddInstanceError(InstanceError.RolesRequired(Role.Administrator))
+      val roleFailure = OutgoingMessage.AddInstanceError(InstanceError.RolesRequired(Role.Administrator))
       val regexFailure =
-        OutgoingWsMessage.AddInstanceError(InstanceError.UserRegexDenied("blib", "bla"))
+        OutgoingMessage.AddInstanceError(InstanceError.UserRegexDenied("blib", "bla"))
 
       testWs(
         controllerSetup = { securityService =>
+          val instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty)
           val controller = WebSocketController(
             webSocketService = mock(classOf[WebSocketService]),
             templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-            instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+            instanceService = instanceService,
             aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-            securityService = securityService
+            securityService = securityService,
+            messageHandler = new BroccoliMessageHandler(instanceService)
           )
           when(controller.instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
           controller
         },
-        inMsg = IncomingWsMessage.AddInstance(instanceCreation),
+        inMsg = IncomingMessage.AddInstance(instanceCreation),
         expectations = Map(
           None -> success,
           Some((".*", Role.Administrator)) -> success,
@@ -244,28 +263,30 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
     "process instance deletion correctly" in new WithApplication {
       val instanceDeletion = "id"
 
-      val success = OutgoingWsMessage.DeleteInstanceSuccess(
+      val success = OutgoingMessage.DeleteInstanceSuccess(
         InstanceDeleted(
           instanceDeletion,
           instanceWithStatus
         )
       )
-      val roleFailure = OutgoingWsMessage.DeleteInstanceError(InstanceError.RolesRequired(Role.Administrator))
-      val regexFailure = OutgoingWsMessage.DeleteInstanceError(InstanceError.UserRegexDenied(instanceDeletion, "bla"))
+      val roleFailure = OutgoingMessage.DeleteInstanceError(InstanceError.RolesRequired(Role.Administrator))
+      val regexFailure = OutgoingMessage.DeleteInstanceError(InstanceError.UserRegexDenied(instanceDeletion, "bla"))
 
       testWs(
         controllerSetup = { securityService =>
+          val instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty)
           val controller = WebSocketController(
             webSocketService = mock(classOf[WebSocketService]),
             templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-            instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+            instanceService = instanceService,
             aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-            securityService = securityService
+            securityService = securityService,
+            messageHandler = new BroccoliMessageHandler(instanceService)
           )
           when(controller.instanceService.deleteInstance(instanceDeletion)).thenReturn(Success(instanceWithStatus))
           controller
         },
-        inMsg = IncomingWsMessage.DeleteInstance(instanceDeletion),
+        inMsg = IncomingMessage.DeleteInstance(instanceDeletion),
         expectations = Map(
           None -> success,
           Some((".*", Role.Administrator)) -> success,
@@ -288,7 +309,7 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         selectedTemplate = None
       )
 
-      val success = OutgoingWsMessage.UpdateInstanceSuccess(
+      val success = OutgoingMessage.UpdateInstanceSuccess(
         InstanceUpdated(
           instanceUpdate,
           instanceWithStatus
@@ -296,12 +317,14 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
       )
       testWs(
         controllerSetup = { securityService =>
+          val instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty)
           val controller = WebSocketController(
             webSocketService = mock(classOf[WebSocketService]),
             templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-            instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+            instanceService = instanceService,
             aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-            securityService = securityService
+            securityService = securityService,
+            messageHandler = new BroccoliMessageHandler(instanceService)
           )
           when(
             controller.instanceService.updateInstance(
@@ -312,16 +335,16 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
             )).thenReturn(Success(instanceWithStatus))
           controller
         },
-        inMsg = IncomingWsMessage.UpdateInstance(instanceUpdate),
+        inMsg = IncomingMessage.UpdateInstance(instanceUpdate),
         expectations = Map(
           None -> success,
           Some((".*", Role.Administrator)) -> success,
-          Some(("bla", Role.Administrator)) -> OutgoingWsMessage.UpdateInstanceError(
+          Some(("bla", Role.Administrator)) -> OutgoingMessage.UpdateInstanceError(
             InstanceError.UserRegexDenied(instanceUpdate.instanceId.get, "bla")),
-          Some((".*", Role.Operator)) -> OutgoingWsMessage.UpdateInstanceError(
+          Some((".*", Role.Operator)) -> OutgoingMessage.UpdateInstanceError(
             InstanceError.RolesRequired(Role.Administrator)
           ),
-          Some((".*", Role.User)) -> OutgoingWsMessage.UpdateInstanceError(
+          Some((".*", Role.User)) -> OutgoingMessage.UpdateInstanceError(
             InstanceError.RolesRequired(Role.Administrator, Role.Operator)
           )
         )
@@ -336,20 +359,22 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         selectedTemplate = None
       )
 
-      val success = OutgoingWsMessage.UpdateInstanceSuccess(
+      val success = OutgoingMessage.UpdateInstanceSuccess(
         InstanceUpdated(
           instanceUpdate,
           instanceWithStatus
         )
       )
+      val instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty)
       testWs(
         controllerSetup = { securityService =>
           val controller = WebSocketController(
             webSocketService = mock(classOf[WebSocketService]),
             templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-            instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+            instanceService = instanceService,
             aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-            securityService = securityService
+            securityService = securityService,
+            messageHandler = new BroccoliMessageHandler(instanceService)
           )
           when(
             controller.instanceService.updateInstance(
@@ -360,15 +385,15 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
             )).thenReturn(Success(instanceWithStatus))
           controller
         },
-        inMsg = IncomingWsMessage.UpdateInstance(instanceUpdate),
+        inMsg = IncomingMessage.UpdateInstance(instanceUpdate),
         expectations = Map(
           None -> success,
           Some((".*", Role.Administrator)) -> success,
-          Some(("bla", Role.Administrator)) -> OutgoingWsMessage.UpdateInstanceError(
+          Some(("bla", Role.Administrator)) -> OutgoingMessage.UpdateInstanceError(
             InstanceError.UserRegexDenied(instanceUpdate.instanceId.get, "bla")
           ),
           Some((".*", Role.Operator)) -> success,
-          Some((".*", Role.User)) -> OutgoingWsMessage.UpdateInstanceError(
+          Some((".*", Role.User)) -> OutgoingMessage.UpdateInstanceError(
             InstanceError.RolesRequired(Role.Administrator, Role.Operator)
           )
         )
@@ -383,20 +408,22 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
         selectedTemplate = Some("templateId")
       )
 
-      val success = OutgoingWsMessage.UpdateInstanceSuccess(
+      val success = OutgoingMessage.UpdateInstanceSuccess(
         InstanceUpdated(
           instanceUpdate,
           instanceWithStatus
         )
       )
+      val instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty)
       testWs(
         controllerSetup = { securityService =>
           val controller = WebSocketController(
             webSocketService = mock(classOf[WebSocketService]),
             templateService = withTemplates(mock(classOf[TemplateService]), Seq.empty),
-            instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty),
+            instanceService = instanceService,
             aboutService = withDummyValues(mock(classOf[AboutInfoService])),
-            securityService = securityService
+            securityService = securityService,
+            messageHandler = new BroccoliMessageHandler(instanceService)
           )
           when(
             controller.instanceService.updateInstance(
@@ -407,17 +434,17 @@ class WebSocketControllerSpec extends PlaySpecification with AuthUtils {
             )).thenReturn(Success(instanceWithStatus))
           controller
         },
-        inMsg = IncomingWsMessage.UpdateInstance(instanceUpdate),
+        inMsg = IncomingMessage.UpdateInstance(instanceUpdate),
         expectations = Map(
           None -> success,
           Some((".*", Role.Administrator)) -> success,
-          Some(("bla", Role.Administrator)) -> OutgoingWsMessage.UpdateInstanceError(
+          Some(("bla", Role.Administrator)) -> OutgoingMessage.UpdateInstanceError(
             InstanceError.UserRegexDenied(instanceUpdate.instanceId.get, "bla")
           ),
-          Some((".*", Role.Operator)) -> OutgoingWsMessage.UpdateInstanceError(
+          Some((".*", Role.Operator)) -> OutgoingMessage.UpdateInstanceError(
             InstanceError.RolesRequired(Role.Administrator)
           ),
-          Some((".*", Role.User)) -> OutgoingWsMessage.UpdateInstanceError(
+          Some((".*", Role.User)) -> OutgoingMessage.UpdateInstanceError(
             InstanceError.RolesRequired(Role.Administrator, Role.Operator)
           )
         )
