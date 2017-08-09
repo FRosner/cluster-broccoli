@@ -1,25 +1,21 @@
 package de.frosner.broccoli.controllers
 
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-import de.frosner.broccoli.conf
+import cats.data.EitherT
+import cats.syntax.either._
+import cats.instances.future._
 import de.frosner.broccoli.controllers.OutgoingWsMessage._
-import de.frosner.broccoli.services._
 import de.frosner.broccoli.services.WebSocketService.Msg
+import de.frosner.broccoli.services._
 import de.frosner.broccoli.util.Logging
-import de.frosner.broccoli.models.Template.templateApiWrites
-import de.frosner.broccoli.models.Instance.instanceApiWrites
-import de.frosner.broccoli.models._
-import jp.t2v.lab.play2.auth.{BroccoliSimpleAuthorization, BroccoliWebsocketSecurity}
-import play.api.mvc._
+import jp.t2v.lab.play2.auth.BroccoliWebsocketSecurity
 import play.api.libs.iteratee._
-import play.api.libs.json.{JsBoolean, JsObject, JsString, Json}
+import play.api.libs.json._
+import play.api.mvc._
+import play.api.libs.concurrent.Execution.Implicits._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
-import scala.util.Try
 
 case class WebSocketController @Inject()(webSocketService: WebSocketService,
                                          templateService: TemplateService,
@@ -41,28 +37,39 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
       Logger.info(s"New connection $connectionLogString")
 
       // TODO receive string and try json decoding here because I can handle the error better
-      val in = Iteratee
-        .foreach[Msg] { incomingMessage =>
-          val outgoingMessage = Json
-            .fromJson[IncomingWsMessage](incomingMessage)
-            .map {
-              case IncomingWsMessage.AddInstance(instanceCreation) =>
-                InstanceController
-                  .create(instanceCreation, user, instanceService)
-                  .fold(AddInstanceError, AddInstanceSuccess)
-              case IncomingWsMessage.DeleteInstance(instanceId) =>
-                InstanceController
-                  .delete(instanceId, user, instanceService)
-                  .fold(DeleteInstanceError, DeleteInstanceSuccess)
-              case IncomingWsMessage.UpdateInstance(instanceUpdate: InstanceUpdate) =>
-                InstanceController
-                  .update(instanceUpdate.instanceId.get, instanceUpdate, user, instanceService)
-                  .fold(UpdateInstanceError, UpdateInstanceSuccess)
-            }
-            .recoverTotal { error =>
-              Logger.warn(s"Can't parse a message from $connectionId: $error")
-              OutgoingWsMessage.Error(s"Failed to parse message message: $error")
-            }
+      val in = Enumeratee.mapM[Msg] { incomingMessage =>
+        Json
+          .fromJson[IncomingWsMessage](incomingMessage)
+          // We return a future here, since some messages map to asynchronous operations.
+          .map[Future[OutgoingWsMessage]] {
+            case IncomingWsMessage.AddInstance(instanceCreation) =>
+              InstanceController
+                .create(instanceCreation, user, instanceService)
+                // We lift the plain Either returned by ".create" into an EitherT and thus into a "Future", so that the
+                // subsequent ".fold" gives us not just an OutgoingWsMessage, but a Future[OutgoingWsMessage]
+                .toEitherT
+                .fold(AddInstanceError, AddInstanceSuccess)
+            case IncomingWsMessage.DeleteInstance(instanceId) =>
+              InstanceController
+                .delete(instanceId, user, instanceService)
+                .toEitherT
+                .fold(DeleteInstanceError, DeleteInstanceSuccess)
+            case IncomingWsMessage.UpdateInstance(instanceUpdate) =>
+              InstanceController
+                .update(instanceUpdate.instanceId.get, instanceUpdate, user, instanceService)
+                .toEitherT
+                .fold(UpdateInstanceError, UpdateInstanceSuccess)
+            case IncomingWsMessage.GetInstanceTasks(instanceId) =>
+              instanceService
+                .getInstanceTasks(user)(instanceId)
+                .fold(GetInstanceTasksError, GetInstanceTasksSuccess)
+          }
+          .recoverTotal { error =>
+            Logger.warn(s"Can't parse a message from $connectionId: $error")
+            Future.successful(OutgoingWsMessage.Error(s"Failed to parse message message: $error"))
+          }
+      } transform Iteratee
+        .foreach { outgoingMessage: OutgoingWsMessage =>
           webSocketService.send(connectionId, Json.toJson(outgoingMessage))
         }
         .map { _ =>

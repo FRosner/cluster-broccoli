@@ -23,4 +23,19 @@ class NomadModule extends AbstractModule with ScalaModule {
   @Singleton
   def provideNomadConfiguration(config: Configuration): NomadConfiguration =
     NomadConfiguration.fromConfig(config.underlying.getConfig("broccoli.nomad"))
+
+  /**
+    * Provide a nomad client.
+    *
+    * The nomad client provided by this method uses Play's client so we let it run on Play's default execution context.
+    * Play's web service client does not block.
+    *
+    * @param config The nomad configuration
+    * @param wsClient The play web service client to use
+    * @return A HTTP client for Nomad
+    */
+  @Provides
+  @Singleton
+  def provideNomadClient(config: NomadConfiguration, wsClient: WSClient): NomadClient =
+    new NomadHttpClient(config.url, wsClient)(play.api.libs.concurrent.Execution.defaultContext)
 }

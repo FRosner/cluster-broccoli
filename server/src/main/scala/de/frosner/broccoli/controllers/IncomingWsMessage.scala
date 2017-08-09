@@ -27,6 +27,7 @@ object IncomingWsMessage {
     case object AddInstance extends Type
     case object DeleteInstance extends Type
     case object UpdateInstance extends Type
+    case object GetInstanceTasks extends Type
   }
 
   /**
@@ -51,6 +52,13 @@ object IncomingWsMessage {
   final case class UpdateInstance(instance: InstanceUpdate) extends IncomingWsMessage
 
   /**
+    * Query the tasks of an instance.
+    *
+    * @param instance The ID of the instance
+    */
+  final case class GetInstanceTasks(instance: String) extends IncomingWsMessage
+
+  /**
     * JSON formats for a message incoming from a websocket.
     *
     * The JSON structure is not particularly straight-forward and deviates from what a generated Reads instance would
@@ -60,18 +68,20 @@ object IncomingWsMessage {
   implicit val incomingWsMessageFormat: Format[IncomingWsMessage] = Format.apply(
     (JsPath \ "messageType").read[Type].flatMap(readsPayload),
     Writes {
-      case AddInstance(create)      => write(Type.AddInstance, create)
-      case DeleteInstance(instance) => write(Type.DeleteInstance, instance)
-      case UpdateInstance(update)   => write(Type.UpdateInstance, update)
+      case AddInstance(create)        => write(Type.AddInstance, create)
+      case DeleteInstance(instance)   => write(Type.DeleteInstance, instance)
+      case UpdateInstance(update)     => write(Type.UpdateInstance, update)
+      case GetInstanceTasks(instance) => write(Type.GetInstanceTasks, instance)
     }
   )
 
   private def readsPayload(`type`: Type): Reads[IncomingWsMessage] = {
     val payload = JsPath \ "payload"
     `type` match {
-      case Type.AddInstance    => payload.read[InstanceCreation].map(AddInstance)
-      case Type.DeleteInstance => payload.read[String].map(DeleteInstance)
-      case Type.UpdateInstance => payload.read[InstanceUpdate].map(UpdateInstance)
+      case Type.AddInstance      => payload.read[InstanceCreation].map(AddInstance)
+      case Type.DeleteInstance   => payload.read[String].map(DeleteInstance)
+      case Type.UpdateInstance   => payload.read[InstanceUpdate].map(UpdateInstance)
+      case Type.GetInstanceTasks => payload.read[String].map(GetInstanceTasks)
     }
   }
 

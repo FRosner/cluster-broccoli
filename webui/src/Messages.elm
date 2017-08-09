@@ -13,6 +13,7 @@ import Models.Resources.Template exposing (Template)
 import Models.Resources.InstanceCreated exposing (InstanceCreated)
 import Models.Resources.InstanceDeleted exposing (InstanceDeleted)
 import Models.Resources.InstanceUpdated exposing (InstanceUpdated)
+import Models.Resources.InstanceTasks exposing (InstanceTasks)
 
 
 type AnyMsg
@@ -49,6 +50,8 @@ type IncomingWsMessage
     | DeleteInstanceErrorMessage InstanceError
     | UpdateInstanceSuccessMessage InstanceUpdated
     | UpdateInstanceErrorMessage InstanceError
+    | GetInstanceTasksSuccessMessage InstanceTasks
+    | GetInstanceTasksErrorMessage InstanceError
     | ErrorMessage String
 
 
@@ -58,3 +61,4 @@ type OutgoingWsMessage
     = AddInstanceMessage InstanceCreation
     | DeleteInstanceMessage InstanceId
     | UpdateInstanceMessage InstanceUpdate
+    | GetInstanceTasks InstanceId

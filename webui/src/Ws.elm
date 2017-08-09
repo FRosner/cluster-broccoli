@@ -10,6 +10,7 @@ import Models.Resources.InstanceUpdate as InstanceUpdate
 import Models.Resources.InstanceCreated as InstanceCreated
 import Models.Resources.InstanceDeleted as InstanceDeleted
 import Models.Resources.InstanceUpdated as InstanceUpdated
+import Models.Resources.InstanceTasks as InstanceTasks
 import Model exposing (Model)
 import Navigation exposing (Location)
 import Updates.Messages exposing (..)
@@ -73,6 +74,12 @@ payloadDecoder t =
 
         "updateInstanceError" ->
             Decode.map UpdateInstanceErrorMessage InstanceError.decoder
+
+        "getInstanceTasksSuccess" ->
+            Decode.map GetInstanceTasksSuccessMessage InstanceTasks.decoder
+
+        "getInstanceTasksError" ->
+            Decode.map GetInstanceTasksErrorMessage InstanceError.decoder
 
         s ->
             Decode.fail <| "Unknown message type: " ++ s
@@ -177,6 +184,14 @@ updateFromMessage model message =
             , showError "Failed to update instance: " (toString error.reason)
             )
 
+        GetInstanceTasksSuccessMessage result ->
+            ( { model | tasks = Dict.insert result.instanceId result.tasks model.tasks }, Cmd.none )
+
+        GetInstanceTasksErrorMessage error ->
+            ( model
+            , showError "Failed to get tasks of the instance" (error.reason)
+            )
+
         ErrorMessage error ->
             ( model
             , showError "An error occured: " error
@@ -223,8 +238,14 @@ encodeOutgoingWsMessage message =
 
                 UpdateInstanceMessage update ->
                     ( "updateInstance", InstanceUpdate.encoder update )
+
+                GetInstanceTasks id ->
+                    ( "getInstanceTasks", Encode.string id )
     in
-        Encode.object [ ( "messageType", Encode.string messageType ), ( "payload", payload ) ]
+        Encode.object
+            [ ( "messageType", Encode.string messageType )
+            , ( "payload", payload )
+            ]
 
 
 send : Location -> OutgoingWsMessage -> Cmd AnyMsg
