@@ -27,11 +27,11 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
     with Logging
     with BroccoliSimpleAuthorization {
 
-  def list(maybeTemplateId: Option[String]) = StackAction(parse.empty) { implicit request =>
+  def list(maybeTemplateId: Option[String]): Action[Unit] = StackAction(parse.empty) { implicit request =>
     Results.Ok(Json.toJson(InstanceController.list(maybeTemplateId, loggedIn, instanceService)))
   }
 
-  def show(id: String) = StackAction(parse.empty) { implicit request =>
+  def show(id: String): Action[Unit] = StackAction(parse.empty) { implicit request =>
     val notFound = NotFound(s"Instance $id not found.")
     val user = loggedIn
     if (id.matches(user.instanceRegex)) {
@@ -52,28 +52,16 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
     }
   }
 
-  def create = StackAction(parse.json[InstanceCreation]) { implicit request =>
-    InstanceController
-      .create(request.body, loggedIn, instanceService)
-      .fold(
-        _.toHTTPResult,
-        created =>
-          Results
-            .Created(Json.toJson(created.instanceWithStatus))
-            .withHeaders(HeaderNames.LOCATION -> s"/api/v1/instances/${created.instanceWithStatus.instance.id}")
-      )
+  def create: Action[InstanceCreation] = StackAction(parse.json[InstanceCreation]) { implicit request =>
+    InstanceController.create(request.body, loggedIn, instanceService).toHTTPResult
   }
 
-  def update(id: String) = StackAction(parse.json[InstanceUpdate]) { implicit request =>
-    InstanceController
-      .update(id, request.body, loggedIn, instanceService)
-      .fold(_.toHTTPResult, updated => Results.Ok(Json.toJson(updated.instanceWithStatus)))
+  def update(id: String): Action[InstanceUpdate] = StackAction(parse.json[InstanceUpdate]) { implicit request =>
+    InstanceController.update(id, request.body, loggedIn, instanceService).toHTTPResult
   }
 
-  def delete(id: String) = StackAction(parse.empty) { implicit request =>
-    InstanceController
-      .delete(id, loggedIn, instanceService)
-      .fold(_.toHTTPResult, deleted => Results.Ok(Json.toJson(deleted.instance)))
+  def delete(id: String): Action[Unit] = StackAction(parse.empty) { implicit request =>
+    InstanceController.delete(id, loggedIn, instanceService).toHTTPResult
   }
 
 }
