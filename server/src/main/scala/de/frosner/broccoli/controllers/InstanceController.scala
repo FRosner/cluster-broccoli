@@ -123,5 +123,6 @@ object InstanceController {
           case throwable: TemplateNotFoundException => InstanceError.TemplateNotFound(throwable.id)
           case throwable                            => InstanceError.Generic(throwable)
         }
-    } yield InstanceUpdated(update, updatedInstance)
+      // Do not expose instance secrets to Operators
+    } yield InstanceUpdated(update, updatedInstance.removeSecretsForRole(user.role))
 }
