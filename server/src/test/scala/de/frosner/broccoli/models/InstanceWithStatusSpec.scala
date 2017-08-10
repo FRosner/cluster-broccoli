@@ -1,9 +1,15 @@
 package de.frosner.broccoli.models
 
+import de.frosner.broccoli.RemoveSecrets.ToRemoveSecretsOps
+import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 
-class InstanceWithStatusSpec extends Specification {
-  "Instance 'anonymization' should" should {
+class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArbitraries with ToRemoveSecretsOps {
+  "Instance RemoveSecrets should" should {
+
+    "remove secrets from the contained instance" in prop { (instance: InstanceWithStatus) =>
+      instance.removeSecrets === instance.copy(instance = instance.instance.removeSecrets)
+    }
 
     "remove one secret parameter value" in {
       val originalInstance = InstanceWithStatus(
@@ -56,7 +62,7 @@ class InstanceWithStatusSpec extends Specification {
         services = Seq.empty,
         periodicRuns = Seq.empty
       )
-      InstanceWithStatus.removeSecretVariables(originalInstance) === expectedInstance
+      originalInstance.removeSecrets === expectedInstance
     }
 
     "remove multiple secret parameter values" in {
@@ -122,7 +128,7 @@ class InstanceWithStatusSpec extends Specification {
         services = Seq.empty,
         periodicRuns = Seq.empty
       )
-      InstanceWithStatus.removeSecretVariables(originalInstance) === expectedInstance
+      originalInstance.removeSecrets === expectedInstance
     }
 
   }

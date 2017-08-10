@@ -3,11 +3,25 @@ package de.frosner.broccoli.models
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 
 import de.frosner.broccoli.services.InstanceService
+import de.frosner.broccoli.RemoveSecrets.ToRemoveSecretsOps
+import org.scalacheck.Gen
+import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 import org.specs2.mutable._
 import play.api.libs.json.{JsString, Json}
 
-class InstanceSpec extends Specification {
+class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries with ToRemoveSecretsOps {
+
+  "The RemoveSecrets instance" should {
+    "remove secret instance parameters" in prop { (instance: Instance) =>
+      val publicInstance = instance.removeSecrets
+      val (secret, public) = publicInstance.parameterValues.partition {
+        case (id, _) =>
+          instance.template.parameterInfos(id).secret.getOrElse(false)
+      }
+      (secret.values must contain(beNull[String]).foreach) and (public.values must contain(not(beNull[String])).foreach)
+    }
+  }
 
   "An instance" should {
 

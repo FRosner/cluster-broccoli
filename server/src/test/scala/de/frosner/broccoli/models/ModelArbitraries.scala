@@ -14,12 +14,94 @@ trait ModelArbitraries {
 
   implicit def arbitraryAccount(implicit arbRole: Arbitrary[Role]): Arbitrary[Account] = Arbitrary {
     for {
-      name <- Gen.identifier.label("name")
+      id <- Gen.identifier.label("id")
       password <- Gen.identifier.label("password")
       instanceRegex <- Gen.identifier.label("instanceRegex")
-      role <- arbRole.arbitrary.label("role")
-    } yield UserAccount(name, password, instanceRegex, role)
+      role <- arbRole.arbitrary
+    } yield UserAccount(id, password, instanceRegex, role)
   }
+
+  implicit var arbitraryParameterInfo: Arbitrary[ParameterInfo] = Arbitrary {
+    for {
+      id <- Gen.identifier.label("id")
+      name <- Gen.option(Gen.identifier.label("name"))
+      default <- Gen.option(Gen.identifier).label("default")
+      secret <- Gen.option(Gen.oneOf(true, false)).label("secret")
+    } yield
+      ParameterInfo(
+        id = id,
+        name = name,
+        default = default,
+        secret = secret
+      )
+  }
+
+  implicit def arbitraryTemplate(
+      implicit arbParameterInfo: Arbitrary[ParameterInfo]
+  ): Arbitrary[Template] = Arbitrary {
+    for {
+      templateId <- Gen.identifier.label("id")
+      templateDescription <- Gen.identifier.label("description")
+      templateParameters <- Gen.listOf(arbParameterInfo.arbitrary).label("parameterInfos")
+    } yield {
+      val idParameter = ParameterInfo(id = "id", None, None, None)
+      val template = templateParameters.map(i => s"{{${i.id}}}").mkString(" ")
+      Template(
+        id = templateId,
+        description = templateDescription,
+        // Templates require an "id" parameter so add one here
+        template = s"{{id}} $template",
+        parameterInfos = templateParameters.map(i => i.id -> i).toMap + ("id" -> idParameter)
+      )
+    }
+  }
+
+  implicit def arbitraryInstance(implicit arbTemplate: Arbitrary[Template]): Arbitrary[Instance] = Arbitrary {
+    for {
+      id <- Gen.identifier.label("id")
+      template <- arbTemplate.arbitrary.label("template")
+      values <- Gen.sequence[Map[String, String], (String, String)](template.parameterInfos.keys.map(id =>
+        Gen.identifier.label("value").map(id -> _)))
+    } yield Instance(id, template, values)
+  }
+
+  implicit val arbitraryJobStatus: Arbitrary[JobStatus] = Arbitrary(Gen.oneOf(JobStatus.values.toSeq))
+
+  implicit val arbitraryServiceStatus: Arbitrary[ServiceStatus] = Arbitrary(Gen.oneOf(ServiceStatus.values.toSeq))
+
+  implicit def arbitraryService(implicit arbStatus: Arbitrary[ServiceStatus]): Arbitrary[Service] = Arbitrary {
+    for {
+      name <- Gen.identifier.label("name")
+      protocol <- Gen.identifier.label("protocol")
+      address <- Gen.identifier.label("address")
+      port <- Gen.posNum[Int].label("port")
+      status <- arbStatus.arbitrary
+    } yield Service(name, protocol, address, port, status)
+  }
+
+  implicit def arbitraryPeriodicRun(implicit arbJobStatus: Arbitrary[JobStatus]): Arbitrary[PeriodicRun] = Arbitrary {
+    for {
+      createdBy <- Gen.identifier.label("createdBy")
+      jobStatus <- arbitraryJobStatus.arbitrary
+      utcSeconds <- Gen.posNum[Long].label("utcSeconds")
+      name <- Gen.identifier.label("jobName")
+    } yield PeriodicRun(createdBy, jobStatus, utcSeconds, name)
+  }
+
+  implicit def arbitraryInstanceWithStatus(
+      implicit arbInstance: Arbitrary[Instance],
+      arbStatus: Arbitrary[JobStatus],
+      arbService: Arbitrary[Service],
+      arbRun: Arbitrary[PeriodicRun]
+  ): Arbitrary[InstanceWithStatus] =
+    Arbitrary {
+      for {
+        instance <- arbInstance.arbitrary
+        jobStatus <- arbStatus.arbitrary
+        services <- Gen.listOf(arbService.arbitrary)
+        runs <- Gen.listOf(arbRun.arbitrary)
+      } yield InstanceWithStatus(instance, jobStatus, services, runs)
+    }
 
   implicit def arbitraryInstanceError(implicit arbRole: Arbitrary[Role]): Arbitrary[InstanceError] =
     Arbitrary(

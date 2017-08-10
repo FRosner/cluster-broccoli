@@ -3,24 +3,17 @@ package de.frosner.broccoli.controllers
 import java.io.FileNotFoundException
 import javax.inject.Inject
 
-import de.frosner.broccoli.models.JobStatusJson._
-import de.frosner.broccoli.models.JobStatus.JobStatus
-import de.frosner.broccoli.models._
-import de.frosner.broccoli.conf
-import Instance.instanceApiWrites
-import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
-import InstanceUpdate.{instanceUpdateReads, instanceUpdateWrites}
 import cats.syntax.either._
-import de.frosner.broccoli.services._
 import de.frosner.broccoli.http.ToHTTPResult.ops._
+import de.frosner.broccoli.models.InstanceCreation.instanceCreationReads
+import de.frosner.broccoli.models.InstanceUpdate.instanceUpdateReads
+import de.frosner.broccoli.models.Role.syntax._
+import de.frosner.broccoli.models._
+import de.frosner.broccoli.services._
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
-import play.api.http.ContentTypes
-import play.api.libs.json.{JsObject, JsString, JsValue, Json}
-import play.api.mvc.{Action, Controller, Request, Results}
-import play.mvc.Http.HeaderNames
-
-import scala.util.{Failure, Success, Try}
+import play.api.libs.json.Json
+import play.api.mvc.{Action, Controller, Results}
 
 case class InstanceController @Inject()(instanceService: InstanceService, override val securityService: SecurityService)
     extends Controller
@@ -37,9 +30,7 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
       // Ensure that the user is allowed to access the instance based on its ID
       .ensureOr(InstanceError.UserRegexDenied(_, loggedIn.instanceRegex))(_.matches(loggedIn.instanceRegex))
       .flatMap(id => instanceService.getInstance(id).toRight(InstanceError.NotFound(id)))
-      // Remove secrets if the user may not see them
-      .map(InstanceWithStatus.filterSecretsForRole(loggedIn.role))
-      .fold(_.toHTTPResult, instance => Ok(Json.toJson(instance)))
+      .fold(_.toHTTPResult, instance => Ok(Json.toJson(instance.removeSecretsForRole(loggedIn.role))))
   }
 
   def create: Action[InstanceCreation] = StackAction(parse.json[InstanceCreation]) { implicit request =>
@@ -95,8 +86,7 @@ object InstanceController {
       .map(id => instanceService.getInstances.filter(_.instance.template.id == id))
       .getOrElse(instanceService.getInstances)
       .filter(_.instance.id.matches(loggedIn.instanceRegex))
-      // Remove secrets from instances if the user may not see them
-      .map(InstanceWithStatus.filterSecretsForRole(loggedIn.role))
+      .map(_.removeSecretsForRole(loggedIn.role))
 
   def update(
       id: String,
@@ -124,10 +114,11 @@ object InstanceController {
           user.role == Role.Administrator || (u.parameterValues.isEmpty && u.selectedTemplate.isEmpty)
         }
       updatedInstance <- Either
-        .fromTry(instanceService.updateInstance(id, update.status, update.parameterValues, update.selectedTemplate))
+        .fromTry(
+          instanceService.updateInstance(instanceId, update.status, update.parameterValues, update.selectedTemplate))
         .leftMap {
-          case throwable: FileNotFoundException     => InstanceError.NotFound(id, Some(throwable))
-          case throwable: InstanceNotFoundException => InstanceError.NotFound(id, Some(throwable))
+          case throwable: FileNotFoundException     => InstanceError.NotFound(instanceId, Some(throwable))
+          case throwable: InstanceNotFoundException => InstanceError.NotFound(instanceId, Some(throwable))
           case throwable: IllegalArgumentException  => InstanceError.InvalidParameters(throwable.getMessage)
           case throwable: TemplateNotFoundException => InstanceError.TemplateNotFound(throwable.id)
           case throwable                            => InstanceError.Generic(throwable)
