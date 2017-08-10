@@ -3,6 +3,7 @@ package de.frosner.broccoli.controllers
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.services._
+import de.frosner.broccoli.RemoveSecrets.ToRemoveSecretsOps
 import de.frosner.broccoli.nomad
 import de.frosner.broccoli.websocket.{BroccoliMessageHandler, IncomingMessage, OutgoingMessage}
 import jp.t2v.lab.play2.auth.test.Helpers._
@@ -20,7 +21,8 @@ class WebSocketControllerSpec
     extends PlaySpecification
     with AuthUtils
     with ModelArbitraries
-    with nomad.ModelArbitraries {
+    with nomad.ModelArbitraries
+    with ToRemoveSecretsOps {
 
   val instanceWithStatus = InstanceWithStatus(
     instance = Instance(
@@ -365,6 +367,12 @@ class WebSocketControllerSpec
           instanceWithStatus
         )
       )
+      val secretSuccess = OutgoingMessage.UpdateInstanceSuccess(
+        InstanceUpdated(
+          instanceUpdate,
+          instanceWithStatus.removeSecrets
+        )
+      )
       val instanceService = withInstances(mock(classOf[InstanceService]), Seq.empty)
       testWs(
         controllerSetup = { securityService =>
@@ -392,7 +400,7 @@ class WebSocketControllerSpec
           Some(("bla", Role.Administrator)) -> OutgoingMessage.UpdateInstanceError(
             InstanceError.UserRegexDenied(instanceUpdate.instanceId.get, "bla")
           ),
-          Some((".*", Role.Operator)) -> success,
+          Some((".*", Role.Operator)) -> secretSuccess,
           Some((".*", Role.User)) -> OutgoingMessage.UpdateInstanceError(
             InstanceError.RolesRequired(Role.Administrator, Role.Operator)
           )

@@ -1,6 +1,7 @@
 package de.frosner.broccoli.models
 
-import play.api.libs.json.{JsPath, Json, Writes}
+import de.frosner.broccoli.RemoveSecrets
+import play.api.libs.json.{Json, Writes}
 
 sealed trait Credentials {
 
@@ -34,6 +35,20 @@ object Account {
       "role" -> account.role
     )
   }
+
+  /**
+    * Remove secrets from an account.
+    *
+    * The instance returns a new UserAccount with the password replaced with an empty string.
+    */
+  implicit val accountRemoveSecrets: RemoveSecrets[Account] = RemoveSecrets.instance(
+    account =>
+      UserAccount(
+        name = account.name,
+        password = "",
+        instanceRegex = account.instanceRegex,
+        role = account.role
+    ))
 }
 
 case class UserAccount(name: String, password: String, instanceRegex: String, role: Role) extends Account

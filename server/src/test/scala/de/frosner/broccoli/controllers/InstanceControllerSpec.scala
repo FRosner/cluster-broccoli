@@ -231,7 +231,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       }
     }
 
-    "return 404 if the instance does not match the account regex" in new WithApplication {
+    "return 403 if the instance does not match the account regex" in new WithApplication {
       testWithAllAuths {
         accountWithRegex
       } { securityService =>
@@ -242,7 +242,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
       }(_.withBody(())) { (controller, result) =>
-        status(result) must be equalTo 404
+        status(result) must be equalTo 403
       }
     }
 
@@ -768,131 +768,5 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       }
       operatorMatcher and userMatcher
     }
-
   }
-
-  "Instance 'anonymization' should" should {
-
-    "remove one secret parameter value" in {
-      val originalInstance = InstanceWithStatus(
-        instance = Instance(
-          id = "i",
-          template = Template(
-            id = "t",
-            template = "{{id}} {{password}}",
-            description = "d",
-            parameterInfos = Map(
-              "password" -> ParameterInfo(
-                id = "secret password",
-                name = None,
-                default = None,
-                secret = Some(true)
-              )
-            )
-          ),
-          parameterValues = Map(
-            "id" -> "i",
-            "password" -> "noone knows"
-          )
-        ),
-        status = JobStatus.Unknown,
-        services = Seq.empty,
-        periodicRuns = Seq.empty
-      )
-      val expectedInstance = InstanceWithStatus(
-        instance = Instance(
-          id = "i",
-          template = Template(
-            id = "t",
-            template = "{{id}} {{password}}",
-            description = "d",
-            parameterInfos = Map(
-              "password" -> ParameterInfo(
-                id = "secret password",
-                name = None,
-                default = None,
-                secret = Some(true)
-              )
-            )
-          ),
-          parameterValues = Map(
-            "id" -> "i",
-            "password" -> null
-          )
-        ),
-        status = JobStatus.Unknown,
-        services = Seq.empty,
-        periodicRuns = Seq.empty
-      )
-      InstanceController.removeSecretVariables(originalInstance) === expectedInstance
-    }
-
-    "remove multiple secret parameter values" in {
-      val originalInstance = InstanceWithStatus(
-        instance = Instance(
-          id = "i",
-          template = Template(
-            id = "t",
-            template = "{{id}} {{password}}",
-            description = "d",
-            parameterInfos = Map(
-              "password" -> ParameterInfo(
-                id = "secret password",
-                name = None,
-                default = None,
-                secret = Some(true)
-              ),
-              "id" -> ParameterInfo(
-                id = "secret id",
-                name = None,
-                default = None,
-                secret = Some(true)
-              )
-            )
-          ),
-          parameterValues = Map(
-            "id" -> "i",
-            "password" -> "noone knows"
-          )
-        ),
-        status = JobStatus.Unknown,
-        services = Seq.empty,
-        periodicRuns = Seq.empty
-      )
-      val expectedInstance = InstanceWithStatus(
-        instance = Instance(
-          id = "i",
-          template = Template(
-            id = "t",
-            template = "{{id}} {{password}}",
-            description = "d",
-            parameterInfos = Map(
-              "password" -> ParameterInfo(
-                id = "secret password",
-                name = None,
-                default = None,
-                secret = Some(true)
-              ),
-              "id" -> ParameterInfo(
-                id = "secret id",
-                name = None,
-                default = None,
-                secret = Some(true)
-              )
-            )
-          ),
-          parameterValues = Map(
-            "id" -> null,
-            "password" -> null
-          )
-        ),
-        status = JobStatus.Unknown,
-        services = Seq.empty,
-        periodicRuns = Seq.empty
-      )
-      InstanceController.removeSecretVariables(originalInstance) === expectedInstance
-    }
-
-  }
-
 }
