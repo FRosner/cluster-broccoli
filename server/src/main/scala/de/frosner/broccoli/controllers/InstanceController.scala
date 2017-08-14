@@ -12,6 +12,7 @@ import de.frosner.broccoli.models._
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
+import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Controller, Results}
 
@@ -33,6 +34,10 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
       .fold(_.toHTTPResult, instance => Ok(Json.toJson(instance.removeSecretsForRole(loggedIn.role))))
   }
 
+  def tasks(id: String): Action[Unit] = AsyncStack(parse.empty) { implicit request =>
+    instanceService.getInstanceTasks(loggedIn)(id).value.map(_.toHTTPResult)
+  }
+
   def create: Action[InstanceCreation] = StackAction(parse.json[InstanceCreation]) { implicit request =>
     InstanceController.create(request.body, loggedIn, instanceService).toHTTPResult
   }
@@ -44,7 +49,6 @@ case class InstanceController @Inject()(instanceService: InstanceService, overri
   def delete(id: String): Action[Unit] = StackAction(parse.empty) { implicit request =>
     InstanceController.delete(id, loggedIn, instanceService).toHTTPResult
   }
-
 }
 
 object InstanceController {

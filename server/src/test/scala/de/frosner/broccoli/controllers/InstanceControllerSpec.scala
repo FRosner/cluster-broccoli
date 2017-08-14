@@ -1,17 +1,34 @@
 package de.frosner.broccoli.controllers
 
+import cats.data.EitherT
+import cats.instances.future._
+import de.frosner.broccoli.http.ToHTTPResult
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.services.{AboutInfoService, InstanceNotFoundException, InstanceService}
+import de.frosner.broccoli.nomad
+import de.frosner.broccoli.services.{InstanceNotFoundException, InstanceService, SecurityService}
+import jp.t2v.lab.play2.auth.test.{Helpers => AuthHelpers}
+import org.mockito.Matchers
 import org.mockito.Mockito._
+import org.scalacheck.Gen
+import org.specs2.ScalaCheck
+import org.specs2.concurrent.ExecutionEnv
+import org.specs2.mock.Mockito
+import play.api.http.HeaderNames
 import play.api.libs.json._
 import play.api.test._
-import Instance.instanceApiWrites
-import InstanceCreation.{instanceCreationReads, instanceCreationWrites}
-import play.api.http.HeaderNames
 
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-class InstanceControllerSpec extends PlaySpecification with AuthUtils {
+class InstanceControllerSpec
+    extends PlaySpecification
+    with Mockito
+    with AuthUtils
+    with ScalaCheck
+    with nomad.ModelArbitraries
+    with ModelArbitraries
+    with ToHTTPResult.ToToHTTPResultOps
+    with AuthHelpers {
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
@@ -76,7 +93,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     "list all instances" in new WithApplication {
       testWithAllAuths { securityService =>
         InstanceController(
-          instanceService = withInstances(mock(classOf[InstanceService]), instances),
+          instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService
         )
       } { controller =>
@@ -97,7 +114,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
       )
       testWithAllAuths { securityService =>
         InstanceController(
-          instanceService = withInstances(mock(classOf[InstanceService]), instances ++ List(notMatchingInstance)),
+          instanceService = withInstances(mock[InstanceService], instances ++ List(notMatchingInstance)),
           securityService = securityService
         )
       } { controller =>
@@ -114,7 +131,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         operator
       } { securityService =>
         InstanceController(
-          instanceService = withInstances(mock(classOf[InstanceService]), instances),
+          instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService
         )
       } { controller =>
@@ -131,7 +148,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         user
       } { securityService =>
         InstanceController(
-          instanceService = withInstances(mock(classOf[InstanceService]), instances),
+          instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService
         )
       } { controller =>
@@ -152,7 +169,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         accountWithRegex
       } { securityService =>
         InstanceController(
-          instanceService = withInstances(mock(classOf[InstanceService]), instances ++ List(matchingInstance)),
+          instanceService = withInstances(mock[InstanceService], instances ++ List(matchingInstance)),
           securityService = securityService
         )
       } { controller =>
@@ -170,7 +187,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     "return the requested instance if it exists" in new WithApplication {
       testWithAllAuths { securityService =>
         InstanceController(
-          instanceService = withInstances(mock(classOf[InstanceService]), instances),
+          instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService
         )
       } { controller =>
@@ -183,7 +200,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
 
     "return 404 if the requested instance does not exist" in new WithApplication {
       val notExisting = "id"
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceService = withInstances(mock[InstanceService], List.empty)
       when(instanceService.getInstance(notExisting)).thenReturn(None)
       testWithAllAuths { securityService =>
         InstanceController(
@@ -203,7 +220,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         operator
       } { securityService =>
         InstanceController(
-          instanceService = withInstances(mock(classOf[InstanceService]), instances),
+          instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService
         )
       } { controller =>
@@ -220,7 +237,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         user
       } { securityService =>
         InstanceController(
-          instanceService = withInstances(mock(classOf[InstanceService]), instances),
+          instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService
         )
       } { controller =>
@@ -236,7 +253,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
         accountWithRegex
       } { securityService =>
         InstanceController(
-          instanceService = withInstances(mock(classOf[InstanceService]), instances),
+          instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService
         )
       } { controller =>
@@ -248,10 +265,62 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
 
   }
 
+  "tasks" should {
+    "return tasks from the instance service" in { implicit ee: ExecutionEnv =>
+      prop { (user: Account, instanceTasks: InstanceTasks) =>
+        val securityService = mock[SecurityService]
+        securityService.authMode returns "conf"
+        securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
+        securityService.getAccount(user.name) returns Some(user)
+
+        val instanceService = mock[InstanceService]
+        instanceService.getInstanceTasks(user)(instanceTasks.instanceId) returns EitherT.pure[Future, InstanceError](
+          instanceTasks)
+
+        val controller = InstanceController(instanceService, securityService)
+
+        val request = FakeRequest().withBody(()).withLoggedIn(controller)(user.name)
+        val result = controller.tasks(instanceTasks.instanceId)(request)
+        status(result) must beEqualTo(instanceTasks.toHTTPResult.header.status)
+        contentAsJson(result) must beEqualTo(contentAsJson(Future.successful(instanceTasks.toHTTPResult)))
+      }.setContext(new WithApplication() {}).set(minTestsOk = 1)
+    }
+
+    "return errors from the instance service" in { implicit ee: ExecutionEnv =>
+      prop { (instanceId: String, user: Account, error: InstanceError) =>
+        val securityService = mock[SecurityService]
+        securityService.authMode returns "conf"
+        securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
+        securityService.getAccount(user.name) returns Some(user)
+        val instanceService = mock[InstanceService]
+        instanceService.getInstanceTasks(user)(instanceId) returns EitherT.leftT[Future, InstanceTasks](error)
+
+        val controller = InstanceController(instanceService, securityService)
+        val request = FakeRequest().withBody(()).withLoggedIn(controller)(user.name)
+
+        val result = controller.tasks(instanceId)(request)
+        status(result) must beEqualTo(error.toHTTPResult.header.status)
+        contentAsJson(result) must beEqualTo(contentAsJson(Future.successful(error.toHTTPResult)))
+      }.setGen1(Gen.identifier.label("instanceId")).setContext(new WithApplication() {}).set(minTestsOk = 1)
+    }
+
+    "fail if not authenticated" in {
+      prop { (instanceId: String) =>
+        val securityService = mock[SecurityService]
+        securityService.authMode returns "conf"
+        val instanceService = mock[InstanceService]
+
+        val controller = InstanceController(instanceService, securityService)
+        val result = controller.tasks(instanceId)(FakeRequest().withBody(()))
+        status(result) must beEqualTo(FORBIDDEN)
+      }.setGen(Gen.identifier.label("instanceId")).setContext(new WithApplication() {}).set(minTestsOk = 1)
+    }
+  }
+
   "create" should {
 
     "create a new instance if it does not exist" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceService = withInstances(mock[InstanceService], List.empty)
       val instanceCreation = InstanceCreation(
         templateId = "template",
         parameters = Map(
@@ -276,7 +345,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "fail if the instance cannot be created" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceService = withInstances(mock[InstanceService], List.empty)
       val instanceCreation = InstanceCreation(
         templateId = "template",
         parameters = Map(
@@ -300,7 +369,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "fail if the instance ID does not match the account prefix" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceService = withInstances(mock[InstanceService], List.empty)
       val instanceCreation = InstanceCreation(
         templateId = "template",
         parameters = Map(
@@ -326,7 +395,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
 
     "fail if running in operator mode" in new WithApplication {
       // TODO helper function (see above)
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceService = withInstances(mock[InstanceService], List.empty)
       val instanceCreation = InstanceCreation(
         templateId = "template",
         parameters = Map(
@@ -352,7 +421,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
 
     "fail if running in user mode" in new WithApplication {
       // TODO helper function (see above)
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceService = withInstances(mock[InstanceService], List.empty)
       val instanceCreation = InstanceCreation(
         templateId = "template",
         parameters = Map(
@@ -381,7 +450,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
   "update" should {
 
     "update the instance status correctly" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceService = withInstances(mock[InstanceService], List.empty)
       when(
         instanceService.updateInstance(
           id = instanceWithStatus.instance.id,
@@ -412,7 +481,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "update the instance parameters correctly" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceService = withInstances(mock[InstanceService], List.empty)
       when(
         instanceService.updateInstance(
           id = instanceWithStatus.instance.id,
@@ -446,7 +515,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "update the instance template correctly" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceService = withInstances(mock[InstanceService], List.empty)
       when(
         instanceService.updateInstance(
           id = instanceWithStatus.instance.id,
@@ -477,7 +546,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "fail if the instance does not exist" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceService = withInstances(mock[InstanceService], List.empty)
       when(
         instanceService.updateInstance(
           id = instanceWithStatus.instance.id,
@@ -507,7 +576,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "fail if the instance does not match the account instance prefix" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceService = withInstances(mock[InstanceService], List.empty)
       when(
         instanceService.updateInstance(
           id = instanceWithStatus.instance.id,
@@ -539,7 +608,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "fail if the request is an empty object" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceService = withInstances(mock[InstanceService], List.empty)
 
       testWithAllAuths { securityService =>
         InstanceController(
@@ -562,7 +631,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "not allow instance status updates if not running in admin or operator mode" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceService = withInstances(mock[InstanceService], List.empty)
 
       testWithAllAuths(user) { securityService =>
         InstanceController(
@@ -585,7 +654,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "not allow instance parameter updates if not running in administrator mode" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceService = withInstances(mock[InstanceService], List.empty)
 
       val operatorMatchers = testWithAllAuths(operator) { securityService =>
         InstanceController(
@@ -629,7 +698,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "not allow template updates if not running in administrator mode" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), List.empty)
+      val instanceService = withInstances(mock[InstanceService], List.empty)
 
       val operatorMatchers = testWithAllAuths(operator) { securityService =>
         InstanceController(
@@ -675,7 +744,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
   "delete" should {
 
     "delete the instance correctly" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), instances)
+      val instanceService = withInstances(mock[InstanceService], instances)
       when(instanceService.deleteInstance(instanceWithStatus.instance.id)).thenReturn(Success(instanceWithStatus))
 
       testWithAllAuths { securityService =>
@@ -692,7 +761,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "not succeed if the instance does not exist" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), instances)
+      val instanceService = withInstances(mock[InstanceService], instances)
       when(instanceService.deleteInstance(instanceWithStatus.instance.id))
         .thenReturn(Failure(InstanceNotFoundException(instanceWithStatus.instance.id)))
 
@@ -709,7 +778,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "not succeed if the instance cannot be deleted" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), instances)
+      val instanceService = withInstances(mock[InstanceService], instances)
       when(instanceService.deleteInstance(instanceWithStatus.instance.id))
         .thenReturn(Failure(new Exception("")))
 
@@ -726,7 +795,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "not succeed if the instance id does not match the account prefix" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), instances)
+      val instanceService = withInstances(mock[InstanceService], instances)
       when(instanceService.deleteInstance(instanceWithStatus.instance.id)).thenReturn(Success(instanceWithStatus))
 
       testWithAllAuths {
@@ -744,7 +813,7 @@ class InstanceControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "should only be allowed in administrator mode" in new WithApplication {
-      val instanceService = withInstances(mock(classOf[InstanceService]), instances)
+      val instanceService = withInstances(mock[InstanceService], instances)
 
       val operatorMatcher = testWithAllAuths(operator) { securityService =>
         InstanceController(
