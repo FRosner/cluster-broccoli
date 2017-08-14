@@ -138,6 +138,13 @@ trait ModelArbitraries {
       allocations <- Gen.listOf(arbAllocation.arbitrary)
     } yield Task(name, allocations)
   }
+
+  implicit def arbitraryInstanceTasks(implicit arbTask: Arbitrary[Task]): Arbitrary[InstanceTasks] = Arbitrary {
+    for {
+      id <- Gen.identifier.label("id")
+      tasks <- Gen.listOf(arbTask.arbitrary)
+    } yield InstanceTasks(id, tasks)
+  }
 }
 
 /**

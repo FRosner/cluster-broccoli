@@ -1,6 +1,8 @@
 package de.frosner.broccoli.models
 
+import de.frosner.broccoli.http.ToHTTPResult
 import play.api.libs.json.{Json, Writes}
+import play.api.mvc.Results
 
 /**
   * The tasks of an instance.
@@ -12,4 +14,7 @@ final case class InstanceTasks(instanceId: String, tasks: Seq[Task])
 
 object InstanceTasks {
   implicit val instanceTasksWrites: Writes[InstanceTasks] = Json.writes[InstanceTasks]
+
+  implicit val instanceTasksToHTTPResult: ToHTTPResult[InstanceTasks] =
+    ToHTTPResult.instance(v => Results.Ok(Json.toJson(v.tasks)))
 }
