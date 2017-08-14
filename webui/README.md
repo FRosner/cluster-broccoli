@@ -22,4 +22,4 @@ changes to the code.
 
 ### Compile and Package
 
-- `yarn package`
+- `yarn dist`
