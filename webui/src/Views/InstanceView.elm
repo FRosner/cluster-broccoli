@@ -6,7 +6,7 @@ import Models.Resources.Role exposing (Role(..))
 import Models.Resources.Task exposing (Task)
 import Models.Resources.TaskState exposing (TaskState(..))
 import Models.Resources.ClientStatus exposing (ClientStatus(ClientComplete))
-import Models.Resources.Allocation as Allocation exposing (Allocation)
+import Models.Resources.Allocation as Allocation exposing (Allocation, shortAllocationId)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 import Views.ParameterFormView as ParameterFormView
@@ -405,7 +405,7 @@ instanceAllocationRow index ( taskName, allocation ) =
     in
         tr []
             [ th [ scope <| toString (index + 1) ] [ text taskName ]
-            , td [] [ code [] [ text allocation.id ] ]
+            , td [] [ code [] [ text (shortAllocationId allocation.id) ] ]
             , td [] [ span [ class ("label " ++ labelKind) ] [ text description ] ]
             ]
 
