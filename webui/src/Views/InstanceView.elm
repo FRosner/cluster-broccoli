@@ -363,30 +363,37 @@ getActiveAllocations task =
 
 instanceTasksView : Maybe (List Task) -> Html msg
 instanceTasksView instanceTasks =
-    case Maybe.map (List.concatMap getActiveAllocations) instanceTasks of
-        Nothing ->
-            h5 []
-                [ text "Loading allocated tasks "
-                , i [ class "fa fa-spinner fa-spin" ] []
-                ]
+    let
+        allocatedTasks =
+            case Maybe.map (List.concatMap getActiveAllocations) instanceTasks of
+                Nothing ->
+                    [ i [ class "fa fa-spinner fa-spin" ] [] ]
 
-        Just [] ->
-            h5 [] [ text "No allocated tasks" ]
+                Just [] ->
+                    [ text "No tasks have been allocated, yet." ]
 
-        Just allocations ->
-            div []
-                [ h5 [] [ text "Allocated tasks" ]
-                , table [ class "table table-condensed table-hover" ]
-                    [ thead []
-                        [ tr []
-                            [ th [] [ text "Task" ]
-                            , th [] [ text "Allocation ID" ]
-                            , th [] [ text "State" ]
+                Just allocations ->
+                    [ table [ class "table table-condensed table-hover" ]
+                        [ thead []
+                            [ tr []
+                                [ th [] [ text "Task" ]
+                                , th [] [ text "Allocation ID" ]
+                                , th [] [ text "State" ]
+                                ]
                             ]
+                        , tbody [] <| List.indexedMap instanceAllocationRow allocations
                         ]
-                    , tbody [] <| List.indexedMap instanceAllocationRow allocations
                     ]
+    in
+        div
+            [ style
+                [ ( "margin-bottom", "15px" ) ]
+            ]
+            (List.concat
+                [ [ h5 [] [ text "Allocated Tasks" ] ]
+                , allocatedTasks
                 ]
+            )
 
 
 instanceAllocationRow : Int -> ( String, Allocation ) -> Html msg
