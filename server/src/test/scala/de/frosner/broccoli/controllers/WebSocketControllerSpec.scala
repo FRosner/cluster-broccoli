@@ -97,6 +97,7 @@ class WebSocketControllerSpec
             incoming.feed(Json.toJson(inMsg)).end
             verify(controller.webSocketService)
               .send(anyString(), Matchers.eq(Json.toJson(outMsg)))
+          case Left(_) => throw new IllegalStateException()
         }
     }
 
@@ -216,6 +217,7 @@ class WebSocketControllerSpec
           )
           incoming.feed(Json.toJson(IncomingMessage.AddInstance(instanceCreation))).end
           verify(controller.webSocketService).send(id, Json.toJson(resultMsg))
+        case Left(_) => throw new IllegalStateException()
       }
     }
 
