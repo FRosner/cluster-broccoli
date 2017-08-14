@@ -366,24 +366,26 @@ instanceTasksView instanceTasks =
     case Maybe.map (List.concatMap getActiveAllocations) instanceTasks of
         Nothing ->
             h5 []
-                [ text "Loading tasks and allocations "
+                [ text "Loading allocated tasks "
                 , i [ class "fa fa-spinner fa-spin" ] []
                 ]
 
         Just [] ->
-            h5 [] [ text "No tasks" ]
+            h5 [] [ text "No allocated tasks" ]
 
         Just allocations ->
-            table [ class "table table-condensed table-hover" ]
-                [ caption [] [ text "Tasks and allocations of this instance" ]
-                , thead []
-                    [ tr []
-                        [ th [] [ text "Task" ]
-                        , th [] [ text "Allocation" ]
-                        , th [] [ text "State" ]
+            div []
+                [ h5 [] [ text "Allocated tasks" ]
+                , table [ class "table table-condensed table-hover" ]
+                    [ thead []
+                        [ tr []
+                            [ th [] [ text "Task" ]
+                            , th [] [ text "Allocation ID" ]
+                            , th [] [ text "State" ]
+                            ]
                         ]
+                    , tbody [] <| List.indexedMap instanceAllocationRow allocations
                     ]
-                , tbody [] <| List.indexedMap instanceAllocationRow allocations
                 ]
 
 
