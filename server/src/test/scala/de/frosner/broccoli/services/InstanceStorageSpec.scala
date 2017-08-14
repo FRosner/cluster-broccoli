@@ -12,7 +12,7 @@ class InstanceStorageSpec extends Specification {
 
     def testStorage = new InstanceStorage {
       protected override val log = Logger(getClass)
-      protected override def readInstancesImpl(): Try[Set[Instance]] = Failure(new Exception())
+      protected override def readInstancesImpl: Try[Set[Instance]] = Failure(new Exception())
       override def readInstancesImpl(idFilter: (String) => Boolean): Try[Set[Instance]] = Failure(new Exception())
       override def readInstanceImpl(id: String): Try[Instance] = Failure(new Exception())
       override def deleteInstanceImpl(toDelete: Instance): Try[Instance] = Failure(new Exception())
