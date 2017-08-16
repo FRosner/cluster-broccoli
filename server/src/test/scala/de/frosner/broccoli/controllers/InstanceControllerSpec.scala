@@ -13,6 +13,8 @@ import org.scalacheck.Gen
 import org.specs2.ScalaCheck
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mock.Mockito
+import play.api.Environment
+import play.api.cache.CacheApi
 import play.api.http.HeaderNames
 import play.api.libs.json._
 import play.api.test._
@@ -94,7 +96,9 @@ class InstanceControllerSpec
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances),
-          securityService = securityService
+          securityService = securityService,
+          cacheApi = cacheApi,
+          playEnv = playEnv
         )
       } { controller =>
         controller.list(None)
@@ -115,7 +119,9 @@ class InstanceControllerSpec
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances ++ List(notMatchingInstance)),
-          securityService = securityService
+          securityService = securityService,
+          cacheApi = cacheApi,
+          playEnv = playEnv
         )
       } { controller =>
         controller.list(Some(instanceWithStatus.instance.template.id))
@@ -132,7 +138,9 @@ class InstanceControllerSpec
       } { securityService =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances),
-          securityService = securityService
+          securityService = securityService,
+          cacheApi = cacheApi,
+          playEnv = playEnv
         )
       } { controller =>
         controller.list(Some(instanceWithStatus.instance.template.id))
@@ -149,7 +157,9 @@ class InstanceControllerSpec
       } { securityService =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances),
-          securityService = securityService
+          securityService = securityService,
+          cacheApi = cacheApi,
+          playEnv = playEnv
         )
       } { controller =>
         controller.list(Some(instanceWithStatus.instance.template.id))
@@ -170,7 +180,9 @@ class InstanceControllerSpec
       } { securityService =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances ++ List(matchingInstance)),
-          securityService = securityService
+          securityService = securityService,
+          cacheApi = cacheApi,
+          playEnv = playEnv
         )
       } { controller =>
         controller.list(None)
@@ -188,7 +200,9 @@ class InstanceControllerSpec
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances),
-          securityService = securityService
+          securityService = securityService,
+          cacheApi = cacheApi,
+          playEnv = playEnv
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
@@ -205,7 +219,9 @@ class InstanceControllerSpec
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          cacheApi = cacheApi,
+          playEnv = playEnv
         )
       } { controller =>
         controller.show(notExisting)
@@ -221,7 +237,9 @@ class InstanceControllerSpec
       } { securityService =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances),
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
@@ -238,7 +256,9 @@ class InstanceControllerSpec
       } { securityService =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances),
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
@@ -254,7 +274,9 @@ class InstanceControllerSpec
       } { securityService =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances),
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
@@ -268,6 +290,9 @@ class InstanceControllerSpec
   "tasks" should {
     "return tasks from the instance service" in { implicit ee: ExecutionEnv =>
       prop { (user: Account, instanceTasks: InstanceTasks) =>
+        val cacheApi = mock[CacheApi]
+        val env = Environment.simple()
+
         val securityService = mock[SecurityService]
         securityService.authMode returns "conf"
         securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
@@ -277,7 +302,7 @@ class InstanceControllerSpec
         instanceService.getInstanceTasks(user)(instanceTasks.instanceId) returns EitherT.pure[Future, InstanceError](
           instanceTasks)
 
-        val controller = InstanceController(instanceService, securityService)
+        val controller = InstanceController(instanceService, securityService, cacheApi, env)
 
         val request = FakeRequest().withBody(()).withLoggedIn(controller)(user.name)
         val result = controller.tasks(instanceTasks.instanceId)(request)
@@ -288,6 +313,9 @@ class InstanceControllerSpec
 
     "return errors from the instance service" in { implicit ee: ExecutionEnv =>
       prop { (instanceId: String, user: Account, error: InstanceError) =>
+        val cacheApi = mock[CacheApi]
+        val env = Environment.simple()
+
         val securityService = mock[SecurityService]
         securityService.authMode returns "conf"
         securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
@@ -295,7 +323,7 @@ class InstanceControllerSpec
         val instanceService = mock[InstanceService]
         instanceService.getInstanceTasks(user)(instanceId) returns EitherT.leftT[Future, InstanceTasks](error)
 
-        val controller = InstanceController(instanceService, securityService)
+        val controller = InstanceController(instanceService, securityService, cacheApi, env)
         val request = FakeRequest().withBody(()).withLoggedIn(controller)(user.name)
 
         val result = controller.tasks(instanceId)(request)
@@ -306,11 +334,14 @@ class InstanceControllerSpec
 
     "fail if not authenticated" in {
       prop { (instanceId: String) =>
+        val cacheApi = mock[CacheApi]
+        val env = Environment.simple()
+
         val securityService = mock[SecurityService]
         securityService.authMode returns "conf"
         val instanceService = mock[InstanceService]
 
-        val controller = InstanceController(instanceService, securityService)
+        val controller = InstanceController(instanceService, securityService, cacheApi, env)
         val result = controller.tasks(instanceId)(FakeRequest().withBody(()))
         status(result) must beEqualTo(FORBIDDEN)
       }.setGen(Gen.identifier.label("instanceId")).setContext(new WithApplication() {}).set(minTestsOk = 1)
@@ -331,7 +362,9 @@ class InstanceControllerSpec
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.create
@@ -357,7 +390,9 @@ class InstanceControllerSpec
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.create
@@ -382,7 +417,9 @@ class InstanceControllerSpec
       } { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.create
@@ -408,7 +445,9 @@ class InstanceControllerSpec
       } { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.create
@@ -434,7 +473,9 @@ class InstanceControllerSpec
       } { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.create
@@ -462,7 +503,9 @@ class InstanceControllerSpec
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -496,7 +539,9 @@ class InstanceControllerSpec
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -527,7 +572,9 @@ class InstanceControllerSpec
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -558,7 +605,9 @@ class InstanceControllerSpec
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -590,7 +639,9 @@ class InstanceControllerSpec
       } { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -613,7 +664,9 @@ class InstanceControllerSpec
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -636,7 +689,9 @@ class InstanceControllerSpec
       testWithAllAuths(user) { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -659,7 +714,9 @@ class InstanceControllerSpec
       val operatorMatchers = testWithAllAuths(operator) { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -678,7 +735,9 @@ class InstanceControllerSpec
       val userMatchers = testWithAllAuths(user) { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -703,7 +762,9 @@ class InstanceControllerSpec
       val operatorMatchers = testWithAllAuths(operator) { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          cacheApi = cacheApi,
+          playEnv = playEnv
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -721,7 +782,9 @@ class InstanceControllerSpec
       val userMatchers = testWithAllAuths(user) { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          cacheApi = cacheApi,
+          playEnv = playEnv
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -750,7 +813,9 @@ class InstanceControllerSpec
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          cacheApi = cacheApi,
+          playEnv = playEnv
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
@@ -768,7 +833,9 @@ class InstanceControllerSpec
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
@@ -785,7 +852,9 @@ class InstanceControllerSpec
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
@@ -803,7 +872,9 @@ class InstanceControllerSpec
       } { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
@@ -818,7 +889,9 @@ class InstanceControllerSpec
       val operatorMatcher = testWithAllAuths(operator) { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
@@ -828,7 +901,9 @@ class InstanceControllerSpec
       val userMatcher = testWithAllAuths(user) { securityService =>
         InstanceController(
           instanceService = instanceService,
-          securityService = securityService
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)

@@ -5,7 +5,8 @@ import javax.inject.Inject
 import de.frosner.broccoli.models.UserCredentials
 import de.frosner.broccoli.services.{SecurityService, WebSocketService}
 import jp.t2v.lab.play2.auth.{BroccoliSimpleAuthorization, LoginLogout}
-import play.api.Logger
+import play.api.{Environment, Logger}
+import play.api.cache.CacheApi
 import play.api.data.Forms._
 import play.api.data._
 import play.api.libs.json.Json
@@ -13,9 +14,12 @@ import play.api.mvc.{Action, AnyContent, Controller, Results}
 
 import scala.concurrent.Future
 
-case class SecurityController @Inject()(override val securityService: SecurityService,
-                                        webSocketService: WebSocketService)
-    extends Controller
+case class SecurityController @Inject()(
+    override val securityService: SecurityService,
+    override val cacheApi: CacheApi,
+    override val playEnv: Environment,
+    webSocketService: WebSocketService
+) extends Controller
     with LoginLogout
     with BroccoliSimpleAuthorization {
 

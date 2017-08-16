@@ -1,25 +1,26 @@
 package jp.t2v.lab.play2.auth
 
 import java.security.SecureRandom
+import java.util.concurrent.TimeUnit
 
-import play.api.Play._
-import play.api.cache.Cache
+import play.api.cache.CacheApi
 
 import scala.annotation.tailrec
+import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 import scala.util.Random
 
-class MultiLoginCacheIdContainer[Id: ClassTag] extends IdContainer[Id] {
+class MultiLoginCacheIdContainer[Id: ClassTag](cache: CacheApi) extends IdContainer[Id] {
 
   private val log = play.api.Logger(getClass)
 
   private[auth] val tokenSuffix = ":multitoken"
   private[auth] val random = new Random(new SecureRandom())
 
-  def startNewSession(userId: Id, timeoutInSeconds: Int): AuthenticityToken = {
+  override def startNewSession(userId: Id, timeoutInSeconds: Int): AuthenticityToken = {
     log.info(s"Starting new session for user '$userId'.")
     val token = generate
-    store(token, userId, timeoutInSeconds)
+    store(token, userId, Duration(timeoutInSeconds.toLong, TimeUnit.SECONDS))
     token
   }
 
@@ -32,18 +33,18 @@ class MultiLoginCacheIdContainer[Id: ClassTag] extends IdContainer[Id] {
 
   def remove(token: AuthenticityToken) {
     log.info(s"Deleting session of user '${get(token)}'")
-    Cache.remove(token + tokenSuffix)
+    cache.remove(token + tokenSuffix)
   }
 
   def get(token: AuthenticityToken): Option[Id] =
-    Cache.get(token + tokenSuffix).map(_.asInstanceOf[Id])
+    cache.get(token + tokenSuffix).map(_.asInstanceOf[Id])
 
-  private[auth] def store(token: AuthenticityToken, userId: Id, timeoutInSeconds: Int) {
-    Cache.set(token + tokenSuffix, userId, timeoutInSeconds)
+  private[auth] def store(token: AuthenticityToken, userId: Id, duration: Duration) {
+    cache.set(token + tokenSuffix, userId, duration)
   }
 
-  def prolongTimeout(token: AuthenticityToken, timeoutInSeconds: Int) {
-    get(token).foreach(store(token, _, timeoutInSeconds))
+  override def prolongTimeout(token: AuthenticityToken, timeoutInSeconds: Int) {
+    get(token).foreach(store(token, _, Duration(timeoutInSeconds.toLong, TimeUnit.SECONDS)))
   }
 
 }

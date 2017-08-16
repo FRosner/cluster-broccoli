@@ -114,7 +114,9 @@ class WebSocketControllerSpec
         instanceService = instanceService,
         aboutService = withDummyValues(mock(classOf[AboutInfoService])),
         securityService = withAuthConf(mock(classOf[SecurityService]), List(account)),
-        messageHandler = new BroccoliMessageHandler(instanceService)
+        messageHandler = new BroccoliMessageHandler(instanceService),
+        playEnv = playEnv,
+        cacheApi = cacheApi
       )
       val result = controller.requestToSocket(FakeRequest().withLoggedIn(controller)(account.name))
       val maybeConnection = WsTestUtil.wrapConnection(result)
@@ -130,7 +132,9 @@ class WebSocketControllerSpec
         instanceService = instanceService,
         aboutService = withDummyValues(mock(classOf[AboutInfoService])),
         securityService = withAuthNone(mock(classOf[SecurityService])),
-        messageHandler = new BroccoliMessageHandler(instanceService)
+        messageHandler = new BroccoliMessageHandler(instanceService),
+        playEnv = playEnv,
+        cacheApi = cacheApi
       )
       when(controller.webSocketService.newConnection(any(classOf[Account]))).thenReturn(("id", null))
       val result = controller.requestToSocket(FakeRequest())
@@ -147,7 +151,9 @@ class WebSocketControllerSpec
         instanceService = instanceService,
         aboutService = withDummyValues(mock(classOf[AboutInfoService])),
         securityService = withAuthConf(mock(classOf[SecurityService]), List(account)),
-        messageHandler = new BroccoliMessageHandler(instanceService)
+        messageHandler = new BroccoliMessageHandler(instanceService),
+        playEnv = playEnv,
+        cacheApi = cacheApi
       )
       val result = controller.requestToSocket(FakeRequest())
       val maybeConnection = WsTestUtil.wrapConnection(result)
@@ -169,7 +175,9 @@ class WebSocketControllerSpec
         instanceService = instanceService,
         aboutService = withDummyValues(mock(classOf[AboutInfoService])),
         securityService = withAuthNone(mock(classOf[SecurityService])),
-        messageHandler = new BroccoliMessageHandler(instanceService)
+        messageHandler = new BroccoliMessageHandler(instanceService),
+        playEnv = playEnv,
+        cacheApi = cacheApi
       )
       when(controller.webSocketService.newConnection(any(classOf[Account]))).thenReturn(("id", Enumerator.empty[Msg]))
       val result = controller.requestToSocket(FakeRequest())
@@ -195,7 +203,9 @@ class WebSocketControllerSpec
         instanceService = instanceService,
         aboutService = withDummyValues(mock(classOf[AboutInfoService])),
         securityService = withAuthNone(mock(classOf[SecurityService])),
-        messageHandler = new BroccoliMessageHandler(instanceService)
+        messageHandler = new BroccoliMessageHandler(instanceService),
+        playEnv = playEnv,
+        cacheApi = cacheApi
       )
       when(controller.webSocketService.newConnection(any(classOf[Account]))).thenReturn((id, Enumerator.empty[Msg]))
       val instanceCreation = InstanceCreation(
@@ -248,7 +258,9 @@ class WebSocketControllerSpec
             instanceService = instanceService,
             aboutService = withDummyValues(mock(classOf[AboutInfoService])),
             securityService = securityService,
-            messageHandler = new BroccoliMessageHandler(instanceService)
+            messageHandler = new BroccoliMessageHandler(instanceService),
+            playEnv = playEnv,
+            cacheApi = cacheApi
           )
           when(controller.instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
           controller
@@ -285,7 +297,9 @@ class WebSocketControllerSpec
             instanceService = instanceService,
             aboutService = withDummyValues(mock(classOf[AboutInfoService])),
             securityService = securityService,
-            messageHandler = new BroccoliMessageHandler(instanceService)
+            messageHandler = new BroccoliMessageHandler(instanceService),
+            playEnv = playEnv,
+            cacheApi = cacheApi
           )
           when(controller.instanceService.deleteInstance(instanceDeletion)).thenReturn(Success(instanceWithStatus))
           controller
@@ -328,7 +342,9 @@ class WebSocketControllerSpec
             instanceService = instanceService,
             aboutService = withDummyValues(mock(classOf[AboutInfoService])),
             securityService = securityService,
-            messageHandler = new BroccoliMessageHandler(instanceService)
+            messageHandler = new BroccoliMessageHandler(instanceService),
+            playEnv = playEnv,
+            cacheApi = cacheApi
           )
           when(
             controller.instanceService.updateInstance(
@@ -384,7 +400,9 @@ class WebSocketControllerSpec
             instanceService = instanceService,
             aboutService = withDummyValues(mock(classOf[AboutInfoService])),
             securityService = securityService,
-            messageHandler = new BroccoliMessageHandler(instanceService)
+            messageHandler = new BroccoliMessageHandler(instanceService),
+            playEnv = playEnv,
+            cacheApi = cacheApi
           )
           when(
             controller.instanceService.updateInstance(
@@ -433,7 +451,9 @@ class WebSocketControllerSpec
             instanceService = instanceService,
             aboutService = withDummyValues(mock(classOf[AboutInfoService])),
             securityService = securityService,
-            messageHandler = new BroccoliMessageHandler(instanceService)
+            messageHandler = new BroccoliMessageHandler(instanceService),
+            playEnv = playEnv,
+            cacheApi = cacheApi
           )
           when(
             controller.instanceService.updateInstance(
