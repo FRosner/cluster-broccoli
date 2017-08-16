@@ -10,6 +10,7 @@ import Models.Resources.Allocation as Allocation exposing (Allocation, shortAllo
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 import Views.ParameterFormView as ParameterFormView
+import Views.Styles exposing (instanceViewElementStyle)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onCheck, onInput, onSubmit)
@@ -386,9 +387,7 @@ instanceTasksView instanceTasks =
                     ]
     in
         div
-            [ style
-                [ ( "margin-bottom", "15px" ) ]
-            ]
+            [ style instanceViewElementStyle ]
             (List.concat
                 [ [ h5 [] [ text "Allocated Tasks" ] ]
                 , allocatedTasks

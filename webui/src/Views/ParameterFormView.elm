@@ -4,6 +4,7 @@ import Models.Resources.Instance exposing (..)
 import Models.Resources.Template exposing (..)
 import Models.Resources.Role as Role exposing (Role(..))
 import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (InstanceParameterForm)
+import Views.Styles exposing (instanceViewElementStyle)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 import Utils.ParameterUtils exposing (getOtherParameters)
@@ -59,7 +60,7 @@ editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole 
                   else
                     [ div
                         [ class "row"
-                        , style [ ( "margin-bottom", "15px" ) ]
+                        , style instanceViewElementStyle
                         ]
                         [ div
                             [ class "col-md-6" ]
@@ -352,7 +353,7 @@ newView template maybeInstanceParameterForm visibleSecrets =
                     ]
                 , div
                     [ class "row"
-                    , style [ ( "margin-bottom", "15px" ) ]
+                    , style instanceViewElementStyle
                     ]
                     [ div
                         [ class "col-md-6" ]
