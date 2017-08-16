@@ -26,5 +26,5 @@ RUN echo "#!/bin/bash" > /usr/bin/consul && \
 ADD cluster-broccoli-dist /cluster-broccoli-dist
 
 ADD templates /cluster-broccoli-dist/templates
-RUN mkdir /instances
+RUN mkdir /cluster-broccoli-dist/instances
 RUN ln -s /cluster-broccoli-dist/bin/cluster-broccoli /usr/bin/cluster-broccoli
