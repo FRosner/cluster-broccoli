@@ -5,6 +5,7 @@ import javax.inject.Inject
 
 import cats.syntax.either._
 import de.frosner.broccoli.http.ToHTTPResult.ops._
+import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.models.InstanceCreation.instanceCreationReads
 import de.frosner.broccoli.models.InstanceUpdate.instanceUpdateReads
 import de.frosner.broccoli.models.Role.syntax._
@@ -18,6 +19,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, Controller, Results}
 
 case class InstanceController @Inject()(
+    instances: NomadInstances,
     instanceService: InstanceService,
     override val securityService: SecurityService,
     override val cacheApi: CacheApi,
@@ -39,7 +41,7 @@ case class InstanceController @Inject()(
   }
 
   def tasks(id: String): Action[Unit] = AsyncStack(parse.empty) { implicit request =>
-    instanceService.getInstanceTasks(loggedIn)(id).value.map(_.toHTTPResult)
+    instances.getInstanceTasks(loggedIn)(id).value.map(_.toHTTPResult)
   }
 
   def create: Action[InstanceCreation] = StackAction(parse.json[InstanceCreation]) { implicit request =>

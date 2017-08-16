@@ -2,15 +2,15 @@ package de.frosner.broccoli.websocket
 
 import cats.data.EitherT
 import cats.instances.future._
+import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.services.InstanceService
 import de.frosner.broccoli.nomad
-import org.scalacheck.{Arbitrary, Gen}
+import de.frosner.broccoli.services.InstanceService
+import org.scalacheck.Gen
 import org.specs2.ScalaCheck
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
-import org.specs2.specification.ExecutionEnvironment
 
 import scala.concurrent.Future
 
@@ -24,11 +24,11 @@ class BroccoliMessageHandlerSpec
   "The Broccoli Message Handler" should {
     "send back instance tasks" in { implicit ee: ExecutionEnv =>
       prop { (account: Account, id: String, tasks: List[Task]) =>
-        val service = mock[InstanceService]
+        val instances = mock[NomadInstances]
         val instanceTasks = InstanceTasks(id, tasks)
-        service.getInstanceTasks(account)(id) returns EitherT.pure[Future, InstanceError](instanceTasks)
+        instances.getInstanceTasks(account)(id) returns EitherT.pure[Future, InstanceError](instanceTasks)
 
-        val outgoingMessage = new BroccoliMessageHandler(service)
+        val outgoingMessage = new BroccoliMessageHandler(instances, mock[InstanceService])
           .processMessage(account)(IncomingMessage.GetInstanceTasks(id))
 
         outgoingMessage must beEqualTo(OutgoingMessage.GetInstanceTasksSuccess(instanceTasks)).await
@@ -37,10 +37,10 @@ class BroccoliMessageHandlerSpec
 
     "send back an error if instance tasks failed" in { implicit ee: ExecutionEnv =>
       prop { (account: Account, id: String, error: InstanceError) =>
-        val service = mock[InstanceService]
-        service.getInstanceTasks(account)(id) returns EitherT.leftT[Future, InstanceTasks](error)
+        val instances = mock[NomadInstances]
+        instances.getInstanceTasks(account)(id) returns EitherT.leftT[Future, InstanceTasks](error)
 
-        val outgoingMessage = new BroccoliMessageHandler(service)
+        val outgoingMessage = new BroccoliMessageHandler(instances, mock[InstanceService])
           .processMessage(account)(IncomingMessage.GetInstanceTasks(id))
 
         outgoingMessage must beEqualTo(OutgoingMessage.GetInstanceTasksError(error)).await

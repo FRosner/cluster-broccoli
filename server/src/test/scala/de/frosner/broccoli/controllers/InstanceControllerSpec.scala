@@ -3,6 +3,7 @@ package de.frosner.broccoli.controllers
 import cats.data.EitherT
 import cats.instances.future._
 import de.frosner.broccoli.http.ToHTTPResult
+import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad
 import de.frosner.broccoli.services.{InstanceNotFoundException, InstanceService, SecurityService}
@@ -98,7 +99,8 @@ class InstanceControllerSpec
           instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService,
           cacheApi = cacheApi,
-          playEnv = playEnv
+          playEnv = playEnv,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.list(None)
@@ -121,7 +123,8 @@ class InstanceControllerSpec
           instanceService = withInstances(mock[InstanceService], instances ++ List(notMatchingInstance)),
           securityService = securityService,
           cacheApi = cacheApi,
-          playEnv = playEnv
+          playEnv = playEnv,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.list(Some(instanceWithStatus.instance.template.id))
@@ -140,7 +143,8 @@ class InstanceControllerSpec
           instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService,
           cacheApi = cacheApi,
-          playEnv = playEnv
+          playEnv = playEnv,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.list(Some(instanceWithStatus.instance.template.id))
@@ -159,7 +163,8 @@ class InstanceControllerSpec
           instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService,
           cacheApi = cacheApi,
-          playEnv = playEnv
+          playEnv = playEnv,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.list(Some(instanceWithStatus.instance.template.id))
@@ -182,7 +187,8 @@ class InstanceControllerSpec
           instanceService = withInstances(mock[InstanceService], instances ++ List(matchingInstance)),
           securityService = securityService,
           cacheApi = cacheApi,
-          playEnv = playEnv
+          playEnv = playEnv,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.list(None)
@@ -202,7 +208,8 @@ class InstanceControllerSpec
           instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService,
           cacheApi = cacheApi,
-          playEnv = playEnv
+          playEnv = playEnv,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
@@ -221,7 +228,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           cacheApi = cacheApi,
-          playEnv = playEnv
+          playEnv = playEnv,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.show(notExisting)
@@ -239,7 +247,8 @@ class InstanceControllerSpec
           instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
@@ -258,7 +267,8 @@ class InstanceControllerSpec
           instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
@@ -276,7 +286,8 @@ class InstanceControllerSpec
           instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
@@ -290,19 +301,22 @@ class InstanceControllerSpec
   "tasks" should {
     "return tasks from the instance service" in { implicit ee: ExecutionEnv =>
       prop { (user: Account, instanceTasks: InstanceTasks) =>
-        val cacheApi = mock[CacheApi]
-        val env = Environment.simple()
-
         val securityService = mock[SecurityService]
         securityService.authMode returns "conf"
         securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
         securityService.getAccount(user.name) returns Some(user)
 
-        val instanceService = mock[InstanceService]
-        instanceService.getInstanceTasks(user)(instanceTasks.instanceId) returns EitherT.pure[Future, InstanceError](
+        val instances = mock[NomadInstances]
+        instances.getInstanceTasks(user)(instanceTasks.instanceId) returns EitherT.pure[Future, InstanceError](
           instanceTasks)
 
-        val controller = InstanceController(instanceService, securityService, cacheApi, env)
+        val controller = InstanceController(
+          instances,
+          mock[InstanceService],
+          securityService,
+          mock[CacheApi],
+          Environment.simple()
+        )
 
         val request = FakeRequest().withBody(()).withLoggedIn(controller)(user.name)
         val result = controller.tasks(instanceTasks.instanceId)(request)
@@ -313,17 +327,20 @@ class InstanceControllerSpec
 
     "return errors from the instance service" in { implicit ee: ExecutionEnv =>
       prop { (instanceId: String, user: Account, error: InstanceError) =>
-        val cacheApi = mock[CacheApi]
-        val env = Environment.simple()
-
         val securityService = mock[SecurityService]
         securityService.authMode returns "conf"
         securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
         securityService.getAccount(user.name) returns Some(user)
-        val instanceService = mock[InstanceService]
-        instanceService.getInstanceTasks(user)(instanceId) returns EitherT.leftT[Future, InstanceTasks](error)
+        val instances = mock[NomadInstances]
+        instances.getInstanceTasks(user)(instanceId) returns EitherT.leftT[Future, InstanceTasks](error)
 
-        val controller = InstanceController(instanceService, securityService, cacheApi, env)
+        val controller = InstanceController(
+          instances,
+          mock[InstanceService],
+          securityService,
+          mock[CacheApi],
+          Environment.simple()
+        )
         val request = FakeRequest().withBody(()).withLoggedIn(controller)(user.name)
 
         val result = controller.tasks(instanceId)(request)
@@ -334,14 +351,15 @@ class InstanceControllerSpec
 
     "fail if not authenticated" in {
       prop { (instanceId: String) =>
-        val cacheApi = mock[CacheApi]
-        val env = Environment.simple()
-
         val securityService = mock[SecurityService]
         securityService.authMode returns "conf"
-        val instanceService = mock[InstanceService]
-
-        val controller = InstanceController(instanceService, securityService, cacheApi, env)
+        val controller = InstanceController(
+          mock[NomadInstances],
+          mock[InstanceService],
+          securityService,
+          mock[CacheApi],
+          Environment.simple()
+        )
         val result = controller.tasks(instanceId)(FakeRequest().withBody(()))
         status(result) must beEqualTo(FORBIDDEN)
       }.setGen(Gen.identifier.label("instanceId")).setContext(new WithApplication() {}).set(minTestsOk = 1)
@@ -364,7 +382,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.create
@@ -392,7 +411,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.create
@@ -419,7 +439,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.create
@@ -447,7 +468,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.create
@@ -475,7 +497,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.create
@@ -505,7 +528,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -541,7 +565,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -574,7 +599,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -607,7 +633,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -641,7 +668,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -666,7 +694,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -691,7 +720,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -716,7 +746,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -737,7 +768,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -764,7 +796,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           cacheApi = cacheApi,
-          playEnv = playEnv
+          playEnv = playEnv,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -784,7 +817,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           cacheApi = cacheApi,
-          playEnv = playEnv
+          playEnv = playEnv,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -815,7 +849,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           cacheApi = cacheApi,
-          playEnv = playEnv
+          playEnv = playEnv,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
@@ -835,7 +870,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
@@ -854,7 +890,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
@@ -874,7 +911,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
@@ -891,7 +929,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
@@ -903,7 +942,8 @@ class InstanceControllerSpec
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
-          cacheApi = cacheApi
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
