@@ -2,10 +2,15 @@ module Views.InstanceView exposing (view)
 
 import Models.Resources.ServiceStatus exposing (..)
 import Models.Resources.JobStatus as JobStatus exposing (..)
-import Models.Resources.Role as Role exposing (Role(..))
+import Models.Resources.Role exposing (Role(..))
+import Models.Resources.Task exposing (Task)
+import Models.Resources.TaskState exposing (TaskState(..))
+import Models.Resources.ClientStatus exposing (ClientStatus(ClientComplete))
+import Models.Resources.Allocation as Allocation exposing (Allocation, shortAllocationId)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 import Views.ParameterFormView as ParameterFormView
+import Views.Styles exposing (instanceViewElementStyle)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onCheck, onInput, onSubmit)
@@ -38,7 +43,7 @@ jobControlsColumnWidth =
     200
 
 
-view instances selectedInstances expandedInstances instanceParameterForms visibleSecrets templates maybeRole attemptedDeleteInstances =
+view instances selectedInstances expandedInstances instanceParameterForms visibleSecrets tasks templates maybeRole attemptedDeleteInstances =
     let
         instancesIds =
             instances
@@ -125,6 +130,7 @@ view instances selectedInstances expandedInstances instanceParameterForms visibl
                                 instanceParameterForms
                                 visibleSecrets
                                 templates
+                                tasks
                                 maybeRole
                                 attemptedDeleteInstances
                             )
@@ -132,13 +138,16 @@ view instances selectedInstances expandedInstances instanceParameterForms visibl
                 ]
 
 
-instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates maybeRole attemptedDeleteInstances instance =
+instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates tasks maybeRole attemptedDeleteInstances instance =
     let
         instanceExpanded =
             Set.member instance.id expandedInstances
 
         instanceParameterForm =
             Dict.get instance.id instanceParameterForms
+
+        instanceTasks =
+            Dict.get instance.id tasks
 
         toDelete =
             attemptedDeleteInstances
@@ -276,6 +285,7 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
             (if (instanceExpanded) then
                 [ instanceDetailView
                     instance
+                    instanceTasks
                     instanceParameterForm
                     visibleSecrets
                     templates
@@ -296,7 +306,7 @@ expandedTdStyle =
 -- TODO as "id" is special we should treat it also special
 
 
-instanceDetailView instance maybeInstanceParameterForm visibleSecrets templates maybeRole =
+instanceDetailView instance instanceTasks maybeInstanceParameterForm visibleSecrets templates maybeRole =
     let
         periodicRuns =
             List.reverse (List.sortBy .utcSeconds instance.periodicRuns)
@@ -315,18 +325,94 @@ instanceDetailView instance maybeInstanceParameterForm visibleSecrets templates 
                         [ ( "padding-right", "40px" ) ]
                     )
                 ]
-                (List.append
-                    [ ParameterFormView.editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole
-                    ]
-                    (if (List.isEmpty periodicRuns) then
+                (List.concat
+                    [ [ ParameterFormView.editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole
+                      ]
+                    , (if (List.isEmpty periodicRuns) then
                         []
-                     else
+                       else
                         [ h5 [] [ text "Periodic Runs" ]
                         , ul []
                             (List.map periodicRunView periodicRuns)
                         ]
-                    )
+                      )
+                    , [ instanceTasksView instanceTasks ]
+                    ]
                 )
+            ]
+
+
+{-| Get active, ie, non-complete tasks of an allocation.
+
+Filter all complete allocations and attach the task name to every allocation.
+
+We remove complete allocations because Nomad 0.5.x (possibly other versions as
+well) returns all complete and thus dead allocations for stopped jobs, whereas
+it only returns non-complete allocations for running jobs.
+
+If we did not filter complete allocations the user would see dead allocations
+suddenly popping up in the UI when they stopped the task—which would be
+somewhat confusing.
+
+-}
+getActiveAllocations : Task -> List ( String, Allocation )
+getActiveAllocations task =
+    task.allocations
+        |> List.filter (.clientStatus >> (/=) ClientComplete)
+        |> List.map ((,) task.name)
+
+
+instanceTasksView : Maybe (List Task) -> Html msg
+instanceTasksView instanceTasks =
+    let
+        allocatedTasks =
+            case Maybe.map (List.concatMap getActiveAllocations) instanceTasks of
+                Nothing ->
+                    [ i [ class "fa fa-spinner fa-spin" ] [] ]
+
+                Just [] ->
+                    [ text "No tasks have been allocated, yet." ]
+
+                Just allocations ->
+                    [ table [ class "table table-condensed table-hover" ]
+                        [ thead []
+                            [ tr []
+                                [ th [] [ text "Task" ]
+                                , th [] [ text "Allocation ID" ]
+                                , th [] [ text "State" ]
+                                ]
+                            ]
+                        , tbody [] <| List.indexedMap instanceAllocationRow allocations
+                        ]
+                    ]
+    in
+        div
+            [ style instanceViewElementStyle ]
+            (List.concat
+                [ [ h5 [] [ text "Allocated Tasks" ] ]
+                , allocatedTasks
+                ]
+            )
+
+
+instanceAllocationRow : Int -> ( String, Allocation ) -> Html msg
+instanceAllocationRow index ( taskName, allocation ) =
+    let
+        ( description, labelKind ) =
+            case allocation.taskState of
+                TaskDead ->
+                    ( "dead", "label-danger" )
+
+                TaskPending ->
+                    ( "pending", "label-warning" )
+
+                TaskRunning ->
+                    ( "running", "label-success" )
+    in
+        tr []
+            [ th [ scope <| toString (index + 1) ] [ text taskName ]
+            , td [] [ code [] [ text (shortAllocationId allocation.id) ] ]
+            , td [] [ span [ class ("label " ++ labelKind) ] [ text description ] ]
             ]
 
 
