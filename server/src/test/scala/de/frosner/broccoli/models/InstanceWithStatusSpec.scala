@@ -24,7 +24,8 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
                 id = "secret password",
                 name = None,
                 default = None,
-                secret = Some(true)
+                secret = Some(true),
+                `type` = Some(ParameterType.String)
               )
             )
           ),
@@ -49,7 +50,8 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
                 id = "secret password",
                 name = None,
                 default = None,
-                secret = Some(true)
+                secret = Some(true),
+                `type` = Some(ParameterType.String)
               )
             )
           ),
@@ -78,13 +80,15 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
                 id = "secret password",
                 name = None,
                 default = None,
-                secret = Some(true)
+                secret = Some(true),
+                `type` = Some(ParameterType.String)
               ),
               "id" -> ParameterInfo(
                 id = "secret id",
                 name = None,
                 default = None,
-                secret = Some(true)
+                secret = Some(true),
+                `type` = Some(ParameterType.String)
               )
             )
           ),
@@ -109,13 +113,15 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
                 id = "secret password",
                 name = None,
                 default = None,
-                secret = Some(true)
+                secret = Some(true),
+                `type` = Some(ParameterType.String)
               ),
               "id" -> ParameterInfo(
                 id = "secret id",
                 name = None,
                 default = None,
-                secret = Some(true)
+                secret = Some(true),
+                `type` = Some(ParameterType.String)
               )
             )
           ),
