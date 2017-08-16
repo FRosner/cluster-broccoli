@@ -16,3 +16,6 @@ target/
 
 # results from HTTP API testing tool
 *run-*
+
+# Intelij Idea files
+.idea/*
