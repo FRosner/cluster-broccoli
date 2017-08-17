@@ -13,6 +13,8 @@ object Dependencies {
     val cats = "1.0.0-MF"
 
     val shapeless = "2.3.2"
+
+    val scalaUri = "0.4.17"
   }
 
   /**
@@ -42,6 +44,11 @@ object Dependencies {
     // Keep this version at 1.5.11 for compatibility with Play 2.5; later versions depend on Play 2.6 already
     "com.beachape" %% "enumeratum-play-json" % "1.5.11"
   )
+
+  /**
+    * Types and DSL for URIs
+    */
+  val scalaUri: ModuleID = "io.lemonlabs" %% "scala-uri" % Versions.scalaUri
 
   /**
     * Property testing for Scala.

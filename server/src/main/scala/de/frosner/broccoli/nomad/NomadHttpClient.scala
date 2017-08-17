@@ -2,6 +2,8 @@ package de.frosner.broccoli.nomad
 
 import cats.instances.future._
 import cats.data.EitherT
+import com.netaporter.uri.Uri
+import com.netaporter.uri.dsl._
 import de.frosner.broccoli.nomad.models._
 import play.api.http.HeaderNames._
 import play.api.http.Status._
@@ -16,7 +18,12 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
   * A client for the HTTP API of Nomad.
   */
-class NomadHttpClient(baseUrl: String, client: WSClient)(implicit context: ExecutionContext) extends NomadClient {
+class NomadHttpClient(baseUri: Uri, client: WSClient)(implicit context: ExecutionContext) extends NomadClient {
+
+  /**
+    * The base URI for the Nomad V1 HTTP API
+    */
+  private val v1: Uri = baseUri / "v1"
 
   /**
     * Get allocations for a job.
@@ -26,7 +33,8 @@ class NomadHttpClient(baseUrl: String, client: WSClient)(implicit context: Execu
     */
   override def getAllocationsForJob(jobId: String @@ Job.Id): Future[WithId[immutable.Seq[Allocation]]] =
     for {
-      response <- url(s"job/$jobId/allocations")
+      response <- client
+        .url(v1 / "job" / jobId / "allocations")
         .withHeaders(ACCEPT -> JSON)
         .get()
     } yield WithId(jobId, response.json.as[immutable.Seq[Allocation]])
@@ -40,7 +48,8 @@ class NomadHttpClient(baseUrl: String, client: WSClient)(implicit context: Execu
   override def getAllocation(id: String @@ Allocation.Id): EitherT[Future, NomadError, Allocation] =
     EitherT
       .right(
-        url(s"allocation/$id")
+        client
+          .url(v1 / "allocation" / id)
           .withHeaders(ACCEPT -> JSON)
           .get())
       .ensureOr(toError)(_.status == OK)
@@ -74,19 +83,21 @@ class NomadHttpClient(baseUrl: String, client: WSClient)(implicit context: Execu
       allocation <- getAllocation(allocationId)
       allocationNode <- EitherT
         .right(
-          url(s"node/${allocation.nodeId}")
+          client
+            .url(v1 / "node" / allocation.nodeId)
             .withHeaders(ACCEPT -> JSON)
             .get())
         .ensureOr(toError)(_.status == OK)
         .map(_.json.as[Node])
+      nodeAddress = parseNodeAddress(allocationNode.httpAddress)
       log <- EitherT
         .right(
           client
-            .url(s"${allocationNode.httpAddress}/v1/client/fs/logs/$allocationId")
+            .url(v1.copy(host = nodeAddress.host, port = nodeAddress.port) / "client" / "fs" / "logs" / allocationId)
             .withQueryString(
               "task" -> taskName,
               "type" -> stream.entryName,
-              // Request the plain text log without frameing and do not follow the log
+              // Request the plain text log without framing and do not follow the log
               "plain" -> "true",
               "follow" -> "false"
             )
@@ -95,17 +106,22 @@ class NomadHttpClient(baseUrl: String, client: WSClient)(implicit context: Execu
         .ensureOr(toError)(_.status == OK)
     } yield TaskLog(stream, tag[TaskLog.Contents](log.body))
 
-  /**
-    * Build a web request with the given API path (without /v1/ prefix).
-    *
-    * @param apiPath The API path for API v1 (without /v1/ prefix)
-    * @return The corresponding web request.
-    */
-  private def url(apiPath: String): WSRequest = client.url(s"$baseUrl/v1/$apiPath")
-
   private def toError(response: WSResponse): NomadError = response.status match {
     case NOT_FOUND => NomadError.NotFound
     // For unexpected errors throw an exception instead to trigger logging
     case _ => throw new UnexpectedNomadHttpApiError(response)
   }
+
+  /**
+    * Parse the HTTP address of a node into a partial URI
+    *
+    * @param httpAddress The HTTP address
+    * @return The partial URI
+    */
+  private def parseNodeAddress(httpAddress: String @@ Node.HttpAddress): Uri = httpAddress.split(":", 2) match {
+    case Array(host, port, _*) => Uri().withHost(host).withPort(port.toInt)
+    case Array(host)           => Uri().withHost(host)
+    case _                     => Uri()
+  }
+
 }

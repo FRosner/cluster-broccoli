@@ -17,6 +17,7 @@ lazy val server = project
     libraryDependencies ++= List(
       Dependencies.simulacrum,
       Dependencies.shapeless,
+      Dependencies.scalaUri,
       Dependencies.scalaguice,
       ws,
       cache,
