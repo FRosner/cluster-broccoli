@@ -3,7 +3,10 @@
 # ~~~~
 
 # API routes
--> /api/v1  de.frosner.broccoli.ApiV1Router
+-> /api/v1  de.frosner.broccoli.routes.ApiV1Router
+
+# Downloads
+-> /downloads/ de.frosner.broccoli.routes.DownloadsRouter
 
 # Web-UI
 GET     /       @controllers.Assets.at(path="/public", file="index.html")

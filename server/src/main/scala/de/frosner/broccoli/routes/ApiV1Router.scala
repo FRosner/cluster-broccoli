@@ -1,12 +1,12 @@
-package de.frosner.broccoli
+package de.frosner.broccoli.routes
 
 import javax.inject.Inject
 
 import de.frosner.broccoli.controllers._
 import play.api.mvc.{Action, Results}
 import play.api.routing.Router.Routes
-import play.api.routing.sird._
 import play.api.routing.SimpleRouter
+import play.api.routing.sird._
 
 /**
   * Routes for Broccoli REST API.

@@ -3,6 +3,7 @@ package de.frosner.broccoli.controllers
 import java.io.FileNotFoundException
 import javax.inject.Inject
 
+import cats.instances.future._
 import cats.syntax.either._
 import de.frosner.broccoli.http.ToHTTPResult.ops._
 import de.frosner.broccoli.instances.NomadInstances
@@ -10,6 +11,7 @@ import de.frosner.broccoli.models.InstanceCreation.instanceCreationReads
 import de.frosner.broccoli.models.InstanceUpdate.instanceUpdateReads
 import de.frosner.broccoli.models.Role.syntax._
 import de.frosner.broccoli.models._
+import de.frosner.broccoli.nomad.models.{Allocation, LogStreamKind, Task => NomadTask}
 import de.frosner.broccoli.services._
 import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
 import play.api.Environment
@@ -17,6 +19,7 @@ import play.api.cache.CacheApi
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Controller, Results}
+import shapeless.tag
 
 case class InstanceController @Inject()(
     instances: NomadInstances,
@@ -43,6 +46,27 @@ case class InstanceController @Inject()(
   def tasks(id: String): Action[Unit] = AsyncStack(parse.empty) { implicit request =>
     instances.getInstanceTasks(loggedIn)(id).value.map(_.toHTTPResult)
   }
+
+  /**
+    * Serve a log file to the frontend.
+    *
+    * @param instanceId The ID of the instance
+    * @param allocationId The ID of the allocation
+    * @param taskName The name of the tasks whose logs to view
+    * @param kind The kind of log
+    * @return The log as plain text or an HTTP error
+    */
+  def logFile(instanceId: String, allocationId: String, taskName: String, kind: LogStreamKind): Action[Unit] =
+    AsyncStack(parse.empty) { implicit request =>
+      instances
+        .getInstanceLog(loggedIn)(
+          instanceId,
+          tag[Allocation.Id](allocationId),
+          tag[NomadTask.Name](taskName),
+          kind
+        )
+        .fold(_.toHTTPResult, Results.Ok(_))
+    }
 
   def create: Action[InstanceCreation] = StackAction(parse.json[InstanceCreation]) { implicit request =>
     InstanceController.create(request.body, loggedIn, instanceService).toHTTPResult

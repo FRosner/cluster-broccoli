@@ -6,8 +6,10 @@ import cats.instances.future._
 import cats.data.EitherT
 import de.frosner.broccoli.models.{Account, InstanceError, InstanceTasks, Task}
 import de.frosner.broccoli.nomad.NomadClient
+import de.frosner.broccoli.nomad.models.{Allocation, Job, LogStreamKind, NomadError, Task => NomadTask}
 import de.frosner.broccoli.nomad.models.Job
 import shapeless.tag
+import shapeless.tag.@@
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -54,4 +56,28 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
             .toSeq
         )
       }
+
+  def getInstanceLog(user: Account)(
+      instanceId: String,
+      allocationId: String @@ Allocation.Id,
+      taskName: String @@ NomadTask.Name,
+      logKind: LogStreamKind
+  ): EitherT[Future, InstanceError, String] =
+    for {
+      // Check whether the user is allowed to see the instance
+      jobId <- EitherT
+        .pure[Future, InstanceError](tag[Job.Id](instanceId))
+        .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
+      // Check whether the allocation really belongs to the instance.  If it doesn't, ie, if the user tries to access
+      // an allocation from another instance hide that the allocation even exists by returning 404
+      _ <- nomadClient
+        .getAllocation(allocationId)
+        .leftMap(toInstanceError(jobId))
+        .ensure(InstanceError.NotFound(instanceId))(_.jobId == jobId)
+      log <- nomadClient.getTaskLog(allocationId, taskName, logKind).leftMap(toInstanceError(jobId))
+    } yield log.contents
+
+  private def toInstanceError(jobId: String @@ Job.Id)(nomadError: NomadError): InstanceError = nomadError match {
+    case NomadError.NotFound => InstanceError.NotFound(jobId)
+  }
 }
