@@ -2,10 +2,15 @@
   "description": "A periodic job that sends an HTTP GET request to a specified address every minute.",
   "parameters": {
     "URL": {
-      "default": "localhost:8000"
+      "default": "localhost:8000",
+      "type": "raw"
     },
     "enabled": {
-      "default": "true"
+      "default": "true",
+      "type": "raw"
+    },
+    "id": {
+      "type": "raw"
     }
   }
 }
