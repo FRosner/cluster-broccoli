@@ -13,17 +13,16 @@ import org.specs2.mutable.Specification
 import play.api.libs.json.JsString
 
 class TemplateRendererSpec extends Specification with Mockito {
-  "TemplateRenderer" should {
-    val templateRenderer =
-      new TemplateRenderer(
-        InstanceConfiguration(
-          1,
-          ParameterType.Raw,
-          InstanceStorageConfiguration(StorageType.FileSystem,
-                                       FileSystemInstanceStorageConfiguration("path"),
-                                       CouchDBInstanceStorageConfiguration("path", "dbname"))
-        ))
+  val templateRenderer = new TemplateRenderer(
+    InstanceConfiguration(
+      1,
+      ParameterType.Raw,
+      InstanceStorageConfiguration(StorageType.FileSystem,
+                                   FileSystemInstanceStorageConfiguration("path"),
+                                   CouchDBInstanceStorageConfiguration("path", "dbname"))
+    ))
 
+  "TemplateRenderer" should {
     "render the template correctly when an instance contains a single parameter" in {
       val instance = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Frank"))
       templateRenderer.renderJson(instance) === JsString("Frank")
@@ -91,5 +90,31 @@ class TemplateRendererSpec extends Specification with Mockito {
       )
       templateRenderer.renderJson(instance) === JsString("Frank 50")
     }
+  }
+
+  "sanitize" should {
+    val parameterValue = "value"
+    "just return the specified parameter value if it is raw" in {
+      templateRenderer
+        .sanitize(
+          "parameter",
+          parameterValue,
+          Map("parameter" -> ParameterInfo("parameter", None, None, None, Some(ParameterType.Raw)))) == parameterValue
+    }
+
+    "escape the value if it is string" in {
+      templateRenderer
+        .sanitize(
+          "parameter",
+          parameterValue,
+          Map("parameter" -> ParameterInfo("parameter", None, None, None, Some(ParameterType.String)))) == s""" "$parameterValue" """.trim
+    }
+
+    "pick the default parameter type if the type for the parameter is not specified in ParameterInfos" in {
+      templateRenderer
+        .sanitize("parameter", "value", Map.empty) === parameterValue
+
+    }
+
   }
 }
