@@ -4,9 +4,9 @@ import javax.inject.Inject
 
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.services._
-import de.frosner.broccoli.util.Logging
 import de.frosner.broccoli.websocket.{IncomingMessage, OutgoingMessage, WebSocketMessageHandler}
 import jp.t2v.lab.play2.auth.BroccoliWebsocketSecurity
+import play.api.Logger
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.iteratee._
 import play.api.libs.json._
@@ -21,8 +21,9 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
                                          messageHandler: WebSocketMessageHandler,
                                          override val securityService: SecurityService)
     extends Controller
-    with Logging
     with BroccoliWebsocketSecurity {
+
+  protected val log = Logger(getClass)
 
   def requestToSocket(request: RequestHeader): Future[Either[Result, (Iteratee[Msg, _], Enumerator[Msg])]] =
     withSecurity(request) { (maybeToken, user, request) =>
@@ -32,7 +33,7 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
         case None => webSocketService.newConnection(user) // no session ID available so we generate one
       }
       val connectionLogString = s"$connectionId by $user from ${request.remoteAddress} at $request"
-      Logger.info(s"New connection $connectionLogString")
+      log.info(s"New connection $connectionLogString")
 
       // TODO receive string and try json decoding here because I can handle the error better
       val in = Enumeratee.mapM[Msg] { incomingMessage =>
@@ -40,14 +41,14 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
           .fromJson[IncomingMessage](incomingMessage)
           .map(messageHandler.processMessage(user))
           .recoverTotal { error =>
-            Logger.warn(s"Can't parse a message from $connectionId: $error")
+            log.warn(s"Can't parse a message from $connectionId: $error")
             Future.successful(OutgoingMessage.Error(s"Failed to parse message message: $error"))
           }
       } transform Iteratee
         .foreach[OutgoingMessage](msg => webSocketService.send(connectionId, Json.toJson(msg)))
         .map { _ =>
           webSocketService.closeConnections(connectionId)
-          Logger.info(s"Closed connection $connectionLogString")
+          log.info(s"Closed connection $connectionLogString")
         }
 
       val aboutEnumerator =

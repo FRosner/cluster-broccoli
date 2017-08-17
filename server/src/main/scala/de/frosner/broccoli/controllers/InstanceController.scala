@@ -10,7 +10,6 @@ import de.frosner.broccoli.models.InstanceUpdate.instanceUpdateReads
 import de.frosner.broccoli.models.Role.syntax._
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.services._
-import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json
@@ -18,7 +17,6 @@ import play.api.mvc.{Action, Controller, Results}
 
 case class InstanceController @Inject()(instanceService: InstanceService, override val securityService: SecurityService)
     extends Controller
-    with Logging
     with BroccoliSimpleAuthorization {
 
   def list(maybeTemplateId: Option[String]): Action[Unit] = StackAction(parse.empty) { implicit request =>

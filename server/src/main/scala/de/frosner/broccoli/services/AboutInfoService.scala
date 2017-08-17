@@ -1,22 +1,14 @@
 package de.frosner.broccoli.services
 
-import java.io.File
 import javax.inject.{Inject, Singleton}
 
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.util.Logging
-import play.Logger
-import play.api.Configuration
-
-import scala.io.Source
-import scala.util.Try
 
 @Singleton
 class AboutInfoService @Inject()(nomadService: NomadService,
                                  consulService: ConsulService,
-                                 securityService: SecurityService)
-    extends Logging {
+                                 securityService: SecurityService) {
 
   def aboutInfo(loggedIn: Account) = AboutInfo(
     project = AboutProject(

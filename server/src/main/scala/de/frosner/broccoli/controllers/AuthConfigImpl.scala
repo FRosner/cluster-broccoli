@@ -1,19 +1,15 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.{Account, Role}
 import de.frosner.broccoli.services.SecurityService
-import de.frosner.broccoli.util.Logging
 import jp.t2v.lab.play2.auth._
-import play.api.Configuration
 import play.api.libs.json.JsString
 import play.api.mvc.{RequestHeader, Result, Results}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
-import scala.util.{Failure, Success, Try}
 
-trait AuthConfigImpl extends AuthConfig with Logging {
+trait AuthConfigImpl extends AuthConfig {
 
   val securityService: SecurityService
 

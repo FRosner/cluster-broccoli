@@ -5,11 +5,9 @@ import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import javax.inject.{Inject, Singleton}
 
 import de.frosner.broccoli.controllers._
-import de.frosner.broccoli.models.{Account, Anonymous}
+import de.frosner.broccoli.models.Account
 import de.frosner.broccoli.services.WebSocketService.Msg
-import de.frosner.broccoli.util.Logging
 import de.frosner.broccoli.websocket.OutgoingMessage
-import play.api.Configuration
 import play.api.libs.iteratee.{Concurrent, Enumerator}
 import play.api.libs.json.{JsValue, Json}
 
@@ -19,8 +17,9 @@ import scala.util.{Failure, Success, Try}
 @Singleton
 class WebSocketService @Inject()(templateService: TemplateService,
                                  instanceService: InstanceService,
-                                 aboutInfoService: AboutInfoService)
-    extends Logging {
+                                 aboutInfoService: AboutInfoService) {
+
+  private val log = play.api.Logger(getClass)
 
   private val scheduler = new ScheduledThreadPoolExecutor(1)
   private val task = new Runnable {
@@ -48,8 +47,7 @@ class WebSocketService @Inject()(templateService: TemplateService,
 
   def newConnection(id: String, user: Account): Enumerator[Msg] = {
     if (connections.contains(id)) {
-      Logger.info(
-        s"ID $id (${user.name}) already has an open web socket connection. Probably he/she has two tabs open?")
+      log.info(s"ID $id (${user.name}) already has an open web socket connection. Probably he/she has two tabs open?")
     }
     val (enumerator, channel) = Concurrent.broadcast[Msg]
     val maybeExistingChannels = connections.get(id)
@@ -80,8 +78,8 @@ class WebSocketService @Inject()(templateService: TemplateService,
           actualMsg
         }
         tryMsg match {
-          case Success(actualMsg) => Logger.debug(s"Broadcasting to $id: $msg")
-          case Failure(throwable) => Logger.warn(s"Broadcasting to $id failed: $throwable")
+          case Success(actualMsg) => log.debug(s"Broadcasting to $id: $msg")
+          case Failure(throwable) => log.warn(s"Broadcasting to $id failed: $throwable")
         }
     }
 

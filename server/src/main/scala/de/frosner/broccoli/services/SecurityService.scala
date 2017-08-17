@@ -2,18 +2,18 @@ package de.frosner.broccoli.services
 
 import javax.inject.{Inject, Singleton}
 
-import com.typesafe.config.{ConfigObject, ConfigValueFactory, ConfigValueType}
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.conf.IllegalConfigException
 import de.frosner.broccoli.models.{Account, Credentials, Role, UserAccount}
-import de.frosner.broccoli.util.Logging
 import play.api.Configuration
 
-import collection.JavaConverters._
+import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 @Singleton()
-case class SecurityService @Inject()(configuration: Configuration) extends Logging {
+case class SecurityService @Inject()(configuration: Configuration) {
+
+  private val log = play.api.Logger(getClass)
 
   // TODO check if setting it wrong will exit also in production
   private lazy val sessionTimeOutString: Option[String] = configuration.getString(conf.AUTH_SESSION_TIMEOUT_KEY)
@@ -25,20 +25,20 @@ case class SecurityService @Inject()(configuration: Configuration) extends Loggi
     case None => Success(conf.AUTH_SESSION_TIMEOUT_DEFAULT)
   }
   if (sessionTimeOutTry.isFailure) {
-    Logger.error(
+    log.error(
       s"Invalid ${conf.AUTH_SESSION_TIMEOUT_DEFAULT} specified: '${sessionTimeOutString.get}'. Needs to be a positive integer.")
     System.exit(1)
   }
   lazy val sessionTimeoutInSeconds = sessionTimeOutTry.get
-  Logger.info(s"${conf.AUTH_SESSION_TIMEOUT_KEY}=$sessionTimeoutInSeconds")
+  log.info(s"${conf.AUTH_SESSION_TIMEOUT_KEY}=$sessionTimeoutInSeconds")
 
   lazy val allowedFailedLogins = SecurityService.tryAllowedFailedLogins(configuration) match {
     case Success(value) => {
-      Logger.info(s"${conf.AUTH_ALLOWED_FAILED_LOGINS_KEY}=$value")
+      log.info(s"${conf.AUTH_ALLOWED_FAILED_LOGINS_KEY}=$value")
       value
     }
     case Failure(throwable) => {
-      Logger.error(throwable.toString)
+      log.error(throwable.toString)
       System.exit(1)
       throw throwable
     }
@@ -52,7 +52,7 @@ case class SecurityService @Inject()(configuration: Configuration) extends Loggi
           mode
         } else {
           val errorMessage = s"Invalid ${conf.AUTH_MODE_KEY}: $mode"
-          Logger.error(errorMessage)
+          log.error(errorMessage)
           System.exit(1)
           throw new IllegalArgumentException(errorMessage)
         }
@@ -61,7 +61,7 @@ case class SecurityService @Inject()(configuration: Configuration) extends Loggi
         conf.AUTH_MODE_DEFAULT
       }
     }
-    Logger.info(s"${conf.AUTH_MODE_KEY}=$result")
+    log.info(s"${conf.AUTH_MODE_KEY}=$result")
     result
   }
 
@@ -69,11 +69,11 @@ case class SecurityService @Inject()(configuration: Configuration) extends Loggi
     val parsed = SecurityService.tryCookieSecure(configuration) match {
       case Success(value) => value
       case Failure(throwable) =>
-        Logger.error(s"Error parsing ${conf.AUTH_COOKIE_SECURE_KEY}: $throwable")
+        log.error(s"Error parsing ${conf.AUTH_COOKIE_SECURE_KEY}: $throwable")
         System.exit(1)
         throw throwable
     }
-    Logger.info(s"${conf.AUTH_COOKIE_SECURE_KEY}=$parsed")
+    log.info(s"${conf.AUTH_COOKIE_SECURE_KEY}=$parsed")
     parsed
   }
 
@@ -81,11 +81,11 @@ case class SecurityService @Inject()(configuration: Configuration) extends Loggi
     val parsed = SecurityService.tryAllowMultiLogin(configuration) match {
       case Success(value) => value
       case Failure(throwable) =>
-        Logger.error(s"Error parsing ${conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_KEY}: $throwable")
+        log.error(s"Error parsing ${conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_KEY}: $throwable")
         System.exit(1)
         throw throwable
     }
-    Logger.info(s"${conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_KEY}=$parsed")
+    log.info(s"${conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_KEY}=$parsed")
     parsed
   }
 
@@ -93,12 +93,12 @@ case class SecurityService @Inject()(configuration: Configuration) extends Loggi
     val accounts = SecurityService.tryAccounts(configuration) match {
       case Success(userObjects) => userObjects.toSet
       case Failure(throwable) => {
-        Logger.error(s"Error parsing ${conf.AUTH_MODE_CONF_ACCOUNTS_KEY}: $throwable")
+        log.error(s"Error parsing ${conf.AUTH_MODE_CONF_ACCOUNTS_KEY}: $throwable")
         System.exit(1)
         throw throwable
       }
     }
-    Logger.info(s"Extracted ${accounts.size} accounts from ${conf.AUTH_MODE_CONF_ACCOUNTS_KEY}")
+    log.info(s"Extracted ${accounts.size} accounts from ${conf.AUTH_MODE_CONF_ACCOUNTS_KEY}")
     accounts
   }
 
@@ -114,7 +114,7 @@ case class SecurityService @Inject()(configuration: Configuration) extends Loggi
         account.name == credentials.name && account.password == credentials.password
       }
     } else {
-      Logger.warn(
+      log.warn(
         s"Credentials for '${credentials.name}' exceeded the allowed number of failed logins: " +
           s"$allowedFailedLogins (has $credentialsFailedLoginAttempts)")
       false

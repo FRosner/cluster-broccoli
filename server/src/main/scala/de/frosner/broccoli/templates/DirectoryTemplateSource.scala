@@ -3,19 +3,20 @@ package de.frosner.broccoli.templates
 import java.nio.file.{FileSystems, Files}
 
 import de.frosner.broccoli.models.{Meta, ParameterInfo, Template}
-import de.frosner.broccoli.util.Logging
 import play.api.libs.json.Json
 
+import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.util.Try
-import scala.collection.JavaConverters._
 
 /**
   * The template source that loads templates from a directory
   *
   * @param directory The path to the directory with templates
   */
-class DirectoryTemplateSource(directory: String) extends TemplateSource with Logging {
+class DirectoryTemplateSource(directory: String) extends TemplateSource {
+
+  private val log = play.api.Logger(getClass)
 
   /**
     * @return The sequence of templates found in the directory
@@ -27,11 +28,11 @@ class DirectoryTemplateSource(directory: String) extends TemplateSource with Log
       throw new IllegalStateException(s"Templates directory ${rootTemplatesDirectory} is not a directory")
     }
 
-    Logger.info(s"Looking for templates in $rootTemplatesDirectory")
+    log.info(s"Looking for templates in $rootTemplatesDirectory")
 
     val templateDirectories = Files.list(rootTemplatesDirectory).iterator().asScala.filter(Files.isDirectory(_)).toSeq
 
-    Logger.info(s"Found ${templateDirectories.length} template directories: ${templateDirectories.mkString(", ")}")
+    log.info(s"Found ${templateDirectories.length} template directories: ${templateDirectories.mkString(", ")}")
 
     val templates = templateDirectories.flatMap(templateDirectory => {
       val tryTemplate = Try {
@@ -43,12 +44,12 @@ class DirectoryTemplateSource(directory: String) extends TemplateSource with Log
         val defaultDescription = s"$templateId template"
         val description = metaInformation
           .map(_.description.getOrElse {
-            Logger.warn(s"No description for $metaFile. Using default template description.")
+            log.warn(s"No description for $metaFile. Using default template description.")
             defaultDescription
           })
           .recover {
             case throwable =>
-              Logger.warn(
+              log.warn(
                 s"Failed to get description of $metaFile: ${throwable.getMessage}. Using default template description.",
                 throwable)
               defaultDescription
@@ -60,7 +61,7 @@ class DirectoryTemplateSource(directory: String) extends TemplateSource with Log
             .map(meta =>
               meta.parameters
                 .getOrElse {
-                  Logger.warn(s"No parameters for $metaFile. Using default parameters.")
+                  log.warn(s"No parameters for $metaFile. Using default parameters.")
                   Map.empty[String, Meta.Parameter]
                 }
                 .map {
@@ -68,18 +69,17 @@ class DirectoryTemplateSource(directory: String) extends TemplateSource with Log
               })
             .recover {
               case throwable =>
-                Logger.warn(
-                  s"Failed to get parameters of $metaFile: ${throwable.getMessage}. Using default parameters.",
-                  throwable)
+                log.warn(s"Failed to get parameters of $metaFile: ${throwable.getMessage}. Using default parameters.",
+                         throwable)
                 Map.empty[String, ParameterInfo]
             }
             .get
         Template(templateId, templateFileContent, description, parameterInfos)
       }
-      tryTemplate.failed.map(throwable => Logger.error(s"Parsing template '$templateDirectory' failed: $throwable"))
+      tryTemplate.failed.map(throwable => log.error(s"Parsing template '$templateDirectory' failed: $throwable"))
       tryTemplate.toOption
     })
-    Logger.info(s"Successfully parsed ${templates.length} templates: ${templates.map(_.id).mkString(", ")}")
+    log.info(s"Successfully parsed ${templates.length} templates: ${templates.map(_.id).mkString(", ")}")
     templates.sortBy(_.id)
   }
 }

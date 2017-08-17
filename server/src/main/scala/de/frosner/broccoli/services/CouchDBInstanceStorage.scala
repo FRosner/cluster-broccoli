@@ -3,23 +3,24 @@ package de.frosner.broccoli.services
 import java.util.concurrent.TimeUnit
 
 import de.frosner.broccoli.models.Instance
-import de.frosner.broccoli.util.Logging
+import de.frosner.broccoli.log.ExecutionTimeLogger
 import play.api.libs.json.{JsObject, _}
 import play.api.libs.ws.WSClient
 
-import scala.concurrent.duration.Duration
 import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 import scala.util.Try
 
 /**
   * Instance storage using CouchDB as a peristence layer.
   * On construction it is checking whether the instance DB exists and creating it if it doesn't.
   */
-case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSClient)
-    extends InstanceStorage
-    with Logging {
+case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSClient) extends InstanceStorage {
 
   import Instance.{instancePersistenceReads, instancePersistenceWrites}
+
+  private val log = play.api.Logger(getClass)
+  override protected val logTime = ExecutionTimeLogger(log)
 
   private val dbUrlString = s"$couchBaseUrl/$dbName"
 
@@ -33,11 +34,11 @@ case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSCl
     val dbGet = Await.result(dbUrl.get(), Duration(2, TimeUnit.SECONDS))
     if (dbGet.status == 200) {
       // TODO #130 check that the result is a database and not just 200
-      Logger.info(s"Using $dbUri to persist instances.")
+      log.info(s"Using $dbUri to persist instances.")
     } else {
       val dbPut = Await.result(dbUrl.execute("PUT"), Duration(2, TimeUnit.SECONDS))
       if (dbPut.status == 201) {
-        Logger.info(s"$dbUri did not exist, so I created it.")
+        log.info(s"$dbUri did not exist, so I created it.")
       } else {
         throw new IllegalArgumentException(
           s"$dbUri did not exist but failed to create: HTTP status code ${dbPut.status}")
@@ -49,21 +50,21 @@ case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSCl
     if (tryLock.isFailure || !tryLock.get.isEmpty) {
       throw new IllegalArgumentException(s"Unable to aquire lock for CouchDB ($lockUri)")
     } else {
-      Logger.info(s"Successfully locked CouchDB ($lockUri)")
+      log.info(s"Successfully locked CouchDB ($lockUri)")
     }
   }
 
   private def requireDocIdEqualToInstanceId[T](docId: JsValue, instanceId: JsValue)(f: => T): T =
     if (docId != instanceId) {
       val error = s"Document ID ($docId) did not match the instance ID ($instanceId)."
-      Logger.error(error)
+      log.error(error)
       throw new IllegalStateException(error)
     } else {
       f
     }
 
   override def closeImpl(): Unit = {
-    Logger.info(s"Releasing lock from CouchDB ($lockUri)")
+    log.info(s"Releasing lock from CouchDB ($lockUri)")
     Await.ready(dbLockUrl.delete(), Duration(5, TimeUnit.SECONDS))
   }
 

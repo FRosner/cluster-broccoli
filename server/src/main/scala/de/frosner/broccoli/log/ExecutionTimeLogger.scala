@@ -1,21 +1,10 @@
-package de.frosner.broccoli.util
+package de.frosner.broccoli.log
 
 import java.util.Date
 
-trait Logging {
+import play.api.Logger
 
-  val Logger = play.api.Logger(getClass.getSimpleName)
-
-  val TimeLogger = ExecutionTimeLogger(Logger)
-
-  def newExceptionWithWarning(exception: Throwable): Throwable = {
-    Logger.warn(exception.toString)
-    exception
-  }
-
-}
-
-case class ExecutionTimeLogger(private val logger: play.api.Logger) {
+class ExecutionTimeLogger(logger: Logger) {
 
   private def logMessage(operation: String, ms: Long) = s"$operation took $ms ms"
 
@@ -37,5 +26,8 @@ case class ExecutionTimeLogger(private val logger: play.api.Logger) {
     val end = new Date()
     (result, end.getTime - start.getTime)
   }
+}
 
+object ExecutionTimeLogger {
+  def apply(log: Logger) = new ExecutionTimeLogger(log)
 }

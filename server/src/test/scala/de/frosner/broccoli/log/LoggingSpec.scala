@@ -1,4 +1,4 @@
-package de.frosner.broccoli.util
+package de.frosner.broccoli.log
 
 import org.specs2.mutable.Specification
 

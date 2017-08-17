@@ -4,18 +4,19 @@ import de.frosner.broccoli.conf
 import de.frosner.broccoli.controllers.AuthConfigImpl
 import de.frosner.broccoli.models.Anonymous
 import de.frosner.broccoli.services.SecurityService
-import de.frosner.broccoli.util.Logging
-import jp.t2v.lab.play2.stackc.{RequestAttributeKey, RequestWithAttributes, StackableController}
+import jp.t2v.lab.play2.stackc.{RequestAttributeKey, RequestWithAttributes}
+import play.api.Logger
 import play.api.libs.iteratee.{Enumerator, Iteratee}
-
-import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.mvc._
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-trait BroccoliWebsocketSecurity extends AsyncAuth with AuthConfigImpl with Logging {
+trait BroccoliWebsocketSecurity extends AsyncAuth with AuthConfigImpl {
 
   self: Controller with AuthConfig =>
+
+  protected def log: Logger
 
   val securityService: SecurityService
 
@@ -32,16 +33,16 @@ trait BroccoliWebsocketSecurity extends AsyncAuth with AuthConfigImpl with Loggi
         maybeUser
           .recover {
             case exception =>
-              Logger.info(s"Authenticating the following session failed (session probably outdated): $tokenString") // TODO log level
+              log.info(s"Authenticating the following session failed (session probably outdated): $tokenString") // TODO log level
               (None, identity[Result] _) // don't follow IntelliJ's recommendation here!
           }
           .flatMap {
             // TODO do we need the updater here? can we even use cookies or should we authenticate for each new WS connection?
             case (Some(user), updater) =>
-              Logger.info(s"Successfully authenticated session $tokenString of $user") // TODO log level
+              log.info(s"Successfully authenticated session $tokenString of $user") // TODO log level
               Future.successful(Right(f(maybeToken, user, req)))
             case (None, _) =>
-              Logger.info(s"Websocket to ${req.remoteAddress} not established because of missing authentication") // TODO log level
+              log.info(s"Websocket to ${req.remoteAddress} not established because of missing authentication") // TODO log level
               authenticationFailed(req).map(result => Left(result))
           }
       case conf.AUTH_MODE_NONE =>

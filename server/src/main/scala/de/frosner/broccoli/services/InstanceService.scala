@@ -11,7 +11,6 @@ import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.NomadClient
-import de.frosner.broccoli.util.Logging
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -27,8 +26,9 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                                 consulService: ConsulService,
                                 ws: WSClient,
                                 applicationLifecycle: ApplicationLifecycle,
-                                configuration: Configuration)
-    extends Logging {
+                                configuration: Configuration) {
+
+  private val log = play.api.Logger(getClass)
 
   private lazy val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
   private lazy val pollingFrequencySecondsTry = pollingFrequencySecondsString match {
@@ -39,12 +39,12 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     case None => Success(conf.POLLING_FREQUENCY_DEFAULT)
   }
   if (pollingFrequencySecondsTry.isFailure) {
-    Logger.error(
+    log.error(
       s"Invalid ${conf.POLLING_FREQUENCY_KEY} specified: '${pollingFrequencySecondsString.get}'. Needs to be a positive integer.")
     System.exit(1)
   }
   private lazy val pollingFrequencySeconds = pollingFrequencySecondsTry.get
-  Logger.info(s"Nomad/Consul polling frequency set to $pollingFrequencySeconds seconds")
+  log.info(s"Nomad/Consul polling frequency set to $pollingFrequencySeconds seconds")
 
   private val scheduler = new ScheduledThreadPoolExecutor(1)
   private val task = new Runnable {
@@ -65,11 +65,11 @@ class InstanceService @Inject()(nomadClient: NomadClient,
         configuration.getString(conf.INSTANCES_STORAGE_TYPE_KEY).getOrElse(conf.INSTANCES_STORAGE_TYPE_DEFAULT)
       val allowedStorageTypes = Set(conf.INSTANCES_STORAGE_TYPE_FS, conf.INSTANCES_STORAGE_TYPE_COUCHDB)
       if (!allowedStorageTypes.contains(storageType)) {
-        Logger.error(
+        log.error(
           s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType is invalid. Only ${allowedStorageTypes.mkString(", ")} supported.")
         System.exit(1)
       }
-      Logger.info(s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType")
+      log.info(s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType")
       storageType
     }
 
@@ -77,10 +77,10 @@ class InstanceService @Inject()(nomadClient: NomadClient,
       case conf.INSTANCES_STORAGE_TYPE_FS => {
         val instanceDir = {
           if (configuration.getString("broccoli.instancesFile").isDefined)
-            Logger.warn(s"broccoli.instancesFile ignored. Use ${conf.INSTANCES_STORAGE_FS_URL_KEY} instead.")
+            log.warn(s"broccoli.instancesFile ignored. Use ${conf.INSTANCES_STORAGE_FS_URL_KEY} instead.")
           val url =
             configuration.getString(conf.INSTANCES_STORAGE_FS_URL_KEY).getOrElse(conf.INSTANCES_STORAGE_FS_URL_DEFAULT)
-          Logger.info(s"${conf.INSTANCES_STORAGE_FS_URL_KEY}=$url")
+          log.info(s"${conf.INSTANCES_STORAGE_FS_URL_KEY}=$url")
           url
         }
         Try(FileSystemInstanceStorage(new File(instanceDir)))
@@ -90,14 +90,14 @@ class InstanceService @Inject()(nomadClient: NomadClient,
           val url = configuration
             .getString(conf.INSTANCES_STORAGE_COUCHDB_URL_KEY)
             .getOrElse(conf.INSTANCES_STORAGE_COUCHDB_URL_DEFAULT)
-          Logger.info(s"${conf.INSTANCES_STORAGE_COUCHDB_URL_KEY}=$url")
+          log.info(s"${conf.INSTANCES_STORAGE_COUCHDB_URL_KEY}=$url")
           url
         }
         val couchDbName = {
           val name = configuration
             .getString(conf.INSTANCES_STORAGE_COUCHDB_DBNAME_KEY)
             .getOrElse(conf.INSTANCES_STORAGE_COUCHDB_DBNAME_DEFAULT)
-          Logger.info(s"${conf.INSTANCES_STORAGE_COUCHDB_DBNAME_KEY}=$name")
+          log.info(s"${conf.INSTANCES_STORAGE_COUCHDB_DBNAME_KEY}=$name")
           name
         }
         Try(CouchDBInstanceStorage(couchDbUrl, couchDbName, ws))
@@ -107,19 +107,19 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     val instanceStorage = maybeInstanceStorage match {
       case Success(storage) => storage
       case Failure(throwable) =>
-        Logger.error(s"Cannot start instance storage: $throwable")
+        log.error(s"Cannot start instance storage: $throwable")
         System.exit(1)
         throw throwable
     }
     sys.addShutdownHook {
-      Logger.info("Closing instanceStorage (shutdown hook)")
+      log.info("Closing instanceStorage (shutdown hook)")
       if (!instanceStorage.isClosed) {
         instanceStorage.close()
       }
     }
     applicationLifecycle.addStopHook(() =>
       Future {
-        Logger.info("Closing instanceStorage (stop hook)")
+        log.info("Closing instanceStorage (stop hook)")
         if (!instanceStorage.isClosed) {
           instanceStorage.close()
         }
@@ -137,7 +137,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     instancesMap = instanceStorage.readInstances match {
       case Success(instances) => instances.map(instance => (instance.id, instance)).toMap
       case Failure(throwable) => {
-        Logger.error(s"Failed to load the instances: ${throwable.toString}")
+        log.error(s"Failed to load the instances: ${throwable.toString}")
         throw throwable
       }
     }
@@ -183,8 +183,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     val maybeCreatedInstance = maybeId
       .map { id =>
         if (instances.contains(id)) {
-          Failure(
-            newExceptionWithWarning(new IllegalArgumentException(s"There is already an instance having the ID $id")))
+          Failure(new IllegalArgumentException(s"There is already an instance having the ID $id"))
         } else {
           val potentialTemplate = templateService.template(templateId)
           potentialTemplate
@@ -198,11 +197,10 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                 result
               }
             }
-            .getOrElse(Failure(
-              newExceptionWithWarning(new IllegalArgumentException(s"Template $templateId does not exist."))))
+            .getOrElse(Failure(new IllegalArgumentException(s"Template $templateId does not exist.")))
         }
       }
-      .getOrElse(Failure(newExceptionWithWarning(new IllegalArgumentException("No ID specified"))))
+      .getOrElse(Failure(new IllegalArgumentException("No ID specified")))
     maybeCreatedInstance.map(addStatuses)
   }
 
@@ -266,8 +264,8 @@ class InstanceService @Inject()(nomadClient: NomadClient,
       }.flatten
 
       updatedInstance match {
-        case Failure(throwable)       => Logger.error(s"Error updating instance: $throwable")
-        case Success(changedInstance) => Logger.debug(s"Successfully applied an update to $changedInstance")
+        case Failure(throwable)       => log.error(s"Error updating instance: $throwable")
+        case Success(changedInstance) => log.debug(s"Successfully applied an update to $changedInstance")
       }
 
       updatedInstance
@@ -296,7 +294,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
       .recover {
         case throwable: ConnectException => {
           // TODO #144
-          Logger.warn(s"Failed to stop $id. It might be running when Nomad is reachable again.")
+          log.warn(s"Failed to stop $id. It might be running when Nomad is reachable again.")
           instancesMap(id)
         }
       }

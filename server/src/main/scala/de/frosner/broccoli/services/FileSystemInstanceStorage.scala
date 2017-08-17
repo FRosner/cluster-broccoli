@@ -3,21 +3,24 @@ package de.frosner.broccoli.services
 import java.io._
 
 import de.frosner.broccoli.models.Instance
-import de.frosner.broccoli.util.Logging
+import de.frosner.broccoli.log.ExecutionTimeLogger
 import play.api.libs.json.Json
 
 import scala.util.{Failure, Success, Try}
 
 @volatile
-case class FileSystemInstanceStorage(storageDirectory: File) extends InstanceStorage with Logging {
+case class FileSystemInstanceStorage(storageDirectory: File) extends InstanceStorage {
 
-  import Instance.instancePersistenceWrites
-  import Instance.instancePersistenceReads
+  import Instance.{instancePersistenceReads, instancePersistenceWrites}
+
+  private val log = play.api.Logger(getClass)
+  protected val logTime = ExecutionTimeLogger(log)
 
   require(storageDirectory.isDirectory && storageDirectory.canWrite,
           s"'$storageDirectory' needs to be a writable directory")
+
   private val lock = new File(storageDirectory, ".lock")
-  Logger.info(s"Locking $storageDirectory ($lock)")
+  log.info(s"Locking $storageDirectory ($lock)")
   if (!lock.createNewFile()) {
     throw new IllegalStateException(s"Cannot lock $storageDirectory. Is there another Broccoli instance running?")
   }
@@ -26,10 +29,10 @@ case class FileSystemInstanceStorage(storageDirectory: File) extends InstanceSto
 
   override def closeImpl(): Unit =
     if (lock.delete()) {
-      Logger.info(s"Releasing lock on '$storageDirectory' ('$lock')")
+      log.info(s"Releasing lock on '$storageDirectory' ('$lock')")
       closed = true
     } else {
-      Logger.error(s"Could not release lock on '$storageDirectory' ('$lock')")
+      log.error(s"Could not release lock on '$storageDirectory' ('$lock')")
     }
 
   override def readInstanceImpl(id: String): Try[Instance] = {
@@ -39,7 +42,7 @@ case class FileSystemInstanceStorage(storageDirectory: File) extends InstanceSto
     instance.flatMap { instance =>
       if (instance.id != id) {
         val error = s"Instance id (${instance.id}) does not match file name ($id)"
-        Logger.error(error)
+        log.error(error)
         Failure(new IllegalStateException(error))
       } else {
         Success(instance)

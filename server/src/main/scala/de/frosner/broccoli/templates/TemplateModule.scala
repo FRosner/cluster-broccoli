@@ -1,6 +1,6 @@
 package de.frosner.broccoli.templates
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Singleton
 
 import com.google.inject.{AbstractModule, Provides}
 import de.frosner.broccoli.signal.UnixSignalManager
@@ -13,6 +13,11 @@ import play.api.Configuration
 class TemplateModule extends AbstractModule with ScalaModule {
   override def configure(): Unit = {}
 
+  @Provides
+  @Singleton
+  def provideTemplateConfiguration(config: Configuration): TemplateConfiguration =
+    TemplateConfiguration.fromConfig(config.underlying.getConfig("broccoli.templates"))
+
   /**
     * Provide the template source.
     *
@@ -21,12 +26,9 @@ class TemplateModule extends AbstractModule with ScalaModule {
     */
   @Provides
   @Singleton
-  @Inject
-  def provideTemplateSource(config: Configuration, signalManager: UnixSignalManager): TemplateSource =
+  def provideTemplateSource(config: TemplateConfiguration, signalManager: UnixSignalManager): TemplateSource =
     new SignalRefreshedTemplateSource(
-      new CachedTemplateSource(
-        new DirectoryTemplateSource(
-          TemplateConfiguration.fromConfig(config.underlying.getConfig("broccoli.templates")).templatesPath)),
+      new CachedTemplateSource(new DirectoryTemplateSource(config.templatesPath)),
       signalManager
     )
 

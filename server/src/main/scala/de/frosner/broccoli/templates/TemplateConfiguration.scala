@@ -1,7 +1,6 @@
 package de.frosner.broccoli.templates
 
 import com.typesafe.config.Config
-import de.frosner.broccoli.util.Logging
 
 /**
   * The Templates configuration.
@@ -10,7 +9,7 @@ import de.frosner.broccoli.util.Logging
   */
 final case class TemplateConfiguration(templatesPath: String)
 
-object TemplateConfiguration extends Logging {
+object TemplateConfiguration {
 
   /**
     * Extract a template configuration from a typesafe config.
@@ -18,12 +17,7 @@ object TemplateConfiguration extends Logging {
     * @param config The config
     * @return The corresponding nomad configuration
     */
-  def fromConfig(config: Config): TemplateConfiguration = {
-    val path = config.getString("path")
-
-    Logger.info(s"template path=$path")
-
-    TemplateConfiguration(path)
-  }
+  def fromConfig(config: Config): TemplateConfiguration =
+    TemplateConfiguration(config.getString("path"))
 
 }
