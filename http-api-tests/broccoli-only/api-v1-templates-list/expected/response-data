@@ -10,14 +10,20 @@
     "parameterInfos": {
       "URL": {
         "id": "URL",
-        "default": "localhost:8000"
+        "default": "localhost:8000",
+        "type": "raw"
       },
       "enabled": {
         "id": "enabled",
-        "default": "true"
+        "default": "true",
+        "type": "raw"
+      },
+      "id": {
+        "id": "id",
+        "type": "raw"
       }
     },
-    "version": "04b869d719e32cace16c457fa3cbe8bb"
+    "version": "4281f2e09ecddc820a82c10deafd733f"
   },
   {
     "id": "http-server",
@@ -31,16 +37,22 @@
       "cpu": {
         "id": "cpu",
         "name": "CPU Shares",
-        "default": "100"
+        "default": "100",
+        "type": "raw"
       },
       "secret": {
         "id": "secret",
         "name": "A Secret Parameter",
         "default": "guessme",
-        "secret": true
+        "secret": true,
+        "type": "raw"
+      },
+      "id": {
+        "id": "id",
+        "type": "raw"
       }
     },
-    "version": "175530a654665f25a54aed1207b967e8"
+    "version": "ae0d471483f2164dd32bf7250e5f04e2"
   },
   {
     "id": "jupyter",
@@ -48,8 +60,13 @@
     "parameters": [
       "id"
     ],
-    "parameterInfos": {},
-    "version": "fce3124b8369efcf453b8e2e7ba97623"
+    "parameterInfos": {
+      "id": {
+        "id": "id",
+        "type": "raw"
+      }
+    },
+    "version": "a89692bd8de8d4f954de8aeb1525dec0"
   },
   {
     "id": "zeppelin",
@@ -57,7 +74,12 @@
     "parameters": [
       "id"
     ],
-    "parameterInfos": {},
-    "version": "74ae5a281ae390857d07b6553c67a650"
+    "parameterInfos": {
+      "id": {
+        "id": "id",
+        "type": "raw"
+      }
+    },
+    "version": "51d87cc9a0249d2f684ca31f59968601"
   }
 ]
