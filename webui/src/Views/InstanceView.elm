@@ -4,7 +4,9 @@ import Models.Resources.ServiceStatus exposing (..)
 import Models.Resources.JobStatus as JobStatus exposing (..)
 import Models.Resources.Role exposing (Role(..))
 import Models.Resources.Task exposing (Task)
+import Models.Resources.Instance exposing (Instance)
 import Models.Resources.TaskState exposing (TaskState(..))
+import Models.Resources.LogKind exposing (LogKind(..))
 import Models.Resources.ClientStatus exposing (ClientStatus(ClientComplete))
 import Models.Resources.Allocation as Allocation exposing (Allocation, shortAllocationId)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
@@ -336,7 +338,7 @@ instanceDetailView instance instanceTasks maybeInstanceParameterForm visibleSecr
                             (List.map periodicRunView periodicRuns)
                         ]
                       )
-                    , [ instanceTasksView instanceTasks ]
+                    , [ instanceTasksView instance instanceTasks ]
                     ]
                 )
             ]
@@ -362,8 +364,8 @@ getActiveAllocations task =
         |> List.map ((,) task.name)
 
 
-instanceTasksView : Maybe (List Task) -> Html msg
-instanceTasksView instanceTasks =
+instanceTasksView : Instance -> Maybe (List Task) -> Html msg
+instanceTasksView instance instanceTasks =
     let
         allocatedTasks =
             case Maybe.map (List.concatMap getActiveAllocations) instanceTasks of
@@ -380,9 +382,10 @@ instanceTasksView instanceTasks =
                                 [ th [] [ text "Task" ]
                                 , th [] [ text "Allocation ID" ]
                                 , th [] [ text "State" ]
+                                , th [] [ text "Download log files" ]
                                 ]
                             ]
-                        , tbody [] <| List.indexedMap instanceAllocationRow allocations
+                        , tbody [] <| List.indexedMap (instanceAllocationRow instance) allocations
                         ]
                     ]
     in
@@ -395,8 +398,29 @@ instanceTasksView instanceTasks =
             )
 
 
-instanceAllocationRow : Int -> ( String, Allocation ) -> Html msg
-instanceAllocationRow index ( taskName, allocation ) =
+{-| Get the URL to a task log of an instance
+-}
+logUrl : Instance -> String -> Allocation -> LogKind -> String
+logUrl instance taskName allocation kind =
+    String.concat
+        [ "/downloads/instances/"
+        , instance.id
+        , "/allocations/"
+        , allocation.id
+        , "/tasks/"
+        , taskName
+        , "/logs/"
+        , case kind of
+            StdOut ->
+                "stdout"
+
+            StdErr ->
+                "stderr"
+        ]
+
+
+instanceAllocationRow : Instance -> Int -> ( String, Allocation ) -> Html msg
+instanceAllocationRow instance index ( taskName, allocation ) =
     let
         ( description, labelKind ) =
             case allocation.taskState of
@@ -413,6 +437,21 @@ instanceAllocationRow index ( taskName, allocation ) =
             [ th [ scope <| toString (index + 1) ] [ text taskName ]
             , td [] [ code [] [ text (shortAllocationId allocation.id) ] ]
             , td [] [ span [ class ("label " ++ labelKind) ] [ text description ] ]
+            , td []
+                [ a
+                    [ href (logUrl instance taskName allocation StdOut)
+                    , target "_blank"
+                    , class "btn btn-primary btn-xs"
+                    ]
+                    [ text "stdout" ]
+                , text " "
+                , a
+                    [ href (logUrl instance taskName allocation StdErr)
+                    , target "_blank"
+                    , class "btn btn-primary btn-xs"
+                    ]
+                    [ text "stderr" ]
+                ]
             ]
 
 
