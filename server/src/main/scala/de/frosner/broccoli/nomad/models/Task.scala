@@ -6,6 +6,7 @@ import play.api.libs.functional.syntax._
 final case class Task(services: Option[Seq[Service]])
 
 object Task {
+  sealed trait Name
 
   implicit val taskFormat: Format[Task] =
     (__ \ "Services")

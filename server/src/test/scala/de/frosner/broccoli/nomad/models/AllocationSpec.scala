@@ -14,13 +14,14 @@ class AllocationSpec extends Specification {
         .validate[List[Allocation]]
         .asEither
 
-      val allocation = Allocation(
-        id = "520bc6c3-53c9-fd2e-5bea-7d0b9dbef254",
-        nodeId = "cf3338e9-5ed0-88ef-df7b-9dd9708130c8",
-        clientStatus = ClientStatus.Running,
-        taskStates = Map("http-task" -> TaskStateEvents(TaskState.Running))
-      )
-      allocations should beRight(List(allocation))
+      allocations should beRight(
+        List(Allocation(
+          id = shapeless.tag[Allocation.Id]("520bc6c3-53c9-fd2e-5bea-7d0b9dbef254"),
+          jobId = shapeless.tag[Job.Id]("tvftarcxrPoy9wNhghqQogihjha"),
+          nodeId = shapeless.tag[Node.Id]("cf3338e9-5ed0-88ef-df7b-9dd9708130c8"),
+          clientStatus = ClientStatus.Running,
+          taskStates = Map(shapeless.tag[Task.Name]("http-task") -> TaskStateEvents(TaskState.Running))
+        )))
     }
   }
 }

@@ -6,6 +6,8 @@ import cats.instances.future._
 import cats.data.EitherT
 import de.frosner.broccoli.models.{Account, InstanceError, InstanceTasks, Task}
 import de.frosner.broccoli.nomad.NomadClient
+import de.frosner.broccoli.nomad.models.Job
+import shapeless.tag
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -30,7 +32,7 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
     */
   def getInstanceTasks(user: Account)(id: String): EitherT[Future, InstanceError, InstanceTasks] =
     EitherT
-      .pure[Future, InstanceError](id)
+      .pure[Future, InstanceError](tag[Job.Id](id))
       .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
       .semiflatMap(nomadClient.getAllocationsForJob)
       .map { allocations =>

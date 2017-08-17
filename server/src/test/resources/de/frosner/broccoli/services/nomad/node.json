@@ -1,0 +1,78 @@
+{
+  "Attributes": {
+    "consul.datacenter": "dc1",
+    "consul.revision": "2c77151",
+    "consul.server": "true",
+    "consul.version": "0.8.5",
+    "cpu.arch": "amd64",
+    "cpu.frequency": "2397",
+    "cpu.modelname": "Intel(R) Xeon(R) CPU E5-2630 v3 @ 2.40GHz",
+    "cpu.numcores": "8",
+    "cpu.totalcompute": "19176",
+    "driver.docker": "1",
+    "driver.docker.version": "17.06.0-ce",
+    "driver.docker.volumes.enabled": "1",
+    "driver.exec": "1",
+    "driver.java": "1",
+    "driver.java.runtime": "Java(TM) SE Runtime Environment (build 1.8.0_74-b02)",
+    "driver.java.version": "1.8.0_74",
+    "driver.java.vm": "Java HotSpot(TM) 64-Bit Server VM (build 25.74-b02, mixed mode)",
+    "driver.raw_exec": "1",
+    "kernel.name": "linux",
+    "kernel.version": "4.2.0-42-generic",
+    "memory.totalbytes": "21045665792",
+    "nomad.revision": "4cd2cf1c3c9ed6dbd0b8261f9bad0e375c182d7f+CHANGES",
+    "nomad.version": "0.5.6",
+    "os.name": "ubuntu",
+    "os.signals": "SIGABRT,SIGSEGV,SIGUSR1,SIGXCPU,SIGSTOP,SIGTTOU,SIGUSR2,SIGILL,SIGTERM,SIGXFSZ,SIGHUP,SIGIOT,SIGKILL,SIGQUIT,SIGINT,SIGPROF,SIGTTIN,SIGURG,SIGCHLD,SIGIO,SIGPIPE,SIGTSTP,SIGALRM,SIGTRAP,SIGBUS,SIGCONT,SIGFPE,SIGSYS",
+    "os.version": "14.04",
+    "unique.cgroup.mountpoint": "/sys/fs/cgroup",
+    "unique.consul.name": "vc31",
+    "unique.hostname": "vc31",
+    "unique.network.ip-address": "127.0.0.1",
+    "unique.storage.bytesfree": "155372511232",
+    "unique.storage.bytestotal": "184696553472",
+    "unique.storage.volume": "/dev/xvda1"
+  },
+  "ComputedClass": "v1:5736492678711156523",
+  "CreateIndex": 5,
+  "Datacenter": "dc1",
+  "Drain": false,
+  "HTTPAddr": "127.0.0.1:4646",
+  "ID": "4beac5b7-3974-3ddf-b572-9db5906fb891",
+  "Links": {
+    "consul": "dc1.vc31"
+  },
+  "Meta": null,
+  "ModifyIndex": 6,
+  "Name": "vc31",
+  "NodeClass": "",
+  "Reserved": {
+    "CPU": 0,
+    "DiskMB": 0,
+    "IOPS": 0,
+    "MemoryMB": 0,
+    "Networks": null
+  },
+  "Resources": {
+    "CPU": 19176,
+    "DiskMB": 148174,
+    "IOPS": 0,
+    "MemoryMB": 20070,
+    "Networks": [
+      {
+        "CIDR": "127.0.0.1/32",
+        "Device": "lo",
+        "DynamicPorts": null,
+        "IP": "127.0.0.1",
+        "MBits": 1000,
+        "ReservedPorts": null
+      }
+    ]
+  },
+  "SecretID": "",
+  "Status": "ready",
+  "StatusDescription": "",
+  "StatusUpdatedAt": 1502884373,
+  "TLSEnabled": false
+}

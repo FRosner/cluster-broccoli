@@ -11,6 +11,8 @@ object Dependencies {
     val play2auth = "0.14.2"
 
     val cats = "1.0.0-MF"
+
+    val shapeless = "2.3.2"
   }
 
   /**
@@ -26,6 +28,11 @@ object Dependencies {
     "kernel",
     "core"
   ).map(module => "org.typelevel" %% s"cats-$module" % Versions.cats)
+
+  /**
+    * Type-level programming library
+    */
+  val shapeless: ModuleID = "com.chuusai" %% "shapeless" % Versions.shapeless
 
   /**
     * A powerful enumeration type for Scala.
