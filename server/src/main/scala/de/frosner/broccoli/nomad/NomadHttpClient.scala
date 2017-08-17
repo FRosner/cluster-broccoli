@@ -99,7 +99,9 @@ class NomadHttpClient(baseUri: Uri, client: WSClient)(implicit context: Executio
               "type" -> stream.entryName,
               // Request the plain text log without framing and do not follow the log
               "plain" -> "true",
-              "follow" -> "false"
+              "follow" -> "false",
+              "origin" -> "end",
+              "offset" -> "204800"
             )
             .withHeaders(ACCEPT -> TEXT)
             .get())
