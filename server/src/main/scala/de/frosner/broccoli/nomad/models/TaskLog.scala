@@ -11,5 +11,6 @@ import shapeless.tag.@@
 final case class TaskLog(kind: LogStreamKind, contents: String @@ TaskLog.Contents)
 
 object TaskLog {
+  sealed trait Offset
   sealed trait Contents
 }

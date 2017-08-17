@@ -11,7 +11,7 @@ import de.frosner.broccoli.models.InstanceCreation.instanceCreationReads
 import de.frosner.broccoli.models.InstanceUpdate.instanceUpdateReads
 import de.frosner.broccoli.models.Role.syntax._
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.nomad.models.{Allocation, LogStreamKind, Task => NomadTask}
+import de.frosner.broccoli.nomad.models.{Allocation, LogStreamKind, TaskLog, Task => NomadTask}
 import de.frosner.broccoli.services._
 import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
 import play.api.Environment
@@ -20,6 +20,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Controller, Results}
 import shapeless.tag
+import squants.information.Information
 
 case class InstanceController @Inject()(
     instances: NomadInstances,
@@ -54,16 +55,24 @@ case class InstanceController @Inject()(
     * @param allocationId The ID of the allocation
     * @param taskName The name of the tasks whose logs to view
     * @param kind The kind of log
+    * @param offset The offset from the end of the log to fetch
     * @return The log as plain text or an HTTP error
     */
-  def logFile(instanceId: String, allocationId: String, taskName: String, kind: LogStreamKind): Action[Unit] =
+  def logFile(
+      instanceId: String,
+      allocationId: String,
+      taskName: String,
+      kind: LogStreamKind,
+      offset: Option[Information]
+  ): Action[Unit] =
     AsyncStack(parse.empty) { implicit request =>
       instances
         .getInstanceLog(loggedIn)(
           instanceId,
           tag[Allocation.Id](allocationId),
           tag[NomadTask.Name](taskName),
-          kind
+          kind,
+          offset.map(tag[TaskLog.Offset](_))
         )
         .fold(_.toHTTPResult, Results.Ok(_))
     }

@@ -18,6 +18,7 @@ lazy val server = project
       Dependencies.simulacrum,
       Dependencies.shapeless,
       Dependencies.scalaUri,
+      Dependencies.squants,
       Dependencies.scalaguice,
       ws,
       cache,

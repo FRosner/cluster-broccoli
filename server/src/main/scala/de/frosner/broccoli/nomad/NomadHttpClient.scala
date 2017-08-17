@@ -11,6 +11,8 @@ import play.api.http.MimeTypes.{JSON, TEXT}
 import play.api.libs.ws.{WSClient, WSRequest, WSResponse}
 import shapeless.tag
 import shapeless.tag.@@
+import squants.Quantity
+import squants.information.{Bytes, Information}
 
 import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -77,7 +79,8 @@ class NomadHttpClient(baseUri: Uri, client: WSClient)(implicit context: Executio
   override def getTaskLog(
       allocationId: String @@ Allocation.Id,
       taskName: String @@ Task.Name,
-      stream: LogStreamKind
+      stream: LogStreamKind,
+      offset: Option[Quantity[Information] @@ TaskLog.Offset]
   ): EitherT[Future, NomadError, TaskLog] =
     for {
       allocation <- getAllocation(allocationId)
@@ -95,13 +98,21 @@ class NomadHttpClient(baseUri: Uri, client: WSClient)(implicit context: Executio
           client
             .url(v1.copy(host = nodeAddress.host, port = nodeAddress.port) / "client" / "fs" / "logs" / allocationId)
             .withQueryString(
-              "task" -> taskName,
-              "type" -> stream.entryName,
-              // Request the plain text log without framing and do not follow the log
-              "plain" -> "true",
-              "follow" -> "false",
-              "origin" -> "end",
-              "offset" -> "204800"
+              Seq("task" -> taskName,
+                  "type" -> stream.entryName,
+                  // Request the plain text log without framing and do not follow the log
+                  "plain" -> "true",
+                  "follow" -> "false") ++
+                offset
+                  .map { size =>
+                    Seq(
+                      // If an offset is given, at the corresponding parameters to the query
+                      "origin" -> "end",
+                      // Round to nearest integer get the (double) value out, and convert it to an integral string
+                      "offset" -> (size in Bytes).rint.value.toInt.toString
+                    )
+                  }
+                  .getOrElse(Seq.empty): _*
             )
             .withHeaders(ACCEPT -> TEXT)
             .get())

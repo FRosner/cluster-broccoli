@@ -3,6 +3,8 @@ package de.frosner.broccoli.nomad
 import cats.data.EitherT
 import de.frosner.broccoli.nomad.models._
 import shapeless.tag.@@
+import squants.Quantity
+import squants.information.Information
 
 import scala.collection.immutable
 import scala.concurrent.Future
@@ -34,11 +36,13 @@ trait NomadClient {
     * @param allocationId The ID of the allocation
     * @param taskName The name of the task
     * @param stream The kind of log to fetch
+    * @param offset The number of bytes to fetch from the end of the log.  If None fetch the entire log
     * @return The task log
     */
   def getTaskLog(
       allocationId: String @@ Allocation.Id,
       taskName: String @@ Task.Name,
-      stream: LogStreamKind
+      stream: LogStreamKind,
+      offset: Option[Quantity[Information] @@ TaskLog.Offset]
   ): EitherT[Future, NomadError, TaskLog]
 }

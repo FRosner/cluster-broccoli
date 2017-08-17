@@ -15,6 +15,8 @@ object Dependencies {
     val shapeless = "2.3.2"
 
     val scalaUri = "0.4.17"
+
+    val squants = "1.3.0"
   }
 
   /**
@@ -49,6 +51,13 @@ object Dependencies {
     * Types and DSL for URIs
     */
   val scalaUri: ModuleID = "io.lemonlabs" %% "scala-uri" % Versions.scalaUri
+
+  /**
+    * Units for Scala.
+    *
+    * We use it for size units, eg bytes, kilobytes, etc.
+    */
+  val squants: ModuleID = "org.typelevel" %% "squants" % Versions.squants
 
   /**
     * Property testing for Scala.

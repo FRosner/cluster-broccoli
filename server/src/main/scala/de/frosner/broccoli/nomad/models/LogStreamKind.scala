@@ -24,15 +24,4 @@ object LogStreamKind extends Enum[LogStreamKind] {
     * The standard error stream of a task.
     */
   case object StdErr extends LogStreamKind
-
-  /**
-    * Use log stream kinds in Play route paths.
-    */
-  implicit def logStreamKindPathBindable(implicit stringBinder: PathBindable[String]): PathBindable[LogStreamKind] =
-    new PathBindable[LogStreamKind] {
-      override def bind(key: String, value: String): Either[String, LogStreamKind] =
-        stringBinder.bind(key, value).flatMap(LogStreamKind.withNameOption(_).toRight("Invalid log kind"))
-
-      override def unbind(_key: String, value: LogStreamKind): String = value.entryName
-    }
 }

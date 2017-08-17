@@ -416,6 +416,9 @@ logUrl instance taskName allocation kind =
 
             StdErr ->
                 "stderr"
+
+        -- Only fetch the last 500 KiB of the log, to avoid large requests and download times
+        , "?offset=500KiB"
         ]
 
 
