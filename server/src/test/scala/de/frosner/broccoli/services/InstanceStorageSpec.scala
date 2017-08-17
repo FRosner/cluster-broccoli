@@ -1,22 +1,17 @@
 package de.frosner.broccoli.services
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
-
-import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.{Instance, JobStatus, ParameterInfo, Template}
-import de.frosner.broccoli.log.ExecutionTimeLogger
-import org.specs2.matcher.MatchResult
+import de.frosner.broccoli.models.{Instance, ParameterInfo, Template}
 import org.specs2.mutable.Specification
-import play.api.{Configuration, Logger}
+import play.api.Logger
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Try}
 
 class InstanceStorageSpec extends Specification {
 
   "Any instance storage" should {
 
     def testStorage = new InstanceStorage {
-      protected override val logTime = new ExecutionTimeLogger(Logger(getClass))
+      protected override val log = Logger(getClass)
       protected override def readInstancesImpl(): Try[Set[Instance]] = Failure(new Exception())
       override def readInstancesImpl(idFilter: (String) => Boolean): Try[Set[Instance]] = Failure(new Exception())
       override def readInstanceImpl(id: String): Try[Instance] = Failure(new Exception())

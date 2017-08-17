@@ -1,13 +1,14 @@
 package de.frosner.broccoli.services
 
+import de.frosner.broccoli.logging
 import de.frosner.broccoli.models.Instance
-import de.frosner.broccoli.log.ExecutionTimeLogger
+import play.api.Logger
 
 import scala.util.Try
 
 trait InstanceStorage {
 
-  protected def logTime: ExecutionTimeLogger
+  protected def log: Logger
 
   private def ifNotClosed[T](f: => T): T =
     if (!isClosed) {
@@ -19,55 +20,60 @@ trait InstanceStorage {
   /**
     * Reads the instance with the specified ID.
     */
-  def readInstance(id: String): Try[Instance] = logTime.info(s"readInstance($id)") {
-    ifNotClosed {
-      readInstanceImpl(id)
-    }
-  }
+  def readInstance(id: String): Try[Instance] =
+    logging.logExecutionTime(s"readInstance($id)") {
+      ifNotClosed {
+        readInstanceImpl(id)
+      }
+    }(log.info(_))
 
   protected def readInstanceImpl(id: String): Try[Instance]
 
   /**
     * Reads all instances.
     */
-  def readInstances(): Try[Set[Instance]] = logTime.info(s"readInstances()") {
-    ifNotClosed {
-      readInstancesImpl
-    }
-  }
+  def readInstances(): Try[Set[Instance]] =
+    logging.logExecutionTime("readInstances()") {
+      ifNotClosed {
+        readInstancesImpl
+      }
+    }(log.info(_))
 
   protected def readInstancesImpl: Try[Set[Instance]]
 
   /**
     * Reads all instances whose IDs match the given filter.
     */
-  def readInstances(idFilter: String => Boolean): Try[Set[Instance]] = logTime.info(s"readInstances(idFilter)") {
-    ifNotClosed {
-      readInstancesImpl(idFilter)
-    }
-  }
+  def readInstances(idFilter: String => Boolean): Try[Set[Instance]] =
+    logging.logExecutionTime("readInstances(idFilter)") {
+      ifNotClosed {
+        readInstancesImpl(idFilter)
+      }
+    }(log.info(_))
 
   protected def readInstancesImpl(idFilter: String => Boolean): Try[Set[Instance]]
 
   /**
     * Persists an instance.
     */
-  def writeInstance(instance: Instance): Try[Instance] = logTime.info(s"writeInstance(${instance.id})") {
-    ifNotClosed {
-      writeInstanceImpl(instance)
-    }
-  }
+  def writeInstance(instance: Instance): Try[Instance] =
+    logging.logExecutionTime(s"writeInstance(${instance.id})") {
+      ifNotClosed {
+        writeInstanceImpl(instance)
+      }
+    }(log.info(_))
 
   protected def writeInstanceImpl(instance: Instance): Try[Instance]
 
   /**
     * Deletes an existing instance. Returns a failure if the instance could not be deleted.
     */
-  def deleteInstance(toDelete: Instance): Try[Instance] = logTime.info(s"deleteInstance(${toDelete.id})") {
-    ifNotClosed {
-      deleteInstanceImpl(toDelete)
-    }
-  }
+  def deleteInstance(toDelete: Instance): Try[Instance] =
+    logging.logExecutionTime(s"deleteInstance(${toDelete.id})") {
+      ifNotClosed {
+        deleteInstanceImpl(toDelete)
+      }
+    }(log.info(_))
 
   protected def deleteInstanceImpl(toDelete: Instance): Try[Instance]
 
@@ -75,10 +81,11 @@ trait InstanceStorage {
 
   def isClosed: Boolean = closed
 
-  def close(): Unit = logTime.info(s"close()") {
-    closeImpl()
-    closed = true
-  }
+  def close(): Unit =
+    logging.logExecutionTime("close()") {
+      closeImpl()
+      closed = true
+    }(log.info(_))
 
   protected def closeImpl(): Unit
 

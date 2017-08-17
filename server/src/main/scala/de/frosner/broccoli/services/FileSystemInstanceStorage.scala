@@ -3,7 +3,6 @@ package de.frosner.broccoli.services
 import java.io._
 
 import de.frosner.broccoli.models.Instance
-import de.frosner.broccoli.log.ExecutionTimeLogger
 import play.api.libs.json.Json
 
 import scala.util.{Failure, Success, Try}
@@ -13,8 +12,7 @@ case class FileSystemInstanceStorage(storageDirectory: File) extends InstanceSto
 
   import Instance.{instancePersistenceReads, instancePersistenceWrites}
 
-  private val log = play.api.Logger(getClass)
-  protected val logTime = ExecutionTimeLogger(log)
+  protected val log = play.api.Logger(getClass)
 
   require(storageDirectory.isDirectory && storageDirectory.canWrite,
           s"'$storageDirectory' needs to be a writable directory")

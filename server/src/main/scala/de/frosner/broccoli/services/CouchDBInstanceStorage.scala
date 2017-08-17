@@ -3,7 +3,6 @@ package de.frosner.broccoli.services
 import java.util.concurrent.TimeUnit
 
 import de.frosner.broccoli.models.Instance
-import de.frosner.broccoli.log.ExecutionTimeLogger
 import play.api.libs.json.{JsObject, _}
 import play.api.libs.ws.WSClient
 
@@ -19,8 +18,7 @@ case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSCl
 
   import Instance.{instancePersistenceReads, instancePersistenceWrites}
 
-  private val log = play.api.Logger(getClass)
-  override protected val logTime = ExecutionTimeLogger(log)
+  protected val log = play.api.Logger(getClass)
 
   private val dbUrlString = s"$couchBaseUrl/$dbName"
 

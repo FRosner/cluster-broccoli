@@ -4,8 +4,8 @@ import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 
 import de.frosner.broccoli.conf
+import de.frosner.broccoli.logging.logExecutionTime
 import de.frosner.broccoli.models.{Service, ServiceStatus}
-import de.frosner.broccoli.log.ExecutionTimeLogger
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
@@ -19,7 +19,6 @@ import scala.util.{Failure, Success, Try}
 class ConsulService @Inject()(configuration: Configuration, ws: WSClient) {
 
   private val log = Logger(getClass)
-  private val logTime = ExecutionTimeLogger(log)
 
   @volatile
   var serviceStatuses: Map[String, Seq[Service]] = Map.empty
@@ -30,7 +29,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) {
     lookupMethod match {
       case conf.CONSUL_LOOKUP_METHOD_DNS => {
         val requestUrl = consulBaseUrl + "/v1/agent/self"
-        logTime.info(s"GET $requestUrl") {
+        logExecutionTime(s"GET $requestUrl") {
           val request = ws.url(requestUrl)
           val response = request.get().map(_.json.as[JsObject])
           val eventuallyConsulDomain = response.map { jsObject =>
@@ -45,7 +44,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) {
           tryConsulDomain.foreach(domain =>
             log.info(s"Advertising Consul entities through DNS using '$domain' as the domain."))
           tryConsulDomain.toOption
-        }
+        }(log.info(_))
       }
       case conf.CONSUL_LOOKUP_METHOD_IP =>
         log.info("Advertising Consul entities through IP addresses.")
