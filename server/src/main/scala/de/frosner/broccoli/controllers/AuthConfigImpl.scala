@@ -3,6 +3,8 @@ package de.frosner.broccoli.controllers
 import de.frosner.broccoli.models.{Account, Role}
 import de.frosner.broccoli.services.SecurityService
 import jp.t2v.lab.play2.auth._
+import play.api.{Environment, Mode}
+import play.api.cache.CacheApi
 import play.api.libs.json.JsString
 import play.api.mvc.{RequestHeader, Result, Results}
 
@@ -12,6 +14,10 @@ import scala.reflect.ClassTag
 trait AuthConfigImpl extends AuthConfig {
 
   val securityService: SecurityService
+
+  val playEnv: Environment
+
+  val cacheApi: CacheApi
 
   type Id = String
 
@@ -26,7 +32,7 @@ trait AuthConfigImpl extends AuthConfig {
   val cookieSecure = securityService.cookieSecure
 
   override lazy val idContainer: AsyncIdContainer[Id] = securityService.allowMultiLogin match {
-    case true  => AsyncIdContainer(new MultiLoginCacheIdContainer[Id])
+    case true  => AsyncIdContainer(new MultiLoginCacheIdContainer[Id](cacheApi))
     case false => AsyncIdContainer(new CacheIdContainer[Id])
   }
 
@@ -57,7 +63,7 @@ trait AuthConfigImpl extends AuthConfig {
 
   override lazy val tokenAccessor = new CookieTokenAccessor(
     cookieName = AuthConfigImpl.CookieName,
-    cookieSecureOption = play.api.Play.maybeApplication.exists(app => play.api.Play.isProd(app) && cookieSecure),
+    cookieSecureOption = playEnv.mode == Mode.Prod && cookieSecure,
     cookieHttpOnlyOption = true,
     cookieDomainOption = None,
     cookiePathOption = "/",

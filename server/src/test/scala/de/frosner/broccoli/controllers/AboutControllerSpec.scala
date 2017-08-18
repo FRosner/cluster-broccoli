@@ -3,6 +3,8 @@ package de.frosner.broccoli.controllers
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.models.{Anonymous, Role, UserAccount}
 import org.mockito.Mockito._
+import play.api.cache.CacheApi
+import play.api.{Application, Environment}
 import play.api.libs.json.{JsBoolean, JsObject, JsString, Json}
 import play.api.test._
 
@@ -16,10 +18,7 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
       val account = UserAccount("user", "pass", ".*", Role.Administrator)
       val aboutInfoService = withDummyValues(mock(classOf[AboutInfoService]))
       testWithAllAuths(account) { securityService =>
-        AboutController(
-          aboutInfoService = aboutInfoService,
-          securityService = securityService
-        )
+        AboutController(aboutInfoService, securityService, cacheApi, playEnv)
       } { controller =>
         controller.about
       }(_.withBody(())) { (controller, result) =>
@@ -32,10 +31,8 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
     "return the about object without authentication" in new WithApplication {
       val account = Anonymous
       val aboutInfoService = withDummyValues(mock(classOf[AboutInfoService]))
-      val controller = AboutController(
-        aboutInfoService = aboutInfoService,
-        securityService = withAuthNone(mock(classOf[SecurityService]))
-      )
+      val controller =
+        AboutController(aboutInfoService, withAuthNone(mock(classOf[SecurityService])), cacheApi, playEnv)
       val result = controller.about(FakeRequest().withBody(()))
       status(result) must be equalTo 200 and {
         contentAsJson(result) must be equalTo Json.toJson(aboutInfoService.aboutInfo(account))

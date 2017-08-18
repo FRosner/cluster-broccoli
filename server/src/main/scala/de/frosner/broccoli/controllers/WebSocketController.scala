@@ -6,7 +6,8 @@ import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.websocket.{IncomingMessage, OutgoingMessage, WebSocketMessageHandler}
 import jp.t2v.lab.play2.auth.BroccoliWebsocketSecurity
-import play.api.Logger
+import play.api.{Environment, Logger}
+import play.api.cache.CacheApi
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.iteratee._
 import play.api.libs.json._
@@ -19,6 +20,8 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
                                          instanceService: InstanceService,
                                          aboutService: AboutInfoService,
                                          messageHandler: WebSocketMessageHandler,
+                                         override val cacheApi: CacheApi,
+                                         override val playEnv: Environment,
                                          override val securityService: SecurityService)
     extends Controller
     with BroccoliWebsocketSecurity {

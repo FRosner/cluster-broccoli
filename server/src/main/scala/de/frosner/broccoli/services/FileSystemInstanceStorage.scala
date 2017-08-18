@@ -49,7 +49,7 @@ case class FileSystemInstanceStorage(storageDirectory: File) extends InstanceSto
   }
 
   @volatile
-  protected override def readInstancesImpl(): Try[Set[Instance]] =
+  protected override def readInstancesImpl: Try[Set[Instance]] =
     readInstances(_ => true)
 
   @volatile

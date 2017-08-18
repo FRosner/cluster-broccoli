@@ -1,26 +1,31 @@
 package jp.t2v.lab.play2.auth
 
-import play.api.cache.Cache
+import play.api.Application
+import play.api.cache.{Cache, CacheApi}
 import play.api.test.{PlaySpecification, WithApplication}
 
 class MultiLoginCacheIdContainerSpec extends PlaySpecification {
 
   sequential
 
-  val container = new MultiLoginCacheIdContainer[String]
+  def cache(implicit app: Application): CacheApi = app.injector.instanceOf[CacheApi]
 
   "starting a new session" should {
 
     "work" in new WithApplication {
+      val container = new MultiLoginCacheIdContainer[String](cache)
+
       val user = "user"
       val token = container.startNewSession(user, 1000)
-      Cache.get(token + container.tokenSuffix) === Some(user)
+      cache.get(token + container.tokenSuffix) must beSome(beEqualTo(user))
     }
 
     "time out" in new WithApplication {
+      val container = new MultiLoginCacheIdContainer[String](cache)
+
       val token = container.startNewSession("user", 1)
       Thread.sleep(2000)
-      Cache.get(token + container.tokenSuffix) should beNone
+      cache.get(token + container.tokenSuffix) should beNone
     }
 
   }
@@ -28,10 +33,12 @@ class MultiLoginCacheIdContainerSpec extends PlaySpecification {
   "removing a session" should {
 
     "work" in new WithApplication {
+      val container = new MultiLoginCacheIdContainer[String](cache)
+
       val user = "user"
       val token = container.startNewSession(user, 1000)
       container.remove(token)
-      Cache.get(token + container.tokenSuffix) should beNone
+      cache.get(token + container.tokenSuffix) should beNone
     }
 
   }
@@ -39,6 +46,8 @@ class MultiLoginCacheIdContainerSpec extends PlaySpecification {
   "getting a session" should {
 
     "work" in new WithApplication {
+      val container = new MultiLoginCacheIdContainer[String](cache)
+
       val user = "user"
       val token = container.startNewSession(user, 1000)
       container.get(token) === Some(user)
@@ -49,11 +58,13 @@ class MultiLoginCacheIdContainerSpec extends PlaySpecification {
   "prolonging a session timeout" should {
 
     "work" in new WithApplication {
+      val container = new MultiLoginCacheIdContainer[String](cache)
+
       val user = "user"
       val token = container.startNewSession(user, 1)
       container.prolongTimeout(token, 100)
       Thread.sleep(2000)
-      Cache.get(token + container.tokenSuffix) === Some(user)
+      cache.get(token + container.tokenSuffix) === Some(user)
     }
 
   }

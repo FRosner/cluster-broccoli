@@ -9,10 +9,16 @@ import play.api.test._
 import play.api.test.Helpers._
 import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Mockito._
+import play.api.cache.CacheApi
+import play.api.{Application, Environment}
 
 import scala.concurrent.Future
 
 trait AuthUtils extends ServiceMocks {
+
+  def playEnv(implicit app: Application): Environment = app.injector.instanceOf[Environment]
+
+  def cacheApi(implicit app: Application): CacheApi = app.injector.instanceOf[CacheApi]
 
   def testWithAllAuths[T <: AuthConfigImpl, B](account: Account)(controller: SecurityService => T)(
       action: T => Action[B])(requestModifier: FakeRequest[AnyContentAsEmpty.type] => FakeRequest[B])(

@@ -25,8 +25,10 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
 
       testWithAllAuths { securityService =>
         TemplateController(
-          templateService = withTemplates(mock(classOf[TemplateService]), List(template)),
-          securityService = securityService
+          withTemplates(mock(classOf[TemplateService]), List(template)),
+          securityService,
+          playEnv,
+          cacheApi
         )
       } { controller =>
         controller.list
@@ -67,8 +69,10 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
 
       testWithAllAuths { securityService =>
         TemplateController(
-          templateService = withTemplates(mock(classOf[TemplateService]), List(template)),
-          securityService = securityService
+          withTemplates(mock(classOf[TemplateService]), List(template)),
+          securityService,
+          playEnv,
+          cacheApi
         )
       } { controller =>
         controller.show("id")
@@ -92,8 +96,10 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
 
       testWithAllAuths { securityService =>
         TemplateController(
-          templateService = templateService,
-          securityService = securityService
+          templateService,
+          securityService,
+          playEnv,
+          cacheApi
         )
       } { controller =>
         controller.show("id")

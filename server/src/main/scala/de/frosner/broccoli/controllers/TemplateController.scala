@@ -6,11 +6,17 @@ import de.frosner.broccoli.models.Template
 import de.frosner.broccoli.models.Template.templateApiWrites
 import de.frosner.broccoli.services.{SecurityService, TemplateService}
 import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
+import play.api.Environment
+import play.api.cache.CacheApi
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Controller}
 
-case class TemplateController @Inject()(templateService: TemplateService, override val securityService: SecurityService)
-    extends Controller
+case class TemplateController @Inject()(
+    templateService: TemplateService,
+    override val securityService: SecurityService,
+    override val playEnv: Environment,
+    override val cacheApi: CacheApi
+) extends Controller
     with BroccoliSimpleAuthorization {
 
   def list = StackAction(parse.empty) { implicit request =>
