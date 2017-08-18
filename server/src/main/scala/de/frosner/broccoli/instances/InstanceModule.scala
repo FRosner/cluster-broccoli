@@ -43,19 +43,12 @@ class InstanceModule extends AbstractModule with ScalaModule {
       }
     }
 
-    sys.addShutdownHook {
-      log.info("Closing instanceStorage (shutdown hook)")
+    applicationLifecycle.addStopHook(() => {
+      log.info("Closing instanceStorage (stop hook)")
       if (!instanceStorage.isClosed) {
         instanceStorage.close()
       }
-    }
-    implicit val executionContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    applicationLifecycle.addStopHook(() =>
-      Future {
-        log.info("Closing instanceStorage (stop hook)")
-        if (!instanceStorage.isClosed) {
-          instanceStorage.close()
-        }
+      Future.successful({})
     })
     instanceStorage
   }
