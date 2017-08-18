@@ -1,23 +1,23 @@
 package jp.t2v.lab.play2.auth
 
-import play.api.cache.Cache
-import play.api.Play._
-
-import scala.annotation.tailrec
-import scala.util.Random
 import java.security.SecureRandom
 
-import de.frosner.broccoli.util.Logging
+import play.api.Play._
+import play.api.cache.Cache
 
+import scala.annotation.tailrec
 import scala.reflect.ClassTag
+import scala.util.Random
 
-class MultiLoginCacheIdContainer[Id: ClassTag] extends IdContainer[Id] with Logging {
+class MultiLoginCacheIdContainer[Id: ClassTag] extends IdContainer[Id] {
+
+  private val log = play.api.Logger(getClass)
 
   private[auth] val tokenSuffix = ":multitoken"
   private[auth] val random = new Random(new SecureRandom())
 
   def startNewSession(userId: Id, timeoutInSeconds: Int): AuthenticityToken = {
-    Logger.info(s"Starting new session for user '$userId'.")
+    log.info(s"Starting new session for user '$userId'.")
     val token = generate
     store(token, userId, timeoutInSeconds)
     token
@@ -31,7 +31,7 @@ class MultiLoginCacheIdContainer[Id: ClassTag] extends IdContainer[Id] with Logg
   }
 
   def remove(token: AuthenticityToken) {
-    Logger.info(s"Deleting session of user '${get(token)}'")
+    log.info(s"Deleting session of user '${get(token)}'")
     Cache.remove(token + tokenSuffix)
   }
 

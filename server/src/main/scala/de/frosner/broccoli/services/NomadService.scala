@@ -2,31 +2,27 @@ package de.frosner.broccoli.services
 
 import java.net.ConnectException
 import java.util.concurrent.TimeUnit
-import javax.inject.{Inject, Named, Singleton}
-import javax.xml.ws.http.HTTPException
+import javax.inject.{Inject, Singleton}
 
-import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.JobStatus._
-import de.frosner.broccoli.models.{Instance, JobStatus, PeriodicRun}
+import de.frosner.broccoli.models.{JobStatus, PeriodicRun}
 import de.frosner.broccoli.nomad.NomadConfiguration
 import de.frosner.broccoli.nomad.models.Job
-import de.frosner.broccoli.util.Logging
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
-import play.api.Configuration
 
-import scala.collection.immutable
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 
 @Singleton
-class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulService: ConsulService, ws: WSClient)
-    extends Logging {
+class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulService: ConsulService, ws: WSClient) {
 
   implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   private val nomadBaseUrl = nomadConfiguration.url
+
+  private val log = play.api.Logger(getClass)
 
   @volatile
   var jobStatuses: Map[String, (JobStatus, Seq[PeriodicRun])] = Map.empty
@@ -72,13 +68,13 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
     })
     jobsWithTemplate.onComplete {
       case Success((ids, statuses)) => {
-        Logger.debug(s"${jobsRequest.uri} => ${ids.zip(statuses).mkString(", ")}")
+        log.debug(s"${jobsRequest.uri} => ${ids.zip(statuses).mkString(", ")}")
         val idsAndStatuses = ids.zip(statuses.map {
           case "running" => JobStatus.Running
           case "pending" => JobStatus.Pending
           case "dead"    => JobStatus.Dead
           case default =>
-            Logger.warn(s"Unmatched status received: $default")
+            log.warn(s"Unmatched status received: $default")
             JobStatus.Unknown
         })
         val idsAndStatusesNotOnNomad = (instanceIds -- ids.toSet).map((_, JobStatus.Stopped))
@@ -123,12 +119,12 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
         filteredIdsAndStatuses.foreach(p => requestServices(p._1))
       }
       case Failure(throwable: ConnectException) => {
-        Logger.error(
+        log.error(
           s"Nomad did not respond when requesting services for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
         setNomadNotReachable()
       }
       case Failure(throwable) => {
-        Logger.warn(s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
+        log.warn(s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
       }
     }
   }
@@ -154,13 +150,13 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
       services.map(_.name)
     }
     val eventuallyRequestedServices = eventuallyJobServiceIds.map { jobServiceIds =>
-      Logger.debug(s"${jobRequest.uri} => ${jobServiceIds.mkString(", ")}")
+      log.debug(s"${jobRequest.uri} => ${jobServiceIds.mkString(", ")}")
       consulService.requestServiceStatus(id, jobServiceIds)
       jobServiceIds
     }
     eventuallyRequestedServices.onFailure {
       case throwable =>
-        Logger.error(s"Requesting services for $id failed: $throwable")
+        log.error(s"Requesting services for $id failed: $throwable")
     }
     eventuallyRequestedServices
   }
@@ -168,7 +164,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
   def startJob(job: JsValue): Try[Unit] = {
     val queryUrl = nomadBaseUrl + "/v1/jobs"
     val request = ws.url(queryUrl)
-    Logger.info(s"Sending job definition to ${request.uri}")
+    log.info(s"Sending job definition to ${request.uri}")
     Try {
       val result = Await.result(request.post(job), Duration(5, TimeUnit.SECONDS))
       if (result.status == 200) {
@@ -182,7 +178,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
   def deleteJob(id: String) = {
     val queryUrl = nomadBaseUrl + s"/v1/job/$id"
     val request = ws.url(queryUrl)
-    Logger.info(s"Sending deletion request to ${request.uri}")
+    log.info(s"Sending deletion request to ${request.uri}")
     Try {
       val result = Await.result(request.delete(), Duration(5, TimeUnit.SECONDS))
       if (result.status == 200) {

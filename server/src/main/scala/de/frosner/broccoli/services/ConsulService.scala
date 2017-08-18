@@ -4,19 +4,21 @@ import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 
 import de.frosner.broccoli.conf
+import de.frosner.broccoli.logging.logExecutionTime
 import de.frosner.broccoli.models.{Service, ServiceStatus}
-import de.frosner.broccoli.util.Logging
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
-import play.api.Configuration
+import play.api.{Configuration, Logger}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
-@Singleton()
-class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extends Logging {
 
-  implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
+@Singleton()
+class ConsulService @Inject()(configuration: Configuration, ws: WSClient) {
+
+  private val log = Logger(getClass)
 
   @volatile
   var serviceStatuses: Map[String, Seq[Service]] = Map.empty
@@ -27,7 +29,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
     lookupMethod match {
       case conf.CONSUL_LOOKUP_METHOD_DNS => {
         val requestUrl = consulBaseUrl + "/v1/agent/self"
-        TimeLogger.info(s"GET $requestUrl") {
+        logExecutionTime(s"GET $requestUrl") {
           val request = ws.url(requestUrl)
           val response = request.get().map(_.json.as[JsObject])
           val eventuallyConsulDomain = response.map { jsObject =>
@@ -35,17 +37,17 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
           }
           val tryConsulDomain = Try(Await.result(eventuallyConsulDomain, Duration(5, TimeUnit.SECONDS))).recoverWith {
             case throwable =>
-              Logger.warn(
+              log.warn(
                 s"Cannot reach Consul to read the configuration from $requestUrl, falling back to IP based lookup: $throwable")
               Failure(throwable)
           }
           tryConsulDomain.foreach(domain =>
-            Logger.info(s"Advertising Consul entities through DNS using '$domain' as the domain."))
+            log.info(s"Advertising Consul entities through DNS using '$domain' as the domain."))
           tryConsulDomain.toOption
-        }
+        }(log.info(_))
       }
       case conf.CONSUL_LOOKUP_METHOD_IP =>
-        Logger.info("Advertising Consul entities through IP addresses.")
+        log.info("Advertising Consul entities through IP addresses.")
         None
       case default =>
         throw new IllegalArgumentException(
@@ -74,8 +76,8 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
         case List(catalogResponse, healthResponse) =>
           val catalogResponseJson = catalogResponse.json
           val healthResponseJson = healthResponse.json
-          Logger.debug(s"${catalogRequest.uri} => $catalogResponseJson")
-          Logger.debug(s"${healthRequest.uri} => $healthResponseJson")
+          log.debug(s"${catalogRequest.uri} => $catalogResponseJson")
+          log.debug(s"${healthRequest.uri} => $healthResponseJson")
           val responseJsonArray = catalogResponseJson.as[JsArray]
           responseJsonArray.value.map { serviceJson =>
             val fields = serviceJson.as[JsObject].value
@@ -84,7 +86,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
             val serviceProtocol = ConsulService.extractProtocolFromTags(fields("ServiceTags")) match {
               case Some(protocol) => protocol
               case None =>
-                Logger.warn("Service did not specify a single protocol tag (e.g. protocol-https). Assuming https.")
+                log.warn("Service did not specify a single protocol tag (e.g. protocol-https). Assuming https.")
                 "https"
             }
             val serviceAddress = consulDomain
@@ -128,7 +130,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient) extend
       }
       case Failure(throwable) =>
         consulReachable = false
-        Logger.error(s"Failed to get service statuses from Consul: ${throwable.toString}")
+        log.error(s"Failed to get service statuses from Consul: ${throwable.toString}")
         val unknownServices = serviceNames.map(unknownService)
         serviceStatuses = serviceStatuses.updated(jobId, unknownServices)
     }
