@@ -381,8 +381,8 @@ instanceTasksView instance instanceTasks =
                             [ tr []
                                 [ th [] [ text "Task" ]
                                 , th [] [ text "Allocation ID" ]
-                                , th [] [ text "State" ]
-                                , th [] [ text "Download log files" ]
+                                , th [ class "text-center" ] [ text "State" ]
+                                , th [ class "text-center" ] [ text "Log files" ]
                                 ]
                             ]
                         , tbody [] <| List.indexedMap (instanceAllocationRow instance) allocations
@@ -439,8 +439,10 @@ instanceAllocationRow instance index ( taskName, allocation ) =
         tr []
             [ th [ scope <| toString (index + 1) ] [ text taskName ]
             , td [] [ code [] [ text (shortAllocationId allocation.id) ] ]
-            , td [] [ span [ class ("label " ++ labelKind) ] [ text description ] ]
-            , td []
+            , td [ class "text-center" ]
+                [ span [ class ("label " ++ labelKind) ] [ text description ]
+                ]
+            , td [ class "text-center" ]
                 [ a
                     [ href (logUrl instance taskName allocation StdOut)
                     , target "_blank"
