@@ -376,7 +376,10 @@ instanceTasksView instance instanceTasks =
                     [ text "No tasks have been allocated, yet." ]
 
                 Just allocations ->
-                    [ table [ class "table table-condensed table-hover" ]
+                    [ table
+                        [ class "table table-condensed table-hover"
+                        , style [ ( "table-layout", "fixed" ) ]
+                        ]
                         [ thead []
                             [ tr []
                                 [ th [] [ text "Task" ]
