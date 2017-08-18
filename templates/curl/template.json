@@ -1,8 +1,8 @@
 {
     "Job": {
         "Region": "global",
-        "ID": "{{id}}",
-        "Name": "{{id}}",
+        "ID": {{id}},
+        "Name": {{id}},
         "Type": "batch",
         "Priority": 50,
         "AllAtOnce": false,

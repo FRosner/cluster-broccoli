@@ -10,7 +10,7 @@
       "type": "raw"
     },
     "id": {
-      "type": "raw"
+      "type": "string"
     }
   }
 }
