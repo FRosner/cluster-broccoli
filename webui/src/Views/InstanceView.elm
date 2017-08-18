@@ -444,14 +444,14 @@ instanceAllocationRow instance index ( taskName, allocation ) =
                 [ a
                     [ href (logUrl instance taskName allocation StdOut)
                     , target "_blank"
-                    , class "btn btn-primary btn-xs"
+                    , class "btn btn-info btn-xs"
                     ]
                     [ text "stdout" ]
                 , text " "
                 , a
                     [ href (logUrl instance taskName allocation StdErr)
                     , target "_blank"
-                    , class "btn btn-primary btn-xs"
+                    , class "btn btn-info btn-xs"
                     ]
                     [ text "stderr" ]
                 ]
