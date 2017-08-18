@@ -25,8 +25,6 @@ object InstanceConfiguration {
         s"Invalid polling frequency specified: $pollingFrequency. Needs to be a positive integer.")
     }
 
-    log.info(s"Nomad/Consul polling frequency set to $pollingFrequency seconds")
-
     val defaultParameterType = ParameterType.withName(config.getString("parameters.defaultType"))
 
     val storageConfiguration = InstanceStorageConfiguration.fromConfig(config.getConfig("storage"))
