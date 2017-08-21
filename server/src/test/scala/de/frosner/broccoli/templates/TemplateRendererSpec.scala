@@ -15,7 +15,6 @@ import play.api.libs.json.JsString
 class TemplateRendererSpec extends Specification with Mockito {
   val templateRenderer = new TemplateRenderer(
     InstanceConfiguration(
-      1,
       ParameterType.Raw,
       InstanceStorageConfiguration(StorageType.FileSystem,
                                    FileSystemInstanceStorageConfiguration("path"),

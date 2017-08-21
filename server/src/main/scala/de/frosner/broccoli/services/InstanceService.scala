@@ -12,6 +12,7 @@ import de.frosner.broccoli.instances.conf.InstanceConfiguration
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.NomadClient
+import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -26,9 +27,18 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                                 consulService: ConsulService,
                                 applicationLifecycle: ApplicationLifecycle,
                                 instanceConfiguration: InstanceConfiguration,
-                                instanceStorage: InstanceStorage) {
+                                instanceStorage: InstanceStorage,
+                                config: Configuration) {
   private val log = play.api.Logger(getClass)
-  private lazy val pollingFrequencySeconds = instanceConfiguration.pollingFrequency
+  // FIXME: refactor out together with the polling scheduler
+  private lazy val pollingFrequencySeconds = {
+    val pollingFrequency = config.getLong("polling.frequency").get
+    if (pollingFrequency <= 0) {
+      throw new IllegalArgumentException(
+        s"Invalid polling frequency specified: $pollingFrequency. Needs to be a positive integer.")
+    }
+    pollingFrequency
+  }
   log.info(s"Nomad/Consul polling frequency set to $pollingFrequencySeconds seconds")
 
   private val scheduler = new ScheduledThreadPoolExecutor(1)
@@ -36,7 +46,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     def run() =
       nomadService.requestStatuses(instances.values.map(_.id).toSet)
   }
-  private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0L, pollingFrequencySeconds.toLong, TimeUnit.SECONDS)
+  private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0L, pollingFrequencySeconds, TimeUnit.SECONDS)
 
   sys.addShutdownHook {
     scheduledTask.cancel(false)
