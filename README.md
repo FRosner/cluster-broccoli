@@ -59,9 +59,12 @@ docker run -p 9000:9000 frosner/cluster-broccoli \
 
 ### Building from Source
 
-1. Download or clone the source code
-2. Navigate into the project directory
-3. `sbt dist`
+Clone this repository and run `sbt dist` to build an [universal ZIP file][universal] in `server/target/universal`.
+
+To build the production Docker image in a local Docker daemon run `sbt docker:publishLocal` local instead.  
+`sbt docker:stage` creates a directory with intermediate artifacts and the `Dockerfile` in `server/target/docker/stage`; use this command to inspect the image contents before building or to manually build the image with a custom docker command. 
+
+[universal]: http://sbt-native-packager.readthedocs.io/en/stable/formats/universal.html
 
 ## Configuration
 
