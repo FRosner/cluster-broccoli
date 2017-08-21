@@ -14,6 +14,7 @@ object YarnPlugin extends AutoPlugin {
   object Commands {
     val install = Seq("yarn", "install")
     val setup = Seq("yarn", "setup")
+    val formatValidate = Seq("yarn", "format:validate")
     val test = Seq("yarn", "test")
     val dist = Seq("yarn", "dist", "--")
   }
@@ -31,6 +32,11 @@ object YarnPlugin extends AutoPlugin {
       * In our case, install Elm packages.
       */
     val yarnSetup: TaskKey[Unit] = taskKey[Unit](s"execute: ${Commands.setup}")
+
+    /**
+      * Check Elm formatting.
+      */
+    val yarnFormatValidate: TaskKey[Unit] = taskKey[Unit](s"execute: ${Commands.formatValidate}")
 
     /**
       * Run frontend tests.
@@ -75,6 +81,9 @@ object YarnPlugin extends AutoPlugin {
         (base / "node_modules").get.toSet
       }
       install((base * ("package.json" || "yarn.lock")).get.toSet)
+    },
+    yarnFormatValidate := {
+      execute(Commands.formatValidate, baseDirectory.value, streams.value.log)
     },
     yarnTest := {
       execute(Commands.test, baseDirectory.value, streams.value.log)
