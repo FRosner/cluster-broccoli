@@ -53,7 +53,7 @@ object YarnPlugin extends AutoPlugin {
         outStyle = FilesInfo.exists
       ) { _: Set[File] =>
         execute(Commands.setup, base, streams.value.log)
-        (base / "elm-stuff" / "packages").get.toSet
+        (base / "elm-stuff" / "packages").get.toSet ++ (base / "tests" / "elm-stuff" / "packages").get.toSet
       }
       setup((base / "elm-package.json").get.toSet)
     },
