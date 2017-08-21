@@ -119,6 +119,8 @@ object YarnPlugin extends AutoPlugin {
     },
     yarnSetup := yarnSetup.dependsOn(yarnInstall).value,
     yarnDist := yarnDist.dependsOn(yarnSetup).value,
+    yarnTest := yarnTest.dependsOn(yarnSetup).value,
+    yarnFormatValidate := yarnFormatValidate.dependsOn(yarnSetup).value,
     test in Test := {
       yarnTest.value
     },
