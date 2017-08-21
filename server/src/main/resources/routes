@@ -2,30 +2,11 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# Templates
-GET     /api/v1/templates      @de.frosner.broccoli.controllers.TemplateController.list
-GET     /api/v1/templates/:id  @de.frosner.broccoli.controllers.TemplateController.show(id: String)
+# API routes
+-> /api/v1  de.frosner.broccoli.routes.ApiV1Router
 
-# Instances
-GET     /api/v1/instances         @de.frosner.broccoli.controllers.InstanceController.list(templateId: Option[String])
-GET     /api/v1/instances/:id     @de.frosner.broccoli.controllers.InstanceController.show(id: String)
-POST    /api/v1/instances         @de.frosner.broccoli.controllers.InstanceController.create
-POST    /api/v1/instances/:id     @de.frosner.broccoli.controllers.InstanceController.update(id: String)
-DELETE  /api/v1/instances/:id     @de.frosner.broccoli.controllers.InstanceController.delete(id: String)
-GET  /api/v1/instances/:id/tasks  @de.frosner.broccoli.controllers.InstanceController.tasks(id: String)
-
-
-# About
-GET     /api/v1/about  @de.frosner.broccoli.controllers.AboutController.about
-
-# Status
-
-GET     /api/v1/status  @de.frosner.broccoli.controllers.StatusController.status
-
-# Authentication
-POST    /api/v1/auth/login   @de.frosner.broccoli.controllers.SecurityController.login()
-POST    /api/v1/auth/logout  @de.frosner.broccoli.controllers.SecurityController.logout()
-GET     /api/v1/auth/verify  @de.frosner.broccoli.controllers.SecurityController.verify()
+# Downloads
+-> /downloads/ de.frosner.broccoli.routes.DownloadsRouter
 
 # Web-UI
 GET     /       @controllers.Assets.at(path="/public", file="index.html")

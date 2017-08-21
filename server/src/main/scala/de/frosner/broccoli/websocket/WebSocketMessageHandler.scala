@@ -5,6 +5,7 @@ import javax.inject.Inject
 import cats.syntax.either._
 import cats.instances.future._
 import de.frosner.broccoli.controllers.InstanceController
+import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.models.Account
 import de.frosner.broccoli.services.InstanceService
 import de.frosner.broccoli.websocket.OutgoingMessage._
@@ -30,7 +31,8 @@ trait WebSocketMessageHandler {
 /**
   * Process broccoli's websocket messages.
   */
-class BroccoliMessageHandler @Inject()(instanceService: InstanceService)(implicit ec: ExecutionContext)
+class BroccoliMessageHandler @Inject()(instances: NomadInstances, instanceService: InstanceService)(
+    implicit ec: ExecutionContext)
     extends WebSocketMessageHandler {
 
   override def processMessage(user: Account)(incomingMessage: IncomingMessage): Future[OutgoingMessage] =
@@ -51,7 +53,7 @@ class BroccoliMessageHandler @Inject()(instanceService: InstanceService)(implici
           .toEitherT
           .fold(UpdateInstanceError, UpdateInstanceSuccess)
       case GetInstanceTasks(instanceId) =>
-        instanceService
+        instances
           .getInstanceTasks(user)(instanceId)
           .fold(GetInstanceTasksError, GetInstanceTasksSuccess)
     }

@@ -13,9 +13,10 @@ module.exports = {
   devServer: {
     // We have a single-page application so do not navigate
     historyApiFallback: true,
-    // Forward API requests to the running backend
+    // Forward requests to API, downloads and websocket to the running backend
     proxy: {
       '/api': 'http://localhost:9000',
+      '/downloads': 'http://localhost:9000',
       '/ws': {
         target: 'ws://localhost:9000/',
         ws: true

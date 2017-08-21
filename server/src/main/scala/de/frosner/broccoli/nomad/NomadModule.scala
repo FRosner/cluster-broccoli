@@ -3,6 +3,7 @@ package de.frosner.broccoli.nomad
 import javax.inject.Singleton
 
 import com.google.inject.{AbstractModule, Provides}
+import com.netaporter.uri.Uri
 import net.codingwell.scalaguice.ScalaModule
 import play.api.Configuration
 import play.api.libs.ws.WSClient
@@ -37,5 +38,5 @@ class NomadModule extends AbstractModule with ScalaModule {
   @Provides
   @Singleton
   def provideNomadClient(config: NomadConfiguration, wsClient: WSClient): NomadClient =
-    new NomadHttpClient(config.url, wsClient)(play.api.libs.concurrent.Execution.defaultContext)
+    new NomadHttpClient(Uri.parse(config.url), wsClient)(play.api.libs.concurrent.Execution.defaultContext)
 }

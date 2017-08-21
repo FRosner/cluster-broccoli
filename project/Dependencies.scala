@@ -11,6 +11,12 @@ object Dependencies {
     val play2auth = "0.14.2"
 
     val cats = "1.0.0-MF"
+
+    val shapeless = "2.3.2"
+
+    val scalaUri = "0.4.17"
+
+    val squants = "1.3.0"
   }
 
   /**
@@ -28,6 +34,11 @@ object Dependencies {
   ).map(module => "org.typelevel" %% s"cats-$module" % Versions.cats)
 
   /**
+    * Type-level programming library
+    */
+  val shapeless: ModuleID = "com.chuusai" %% "shapeless" % Versions.shapeless
+
+  /**
     * A powerful enumeration type for Scala.
     */
   val enumeratum: Seq[ModuleID] = Seq(
@@ -35,6 +46,18 @@ object Dependencies {
     // Keep this version at 1.5.11 for compatibility with Play 2.5; later versions depend on Play 2.6 already
     "com.beachape" %% "enumeratum-play-json" % "1.5.11"
   )
+
+  /**
+    * Types and DSL for URIs
+    */
+  val scalaUri: ModuleID = "io.lemonlabs" %% "scala-uri" % Versions.scalaUri
+
+  /**
+    * Units for Scala.
+    *
+    * We use it for size units, eg bytes, kilobytes, etc.
+    */
+  val squants: ModuleID = "org.typelevel" %% "squants" % Versions.squants
 
   /**
     * Property testing for Scala.

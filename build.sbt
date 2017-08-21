@@ -16,6 +16,9 @@ lazy val server = project
     routesGenerator := InjectedRoutesGenerator,
     libraryDependencies ++= List(
       Dependencies.simulacrum,
+      Dependencies.shapeless,
+      Dependencies.scalaUri,
+      Dependencies.squants,
       Dependencies.scalaguice,
       ws,
       cache,

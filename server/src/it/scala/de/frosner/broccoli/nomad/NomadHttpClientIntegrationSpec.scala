@@ -1,5 +1,8 @@
 package de.frosner.broccoli.nomad
 
+import com.netaporter.uri.Uri
+import com.netaporter.uri.dsl._
+import de.frosner.broccoli.nomad.models.Job
 import de.frosner.broccoli.test.contexts.WSClientContext
 import de.frosner.broccoli.test.contexts.docker.BroccoliDockerContext
 import de.frosner.broccoli.test.contexts.docker.BroccoliTestService.{Broccoli, Nomad}
@@ -25,19 +28,18 @@ class NomadHttpClientIntegrationSpec
   override def broccoliDockerConfig: BroccoliDockerContext.Configuration =
     BroccoliDockerContext.Configuration.services(Broccoli, Nomad)
 
-  private val baseUrl = "http://localhost:4646"
-  private val broccoliURL = "http://localhost:9000"
+  private val broccoliApi = "http://localhost:9000/api/v1"
 
   override def is(implicit executionEnv: ExecutionEnv): Any =
     "The NomadHttpClient" should {
       "get allocations for a running nomad job" >> { wsClient: WSClient =>
         // Generate a random identifier for the instance
         val identifier = Gen.resize(10, Gen.identifier).sample.get
-        val client = new NomadHttpClient(baseUrl, wsClient)
+        val client = new NomadHttpClient(Uri.parse("http://localhost:4646"), wsClient)
         (for {
           // Create and start a simple instance to look at it's allocations
           _ <- wsClient
-            .url(s"$broccoliURL/api/v1/instances")
+            .url(broccoliApi / "instances")
             .post(
               Json.obj("templateId" -> "http-server",
                        "parameters" -> Json.obj(
@@ -49,7 +51,7 @@ class NomadHttpClientIntegrationSpec
               response
             })
           _ <- wsClient
-            .url(s"$broccoliURL/api/v1/instances/$identifier")
+            .url(broccoliApi / "instances" / identifier)
             .post(Json.obj("status" -> "running"))
             .map(response => {
               response.status must beEqualTo(200)
@@ -57,7 +59,7 @@ class NomadHttpClientIntegrationSpec
               blocking(Thread.sleep(1.seconds.toMillis))
               response
             })
-          allocations <- client.getAllocationsForJob(identifier)
+          allocations <- client.getAllocationsForJob(shapeless.tag[Job.Id](identifier))
         } yield {
           (allocations.jobId === identifier) and (allocations.payload must have length 1)
         }).await(5, broccoliDockerConfig.startupPatience + 2.seconds)
