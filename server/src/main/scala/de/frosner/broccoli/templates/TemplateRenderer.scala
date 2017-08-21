@@ -12,7 +12,7 @@ import play.api.libs.json.{JsString, JsValue, Json}
   * @param instanceConfiguration
   */
 class TemplateRenderer @Inject()(instanceConfiguration: InstanceConfiguration) {
-  private[templates] def sanitize(parameter: String, value: String, parameterInfos: Map[String, ParameterInfo]) = {
+  def sanitize(parameter: String, value: String, parameterInfos: Map[String, ParameterInfo]) = {
     val parameterType = parameterInfos
       .get(parameter)
       .flatMap(_.`type`)
