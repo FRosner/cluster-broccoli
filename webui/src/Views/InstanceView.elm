@@ -378,14 +378,15 @@ instanceTasksView instance instanceTasks =
                 Just allocations ->
                     [ table
                         [ class "table table-condensed table-hover"
-                        , style [ ( "table-layout", "fixed" ) ]
                         ]
-                        [ thead []
+                        [ thead
+                            -- Do not wrap table headers
+                            [ style [ ( "white-space", "nowrap" ) ] ]
                             [ tr []
-                                [ th [] [ text "Task" ]
-                                , th [] [ text "Allocation ID" ]
-                                , th [ class "text-center" ] [ text "State" ]
-                                , th [ class "text-center" ] [ text "Log files" ]
+                                [ th [] [ text "Allocation ID" ]
+                                , th [] [ text "State" ]
+                                , th [ style [ ( "width", "100%" ) ] ] [ text "Task" ]
+                                , th [] [ text "Log files" ]
                                 ]
                             ]
                         , tbody [] <| List.indexedMap (instanceAllocationRow instance) allocations
@@ -440,12 +441,14 @@ instanceAllocationRow instance index ( taskName, allocation ) =
                     ( "running", "label-success" )
     in
         tr []
-            [ th [ scope <| toString (index + 1) ] [ text taskName ]
-            , td [] [ code [] [ text (shortAllocationId allocation.id) ] ]
-            , td [ class "text-center" ]
+            [ td [] [ code [] [ text (shortAllocationId allocation.id) ] ]
+            , td []
                 [ span [ class ("label " ++ labelKind) ] [ text description ]
                 ]
-            , td [ class "text-center" ]
+            , td [] [ text taskName ]
+            , td
+                -- Do not wrap buttons in this cell
+                [ style [ ( "white-space", "nowrap" ) ] ]
                 [ a
                     [ href (logUrl instance taskName allocation StdOut)
                     , target "_blank"
