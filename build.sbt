@@ -76,7 +76,6 @@ lazy val server = project
     dockerLabels ++= Option(System.getenv("TRAVIS_BUILD_NUMBER")).map("travis-build-number" -> _).toMap,
     // Do not run integration tests in parallel, because these spawn docker containers and thus depend on global state
     parallelExecution in IntegrationTest := false,
-    // Do not run unit tests in parallel either because Play doesn't like it
     // Play doesn't like parallel tests with all its state
     parallelExecution in Test := false,
     // Disable API documentation, see https://github.com/playframework/playframework/issues/6688#issuecomment-258080633.
