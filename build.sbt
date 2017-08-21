@@ -52,40 +52,23 @@ lazy val server = project
     dockerBaseImage := "openjdk:8-jre",
     // Upgrade the latest tag when we're building from master on Travis CI
     dockerUpdateLatest := Option(System.getenv("TRAVIS_BRANCH")).exists(_ == "master"),
-    // Map the templates directory into the docker image build context
+    // Copy templates into the docker file
     mappings in Docker := {
       val templatesDirectory = baseDirectory.value.getParentFile / "templates"
+      val targetDirectory = s"${(defaultLinuxInstallLocation in Docker).value}/templates"
       val templates = templatesDirectory.***.get.collect {
         case templateFile if templateFile.isFile =>
           templateFile -> templateFile
             .relativeTo(templatesDirectory)
-            .map(name => (file("/templates") / name.getPath).getPath)
+            .map(name => s"$targetDirectory/${name.getPath}")
             .get
       }
       (mappings in Docker).value ++ templates
     },
-    // Add the templates directory mapped above, and create a daemon-user writable directory to store instances
+    // Create a directory to store instances
     dockerCommands := {
-      val commands = dockerCommands.value
-      val user = (daemonUser in Docker).value
-      val group = (daemonGroup in Docker).value
-      val instanceAndTemplatesCommands = Seq(
-        Cmd("ADD", "templates", "/templates"),
-        ExecCmd("RUN", "mkdir", "/instances"),
-        ExecCmd("RUN", "chown", "-R", s"$user:$group", "/templates", "/instances"),
-        ExecCmd("RUN", "chmod", "0755", "/instances")
-      )
-      // Insert commands to create instances and add templates right after the working directory of the image is
-      // configured
-      val workdirIndex = commands.indexWhere {
-        case Cmd("WORKDIR", _*) => true
-        case _                  => false
-      }
-      commands.take(workdirIndex) ++ instanceAndTemplatesCommands ++ commands.drop(workdirIndex)
+      dockerCommands.value :+ ExecCmd("RUN", "mkdir", s"${(defaultLinuxInstallLocation in Docker).value}/instances")
     },
-    // Point broccoli to the /instances and /templates directories in the container
-    dockerCmd ++= Seq("-Dbroccoli.templates.storage.fs.url=/templates",
-                      "-Dbroccoli.instances.storage.fs.url=/instances"),
     // Expose the application port
     dockerExposedPorts := Seq(9000),
     // Add additional labels to track docker images back to builds and branches
