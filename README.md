@@ -57,10 +57,6 @@ docker run -p 9000:9000 frosner/cluster-broccoli \
   -Dbroccoli.consul.url=<your-consul-url>
 ```
 
-### Using the Development Docker Image
-
-If you only intend to develop Broccoli and want to quickly get started with the source code, you can use the [development image](https://hub.docker.com/r/frosner/cluster-broccoli-dev/). It comes with the required tools for building and running Broccoli in development mode.
-
 ### Building from Source
 
 1. Download or clone the source code
