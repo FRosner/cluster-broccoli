@@ -20,10 +20,10 @@
       },
       "id": {
         "id": "id",
-        "type": "raw"
+        "type": "string"
       }
     },
-    "version": "4281f2e09ecddc820a82c10deafd733f"
+    "version": "1d3ef79890dc8754add7be8f6dcab004"
   },
   {
     "id": "http-server",
