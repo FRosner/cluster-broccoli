@@ -384,9 +384,9 @@ instanceTasksView instance instanceTasks =
                             [ style [ ( "white-space", "nowrap" ) ] ]
                             [ tr []
                                 [ th [] [ text "Allocation ID" ]
-                                , th [] [ text "State" ]
+                                , th [ class "text-center" ] [ text "State" ]
                                 , th [ style [ ( "width", "100%" ) ] ] [ text "Task" ]
-                                , th [] [ text "Log files" ]
+                                , th [ class "text-center" ] [ text "Task logs" ]
                                 ]
                             ]
                         , tbody [] <| List.indexedMap (instanceAllocationRow instance) allocations
@@ -442,13 +442,13 @@ instanceAllocationRow instance index ( taskName, allocation ) =
     in
         tr []
             [ td [] [ code [] [ text (shortAllocationId allocation.id) ] ]
-            , td []
+            , td [ class "text-center" ]
                 [ span [ class ("label " ++ labelKind) ] [ text description ]
                 ]
             , td [] [ text taskName ]
             , td
                 -- Do not wrap buttons in this cell
-                [ style [ ( "white-space", "nowrap" ) ] ]
+                [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
                 [ a
                     [ href (logUrl instance taskName allocation StdOut)
                     , target "_blank"
