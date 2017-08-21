@@ -89,6 +89,7 @@ The following configuration properties are supported. Please refer to the [Wiki]
 | `broccoli.instances.storage.fs.url` | Storage directory for instances in `fs` mode. | `instances` |
 | `broccoli.instances.storage.couchdb.url` | URL to CouchDB in `couchdb` mode. | `http://localhost:5984` |
 | `broccoli.instances.storage.couchdb.dbName` | Database name in `couchdb` mode. | `broccoli_instances` |
+| `broccoli.instances.parameters.defaultType` | Default type for the template parameters  | 'string' |
 
 ### [Security](https://github.com/FRosner/cluster-broccoli/wiki/Security)
 
