@@ -32,7 +32,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
   private val log = play.api.Logger(getClass)
   // FIXME: refactor out together with the polling scheduler
   private lazy val pollingFrequencySeconds = {
-    val pollingFrequency = config.getLong("polling.frequency").get
+    val pollingFrequency = config.getLong("broccoli.polling.frequency").get
     if (pollingFrequency <= 0) {
       throw new IllegalArgumentException(
         s"Invalid polling frequency specified: $pollingFrequency. Needs to be a positive integer.")
