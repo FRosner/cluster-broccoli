@@ -9,8 +9,7 @@ case class Instance(id: String, template: Template, parameterValues: Map[String,
 
   def requireParameterValueConsistency(parameterValues: Map[String, String], template: Template) = {
     val realParametersWithValues = parameterValues.keySet ++ template.parameterInfos.flatMap {
-      case (key, ParameterInfo(_, _, Some(default), _)) => Some(key)
-      case (key, ParameterInfo(_, _, None, _))          => None
+      case (key, info) => info.default.map(Function.const(key))
     }
     require(
       template.parameters == realParametersWithValues,
@@ -44,21 +43,6 @@ case class Instance(id: String, template: Template, parameterValues: Map[String,
         parameterValues = newParameterValues
       )
     }
-
-  def templateJson: JsValue = {
-    val templateWithValues = parameterValues.foldLeft(template.template) {
-      case (intermediateTemplate, (parameter, value)) =>
-        intermediateTemplate.replaceAllLiterally(s"{{$parameter}}", value)
-    }
-    val parameterDefaults = template.parameterInfos.flatMap {
-      case (parameterId, parameterInfo) => parameterInfo.default.map(default => (parameterId, default))
-    }
-    val templateWithDefaults = parameterDefaults.foldLeft(templateWithValues) {
-      case (intermediateTemplate, (parameter, value)) =>
-        intermediateTemplate.replaceAllLiterally(s"{{$parameter}}", value)
-    }
-    Json.parse(templateWithDefaults)
-  }
 
 }
 

@@ -60,7 +60,7 @@ class TemplateSpec extends Specification {
                              template = "template JSON {{id}}",
                              description = "desc",
                              parameterInfos = Map(
-                               "id" -> ParameterInfo("id", None, None, secret = Some(false))
+                               "id" -> ParameterInfo("id", None, None, secret = Some(false), `type` = None)
                              )).version
     }
 

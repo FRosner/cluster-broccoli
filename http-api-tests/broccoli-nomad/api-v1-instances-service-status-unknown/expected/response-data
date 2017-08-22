@@ -12,16 +12,22 @@
       "cpu": {
         "id": "cpu",
         "name": "CPU Shares",
-        "default": "100"
+        "default": "100",
+        "type": "raw"
       },
       "secret": {
         "id": "secret",
         "name": "A Secret Parameter",
         "default": "guessme",
-        "secret": true
+        "secret": true,
+        "type": "raw"
+      },
+      "id": {
+        "id": "id",
+        "type": "raw"
       }
     },
-    "version": "175530a654665f25a54aed1207b967e8"
+    "version": "ae0d471483f2164dd32bf7250e5f04e2"
   },
   "parameterValues": {
     "id": "test-http"

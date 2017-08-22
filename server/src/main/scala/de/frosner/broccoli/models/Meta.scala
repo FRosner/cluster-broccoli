@@ -16,8 +16,12 @@ object Meta {
     * @param name Name of the parameter
     * @param default Default value of the parameter
     * @param secret True if the parameter is a secret
+    * @param type Type of the parameter
     */
-  final case class Parameter(name: Option[String], default: Option[String], secret: Option[Boolean])
+  final case class Parameter(name: Option[String],
+                             default: Option[String],
+                             secret: Option[Boolean],
+                             `type`: Option[ParameterType])
 
   object Parameter {
     implicit val parameterReads: Reads[Parameter] = Json.reads[Parameter]

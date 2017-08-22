@@ -7,8 +7,7 @@ import de.frosner.broccoli.RemoveSecrets.ToRemoveSecretsOps
 import org.scalacheck.Gen
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
-import org.specs2.mutable._
-import play.api.libs.json.{JsString, Json}
+import play.api.libs.json.JsString
 
 class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries with ToRemoveSecretsOps {
 
@@ -35,59 +34,6 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
       Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map.empty) must throwA[IllegalArgumentException]
     }
 
-    "parse the template correctly when it contains a single parameter" in {
-      val instance = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Frank"))
-      instance.templateJson === JsString("Frank")
-    }
-
-    "parse the template correctly when it contains multiple parameters" in {
-      val instance =
-        Instance("1", Template("1", "\"{{id}} {{age}}\"", "desc", Map.empty), Map("id" -> "Frank", "age" -> "5"))
-      instance.templateJson === JsString("Frank 5")
-    }
-
-    "parse the template correctly when it contains a defined default parameter" in {
-      val instance = Instance(
-        id = "1",
-        template = Template(
-          id = "1",
-          template = "\"{{id}} {{age}}\"",
-          description = "desc",
-          parameterInfos = Map("age" -> ParameterInfo("age", None, Some("50"), secret = Some(false)))
-        ),
-        parameterValues = Map("id" -> "Frank")
-      )
-      instance.templateJson === JsString("Frank 50")
-    }
-
-    "parse the template correctly when it contains regex stuff that breacks with replaceAll" in {
-      val instance = Instance(
-        id = "1",
-        template = Template(
-          id = "1",
-          template = "\"{{id}}\"",
-          description = "desc",
-          parameterInfos = Map.empty
-        ),
-        parameterValues = Map("id" -> "^.*$")
-      )
-      instance.templateJson === JsString("^.*$")
-    }
-
-    "parse the template correctly when it contains an undefined default parameter" in {
-      val instance = Instance(
-        id = "1",
-        template = Template(
-          id = "1",
-          template = "\"{{id}} {{age}}\"",
-          description = "desc",
-          parameterInfos = Map("age" -> ParameterInfo("age", None, None, secret = Some(false)))
-        ),
-        parameterValues = Map("id" -> "Frank", "age" -> "50")
-      )
-      instance.templateJson === JsString("Frank 50")
-    }
-
     "throw an exception if the template contains no default and no value" in {
       Instance(
         id = "1",
@@ -95,7 +41,7 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos = Map("age" -> ParameterInfo("age", None, None, secret = Some(false)))
+          parameterInfos = Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = None))
         ),
         parameterValues = Map("id" -> "Frank")
       ) must throwA[IllegalArgumentException]

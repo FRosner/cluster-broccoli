@@ -12,7 +12,12 @@
     "parameters": [
       "id"
     ],
-    "parameterInfos": {},
-    "version": "74ae5a281ae390857d07b6553c67a650"
+    "parameterInfos": {
+      "id": {
+        "id": "id",
+        "type": "raw"
+      }
+    },
+    "version": "51d87cc9a0249d2f684ca31f59968601"
   }
 }

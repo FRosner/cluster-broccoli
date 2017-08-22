@@ -3,12 +3,17 @@
   "parameters": {
     "cpu": {
       "name": "CPU Shares",
-      "default": "100"
+      "default": "100",
+      "type": "raw"
     },
     "secret": {
       "name": "A Secret Parameter",
       "default": "guessme",
-      "secret": true
+      "secret": true,
+      "type": "raw"
+    },
+    "id": {
+      "type": "raw"
     }
   }
 }

@@ -1,4 +1,4 @@
-package de.frosner.broccoli.services
+package de.frosner.broccoli.instances
 
 import java.io._
 

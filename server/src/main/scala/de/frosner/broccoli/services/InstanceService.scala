@@ -1,20 +1,20 @@
 package de.frosner.broccoli.services
 
-import java.io._
 import java.net.ConnectException
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import javax.inject.{Inject, Singleton}
 
 import cats.data.EitherT
-import cats.instances.future._
-import de.frosner.broccoli.conf
+import cats.instances.future.{getClass, _}
+import de.frosner.broccoli.instances._
+import de.frosner.broccoli.templates.TemplateRenderer
+import de.frosner.broccoli.instances.conf.InstanceConfiguration
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.NomadClient
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.ws.WSClient
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -25,26 +25,20 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                                 templateService: TemplateService,
                                 nomadService: NomadService,
                                 consulService: ConsulService,
-                                ws: WSClient,
                                 applicationLifecycle: ApplicationLifecycle,
-                                configuration: Configuration) {
-
+                                instanceConfiguration: InstanceConfiguration,
+                                instanceStorage: InstanceStorage,
+                                config: Configuration) {
   private val log = play.api.Logger(getClass)
-
-  private lazy val pollingFrequencySecondsString = configuration.getString(conf.POLLING_FREQUENCY_KEY)
-  private lazy val pollingFrequencySecondsTry = pollingFrequencySecondsString match {
-    case Some(string) =>
-      Try(string.toInt).flatMap { int =>
-        if (int >= 1) Success(int) else Failure(new Exception())
-      }
-    case None => Success(conf.POLLING_FREQUENCY_DEFAULT)
+  // FIXME: refactor out together with the polling scheduler
+  private lazy val pollingFrequencySeconds = {
+    val pollingFrequency = config.getLong("broccoli.polling.frequency").get
+    if (pollingFrequency <= 0) {
+      throw new IllegalArgumentException(
+        s"Invalid polling frequency specified: $pollingFrequency. Needs to be a positive integer.")
+    }
+    pollingFrequency
   }
-  if (pollingFrequencySecondsTry.isFailure) {
-    log.error(
-      s"Invalid ${conf.POLLING_FREQUENCY_KEY} specified: '${pollingFrequencySecondsString.get}'. Needs to be a positive integer.")
-    System.exit(1)
-  }
-  private lazy val pollingFrequencySeconds = pollingFrequencySecondsTry.get
   log.info(s"Nomad/Consul polling frequency set to $pollingFrequencySeconds seconds")
 
   private val scheduler = new ScheduledThreadPoolExecutor(1)
@@ -52,80 +46,11 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     def run() =
       nomadService.requestStatuses(instances.values.map(_.id).toSet)
   }
-  private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0L, pollingFrequencySeconds.toLong, TimeUnit.SECONDS)
+  private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0L, pollingFrequencySeconds, TimeUnit.SECONDS)
 
   sys.addShutdownHook {
     scheduledTask.cancel(false)
     scheduler.shutdown()
-  }
-
-  @volatile
-  private lazy val instanceStorage: InstanceStorage = {
-    val instanceStorageType = {
-      val storageType =
-        configuration.getString(conf.INSTANCES_STORAGE_TYPE_KEY).getOrElse(conf.INSTANCES_STORAGE_TYPE_DEFAULT)
-      val allowedStorageTypes = Set(conf.INSTANCES_STORAGE_TYPE_FS, conf.INSTANCES_STORAGE_TYPE_COUCHDB)
-      if (!allowedStorageTypes.contains(storageType)) {
-        log.error(
-          s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType is invalid. Only ${allowedStorageTypes.mkString(", ")} supported.")
-        System.exit(1)
-      }
-      log.info(s"${conf.INSTANCES_STORAGE_TYPE_KEY}=$storageType")
-      storageType
-    }
-
-    val maybeInstanceStorage = instanceStorageType match {
-      case conf.INSTANCES_STORAGE_TYPE_FS => {
-        val instanceDir = {
-          if (configuration.getString("broccoli.instancesFile").isDefined)
-            log.warn(s"broccoli.instancesFile ignored. Use ${conf.INSTANCES_STORAGE_FS_URL_KEY} instead.")
-          val url =
-            configuration.getString(conf.INSTANCES_STORAGE_FS_URL_KEY).getOrElse(conf.INSTANCES_STORAGE_FS_URL_DEFAULT)
-          log.info(s"${conf.INSTANCES_STORAGE_FS_URL_KEY}=$url")
-          url
-        }
-        Try(FileSystemInstanceStorage(new File(instanceDir)))
-      }
-      case conf.INSTANCES_STORAGE_TYPE_COUCHDB => {
-        val couchDbUrl = {
-          val url = configuration
-            .getString(conf.INSTANCES_STORAGE_COUCHDB_URL_KEY)
-            .getOrElse(conf.INSTANCES_STORAGE_COUCHDB_URL_DEFAULT)
-          log.info(s"${conf.INSTANCES_STORAGE_COUCHDB_URL_KEY}=$url")
-          url
-        }
-        val couchDbName = {
-          val name = configuration
-            .getString(conf.INSTANCES_STORAGE_COUCHDB_DBNAME_KEY)
-            .getOrElse(conf.INSTANCES_STORAGE_COUCHDB_DBNAME_DEFAULT)
-          log.info(s"${conf.INSTANCES_STORAGE_COUCHDB_DBNAME_KEY}=$name")
-          name
-        }
-        Try(CouchDBInstanceStorage(couchDbUrl, couchDbName, ws))
-      }
-      case default => throw new IllegalStateException(s"Illegal storage type '$instanceStorageType")
-    }
-    val instanceStorage = maybeInstanceStorage match {
-      case Success(storage) => storage
-      case Failure(throwable) =>
-        log.error(s"Cannot start instance storage: $throwable")
-        System.exit(1)
-        throw throwable
-    }
-    sys.addShutdownHook {
-      log.info("Closing instanceStorage (shutdown hook)")
-      if (!instanceStorage.isClosed) {
-        instanceStorage.close()
-      }
-    }
-    applicationLifecycle.addStopHook(() =>
-      Future {
-        log.info("Closing instanceStorage (stop hook)")
-        if (!instanceStorage.isClosed) {
-          instanceStorage.close()
-        }
-    })
-    instanceStorage
   }
 
   @volatile
@@ -247,12 +172,14 @@ class InstanceService @Inject()(nomadClient: NomadClient,
           Success(instance)
         }
       }
+
+      val templateRenderer = new TemplateRenderer(instanceConfiguration)
       val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
         statusUpdater
           .map {
             // Update the instance status
             case JobStatus.Running =>
-              nomadService.startJob(instance.templateJson).map(_ => instance)
+              nomadService.startJob(templateRenderer.renderJson(instance)).map(_ => instance)
             case JobStatus.Stopped =>
               nomadService.deleteJob(instance.id).map(_ => instance)
             case other =>

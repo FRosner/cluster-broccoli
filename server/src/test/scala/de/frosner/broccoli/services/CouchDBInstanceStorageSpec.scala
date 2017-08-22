@@ -7,8 +7,8 @@ import java.util.UUID
 
 import de.frosner.broccoli.models.{Instance, Template}
 import Instance.{instancePersistenceReads, instancePersistenceWrites}
+import de.frosner.broccoli.instances.{CouchDBInstanceStorage, InstanceNotFoundException}
 import org.specs2.mutable.Specification
-
 import play.core.server.Server
 import play.api.Play
 import play.api.routing.sird._

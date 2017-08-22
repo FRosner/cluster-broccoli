@@ -88,5 +88,4 @@ object Dependencies {
     * Apache Commons IO to provide additional functionality for IO like copying directories recursively
     */
   val commonsIO: ModuleID = "commons-io" % "commons-io" % "2.5"
-
 }
