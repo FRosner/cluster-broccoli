@@ -386,6 +386,8 @@ instanceTasksView instance instanceTasks =
                                 [ th [] [ text "Allocation ID" ]
                                 , th [ class "text-center" ] [ text "State" ]
                                 , th [ style [ ( "width", "100%" ) ] ] [ text "Task" ]
+                                , th [ class "text-center" ] [ text "CPU" ]
+                                , th [ class "text-center" ] [ text "Memory" ]
                                 , th [ class "text-center" ] [ text "Task logs" ]
                                 ]
                             ]
@@ -446,6 +448,34 @@ instanceAllocationRow instance index ( taskName, allocation ) =
                 [ span [ class ("label " ++ labelKind) ] [ text description ]
                 ]
             , td [] [ text taskName ]
+            , td []
+                [ div
+                    [ class "progress" ]
+                    [ div
+                        [ class "progress-bar progress-bar-success"
+                        , attribute "role" "porgressbar"
+                        , attribute "aria-valuenow" "40"
+                        , attribute "aria-value-min" "0"
+                        , attribute "aria-value-max" "100"
+                        , style [ ( "width", "40%" ) ]
+                        ]
+                        [ div [ style [ ( "width", "75px" ) ] ] [] ]
+                    ]
+                ]
+            , td []
+                [ div
+                    [ class "progress" ]
+                    [ div
+                        [ class "progress-bar progress-bar-warning"
+                        , attribute "role" "porgressbar"
+                        , attribute "aria-valuenow" "90"
+                        , attribute "aria-value-min" "0"
+                        , attribute "aria-value-max" "100"
+                        , style [ ( "width", "90%" ) ]
+                        ]
+                        [ div [ style [ ( "width", "75px" ) ] ] [] ]
+                    ]
+                ]
             , td
                 -- Do not wrap buttons in this cell
                 [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
