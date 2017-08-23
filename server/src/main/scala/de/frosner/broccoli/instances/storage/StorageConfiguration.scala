@@ -1,7 +1,7 @@
 package de.frosner.broccoli.instances.storage
 
 import de.frosner.broccoli.instances.storage.couchdb.CouchDBConfiguration
-import de.frosner.broccoli.instances.storage.filesystem.FilesystemConfiguration
+import de.frosner.broccoli.instances.storage.filesystem.FileSystemConfiguration
 
 /**
   * Configuration specific to the instance storage type
@@ -12,6 +12,6 @@ import de.frosner.broccoli.instances.storage.filesystem.FilesystemConfiguration
   */
 final case class StorageConfiguration(
     `type`: StorageType,
-    fs: FilesystemConfiguration,
+    fs: FileSystemConfiguration,
     couchdb: CouchDBConfiguration
 )

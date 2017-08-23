@@ -5,4 +5,4 @@ package de.frosner.broccoli.instances.storage.filesystem
   *
   * @param url location on the filesystem to store the instance information
   */
-final case class FilesystemConfiguration(url: String)
+final case class FileSystemConfiguration(url: String)
