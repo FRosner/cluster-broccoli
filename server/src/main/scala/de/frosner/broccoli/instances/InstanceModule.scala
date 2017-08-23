@@ -44,10 +44,10 @@ class InstanceModule extends AbstractModule with ScalaModule {
     val storageConfig = config.instances.storage
     val instanceStorage = storageConfig.`type` match {
       case StorageType.FileSystem =>
-        FileSystemInstanceStorage(storageConfig.fs.path.toAbsolutePath.toFile)
+        new FileSystemInstanceStorage(storageConfig.fs.path.toAbsolutePath.toFile)
       case StorageType.CouchDB =>
         val config = storageConfig.couchdb
-        CouchDBInstanceStorage(config.url, config.database, ws)
+        new CouchDBInstanceStorage(config.url, config.database, ws)
     }
 
     applicationLifecycle.addStopHook(() => {

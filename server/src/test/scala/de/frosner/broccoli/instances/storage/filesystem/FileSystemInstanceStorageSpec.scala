@@ -25,21 +25,21 @@ class FileSystemInstanceStorageSpec extends Specification with TemporaryDirector
   "Using the file system instance storage" should {
 
     "require the storage directory to be present" in {
-      FileSystemInstanceStorage(new File(UUID.randomUUID().toString)) should throwA[IllegalArgumentException]
+      new FileSystemInstanceStorage(new File(UUID.randomUUID().toString)) should throwA[IllegalArgumentException]
     }
 
     "fail if the storage directory is already locked" in { folder: Path =>
-      FileSystemInstanceStorage(folder.toFile)
-      FileSystemInstanceStorage(folder.toFile) should throwA[IllegalStateException]
+      new FileSystemInstanceStorage(folder.toFile)
+      new FileSystemInstanceStorage(folder.toFile) should throwA[IllegalStateException]
     }
 
     "lock the storage directory" in { folder: Path =>
-      FileSystemInstanceStorage(folder.toFile)
+      new FileSystemInstanceStorage(folder.toFile)
       new File(folder.toFile, ".lock").isFile === true
     }
 
     "unlock the storage directory on close" in { folder: Path =>
-      FileSystemInstanceStorage(folder.toFile).close()
+      new FileSystemInstanceStorage(folder.toFile).close()
       new File(folder.toFile, ".lock").isFile === false
     }
 
@@ -48,13 +48,13 @@ class FileSystemInstanceStorageSpec extends Specification with TemporaryDirector
   "Writing and reading an instance" should {
 
     "work" in { folder: Path =>
-      val storage = FileSystemInstanceStorage(folder.toFile)
+      val storage = new FileSystemInstanceStorage(folder.toFile)
       storage.writeInstance(instance)
       storage.readInstance(instance.id) === Success(instance)
     }
 
     "fail if the file is not readable" in { folder: Path =>
-      val storage = FileSystemInstanceStorage(folder.toFile)
+      val storage = new FileSystemInstanceStorage(folder.toFile)
       storage.writeInstance(instance)
       val instanceFile = new File(folder.toFile, instance.id + ".json")
       instanceFile.setReadable(false)
@@ -62,7 +62,7 @@ class FileSystemInstanceStorageSpec extends Specification with TemporaryDirector
     }
 
     "fail if the file is not a valid JSON" in { folder: Path =>
-      val storage = FileSystemInstanceStorage(folder.toFile)
+      val storage = new FileSystemInstanceStorage(folder.toFile)
       storage.writeInstance(instance)
       val instanceFile = new File(folder.toFile, instance.id + ".json")
       val writer = new PrintStream(new FileOutputStream(instanceFile))
@@ -72,7 +72,7 @@ class FileSystemInstanceStorageSpec extends Specification with TemporaryDirector
     }
 
     "fail if the instance ID does not match the file name" in { folder: Path =>
-      val storage = FileSystemInstanceStorage(folder.toFile)
+      val storage = new FileSystemInstanceStorage(folder.toFile)
       storage.writeInstance(instance)
       val instanceFile = new File(folder.toFile, instance.id + ".json")
       val fileContent = Source
@@ -90,7 +90,7 @@ class FileSystemInstanceStorageSpec extends Specification with TemporaryDirector
   "Writing and reading all instances" should {
 
     "not apply an additional filter if called without one" in { folder: Path =>
-      val storage = FileSystemInstanceStorage(folder.toFile)
+      val storage = new FileSystemInstanceStorage(folder.toFile)
       val instance2 = instance.copy(id = instance.id + "2")
       storage.writeInstance(instance)
       storage.writeInstance(instance2)
@@ -99,7 +99,7 @@ class FileSystemInstanceStorageSpec extends Specification with TemporaryDirector
     }
 
     "apply an additional filter if specified" in { folder: Path =>
-      val storage = FileSystemInstanceStorage(folder.toFile)
+      val storage = new FileSystemInstanceStorage(folder.toFile)
       val instance2 = instance.copy(id = instance.id + "2")
       storage.writeInstance(instance)
       storage.writeInstance(instance2)
@@ -108,14 +108,14 @@ class FileSystemInstanceStorageSpec extends Specification with TemporaryDirector
     }
 
     "filter out non .json files from the directory" in { folder: Path =>
-      val storage = FileSystemInstanceStorage(folder.toFile)
+      val storage = new FileSystemInstanceStorage(folder.toFile)
       val newFile = new File(folder.toFile, "notJson.exe")
       newFile.createNewFile()
       storage.readInstances === Success(Set.empty[Instance])
     }
 
     "fail if reading any of the instances fails" in { folder: Path =>
-      val storage = FileSystemInstanceStorage(folder.toFile)
+      val storage = new FileSystemInstanceStorage(folder.toFile)
       storage.writeInstance(instance)
       val instanceFile = new File(folder.toFile, instance.id + ".json")
       instanceFile.setReadable(false)
@@ -126,14 +126,14 @@ class FileSystemInstanceStorageSpec extends Specification with TemporaryDirector
   "Deleting an instance" should {
 
     "work" in { folder: Path =>
-      val storage = FileSystemInstanceStorage(folder.toFile)
+      val storage = new FileSystemInstanceStorage(folder.toFile)
       storage.writeInstance(instance)
       storage.deleteInstance(instance)
       storage.readInstance(instance.id).isFailure === true
     }
 
     "fail if the file does not exist" in { folder: Path =>
-      val storage = FileSystemInstanceStorage(folder.toFile)
+      val storage = new FileSystemInstanceStorage(folder.toFile)
       storage.deleteInstance(instance).failed.get should beAnInstanceOf[FileNotFoundException]
     }
   }

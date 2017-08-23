@@ -9,7 +9,7 @@ import play.api.libs.json.Json
 import scala.util.{Failure, Success, Try}
 
 @volatile
-case class FileSystemInstanceStorage(storageDirectory: File) extends InstanceStorage {
+class FileSystemInstanceStorage(storageDirectory: File) extends InstanceStorage {
 
   import Instance.{instancePersistenceReads, instancePersistenceWrites}
 
