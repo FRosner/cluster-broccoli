@@ -1,8 +1,10 @@
 package de.frosner.broccoli.instances.storage.filesystem
 
+import java.nio.file.Path
+
 /**
   * Configuration for FileSystemInstanceStorage
   *
-  * @param url location on the filesystem to store the instance information
+  * @param path location on the filesystem to store the instance information
   */
-final case class FileSystemConfiguration(url: String)
+final case class FileSystemConfiguration(path: Path)
