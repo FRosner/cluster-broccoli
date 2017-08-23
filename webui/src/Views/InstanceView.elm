@@ -450,7 +450,9 @@ instanceAllocationRow instance index ( taskName, allocation ) =
             , td [] [ text taskName ]
             , td []
                 [ div
-                    [ class "progress" ]
+                    [ class "progress"
+                    , title "398/1000 MHz"
+                    ]
                     [ div
                         [ class "progress-bar progress-bar-success"
                         , attribute "role" "porgressbar"
@@ -464,7 +466,9 @@ instanceAllocationRow instance index ( taskName, allocation ) =
                 ]
             , td []
                 [ div
-                    [ class "progress" ]
+                    [ class "progress"
+                    , title "481/512 MB"
+                    ]
                     [ div
                         [ class "progress-bar progress-bar-warning"
                         , attribute "role" "porgressbar"
