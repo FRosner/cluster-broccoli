@@ -10,14 +10,14 @@ import play.api.libs.json.{JsString, JsValue, Json}
 /**
   * Renders json representation of the passed instance
   *
-  * @param instanceConfiguration
+  * @param defaultType The default type of template parameters
   */
-class TemplateRenderer @Inject()(instanceConfiguration: InstanceConfiguration) {
-  def sanitize(parameter: String, value: String, parameterInfos: Map[String, ParameterInfo]) = {
+class TemplateRenderer(defaultType: ParameterType) {
+  def sanitize(parameter: String, value: String, parameterInfos: Map[String, ParameterInfo]): String = {
     val parameterType = parameterInfos
       .get(parameter)
       .flatMap(_.`type`)
-      .getOrElse(instanceConfiguration.defaultParameterType)
+      .getOrElse(defaultType)
     val sanitized = parameterType match {
       case ParameterType.Raw => value
       case ParameterType.String =>

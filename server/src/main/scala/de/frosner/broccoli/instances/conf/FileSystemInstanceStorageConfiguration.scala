@@ -9,13 +9,3 @@ import play.api.Logger
   * @param url location on the filesystem to store the instance information
   */
 final case class FileSystemInstanceStorageConfiguration(url: String)
-
-object FileSystemInstanceStorageConfiguration {
-  private val log = Logger(getClass)
-
-  def fromConfig(config: Config): FileSystemInstanceStorageConfiguration = {
-    val url = config.getString("url")
-    log.info(s"broccoli.instances.storage.fs.url=$url")
-    FileSystemInstanceStorageConfiguration(url)
-  }
-}

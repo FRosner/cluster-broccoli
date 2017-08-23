@@ -34,6 +34,7 @@ lazy val server = project
     libraryDependencies ++= Dependencies.enumeratum,
     libraryDependencies ++= Dependencies.specs2.map(_ % Test),
     libraryDependencies ++= Dependencies.specs2.map(_ % IntegrationTest),
+    libraryDependencies ++= Dependencies.pureconfig,
     libraryDependencies ++= Dependencies.play2auth,
     // Macro support for Scala
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),

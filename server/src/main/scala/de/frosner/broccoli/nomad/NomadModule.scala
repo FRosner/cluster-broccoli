@@ -4,6 +4,7 @@ import javax.inject.Singleton
 
 import com.google.inject.{AbstractModule, Provides}
 import com.netaporter.uri.Uri
+import de.frosner.broccoli.BroccoliConfiguration
 import net.codingwell.scalaguice.ScalaModule
 import play.api.Configuration
 import play.api.libs.ws.WSClient
@@ -13,17 +14,6 @@ import play.api.libs.ws.WSClient
   */
 class NomadModule extends AbstractModule with ScalaModule {
   override def configure(): Unit = {}
-
-  /**
-    * Provide the nomad configuration.
-    *
-    * @param config The Play configuration
-    * @return The nomad configuration extracted from the Play configuration
-    */
-  @Provides
-  @Singleton
-  def provideNomadConfiguration(config: Configuration): NomadConfiguration =
-    NomadConfiguration.fromConfig(config.underlying.getConfig("broccoli.nomad"))
 
   /**
     * Provide a nomad client.
@@ -37,6 +27,6 @@ class NomadModule extends AbstractModule with ScalaModule {
     */
   @Provides
   @Singleton
-  def provideNomadClient(config: NomadConfiguration, wsClient: WSClient): NomadClient =
-    new NomadHttpClient(Uri.parse(config.url), wsClient)(play.api.libs.concurrent.Execution.defaultContext)
+  def provideNomadClient(config: BroccoliConfiguration, wsClient: WSClient): NomadClient =
+    new NomadHttpClient(Uri.parse(config.nomad.url), wsClient)(play.api.libs.concurrent.Execution.defaultContext)
 }

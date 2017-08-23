@@ -26,7 +26,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                                 nomadService: NomadService,
                                 consulService: ConsulService,
                                 applicationLifecycle: ApplicationLifecycle,
-                                instanceConfiguration: InstanceConfiguration,
+                                templateRenderer: TemplateRenderer,
                                 instanceStorage: InstanceStorage,
                                 config: Configuration) {
   private val log = play.api.Logger(getClass)
@@ -60,12 +60,11 @@ class InstanceService @Inject()(nomadClient: NomadClient,
   @volatile
   private def initializeInstancesMap: Map[String, Instance] = {
     instancesMapInitialized = true
-    instancesMap = instanceStorage.readInstances match {
+    instancesMap = instanceStorage.readInstances() match {
       case Success(instances) => instances.map(instance => (instance.id, instance)).toMap
-      case Failure(throwable) => {
+      case Failure(throwable) =>
         log.error(s"Failed to load the instances: ${throwable.toString}")
         throw throwable
-      }
     }
     instancesMap
   }
@@ -173,7 +172,6 @@ class InstanceService @Inject()(nomadClient: NomadClient,
         }
       }
 
-      val templateRenderer = new TemplateRenderer(instanceConfiguration)
       val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
         statusUpdater
           .map {

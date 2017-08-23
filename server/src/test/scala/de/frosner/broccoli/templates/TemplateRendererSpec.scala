@@ -13,13 +13,7 @@ import org.specs2.mutable.Specification
 import play.api.libs.json.JsString
 
 class TemplateRendererSpec extends Specification with Mockito {
-  val templateRenderer = new TemplateRenderer(
-    InstanceConfiguration(
-      ParameterType.Raw,
-      InstanceStorageConfiguration(StorageType.FileSystem,
-                                   FileSystemInstanceStorageConfiguration("path"),
-                                   CouchDBInstanceStorageConfiguration("path", "dbname"))
-    ))
+  val templateRenderer = new TemplateRenderer(ParameterType.Raw)
 
   "TemplateRenderer" should {
     "render the template correctly when an instance contains a single parameter" in {

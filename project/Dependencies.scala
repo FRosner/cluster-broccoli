@@ -17,6 +17,8 @@ object Dependencies {
     val scalaUri = "0.4.17"
 
     val squants = "1.3.0"
+
+    val pureconfig = "0.7.2"
   }
 
   /**
@@ -74,6 +76,14 @@ object Dependencies {
     * Scala syntax for Guice, to declare custom modules
     */
   val scalaguice: ModuleID = "net.codingwell" %% "scala-guice" % "4.1.0"
+
+  /**
+    * Load configuration into case classes.
+    */
+  val pureconfig: Seq[ModuleID] = Seq(
+    "pureconfig",
+    "pureconfig-enumeratum"
+  ).map(module => "com.github.pureconfig" %% module % Versions.pureconfig)
 
   /**
     * Authentication framework for Play
