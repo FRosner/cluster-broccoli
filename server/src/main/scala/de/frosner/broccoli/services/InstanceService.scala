@@ -6,9 +6,9 @@ import javax.inject.{Inject, Singleton}
 
 import cats.data.EitherT
 import cats.instances.future.{getClass, _}
-import de.frosner.broccoli.instances._
+import de.frosner.broccoli.instances.{InstanceConfiguration, _}
 import de.frosner.broccoli.templates.TemplateRenderer
-import de.frosner.broccoli.instances.conf.InstanceConfiguration
+import de.frosner.broccoli.instances.storage.InstanceStorage
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.NomadClient

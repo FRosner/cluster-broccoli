@@ -5,7 +5,9 @@ import javax.inject.Singleton
 
 import com.google.inject.{AbstractModule, Provides}
 import de.frosner.broccoli.BroccoliConfiguration
-import de.frosner.broccoli.instances.conf.InstanceConfiguration
+import de.frosner.broccoli.instances.storage.{InstanceStorage, StorageType}
+import de.frosner.broccoli.instances.storage.couchdb.CouchDBInstanceStorage
+import de.frosner.broccoli.instances.storage.filesystem.FileSystemInstanceStorage
 import de.frosner.broccoli.templates.TemplateRenderer
 import net.codingwell.scalaguice.ScalaModule
 import play.api.{Configuration, Logger}

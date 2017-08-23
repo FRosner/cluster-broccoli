@@ -1,23 +1,18 @@
-package de.frosner.broccoli.services
+package de.frosner.broccoli.instances.storage.couchdb
 
-import java.io.{File, FileNotFoundException, FileOutputStream, PrintStream}
 import java.net.ConnectException
-import java.nio.file.Paths
-import java.util.UUID
 
+import de.frosner.broccoli.instances.InstanceNotFoundException
+import de.frosner.broccoli.models.Instance.{instancePersistenceReads, instancePersistenceWrites}
 import de.frosner.broccoli.models.{Instance, Template}
-import Instance.{instancePersistenceReads, instancePersistenceWrites}
-import de.frosner.broccoli.instances.{CouchDBInstanceStorage, InstanceNotFoundException}
 import org.specs2.mutable.Specification
-import play.core.server.Server
-import play.api.Play
-import play.api.routing.sird._
-import play.api.mvc._
 import play.api.libs.json._
+import play.api.mvc._
+import play.api.routing.sird._
 import play.api.test._
+import play.core.server.Server
 
-import scala.io.Source
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 class CouchDBInstanceStorageSpec extends Specification {
 

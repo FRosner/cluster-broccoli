@@ -1,7 +1,8 @@
-package de.frosner.broccoli.instances
+package de.frosner.broccoli.instances.storage.filesystem
 
 import java.io._
 
+import de.frosner.broccoli.instances.storage.InstanceStorage
 import de.frosner.broccoli.models.Instance
 import play.api.libs.json.Json
 

@@ -1,4 +1,4 @@
-package de.frosner.broccoli.instances
+package de.frosner.broccoli.instances.storage
 
 import enumeratum.{Enum, EnumEntry, PlayJsonEnum}
 

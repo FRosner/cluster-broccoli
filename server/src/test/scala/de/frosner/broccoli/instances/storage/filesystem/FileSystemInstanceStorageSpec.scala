@@ -1,11 +1,10 @@
-package de.frosner.broccoli.services
+package de.frosner.broccoli.instances.storage.filesystem
 
 import java.io._
 import java.nio.file._
 import java.util.UUID
 
 import com.fasterxml.jackson.core.JsonParseException
-import de.frosner.broccoli.instances.FileSystemInstanceStorage
 import de.frosner.broccoli.models.{Instance, Template}
 import de.frosner.broccoli.util.TemporaryDirectoryContext
 import org.specs2.mutable.Specification

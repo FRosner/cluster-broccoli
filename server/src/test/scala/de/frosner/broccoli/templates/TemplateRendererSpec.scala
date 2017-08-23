@@ -1,12 +1,6 @@
 package de.frosner.broccoli.templates
 
-import de.frosner.broccoli.instances.StorageType
-import de.frosner.broccoli.instances.conf.{
-  CouchDBInstanceStorageConfiguration,
-  FileSystemInstanceStorageConfiguration,
-  InstanceConfiguration,
-  InstanceStorageConfiguration
-}
+import de.frosner.broccoli.instances.storage.{StorageConfiguration, StorageType}
 import de.frosner.broccoli.models.{Instance, ParameterInfo, ParameterType, Template}
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification

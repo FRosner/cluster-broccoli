@@ -1,10 +1,11 @@
-package de.frosner.broccoli.instances
+package de.frosner.broccoli.instances.storage.couchdb
 
 import java.util.concurrent.TimeUnit
 
+import de.frosner.broccoli.instances.InstanceNotFoundException
+import de.frosner.broccoli.instances.storage.InstanceStorage
 import de.frosner.broccoli.models.Instance
 import play.api.libs.json.{JsObject, _}
-import play.api.libs.json._
 import play.api.libs.ws.WSClient
 
 import scala.concurrent.Await

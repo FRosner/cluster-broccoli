@@ -1,6 +1,6 @@
 package de.frosner.broccoli
 
-import de.frosner.broccoli.instances.conf.InstanceConfiguration
+import de.frosner.broccoli.instances.InstanceConfiguration
 import de.frosner.broccoli.nomad.NomadConfiguration
 import de.frosner.broccoli.templates.TemplateConfiguration
 

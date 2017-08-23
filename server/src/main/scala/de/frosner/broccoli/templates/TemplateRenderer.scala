@@ -2,7 +2,7 @@ package de.frosner.broccoli.templates
 
 import javax.inject.Inject
 
-import de.frosner.broccoli.instances.conf.InstanceConfiguration
+import de.frosner.broccoli.instances.InstanceConfiguration
 import de.frosner.broccoli.models.{Instance, ParameterInfo, ParameterType}
 import org.apache.commons.lang3.StringEscapeUtils
 import play.api.libs.json.{JsString, JsValue, Json}
