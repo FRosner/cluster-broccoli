@@ -2,9 +2,10 @@ package de.frosner.broccoli.services
 
 import javax.inject.{Inject, Singleton}
 
+import com.mohiva.play.silhouette.api.util.Credentials
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.conf.IllegalConfigException
-import de.frosner.broccoli.models.{Account, Credentials, Role, UserAccount}
+import de.frosner.broccoli.models.{Account, Role, UserAccount}
 import play.api.Configuration
 
 import scala.collection.JavaConverters._
@@ -108,19 +109,19 @@ case class SecurityService @Inject()(configuration: Configuration) {
   // TODO store failed logins (reset on successful login) and only allowToAuthenticate if not blocked
 
   def isAllowedToAuthenticate(credentials: Credentials): Boolean = {
-    val credentialsFailedLoginAttempts = failedLoginAttempts.getOrElse(credentials.name, 0)
+    val credentialsFailedLoginAttempts = failedLoginAttempts.getOrElse(credentials.identifier, 0)
     val allowed = if (credentialsFailedLoginAttempts <= allowedFailedLogins) {
       accounts.exists { account =>
-        account.name == credentials.name && account.password == credentials.password
+        account.name == credentials.identifier && account.password == credentials.password
       }
     } else {
       log.warn(
-        s"Credentials for '${credentials.name}' exceeded the allowed number of failed logins: " +
+        s"Credentials for '${credentials.identifier}' exceeded the allowed number of failed logins: " +
           s"$allowedFailedLogins (has $credentialsFailedLoginAttempts)")
       false
     }
     if (!allowed) {
-      failedLoginAttempts = failedLoginAttempts.updated(credentials.name, credentialsFailedLoginAttempts + 1)
+      failedLoginAttempts = failedLoginAttempts.updated(credentials.identifier, credentialsFailedLoginAttempts + 1)
     }
     allowed
   }

@@ -1,5 +1,6 @@
 package de.frosner.broccoli.controllers
 
+import com.mohiva.play.silhouette.api.util.Credentials
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.services._
@@ -19,7 +20,7 @@ trait ServiceMocks {
     requireMock(securityService)
     allowed.foreach { account =>
       when(securityService.getAccount(account.name)).thenReturn(Some(account))
-      val credentials = UserCredentials(account.name, account.password)
+      val credentials = Credentials(account.name, account.password)
       when(securityService.isAllowedToAuthenticate(credentials)).thenReturn(true)
     }
     when(securityService.authMode).thenReturn(conf.AUTH_MODE_CONF)

@@ -2,6 +2,7 @@ package de.frosner.broccoli.controllers
 
 import cats.data.EitherT
 import cats.instances.future._
+import com.mohiva.play.silhouette.api.util.Credentials
 import de.frosner.broccoli.http.ToHTTPResult
 import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.instances.InstanceNotFoundException

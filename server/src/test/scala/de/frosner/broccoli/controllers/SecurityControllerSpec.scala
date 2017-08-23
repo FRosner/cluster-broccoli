@@ -2,7 +2,8 @@ package de.frosner.broccoli.controllers
 
 import java.util.concurrent.TimeUnit
 
-import de.frosner.broccoli.models.{Role, UserAccount, UserCredentials}
+import com.mohiva.play.silhouette.api.util.Credentials
+import de.frosner.broccoli.models.{Role, UserAccount}
 import de.frosner.broccoli.services.{SecurityService, WebSocketService}
 import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Matchers._
@@ -12,7 +13,6 @@ import play.api.test._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import scala.concurrent.duration.TimeUnit
 
 class SecurityControllerSpec extends PlaySpecification with AuthUtils {
 
@@ -71,7 +71,7 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
         playEnv,
         mock(classOf[WebSocketService])
       )
-      when(controller.securityService.isAllowedToAuthenticate(UserCredentials(account.name, account.password)))
+      when(controller.securityService.isAllowedToAuthenticate(Credentials(account.name, account.password)))
         .thenReturn(false)
       val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, account.password))
       val result = controller.login.apply(requestWithData)

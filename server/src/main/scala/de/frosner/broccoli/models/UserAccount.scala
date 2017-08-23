@@ -3,17 +3,7 @@ package de.frosner.broccoli.models
 import de.frosner.broccoli.RemoveSecrets
 import play.api.libs.json.{Json, Writes}
 
-sealed trait Credentials {
-
-  val name: String
-
-  val password: String
-
-}
-
-case class UserCredentials(name: String, password: String) extends Credentials
-
-sealed trait Account extends Credentials {
+sealed trait Account {
 
   val name: String
 

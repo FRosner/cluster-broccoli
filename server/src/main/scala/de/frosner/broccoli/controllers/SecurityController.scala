@@ -2,7 +2,7 @@ package de.frosner.broccoli.controllers
 
 import javax.inject.Inject
 
-import de.frosner.broccoli.models.UserCredentials
+import com.mohiva.play.silhouette.api.util.Credentials
 import de.frosner.broccoli.services.{SecurityService, WebSocketService}
 import jp.t2v.lab.play2.auth.{BroccoliSimpleAuthorization, LoginLogout}
 import play.api.{Environment, Logger}
@@ -32,7 +32,7 @@ case class SecurityController @Inject()(
     mapping(
       SecurityController.UsernameFormKey -> text,
       SecurityController.PasswordFormKey -> text
-    )(UserCredentials.apply)(UserCredentials.unapply)
+    )(Credentials.apply)(Credentials.unapply)
   }
 
   def login: Action[AnyContent] = Action.async { implicit request =>
@@ -44,11 +44,11 @@ case class SecurityController @Inject()(
       .bindFromRequest()
       .fold(
         formWithErrors => Future.successful(Results.BadRequest),
-        account => {
-          if (securityService.isAllowedToAuthenticate(account)) {
-            log.info(s"Login successful for user '${account.name}'.")
-            gotoLoginSucceeded(account.name).flatMap { result =>
-              resolveUser(account.name).map { maybeUser =>
+        credentials => {
+          if (securityService.isAllowedToAuthenticate(credentials)) {
+            log.info(s"Login successful for user '${credentials.identifier}'.")
+            gotoLoginSucceeded(credentials.identifier).flatMap { result =>
+              resolveUser(credentials.identifier).map { maybeUser =>
                 val userResult = Results.Ok(Json.toJson(maybeUser.get))
                 result.copy(
                   header = result.header.copy(
@@ -64,7 +64,7 @@ case class SecurityController @Inject()(
               }
             }
           } else {
-            log.info(s"Login failed for user '${account.name}'.")
+            log.info(s"Login failed for user '${credentials.identifier}'.")
             Future.successful(Results.Unauthorized)
           }
         }
