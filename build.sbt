@@ -34,6 +34,7 @@ lazy val server = project
     libraryDependencies ++= Dependencies.enumeratum,
     libraryDependencies ++= Dependencies.specs2.map(_ % Test),
     libraryDependencies ++= Dependencies.specs2.map(_ % IntegrationTest),
+    libraryDependencies ++= Dependencies.silhouette,
     libraryDependencies ++= Dependencies.pureconfig,
     libraryDependencies ++= Dependencies.play2auth,
     // Macro support for Scala
@@ -96,6 +97,8 @@ lazy val root = project
       List(
         version := "0.7.0-SNAPSHOT",
         scalaVersion := "2.11.11",
+        // Enable jcenter for silhouette's dependencies
+        resolvers += Resolver.jcenterRepo,
         // Build settings
         scalacOptions ++= List(
           // Code encoding
