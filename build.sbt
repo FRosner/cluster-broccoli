@@ -1,3 +1,5 @@
+import com.typesafe.sbt.packager.docker._
+
 lazy val webui = project
   .in(file("webui"))
   .enablePlugins(YarnPlugin)
@@ -7,7 +9,7 @@ lazy val webui = project
 
 lazy val server = project
   .in(file("server"))
-  .enablePlugins(PlayScala, BuildInfoPlugin)
+  .enablePlugins(PlayScala, BuildInfoPlugin, DockerPlugin)
   .disablePlugins(PlayLayoutPlugin)
   .configs(IntegrationTest)
   .settings(Defaults.itSettings)
@@ -38,9 +40,42 @@ lazy val server = project
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.frosner.broccoli.build",
     PlayKeys.playMonitoredFiles ++= (sourceDirectories in (Compile, TwirlKeys.compileTemplates)).value,
+    // Docker build settings
+    packageName in Docker := "cluster-broccoli",
+    maintainer in Docker := "Frank Rosner",
+    // On Travis CI, use the commit hash as primary version of the docker image
+    version in Docker := Option(System.getenv("TRAVIS_COMMIT"))
+      .map(_.substring(0, 8))
+      .getOrElse((version in Compile).value),
+    dockerUsername := Some("frosner"),
+    // Build from OpenJDK
+    dockerBaseImage := "openjdk:8-jre",
+    // Upgrade the latest tag when we're building from master on Travis CI
+    dockerUpdateLatest := Option(System.getenv("TRAVIS_BRANCH")).exists(_ == "master"),
+    // Copy templates into the docker file
+    mappings in Docker := {
+      val templatesDirectory = baseDirectory.value.getParentFile / "templates"
+      val targetDirectory = s"${(defaultLinuxInstallLocation in Docker).value}/templates"
+      val templates = templatesDirectory.***.get.collect {
+        case templateFile if templateFile.isFile =>
+          templateFile -> templateFile
+            .relativeTo(templatesDirectory)
+            .map(name => s"$targetDirectory/${name.getPath}")
+            .get
+      }
+      (mappings in Docker).value ++ templates
+    },
+    // Create a directory to store instances
+    dockerCommands := {
+      dockerCommands.value :+ ExecCmd("RUN", "mkdir", s"${(defaultLinuxInstallLocation in Docker).value}/instances")
+    },
+    // Expose the application port
+    dockerExposedPorts := Seq(9000),
+    // Add additional labels to track docker images back to builds and branches
+    dockerLabels ++= Option(System.getenv("TRAVIS_BRANCH")).map("branch" -> _).toMap,
+    dockerLabels ++= Option(System.getenv("TRAVIS_BUILD_NUMBER")).map("travis-build-number" -> _).toMap,
     // Do not run integration tests in parallel, because these spawn docker containers and thus depend on global state
     parallelExecution in IntegrationTest := false,
-    // Do not run unit tests in parallel either because Play doesn't like it
     // Play doesn't like parallel tests with all its state
     parallelExecution in Test := false,
     // Disable API documentation, see https://github.com/playframework/playframework/issues/6688#issuecomment-258080633.

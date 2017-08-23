@@ -44,16 +44,10 @@ jobs:
         - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/instance-persistence-dir
     - stage: docker
       script:
-        - . prepare-docker-builds
+        # Publish docker image
         - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
-        - export COMMIT=${TRAVIS_COMMIT::8}
-        - export REPO=frosner/cluster-broccoli
-        - export NICE_BRANCH_NAME=$(echo $TRAVIS_BRANCH | sed -e 's/\//_/g')
-        - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo "$NICE_BRANCH_NAME" ; fi`
-        - docker build -t $REPO:$COMMIT docker/prod/
-        - docker tag $REPO:$COMMIT $REPO:$TAG
-        - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-        - docker push $REPO
+        - sbt server/docker:publish
+
 
 before_cache:
   # Delete transient files to avoid needless re-caching
