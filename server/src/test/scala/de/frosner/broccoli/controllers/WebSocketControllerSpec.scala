@@ -1,21 +1,21 @@
 package de.frosner.broccoli.controllers
 
+import de.frosner.broccoli.RemoveSecrets.ToRemoveSecretsOps
+import de.frosner.broccoli.auth.UserAccount
+import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.models._
+import de.frosner.broccoli.nomad
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.services._
-import de.frosner.broccoli.RemoveSecrets.ToRemoveSecretsOps
-import de.frosner.broccoli.instances.NomadInstances
-import de.frosner.broccoli.nomad
 import de.frosner.broccoli.websocket.{BroccoliMessageHandler, IncomingMessage, OutgoingMessage}
 import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Matchers
-import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.specs2.mock.Mockito
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
 import play.api.test._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.util.Success
 
@@ -85,9 +85,9 @@ class WebSocketControllerSpec
             withAuthNone(mock[SecurityService])
           }
         val controller = controllerSetup(securityService)
-        when(controller.webSocketService.newConnection(Matchers.anyString(), any[Account]))
+        when(controller.webSocketService.newConnection(Matchers.anyString(), any[UserAccount]))
           .thenReturn(Enumerator.empty[Msg])
-        when(controller.webSocketService.newConnection(any[Account]))
+        when(controller.webSocketService.newConnection(any[UserAccount]))
           .thenReturn(("session_id", Enumerator.empty[Msg]))
         val result = maybeAccount
           .map { account =>
@@ -140,7 +140,7 @@ class WebSocketControllerSpec
         playEnv = playEnv,
         cacheApi = cacheApi
       )
-      when(controller.webSocketService.newConnection(any[Account])).thenReturn(("id", null))
+      when(controller.webSocketService.newConnection(any[UserAccount])).thenReturn(("id", null))
       val result = controller.requestToSocket(FakeRequest())
       val maybeConnection = WsTestUtil.wrapConnection(result)
       maybeConnection should beRight
@@ -183,7 +183,7 @@ class WebSocketControllerSpec
         playEnv = playEnv,
         cacheApi = cacheApi
       )
-      when(controller.webSocketService.newConnection(any[Account])).thenReturn(("id", Enumerator.empty[Msg]))
+      when(controller.webSocketService.newConnection(any[UserAccount])).thenReturn(("id", Enumerator.empty[Msg]))
       val result = controller.requestToSocket(FakeRequest())
       val maybeConnection = WsTestUtil.wrapConnection(result)
       maybeConnection should beRight.like {
@@ -211,7 +211,7 @@ class WebSocketControllerSpec
         playEnv = playEnv,
         cacheApi = cacheApi
       )
-      when(controller.webSocketService.newConnection(any[Account])).thenReturn((id, Enumerator.empty[Msg]))
+      when(controller.webSocketService.newConnection(any[UserAccount])).thenReturn((id, Enumerator.empty[Msg]))
       val instanceCreation = InstanceCreation(
         "template",
         Map(

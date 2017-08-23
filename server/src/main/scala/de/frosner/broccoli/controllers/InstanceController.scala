@@ -5,6 +5,7 @@ import javax.inject.Inject
 
 import cats.instances.future._
 import cats.syntax.either._
+import de.frosner.broccoli.auth.UserAccount
 import de.frosner.broccoli.http.ToHTTPResult.ops._
 import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.instances.InstanceNotFoundException
@@ -94,11 +95,11 @@ case class InstanceController @Inject()(
 object InstanceController {
 
   def create(instanceCreation: InstanceCreation,
-             loggedIn: Account,
+             loggedIn: UserAccount,
              instanceService: InstanceService): Either[InstanceError, InstanceCreated] =
     for {
       user <- Either
-        .right[InstanceError, Account](loggedIn)
+        .right[InstanceError, UserAccount](loggedIn)
         .ensure(InstanceError.RolesRequired(Role.Administrator): InstanceError)(_.role == Role.Administrator)
       _ <- Either
         .fromOption(instanceCreation.parameters.get("id"), InstanceError.IdMissing: InstanceError)
@@ -110,12 +111,12 @@ object InstanceController {
 
   def delete(
       id: String,
-      loggedIn: Account,
+      loggedIn: UserAccount,
       instanceService: InstanceService
   ): Either[InstanceError, InstanceDeleted] =
     for {
       user <- Either
-        .right[InstanceError, Account](loggedIn)
+        .right[InstanceError, UserAccount](loggedIn)
         .ensure(InstanceError.RolesRequired(Role.Administrator): InstanceError)(_.role == Role.Administrator)
       instanceId <- Either
         .right[InstanceError, String](id)
@@ -125,7 +126,9 @@ object InstanceController {
         .leftMap(InstanceError.Generic(_): InstanceError)
     } yield InstanceDeleted(instanceId, deletedInstance)
 
-  def list(templateId: Option[String], loggedIn: Account, instanceService: InstanceService): Seq[InstanceWithStatus] =
+  def list(templateId: Option[String],
+           loggedIn: UserAccount,
+           instanceService: InstanceService): Seq[InstanceWithStatus] =
     templateId
       .map(id => instanceService.getInstances.filter(_.instance.template.id == id))
       .getOrElse(instanceService.getInstances)
@@ -135,12 +138,12 @@ object InstanceController {
   def update(
       id: String,
       instanceUpdate: InstanceUpdate,
-      loggedIn: Account,
+      loggedIn: UserAccount,
       instanceService: InstanceService
   ): Either[InstanceError, InstanceUpdated] =
     for {
       user <- Either
-        .right[InstanceError, Account](loggedIn)
+        .right[InstanceError, UserAccount](loggedIn)
         .ensure(InstanceError.RolesRequired(Role.Administrator, Role.Operator))(u =>
           u.role == Role.Administrator || u.role == Role.Operator)
       instanceId <- Either

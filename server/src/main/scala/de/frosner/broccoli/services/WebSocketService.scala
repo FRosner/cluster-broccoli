@@ -4,8 +4,8 @@ import java.util.UUID
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import javax.inject.{Inject, Singleton}
 
+import de.frosner.broccoli.auth.UserAccount
 import de.frosner.broccoli.controllers._
-import de.frosner.broccoli.models.Account
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.websocket.OutgoingMessage
 import play.api.libs.iteratee.{Concurrent, Enumerator}
@@ -38,14 +38,14 @@ class WebSocketService @Inject()(templateService: TemplateService,
   private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS)
 
   @volatile
-  private var connections: Map[String, (Account, Set[Concurrent.Channel[Msg]])] = Map.empty
+  private var connections: Map[String, (UserAccount, Set[Concurrent.Channel[Msg]])] = Map.empty
 
-  def newConnection(user: Account): (String, Enumerator[Msg]) = {
+  def newConnection(user: UserAccount): (String, Enumerator[Msg]) = {
     val id = UUID.randomUUID().toString
     (id, newConnection(id, user))
   }
 
-  def newConnection(id: String, user: Account): Enumerator[Msg] = {
+  def newConnection(id: String, user: UserAccount): Enumerator[Msg] = {
     if (connections.contains(id)) {
       log.info(s"ID $id (${user.name}) already has an open web socket connection. Probably he/she has two tabs open?")
     }
@@ -68,7 +68,7 @@ class WebSocketService @Inject()(templateService: TemplateService,
         true
     }
 
-  def broadcast(msg: Account => Msg): Unit =
+  def broadcast(msg: UserAccount => Msg): Unit =
     connections.foreach {
       case (id, (user, channels)) =>
         // TODO we're kinda swallowing the exceptions here. That's ok because currently we have no authorization on broadcasts

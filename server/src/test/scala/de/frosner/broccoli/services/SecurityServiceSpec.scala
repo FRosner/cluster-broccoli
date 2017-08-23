@@ -3,12 +3,13 @@ package de.frosner.broccoli.services
 import com.google.common.collect.ImmutableMap
 import com.mohiva.play.silhouette.api.util.Credentials
 import com.typesafe.config.{ConfigException, ConfigFactory, ConfigValueFactory}
+import de.frosner.broccoli.auth.UserAccount
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.{Account, Role, UserAccount}
+import de.frosner.broccoli.models.Role
 import org.specs2.mutable.Specification
 import play.api.Configuration
 
-import collection.JavaConverters._
+import scala.collection.JavaConverters._
 import scala.util.Success
 
 class SecurityServiceSpec extends Specification {
@@ -111,7 +112,7 @@ class SecurityServiceSpec extends Specification {
           ConfigValueFactory.fromIterable(accountsJava)
         )
       SecurityService.tryAccounts(Configuration(config)) should beSuccessfulTry.withValue(
-        contain(exactly(account: Account)))
+        contain(exactly(account: UserAccount)))
     }
 
     "not require the optional parameters" in {
@@ -130,7 +131,7 @@ class SecurityServiceSpec extends Specification {
           ConfigValueFactory.fromIterable(accountsJava)
         )
 
-      val userAccount: Account = UserAccount(
+      val userAccount = UserAccount(
         name = account.name,
         password = account.password,
         instanceRegex = ".*",

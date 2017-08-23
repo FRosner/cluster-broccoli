@@ -2,6 +2,7 @@ package de.frosner.broccoli.services
 
 import javax.inject.{Inject, Singleton}
 
+import de.frosner.broccoli.auth.UserAccount
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models._
 
@@ -10,7 +11,7 @@ class AboutInfoService @Inject()(nomadService: NomadService,
                                  consulService: ConsulService,
                                  securityService: SecurityService) {
 
-  def aboutInfo(loggedIn: Account) = AboutInfo(
+  def aboutInfo(loggedIn: UserAccount) = AboutInfo(
     project = AboutProject(
       name = de.frosner.broccoli.build.BuildInfo.name,
       version = de.frosner.broccoli.build.BuildInfo.version

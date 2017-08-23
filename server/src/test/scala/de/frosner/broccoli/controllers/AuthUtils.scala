@@ -1,15 +1,16 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.models.{Account, Role, UserAccount}
+import de.frosner.broccoli.auth.UserAccount
+import de.frosner.broccoli.models.Role
 import de.frosner.broccoli.services.SecurityService
-import org.specs2.matcher.MatchResult
-import org.specs2.matcher.MatchersImplicits._
-import play.api.mvc.{Action, AnyContentAsEmpty, Result}
-import play.api.test._
-import play.api.test.Helpers._
 import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Mockito._
+import org.specs2.matcher.MatchResult
+import org.specs2.matcher.MatchersImplicits._
 import play.api.cache.CacheApi
+import play.api.mvc.{Action, AnyContentAsEmpty, Result}
+import play.api.test.Helpers._
+import play.api.test._
 import play.api.{Application, Environment}
 
 import scala.concurrent.Future
@@ -20,7 +21,7 @@ trait AuthUtils extends ServiceMocks {
 
   def cacheApi(implicit app: Application): CacheApi = app.injector.instanceOf[CacheApi]
 
-  def testWithAllAuths[T <: AuthConfigImpl, B](account: Account)(controller: SecurityService => T)(
+  def testWithAllAuths[T <: AuthConfigImpl, B](account: UserAccount)(controller: SecurityService => T)(
       action: T => Action[B])(requestModifier: FakeRequest[AnyContentAsEmpty.type] => FakeRequest[B])(
       matcher: (T, Future[Result]) => MatchResult[_]): MatchResult[_] = {
     val confAuthController = controller(withAuthConf(mock(classOf[SecurityService]), List(account)))

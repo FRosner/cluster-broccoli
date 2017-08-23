@@ -4,7 +4,8 @@ import javax.inject.Inject
 
 import cats.instances.future._
 import cats.data.EitherT
-import de.frosner.broccoli.models.{Account, InstanceError, InstanceTasks, Task}
+import de.frosner.broccoli.auth.UserAccount
+import de.frosner.broccoli.models.{InstanceError, InstanceTasks, Task}
 import de.frosner.broccoli.nomad.NomadClient
 import de.frosner.broccoli.nomad.models.{Allocation, Job, LogStreamKind, NomadError, TaskLog, Task => NomadTask}
 import shapeless.tag
@@ -32,7 +33,7 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
     * @return All tasks of the given instance with their allocations, or an empty list if the instance has no tasks or
     *         didn't exist.  If the user may not access the instance return an InstanceError instead.
     */
-  def getInstanceTasks(user: Account)(id: String): EitherT[Future, InstanceError, InstanceTasks] =
+  def getInstanceTasks(user: UserAccount)(id: String): EitherT[Future, InstanceError, InstanceTasks] =
     EitherT
       .pure[Future, InstanceError](tag[Job.Id](id))
       .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
@@ -57,7 +58,7 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
         )
       }
 
-  def getInstanceLog(user: Account)(
+  def getInstanceLog(user: UserAccount)(
       instanceId: String,
       allocationId: String @@ Allocation.Id,
       taskName: String @@ NomadTask.Name,

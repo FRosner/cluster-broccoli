@@ -1,6 +1,7 @@
 package de.frosner.broccoli.controllers
 
 import com.mohiva.play.silhouette.api.util.Credentials
+import de.frosner.broccoli.auth.UserAccount
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.services._
@@ -16,7 +17,7 @@ trait ServiceMocks {
     s"${obj.getClass.toString} needs to be a mock!"
   )
 
-  def withAuthConf(securityService: SecurityService, allowed: Iterable[Account]): SecurityService = {
+  def withAuthConf(securityService: SecurityService, allowed: Iterable[UserAccount]): SecurityService = {
     requireMock(securityService)
     allowed.foreach { account =>
       when(securityService.getAccount(account.name)).thenReturn(Some(account))
@@ -35,7 +36,7 @@ trait ServiceMocks {
 
   def withDummyValues(aboutInfoService: AboutInfoService): AboutInfoService = {
     requireMock(aboutInfoService)
-    when(aboutInfoService.aboutInfo(any(classOf[Account]))).thenReturn(
+    when(aboutInfoService.aboutInfo(any(classOf[UserAccount]))).thenReturn(
       AboutInfo(
         project = AboutProject(
           name = "project",

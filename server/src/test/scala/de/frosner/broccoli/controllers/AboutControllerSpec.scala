@@ -1,11 +1,10 @@
 package de.frosner.broccoli.controllers
 
+import de.frosner.broccoli.auth.UserAccount
+import de.frosner.broccoli.models.Role
 import de.frosner.broccoli.services._
-import de.frosner.broccoli.models.{Anonymous, Role, UserAccount}
 import org.mockito.Mockito._
-import play.api.cache.CacheApi
-import play.api.{Application, Environment}
-import play.api.libs.json.{JsBoolean, JsObject, JsString, Json}
+import play.api.libs.json.Json
 import play.api.test._
 
 class AboutControllerSpec extends PlaySpecification with AuthUtils {
@@ -29,7 +28,7 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "return the about object without authentication" in new WithApplication {
-      val account = Anonymous
+      val account = UserAccount.anonymous
       val aboutInfoService = withDummyValues(mock(classOf[AboutInfoService]))
       val controller =
         AboutController(aboutInfoService, withAuthNone(mock(classOf[SecurityService])), cacheApi, playEnv)

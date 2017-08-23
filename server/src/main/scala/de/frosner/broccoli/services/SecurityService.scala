@@ -3,9 +3,10 @@ package de.frosner.broccoli.services
 import javax.inject.{Inject, Singleton}
 
 import com.mohiva.play.silhouette.api.util.Credentials
+import de.frosner.broccoli.auth.UserAccount
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.conf.IllegalConfigException
-import de.frosner.broccoli.models.{Account, Role, UserAccount}
+import de.frosner.broccoli.models.Role
 import play.api.Configuration
 
 import scala.collection.JavaConverters._
@@ -90,7 +91,7 @@ case class SecurityService @Inject()(configuration: Configuration) {
     parsed
   }
 
-  private lazy val accounts: Set[Account] = {
+  private lazy val accounts: Set[UserAccount] = {
     val accounts = SecurityService.tryAccounts(configuration) match {
       case Success(userObjects) => userObjects.toSet
       case Failure(throwable) => {
@@ -126,7 +127,7 @@ case class SecurityService @Inject()(configuration: Configuration) {
     allowed
   }
 
-  def getAccount(id: String): Option[Account] = accounts.find(_.name == id)
+  def getAccount(id: String): Option[UserAccount] = accounts.find(_.name == id)
 
 }
 
@@ -138,7 +139,7 @@ object SecurityService {
       .getOrElse(conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_DEFAULT)
   }
 
-  private[services] def tryAccounts(configuration: Configuration): Try[Iterable[Account]] = Try {
+  private[services] def tryAccounts(configuration: Configuration): Try[Iterable[UserAccount]] = Try {
     if (configuration.underlying.hasPath(conf.AUTH_MODE_CONF_ACCOUNTS_KEY)) {
       configuration.underlying
         .getConfigList(conf.AUTH_MODE_CONF_ACCOUNTS_KEY)

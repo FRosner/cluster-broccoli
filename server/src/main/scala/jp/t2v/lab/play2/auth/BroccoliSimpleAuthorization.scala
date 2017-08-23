@@ -1,8 +1,8 @@
 package jp.t2v.lab.play2.auth
 
+import de.frosner.broccoli.auth.UserAccount
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.controllers.AuthConfigImpl
-import de.frosner.broccoli.models.Anonymous
 import de.frosner.broccoli.services.SecurityService
 import jp.t2v.lab.play2.stackc.{RequestAttributeKey, RequestWithAttributes, StackableController}
 import play.api.mvc.{Controller, RequestHeader, Result}
@@ -38,7 +38,7 @@ trait BroccoliSimpleAuthorization extends StackableController with AsyncAuth wit
 
   implicit def loggedIn(implicit req: RequestWithAttributes[_]): User = securityService.authMode match {
     case conf.AUTH_MODE_CONF => req.get(AuthKey).get
-    case conf.AUTH_MODE_NONE => Anonymous
+    case conf.AUTH_MODE_NONE => UserAccount.anonymous
     case other               => throw new IllegalStateException(s"Unrecognized auth mode: ${securityService.authMode}")
   }
 

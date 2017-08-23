@@ -4,9 +4,9 @@ import javax.inject.Inject
 
 import cats.syntax.either._
 import cats.instances.future._
+import de.frosner.broccoli.auth.UserAccount
 import de.frosner.broccoli.controllers.InstanceController
 import de.frosner.broccoli.instances.NomadInstances
-import de.frosner.broccoli.models.Account
 import de.frosner.broccoli.services.InstanceService
 import de.frosner.broccoli.websocket.OutgoingMessage._
 import de.frosner.broccoli.websocket.IncomingMessage._
@@ -25,7 +25,7 @@ trait WebSocketMessageHandler {
     * @param incomingMessage An incoming message
     * @return An outgoing message to send in response
     */
-  def processMessage(user: Account)(incomingMessage: IncomingMessage): Future[OutgoingMessage]
+  def processMessage(user: UserAccount)(incomingMessage: IncomingMessage): Future[OutgoingMessage]
 }
 
 /**
@@ -35,7 +35,7 @@ class BroccoliMessageHandler @Inject()(instances: NomadInstances, instanceServic
     implicit ec: ExecutionContext)
     extends WebSocketMessageHandler {
 
-  override def processMessage(user: Account)(incomingMessage: IncomingMessage): Future[OutgoingMessage] =
+  override def processMessage(user: UserAccount)(incomingMessage: IncomingMessage): Future[OutgoingMessage] =
     incomingMessage match {
       case AddInstance(instanceCreation) =>
         InstanceController
