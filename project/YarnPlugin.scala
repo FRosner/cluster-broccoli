@@ -14,6 +14,8 @@ object YarnPlugin extends AutoPlugin {
   object Commands {
     val install = Seq("yarn", "install")
     val setup = Seq("yarn", "setup")
+    val formatValidate = Seq("yarn", "format:validate")
+    val test = Seq("yarn", "test")
     val dist = Seq("yarn", "dist", "--")
   }
 
@@ -32,6 +34,16 @@ object YarnPlugin extends AutoPlugin {
     val yarnSetup: TaskKey[Unit] = taskKey[Unit](s"execute: ${Commands.setup}")
 
     /**
+      * Check Elm formatting.
+      */
+    val yarnFormatValidate: TaskKey[Unit] = taskKey[Unit](s"execute: ${Commands.formatValidate}")
+
+    /**
+      * Run frontend tests.
+      */
+    val yarnTest: TaskKey[Unit] = taskKey[Unit](s"execute: ${Commands.test}")
+
+    /**
       * Build the webpack bundles through yarn dist.
       */
     val yarnDist: TaskKey[Seq[File]] = taskKey[Seq[File]](s"execute: ${Commands.dist}")
@@ -43,7 +55,8 @@ object YarnPlugin extends AutoPlugin {
     cleanFiles ++= Seq(
       baseDirectory.value / "dist", // The webpack output
       baseDirectory.value / "node_modules", // The node modules
-      baseDirectory.value / "elm-stuff" // Elm packages
+      baseDirectory.value / "elm-stuff", // Elm packages
+      baseDirectory.value / "tests" / "elm-stuff" // Elm packages for webui tests
     ),
     yarnSetup := {
       val base = baseDirectory.value
@@ -53,7 +66,7 @@ object YarnPlugin extends AutoPlugin {
         outStyle = FilesInfo.exists
       ) { _: Set[File] =>
         execute(Commands.setup, base, streams.value.log)
-        (base / "elm-stuff" / "packages").get.toSet
+        (base / "elm-stuff" / "packages").get.toSet ++ (base / "tests" / "elm-stuff" / "packages").get.toSet
       }
       setup((base / "elm-package.json").get.toSet)
     },
@@ -68,6 +81,12 @@ object YarnPlugin extends AutoPlugin {
         (base / "node_modules").get.toSet
       }
       install((base * ("package.json" || "yarn.lock")).get.toSet)
+    },
+    yarnFormatValidate := {
+      execute(Commands.formatValidate, baseDirectory.value, streams.value.log)
+    },
+    yarnTest := {
+      execute(Commands.test, baseDirectory.value, streams.value.log)
     },
     yarnDist := {
       val log = streams.value.log
@@ -98,8 +117,13 @@ object YarnPlugin extends AutoPlugin {
         baseDirectory.value * ("package.json" || "yarn.lock" || "elm-package.json" || "webpack.config.*.js")
       yarnDist(sources.get.toSet).toSeq
     },
-    yarnSetup := (yarnSetup dependsOn yarnInstall).value,
-    yarnDist := (yarnDist dependsOn yarnSetup).value,
+    yarnSetup := yarnSetup.dependsOn(yarnInstall).value,
+    yarnDist := yarnDist.dependsOn(yarnSetup).value,
+    yarnTest := yarnTest.dependsOn(yarnSetup).value,
+    yarnFormatValidate := yarnFormatValidate.dependsOn(yarnSetup).value,
+    test in Test := {
+      yarnTest.value
+    },
     resourceGenerators in Compile += yarnDist.taskValue
   )
 

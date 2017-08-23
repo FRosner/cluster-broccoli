@@ -19,19 +19,19 @@ jobs:
     - stage: test
       script:
         - ./scalafmt --test
-        - sbt test:compile
-        - sbt it:compile
-        - sbt test
+        - sbt server/test:compile
+        # Compile integration tests to fail build early if they are broken
+        - sbt server/it:compile
+        # Run backend tests
+        - sbt server/test
     # Frontend tests
     - stage: test
-      install:
-        - cd webui
-        - yarn install
-        - yarn setup
       script:
-        - yarn format:validate
-        - yarn compile
-        - yarn test
+        - sbt webui/yarnFormatValidate
+        # Generate resources to ensure that webpack builds cleanly
+        - sbt webui/copyResources
+        # Run Elm tests
+        - sbt webui/test
     - stage: integration
       script:
         - . prepare-docker-builds
