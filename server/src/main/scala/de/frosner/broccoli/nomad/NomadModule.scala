@@ -9,6 +9,8 @@ import net.codingwell.scalaguice.ScalaModule
 import play.api.Configuration
 import play.api.libs.ws.WSClient
 
+import scala.concurrent.ExecutionContext
+
 /**
   * Provide bindings for Nomad access.
   */
@@ -27,6 +29,6 @@ class NomadModule extends AbstractModule with ScalaModule {
     */
   @Provides
   @Singleton
-  def provideNomadClient(config: BroccoliConfiguration, wsClient: WSClient): NomadClient =
-    new NomadHttpClient(Uri.parse(config.nomad.url), wsClient)(play.api.libs.concurrent.Execution.defaultContext)
+  def provideNomadClient(config: BroccoliConfiguration, wsClient: WSClient, context: ExecutionContext): NomadClient =
+    new NomadHttpClient(Uri.parse(config.nomad.url), wsClient)(context)
 }
