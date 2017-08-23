@@ -3,7 +3,7 @@
   "parameters": {
     "URL": {
       "default": "localhost:8000",
-      "type": "raw"
+      "type": "string"
     },
     "enabled": {
       "default": "true",

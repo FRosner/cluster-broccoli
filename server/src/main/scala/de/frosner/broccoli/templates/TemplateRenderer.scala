@@ -4,6 +4,7 @@ import javax.inject.Inject
 
 import de.frosner.broccoli.instances.conf.InstanceConfiguration
 import de.frosner.broccoli.models.{Instance, ParameterInfo, ParameterType}
+import org.apache.commons.lang3.StringEscapeUtils
 import play.api.libs.json.{JsString, JsValue, Json}
 
 /**
@@ -18,10 +19,11 @@ class TemplateRenderer @Inject()(instanceConfiguration: InstanceConfiguration) {
       .flatMap(_.`type`)
       .getOrElse(instanceConfiguration.defaultParameterType)
     val sanitized = parameterType match {
-      case ParameterType.Raw    => value
-      case ParameterType.String => JsString(value)
+      case ParameterType.Raw => value
+      case ParameterType.String =>
+        StringEscapeUtils.escapeJson(value)
     }
-    sanitized.toString
+    sanitized
   }
 
   def renderJson(instance: Instance): JsValue = {

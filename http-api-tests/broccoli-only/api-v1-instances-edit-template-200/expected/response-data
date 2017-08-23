@@ -15,9 +15,9 @@
     "parameterInfos": {
       "id": {
         "id": "id",
-        "type": "raw"
+        "type": "string"
       }
     },
-    "version": "51d87cc9a0249d2f684ca31f59968601"
+    "version": "8e57100c23ffe1a46ac7cb765647c984"
   }
 }

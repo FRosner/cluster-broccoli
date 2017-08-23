@@ -52,14 +52,14 @@ class TemplateRendererSpec extends Specification with Mockito {
         id = "1",
         template = Template(
           id = "1",
-          template = "{{id}}",
+          template = """"{{id}}"""",
           description = "desc",
           parameterInfos =
             Map("id" -> ParameterInfo("id", None, None, secret = Some(false), `type` = Some(ParameterType.String)))
         ),
-        parameterValues = Map("id" -> "Frank")
+        parameterValues = Map("id" -> "\"Frank")
       )
-      templateRenderer.renderJson(instance) === JsString("Frank")
+      templateRenderer.renderJson(instance) === JsString("\"Frank")
     }
 
     "parse the template correctly when it contains regex stuff that breacks with replaceAll" in {
@@ -98,20 +98,20 @@ class TemplateRendererSpec extends Specification with Mockito {
         .sanitize(
           "parameter",
           parameterValue,
-          Map("parameter" -> ParameterInfo("parameter", None, None, None, Some(ParameterType.Raw)))) == parameterValue
+          Map("parameter" -> ParameterInfo("parameter", None, None, None, Some(ParameterType.Raw)))) === parameterValue
     }
 
-    "escape the value if it is string" in {
+    "escape the value if it is a string" in {
       templateRenderer
         .sanitize(
           "parameter",
-          parameterValue,
-          Map("parameter" -> ParameterInfo("parameter", None, None, None, Some(ParameterType.String)))) == s""" "$parameterValue" """.trim
+          """ "value  """,
+          Map("parameter" -> ParameterInfo("parameter", None, None, None, Some(ParameterType.String)))) === """ \"value  """
     }
 
     "pick the default parameter type if the type for the parameter is not specified in ParameterInfos" in {
       templateRenderer
-        .sanitize("parameter", "value", Map.empty) === parameterValue
+        .sanitize("parameter", parameterValue, Map.empty) === parameterValue
 
     }
 
