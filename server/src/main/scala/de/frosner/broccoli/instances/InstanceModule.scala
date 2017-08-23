@@ -1,21 +1,12 @@
 package de.frosner.broccoli.instances
 
-import java.nio.file.FileSystems
 import javax.inject.Singleton
 
 import com.google.inject.{AbstractModule, Provides}
 import de.frosner.broccoli.BroccoliConfiguration
-import de.frosner.broccoli.instances.storage.{InstanceStorage, StorageType}
-import de.frosner.broccoli.instances.storage.couchdb.CouchDBInstanceStorage
-import de.frosner.broccoli.instances.storage.filesystem.FileSystemInstanceStorage
 import de.frosner.broccoli.templates.TemplateRenderer
 import net.codingwell.scalaguice.ScalaModule
-import play.api.{Configuration, Logger}
-import play.api.inject.ApplicationLifecycle
-import play.api.libs.ws.WSClient
-
-import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
+import play.api.Logger
 
 /**
   * Provide instance storage and template rendering implementations.
@@ -32,32 +23,4 @@ class InstanceModule extends AbstractModule with ScalaModule {
   @Singleton
   def provideTemplateRenderer(config: BroccoliConfiguration): TemplateRenderer =
     new TemplateRenderer(config.instances.parameters.defaultType)
-
-  /**
-    * Provides the instance storage.
-    */
-  @Provides
-  @Singleton
-  def provideInstanceStorage(config: BroccoliConfiguration,
-                             ws: WSClient,
-                             applicationLifecycle: ApplicationLifecycle): InstanceStorage = {
-    val storageConfig = config.instances.storage
-    val instanceStorage = storageConfig.`type` match {
-      case StorageType.FileSystem =>
-        new FileSystemInstanceStorage(storageConfig.fs.path.toAbsolutePath.toFile)
-      case StorageType.CouchDB =>
-        val config = storageConfig.couchdb
-        new CouchDBInstanceStorage(config.url, config.database, ws)
-    }
-
-    applicationLifecycle.addStopHook(() => {
-      log.info("Closing instanceStorage (stop hook)")
-      if (!instanceStorage.isClosed) {
-        instanceStorage.close()
-      }
-      Future.successful({})
-    })
-    instanceStorage
-  }
-
 }
