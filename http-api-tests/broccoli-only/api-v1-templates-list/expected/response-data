@@ -11,7 +11,7 @@
       "URL": {
         "id": "URL",
         "default": "localhost:8000",
-        "type": "raw"
+        "type": "string"
       },
       "enabled": {
         "id": "enabled",
@@ -23,7 +23,7 @@
         "type": "string"
       }
     },
-    "version": "1d3ef79890dc8754add7be8f6dcab004"
+    "version": "1b9568224ce298670ec87d1194fa2f45"
   },
   {
     "id": "http-server",
@@ -45,14 +45,14 @@
         "name": "A Secret Parameter",
         "default": "guessme",
         "secret": true,
-        "type": "raw"
+        "type": "string"
       },
       "id": {
         "id": "id",
-        "type": "raw"
+        "type": "string"
       }
     },
-    "version": "ae0d471483f2164dd32bf7250e5f04e2"
+    "version": "e1ee8d8dd92a3b1bed4392da1cdea8c6"
   },
   {
     "id": "jupyter",
@@ -63,10 +63,10 @@
     "parameterInfos": {
       "id": {
         "id": "id",
-        "type": "raw"
+        "type": "string"
       }
     },
-    "version": "a89692bd8de8d4f954de8aeb1525dec0"
+    "version": "6b853acfc7f3fe0a337cdb7dbe4a51b8"
   },
   {
     "id": "zeppelin",
@@ -77,9 +77,9 @@
     "parameterInfos": {
       "id": {
         "id": "id",
-        "type": "raw"
+        "type": "string"
       }
     },
-    "version": "51d87cc9a0249d2f684ca31f59968601"
+    "version": "8e57100c23ffe1a46ac7cb765647c984"
   }
 ]

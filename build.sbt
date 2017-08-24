@@ -22,12 +22,12 @@ lazy val server = project
       Dependencies.scalaUri,
       Dependencies.squants,
       Dependencies.scalaguice,
+      Dependencies.commonsIO,
       ws,
       cache,
       specs2 % Test,
       specs2 % IntegrationTest,
-      Dependencies.scalacheck % Test,
-      Dependencies.commonsIO % Test
+      Dependencies.scalacheck % Test
     ),
     libraryDependencies ++= Dependencies.cats,
     libraryDependencies ++= Dependencies.cats.map(_ % IntegrationTest),

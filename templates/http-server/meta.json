@@ -10,10 +10,10 @@
       "name": "A Secret Parameter",
       "default": "guessme",
       "secret": true,
-      "type": "raw"
+      "type": "string"
     },
     "id": {
-      "type": "raw"
+      "type": "string"
     }
   }
 }
