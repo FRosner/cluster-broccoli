@@ -454,14 +454,17 @@ instanceAllocationRow instance index ( taskName, allocation ) =
                     , title "398/1000 MHz"
                     ]
                     [ div
-                        [ class "progress-bar progress-bar-success"
+                        [ class "progress-bar progress-bar-danger progress-bar-striped"
                         , attribute "role" "porgressbar"
-                        , attribute "aria-valuenow" "40"
+                        , attribute "aria-valuenow" "100"
                         , attribute "aria-value-min" "0"
                         , attribute "aria-value-max" "100"
-                        , style [ ( "width", "40%" ) ]
+                        , style [ ( "width", "100%" ) ]
                         ]
-                        [ div [ style [ ( "width", "75px" ) ] ] [] ]
+                        [ div
+                            [ style [ ( "width", "75px" ) ] ]
+                            [ text "280%" ]
+                        ]
                     ]
                 ]
             , td []
@@ -470,14 +473,17 @@ instanceAllocationRow instance index ( taskName, allocation ) =
                     , title "481/512 MB"
                     ]
                     [ div
-                        [ class "progress-bar progress-bar-warning"
+                        [ class "progress-bar progress-bar-danger"
                         , attribute "role" "porgressbar"
                         , attribute "aria-valuenow" "90"
                         , attribute "aria-value-min" "0"
                         , attribute "aria-value-max" "100"
                         , style [ ( "width", "90%" ) ]
                         ]
-                        [ div [ style [ ( "width", "75px" ) ] ] [] ]
+                        [ div
+                            [ style [ ( "width", "75px" ) ] ]
+                            [ text "94%" ]
+                        ]
                     ]
                 ]
             , td
