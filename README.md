@@ -82,8 +82,7 @@ The following configuration properties are supported. Please refer to the [Wiki]
 
 | Property | Description | Default |
 | -------- | ----------- | ------- |
-| `broccoli.templates.storage.type` | Storage type for templates. Currently only `fs` supported. | `fs` |
-| `broccoli.templates.storage.fs.url` | Storage directory for templates in `fs` mode. | `templates` |
+| `broccoli.templates.path` | Path to storage directory for templates. | `./templates` |
 | `broccoli.instances.storage.type` | Storage type for instances. `fs` and `couchdb` are supported. See the [instance documentation](https://github.com/FRosner/cluster-broccoli/wiki/Instances) for details. | `fs` |
 | `broccoli.instances.storage.fs.url` | Storage directory for instances in `fs` mode. | `instances` |
 | `broccoli.instances.storage.couchdb.url` | URL to CouchDB in `couchdb` mode. | `http://localhost:5984` |
