@@ -92,6 +92,6 @@ object Dependencies {
   /**
     * Apache Commons Lang to provide escape string functionality used during rendering parameter values in templates
     */
-  val commonsLang: ModuleID = "org.apache.commons" % "commons-lang3" % "3.1"
+  val commonsLang: ModuleID = "org.apache.commons" % "commons-lang3" % "3.6"
 
 }
