@@ -88,4 +88,10 @@ object Dependencies {
     * Apache Commons IO to provide additional functionality for IO like copying directories recursively
     */
   val commonsIO: ModuleID = "commons-io" % "commons-io" % "2.5"
+
+  /**
+    * Apache Commons Lang to provide escape string functionality used during rendering parameter values in templates
+    */
+  val commonsLang: ModuleID = "org.apache.commons" % "commons-lang3" % "3.6"
+
 }
