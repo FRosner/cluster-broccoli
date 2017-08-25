@@ -7,7 +7,7 @@ sleep $BROCCOLI_SLEEP_MEDIUM
 docker run --rm -d --net host \
   frosner/cluster-broccoli-test \
   cluster-broccoli \
-  -Dconfig.file="http-api-tests/instance-persistence-couchdb/couchdb.conf" > cluster-broccoli.did
+  -Dconfig.file="/couchdb.conf" > cluster-broccoli.did
 
 sleep $BROCCOLI_SLEEP_MEDIUM
 
