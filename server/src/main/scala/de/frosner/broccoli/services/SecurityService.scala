@@ -1,18 +1,27 @@
 package de.frosner.broccoli.services
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject, Provider, Singleton}
 
+import cats.data.OptionT
+import cats.instances.future._
+import com.mohiva.play.silhouette.api.LoginInfo
 import com.mohiva.play.silhouette.api.util.Credentials
+import com.mohiva.play.silhouette.impl.exceptions.{IdentityNotFoundException, InvalidPasswordException}
+import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import de.frosner.broccoli.auth.{UserAccount, UserRole}
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.conf.IllegalConfigException
 import play.api.Configuration
 
 import scala.collection.JavaConverters._
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 @Singleton()
-case class SecurityService @Inject()(configuration: Configuration) {
+case class SecurityService @Inject()(
+    configuration: Configuration,
+    credentialsProvider: CredentialsProvider
+)(implicit ex: ExecutionContext) {
 
   private val log = play.api.Logger(getClass)
 
@@ -106,8 +115,37 @@ case class SecurityService @Inject()(configuration: Configuration) {
   @volatile
   private var failedLoginAttempts: Map[String, Int] = Map.empty
 
-  // TODO store failed logins (reset on successful login) and only allowToAuthenticate if not blocked
+  /**
+    * Authenticate the given credentials.
+    *
+    * @param credentials The credentials to check
+    * @return The corresponding login info if it exists, or None otherwise
+    */
+  def authenticate(credentials: Credentials): OptionT[Future, LoginInfo] = {
+    val loginInfo = for {
+      attempts <- OptionT
+        .pure(failedLoginAttempts.getOrElse(credentials.identifier, 0))
+      if attempts <= allowedFailedLogins
+      loginInfo <- OptionT(
+        credentialsProvider
+          .authenticate(credentials)
+          .map(Some(_))
+          .recover {
+            case _: InvalidPasswordException  => None
+            case _: IdentityNotFoundException => None
+          })
+    } yield loginInfo
+    loginInfo.isEmpty.foreach { hasFailed =>
+      if (hasFailed) {
+        // FIXME: Prone to race conditions; updates may get lost between getting and setting the value!
+        failedLoginAttempts = failedLoginAttempts.updated(credentials.identifier,
+                                                          failedLoginAttempts.getOrElse(credentials.identifier, 0) + 1)
+      }
+    }
+    loginInfo
+  }
 
+  @deprecated("Use authenticate", "2017-08-25")
   def isAllowedToAuthenticate(credentials: Credentials): Boolean = {
     val credentialsFailedLoginAttempts = failedLoginAttempts.getOrElse(credentials.identifier, 0)
     val allowed = if (credentialsFailedLoginAttempts <= allowedFailedLogins) {

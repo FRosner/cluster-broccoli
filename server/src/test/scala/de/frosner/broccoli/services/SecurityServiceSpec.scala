@@ -40,6 +40,8 @@ class SecurityServiceSpec extends Specification {
 
   "An authentication check" should {
 
+    SecurityService()
+
     "succeed if the account matches" in {
       SecurityService(configWithAccounts(List(account)))
         .isAllowedToAuthenticate(credentials) === true

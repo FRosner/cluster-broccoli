@@ -2,6 +2,8 @@ package de.frosner.broccoli.controllers
 
 import javax.inject.Inject
 
+import cats.data.OptionT
+import cats.instances.future._
 import com.mohiva.play.silhouette.api.util.Credentials
 import de.frosner.broccoli.services.{SecurityService, WebSocketService}
 import jp.t2v.lab.play2.auth.{BroccoliSimpleAuthorization, LoginLogout}
@@ -45,27 +47,26 @@ case class SecurityController @Inject()(
       .fold(
         formWithErrors => Future.successful(Results.BadRequest),
         credentials => {
-          if (securityService.isAllowedToAuthenticate(credentials)) {
-            log.info(s"Login successful for user '${credentials.identifier}'.")
-            gotoLoginSucceeded(credentials.identifier).flatMap { result =>
-              resolveUser(credentials.identifier).map { maybeUser =>
-                val userResult = Results.Ok(Json.toJson(maybeUser.get))
-                result.copy(
-                  header = result.header.copy(
-                    headers = userResult.header.headers
-                      .get("Content-Type")
-                      .map { contentType =>
-                        result.header.headers.updated("Content-Type", contentType)
-                      }
-                      .getOrElse(result.header.headers)
-                  ),
-                  body = userResult.body
-                )
-              }
-            }
-          } else {
+          (for {
+            loginInfo <- securityService.authenticate(credentials)
+            result <- OptionT.liftF(gotoLoginSucceeded(loginInfo.providerKey))
+            user <- OptionT(resolveUser(loginInfo.providerKey))
+          } yield {
+            val userResult = Results.Ok(Json.toJson(user))
+            result.copy(
+              header = result.header.copy(
+                headers = userResult.header.headers
+                  .get("Content-Type")
+                  .map { contentType =>
+                    result.header.headers.updated("Content-Type", contentType)
+                  }
+                  .getOrElse(result.header.headers)
+              ),
+              body = userResult.body
+            )
+          }).getOrElse {
             log.info(s"Login failed for user '${credentials.identifier}'.")
-            Future.successful(Results.Unauthorized)
+            Results.Unauthorized
           }
         }
       )
