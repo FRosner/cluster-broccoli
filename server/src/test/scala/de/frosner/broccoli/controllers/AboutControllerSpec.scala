@@ -1,7 +1,6 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.auth.UserAccount
-import de.frosner.broccoli.models.Role
+import de.frosner.broccoli.auth.{UserAccount, UserRole}
 import de.frosner.broccoli.services._
 import org.mockito.Mockito._
 import play.api.libs.json.Json
@@ -14,7 +13,7 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
   "about" should {
 
     "return the about object with authentication" in new WithApplication {
-      val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val account = UserAccount("user", "pass", ".*", UserRole.Administrator)
       val aboutInfoService = withDummyValues(mock(classOf[AboutInfoService]))
       testWithAllAuths(account) { securityService =>
         AboutController(aboutInfoService, securityService, cacheApi, playEnv)

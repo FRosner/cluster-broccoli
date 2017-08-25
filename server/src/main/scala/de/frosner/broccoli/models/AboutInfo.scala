@@ -1,5 +1,6 @@
 package de.frosner.broccoli.models
 
+import de.frosner.broccoli.auth.UserRole
 import play.api.libs.json.{Json, Reads, Writes}
 
 case class AboutInfo(project: AboutProject, scala: AboutScala, sbt: AboutSbt, auth: AboutAuth, services: AboutServices)
@@ -14,7 +15,7 @@ case class AboutAuth(enabled: Boolean, user: AboutUser)
 
 case class AboutServices(clusterManager: AboutClusterManager, serviceDiscovery: AboutServiceDiscovery)
 
-case class AboutUser(name: String, role: Role, instanceRegex: String)
+case class AboutUser(name: String, role: UserRole, instanceRegex: String)
 
 case class AboutClusterManager(connected: Boolean)
 

@@ -1,7 +1,7 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.RemoveSecrets.ToRemoveSecretsOps
-import de.frosner.broccoli.auth.UserAccount
+import de.frosner.broccoli.auth.{UserAccount, UserRole}
 import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad
@@ -71,7 +71,7 @@ class WebSocketControllerSpec
 
   private def testWs(controllerSetup: SecurityService => WebSocketController,
                      inMsg: IncomingMessage,
-                     expectations: Map[Option[(String, Role)], OutgoingMessage]) =
+                     expectations: Map[Option[(String, UserRole)], OutgoingMessage]) =
     expectations.foreach {
       case (maybeInstanceRegexAndRole, outMsg) =>
         val maybeAccount = maybeInstanceRegexAndRole.map {
@@ -110,7 +110,7 @@ class WebSocketControllerSpec
   "WebSocketController" should {
 
     "establish a websocket connection correctly (with authentication)" in new WithApplication {
-      val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val account = UserAccount("user", "pass", ".*", UserRole.Administrator)
       val instanceService = withInstances(mock[InstanceService], Seq.empty)
       val controller = WebSocketController(
         webSocketService = mock[WebSocketService],
@@ -128,7 +128,7 @@ class WebSocketControllerSpec
     }
 
     "establish a websocket connection correctly (without authentication)" in new WithApplication {
-      val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val account = UserAccount("user", "pass", ".*", UserRole.Administrator)
       val instanceService = withInstances(mock[InstanceService], Seq.empty)
       val controller = WebSocketController(
         webSocketService = mock[WebSocketService],
@@ -147,7 +147,7 @@ class WebSocketControllerSpec
     }
 
     "decline the websocket connection if not authenticated" in new WithApplication {
-      val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val account = UserAccount("user", "pass", ".*", UserRole.Administrator)
       val instanceService = withInstances(mock[InstanceService], Seq.empty)
       val controller = WebSocketController(
         webSocketService = mock[WebSocketService],
@@ -167,7 +167,7 @@ class WebSocketControllerSpec
     }
 
     "send about info, template and instance list after establishing the connection" in new WithApplication {
-      val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val account = UserAccount("user", "pass", ".*", UserRole.Administrator)
       val instances = Seq(
         instanceWithStatus
       )
@@ -249,7 +249,7 @@ class WebSocketControllerSpec
           instanceWithStatus
         )
       )
-      val roleFailure = OutgoingMessage.AddInstanceError(InstanceError.RolesRequired(Role.Administrator))
+      val roleFailure = OutgoingMessage.AddInstanceError(InstanceError.RolesRequired(UserRole.Administrator))
       val regexFailure =
         OutgoingMessage.AddInstanceError(InstanceError.UserRegexDenied("blib", "bla"))
 
@@ -272,10 +272,10 @@ class WebSocketControllerSpec
         inMsg = IncomingMessage.AddInstance(instanceCreation),
         expectations = Map(
           None -> success,
-          Some((".*", Role.Administrator)) -> success,
-          Some(("bla", Role.Administrator)) -> regexFailure,
-          Some((".*", Role.Operator)) -> roleFailure,
-          Some((".*", Role.User)) -> roleFailure
+          Some((".*", UserRole.Administrator)) -> success,
+          Some(("bla", UserRole.Administrator)) -> regexFailure,
+          Some((".*", UserRole.Operator)) -> roleFailure,
+          Some((".*", UserRole.User)) -> roleFailure
         )
       )
     }
@@ -289,7 +289,7 @@ class WebSocketControllerSpec
           instanceWithStatus
         )
       )
-      val roleFailure = OutgoingMessage.DeleteInstanceError(InstanceError.RolesRequired(Role.Administrator))
+      val roleFailure = OutgoingMessage.DeleteInstanceError(InstanceError.RolesRequired(UserRole.Administrator))
       val regexFailure = OutgoingMessage.DeleteInstanceError(InstanceError.UserRegexDenied(instanceDeletion, "bla"))
 
       testWs(
@@ -311,10 +311,10 @@ class WebSocketControllerSpec
         inMsg = IncomingMessage.DeleteInstance(instanceDeletion),
         expectations = Map(
           None -> success,
-          Some((".*", Role.Administrator)) -> success,
-          Some(("bla", Role.Administrator)) -> regexFailure,
-          Some((".*", Role.Operator)) -> roleFailure,
-          Some((".*", Role.User)) -> roleFailure
+          Some((".*", UserRole.Administrator)) -> success,
+          Some(("bla", UserRole.Administrator)) -> regexFailure,
+          Some((".*", UserRole.Operator)) -> roleFailure,
+          Some((".*", UserRole.User)) -> roleFailure
         )
       )
     }
@@ -362,14 +362,14 @@ class WebSocketControllerSpec
         inMsg = IncomingMessage.UpdateInstance(instanceUpdate),
         expectations = Map(
           None -> success,
-          Some((".*", Role.Administrator)) -> success,
-          Some(("bla", Role.Administrator)) -> OutgoingMessage.UpdateInstanceError(
+          Some((".*", UserRole.Administrator)) -> success,
+          Some(("bla", UserRole.Administrator)) -> OutgoingMessage.UpdateInstanceError(
             InstanceError.UserRegexDenied(instanceUpdate.instanceId.get, "bla")),
-          Some((".*", Role.Operator)) -> OutgoingMessage.UpdateInstanceError(
-            InstanceError.RolesRequired(Role.Administrator)
+          Some((".*", UserRole.Operator)) -> OutgoingMessage.UpdateInstanceError(
+            InstanceError.RolesRequired(UserRole.Administrator)
           ),
-          Some((".*", Role.User)) -> OutgoingMessage.UpdateInstanceError(
-            InstanceError.RolesRequired(Role.Administrator, Role.Operator)
+          Some((".*", UserRole.User)) -> OutgoingMessage.UpdateInstanceError(
+            InstanceError.RolesRequired(UserRole.Administrator, UserRole.Operator)
           )
         )
       )
@@ -420,13 +420,13 @@ class WebSocketControllerSpec
         inMsg = IncomingMessage.UpdateInstance(instanceUpdate),
         expectations = Map(
           None -> success,
-          Some((".*", Role.Administrator)) -> success,
-          Some(("bla", Role.Administrator)) -> OutgoingMessage.UpdateInstanceError(
+          Some((".*", UserRole.Administrator)) -> success,
+          Some(("bla", UserRole.Administrator)) -> OutgoingMessage.UpdateInstanceError(
             InstanceError.UserRegexDenied(instanceUpdate.instanceId.get, "bla")
           ),
-          Some((".*", Role.Operator)) -> secretSuccess,
-          Some((".*", Role.User)) -> OutgoingMessage.UpdateInstanceError(
-            InstanceError.RolesRequired(Role.Administrator, Role.Operator)
+          Some((".*", UserRole.Operator)) -> secretSuccess,
+          Some((".*", UserRole.User)) -> OutgoingMessage.UpdateInstanceError(
+            InstanceError.RolesRequired(UserRole.Administrator, UserRole.Operator)
           )
         )
       )
@@ -471,15 +471,15 @@ class WebSocketControllerSpec
         inMsg = IncomingMessage.UpdateInstance(instanceUpdate),
         expectations = Map(
           None -> success,
-          Some((".*", Role.Administrator)) -> success,
-          Some(("bla", Role.Administrator)) -> OutgoingMessage.UpdateInstanceError(
+          Some((".*", UserRole.Administrator)) -> success,
+          Some(("bla", UserRole.Administrator)) -> OutgoingMessage.UpdateInstanceError(
             InstanceError.UserRegexDenied(instanceUpdate.instanceId.get, "bla")
           ),
-          Some((".*", Role.Operator)) -> OutgoingMessage.UpdateInstanceError(
-            InstanceError.RolesRequired(Role.Administrator)
+          Some((".*", UserRole.Operator)) -> OutgoingMessage.UpdateInstanceError(
+            InstanceError.RolesRequired(UserRole.Administrator)
           ),
-          Some((".*", Role.User)) -> OutgoingMessage.UpdateInstanceError(
-            InstanceError.RolesRequired(Role.Administrator, Role.Operator)
+          Some((".*", UserRole.User)) -> OutgoingMessage.UpdateInstanceError(
+            InstanceError.RolesRequired(UserRole.Administrator, UserRole.Operator)
           )
         )
       )

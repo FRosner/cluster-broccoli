@@ -3,10 +3,9 @@ package de.frosner.broccoli.services
 import javax.inject.{Inject, Singleton}
 
 import com.mohiva.play.silhouette.api.util.Credentials
-import de.frosner.broccoli.auth.UserAccount
+import de.frosner.broccoli.auth.{UserAccount, UserRole}
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.conf.IllegalConfigException
-import de.frosner.broccoli.models.Role
 import play.api.Configuration
 
 import scala.collection.JavaConverters._
@@ -150,7 +149,7 @@ object SecurityService {
             password = account.getString(conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY),
             instanceRegex = account.getString(conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY),
             role = if (account.hasPath(conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY)) {
-              Role.withNameInsensitive(account.getString(conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY))
+              UserRole.withNameInsensitive(account.getString(conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY))
             } else {
               conf.AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT
             }

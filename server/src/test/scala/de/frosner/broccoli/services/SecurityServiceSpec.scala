@@ -3,9 +3,8 @@ package de.frosner.broccoli.services
 import com.google.common.collect.ImmutableMap
 import com.mohiva.play.silhouette.api.util.Credentials
 import com.typesafe.config.{ConfigException, ConfigFactory, ConfigValueFactory}
-import de.frosner.broccoli.auth.UserAccount
+import de.frosner.broccoli.auth.{UserAccount, UserRole}
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.Role
 import org.specs2.mutable.Specification
 import play.api.Configuration
 
@@ -36,7 +35,7 @@ class SecurityServiceSpec extends Specification {
     Configuration(config)
   }
 
-  val account = UserAccount("frank", "pass", "^test.*", Role.Administrator)
+  val account = UserAccount("frank", "pass", "^test.*", UserRole.Administrator)
   val credentials = Credentials("foo", "bar")
 
   "An authentication check" should {

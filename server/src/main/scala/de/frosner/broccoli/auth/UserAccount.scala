@@ -1,7 +1,6 @@
 package de.frosner.broccoli.auth
 
 import de.frosner.broccoli.RemoveSecrets
-import de.frosner.broccoli.models.Role
 import play.api.libs.json.{Json, Writes}
 
 /**
@@ -12,7 +11,7 @@ import play.api.libs.json.{Json, Writes}
   * @param instanceRegex The instance regex for access control to instances
   * @param role The user role
   */
-case class UserAccount(name: String, password: String, instanceRegex: String, role: Role)
+case class UserAccount(name: String, password: String, instanceRegex: String, role: UserRole)
 
 object UserAccount {
 
@@ -23,7 +22,7 @@ object UserAccount {
     name = "anonymous",
     password = "",
     instanceRegex = ".*",
-    role = Role.Administrator
+    role = UserRole.Administrator
   )
 
   implicit val accountWrites: Writes[UserAccount] = Writes { account =>

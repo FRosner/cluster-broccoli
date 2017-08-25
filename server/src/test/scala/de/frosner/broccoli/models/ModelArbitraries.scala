@@ -1,6 +1,6 @@
 package de.frosner.broccoli.models
 
-import de.frosner.broccoli.auth.UserAccount
+import de.frosner.broccoli.auth.{UserAccount, UserRole}
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models.ServiceStatus.ServiceStatus
 import de.frosner.broccoli.nomad.models.{ClientStatus, TaskState}
@@ -11,9 +11,9 @@ import org.scalacheck.{Arbitrary, Gen}
   */
 trait ModelArbitraries {
 
-  implicit val arbitraryRole: Arbitrary[Role] = Arbitrary(Gen.oneOf(Role.values))
+  implicit val arbitraryUserRole: Arbitrary[UserRole] = Arbitrary(Gen.oneOf(UserRole.values))
 
-  implicit def arbitraryAccount(implicit arbRole: Arbitrary[Role]): Arbitrary[UserAccount] = Arbitrary {
+  implicit def arbitraryAccount(implicit arbRole: Arbitrary[UserRole]): Arbitrary[UserAccount] = Arbitrary {
     for {
       id <- Gen.identifier.label("id")
       password <- Gen.identifier.label("password")
@@ -106,7 +106,7 @@ trait ModelArbitraries {
       } yield InstanceWithStatus(instance, jobStatus, services, runs)
     }
 
-  implicit def arbitraryInstanceError(implicit arbRole: Arbitrary[Role]): Arbitrary[InstanceError] =
+  implicit def arbitraryInstanceError(implicit arbRole: Arbitrary[UserRole]): Arbitrary[InstanceError] =
     Arbitrary(
       Gen.oneOf(
         Gen
@@ -119,7 +119,7 @@ trait ModelArbitraries {
         Gen
           .zip(Gen.identifier.label("instanceId"), Gen.identifier.label("regex"))
           .map(InstanceError.UserRegexDenied.tupled),
-        Gen.nonEmptyBuildableOf[Set[Role], Role](arbRole.arbitrary).map(InstanceError.RolesRequired(_)),
+        Gen.nonEmptyBuildableOf[Set[UserRole], UserRole](arbRole.arbitrary).map(InstanceError.RolesRequired(_)),
         Gen.identifier.label("message").map(message => InstanceError.Generic(new Throwable(message)))
       ))
 

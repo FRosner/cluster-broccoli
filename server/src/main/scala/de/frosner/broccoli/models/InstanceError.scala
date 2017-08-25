@@ -1,5 +1,6 @@
 package de.frosner.broccoli.models
 
+import de.frosner.broccoli.auth.UserRole
 import de.frosner.broccoli.http.ToHTTPResult
 import play.api.libs.json.{Json, Writes}
 import play.api.mvc.Results
@@ -66,12 +67,12 @@ object InstanceError {
     * A user was denied to perform an operation on an instance because the operation requires roles
     * which the user lacked.
     */
-  final case class RolesRequired(roles: Set[Role]) extends InstanceError {
+  final case class RolesRequired(roles: Set[UserRole]) extends InstanceError {
     override val reason: String = s"Requires the following role(s): ${roles.toSeq.sortBy(_.toString).mkString(", ")}"
   }
 
   object RolesRequired {
-    def apply(role: Role, roles: Role*): RolesRequired = RolesRequired(Set(role) ++ roles)
+    def apply(role: UserRole, roles: UserRole*): RolesRequired = RolesRequired(Set(role) ++ roles)
   }
 
   /**

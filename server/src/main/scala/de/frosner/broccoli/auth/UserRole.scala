@@ -1,4 +1,4 @@
-package de.frosner.broccoli.models
+package de.frosner.broccoli.auth
 
 import de.frosner.broccoli.RemoveSecrets
 import enumeratum._
@@ -8,25 +8,25 @@ import scala.collection.immutable
 /**
   * A user role in the application
   */
-sealed trait Role extends EnumEntry with EnumEntry.Lowercase
+sealed trait UserRole extends EnumEntry with EnumEntry.Lowercase
 
-object Role extends Enum[Role] with PlayJsonEnum[Role] {
-  override def values: immutable.IndexedSeq[Role] = findValues
+object UserRole extends Enum[UserRole] with PlayJsonEnum[UserRole] {
+  override def values: immutable.IndexedSeq[UserRole] = findValues
 
   /**
     * Grants all privileges.
     */
-  final case object Administrator extends Role
+  final case object Administrator extends UserRole
 
   /**
     * Grants limited privileges to edit instances.
     */
-  final case object Operator extends Role
+  final case object Operator extends UserRole
 
   /**
     * Grants use of instances but does not allow modification.
     */
-  final case object User extends Role
+  final case object User extends UserRole
 
   /**
     * Filter secrets unless a user has the Administrator role.
@@ -40,9 +40,9 @@ object Role extends Enum[Role] with PlayJsonEnum[Role] {
     * @tparam T The value type
     * @return The value filtered according to RemoveSecrets
     */
-  def removeSecretsForRole[T](role: Role)(value: T)(implicit removeSecrets: RemoveSecrets[T]): T = role match {
-    case Role.Administrator => value
-    case _                  => removeSecrets.removeSecrets(value)
+  def removeSecretsForRole[T](role: UserRole)(value: T)(implicit removeSecrets: RemoveSecrets[T]): T = role match {
+    case UserRole.Administrator => value
+    case _                      => removeSecrets.removeSecrets(value)
   }
 
   /**
@@ -58,7 +58,7 @@ object Role extends Enum[Role] with PlayJsonEnum[Role] {
         * @param role The user role
         * @return The value with secrets removed if the role requires it, otherwise this value
         */
-      def removeSecretsForRole(role: Role): T = Role.removeSecretsForRole(role)(value)(removeSecrets)
+      def removeSecretsForRole(role: UserRole): T = UserRole.removeSecretsForRole(role)(value)(removeSecrets)
     }
   }
 

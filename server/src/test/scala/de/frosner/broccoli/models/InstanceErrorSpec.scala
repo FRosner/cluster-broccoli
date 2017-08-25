@@ -1,5 +1,6 @@
 package de.frosner.broccoli.models
 
+import de.frosner.broccoli.auth.UserRole
 import de.frosner.broccoli.http.ToHTTPResult
 import org.specs2.ScalaCheck
 import org.scalacheck.Gen
@@ -58,7 +59,7 @@ class InstanceErrorSpec
   }
 
   "InstanceError.RolesRequest" should {
-    "map to forbidden" in prop { roles: Set[Role] =>
+    "map to forbidden" in prop { roles: Set[UserRole] =>
       val error: InstanceError = InstanceError.RolesRequired(roles)
       status(Future.successful(error.toHTTPResult)) === FORBIDDEN
     }

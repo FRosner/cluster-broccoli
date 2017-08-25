@@ -1,7 +1,6 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.auth.UserAccount
-import de.frosner.broccoli.models.Role
+import de.frosner.broccoli.auth.{UserAccount, UserRole}
 import de.frosner.broccoli.services.SecurityService
 import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Mockito._
@@ -40,7 +39,7 @@ trait AuthUtils extends ServiceMocks {
   def testWithAllAuths[T <: AuthConfigImpl, B](controller: SecurityService => T)(action: T => Action[B])(
       requestModifier: FakeRequest[AnyContentAsEmpty.type] => FakeRequest[B])(
       matcher: (T, Future[Result]) => MatchResult[_]): MatchResult[_] = {
-    val account = UserAccount("user", "pass", ".*", Role.Administrator)
+    val account = UserAccount("user", "pass", ".*", UserRole.Administrator)
     val noAuthController = controller(withAuthNone(mock(classOf[SecurityService])))
     val noAuthRequest = requestModifier(FakeRequest())
     val noAuthResult = action(noAuthController).apply(noAuthRequest)

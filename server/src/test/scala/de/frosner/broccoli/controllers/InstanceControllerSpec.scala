@@ -3,7 +3,7 @@ package de.frosner.broccoli.controllers
 import cats.data.EitherT
 import cats.instances.future._
 import com.mohiva.play.silhouette.api.util.Credentials
-import de.frosner.broccoli.auth.UserAccount
+import de.frosner.broccoli.auth.{UserAccount, UserRole}
 import de.frosner.broccoli.http.ToHTTPResult
 import de.frosner.broccoli.instances.{InstanceNotFoundException, NomadInstances}
 import de.frosner.broccoli.models._
@@ -41,21 +41,21 @@ class InstanceControllerSpec
     name = "user",
     password = "pass",
     instanceRegex = "^matching-.*",
-    role = Role.Administrator
+    role = UserRole.Administrator
   )
 
   val operator = UserAccount(
     name = "Operator",
     password = "pass",
     instanceRegex = ".*",
-    role = Role.Operator
+    role = UserRole.Operator
   )
 
   val user = UserAccount(
     name = "User",
     password = "pass",
     instanceRegex = ".*",
-    role = Role.User
+    role = UserRole.User
   )
 
   val instanceWithStatus = InstanceWithStatus(

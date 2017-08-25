@@ -1,7 +1,7 @@
 package de.frosner.broccoli.controllers
 
 import com.mohiva.play.silhouette.api.util.Credentials
-import de.frosner.broccoli.auth.UserAccount
+import de.frosner.broccoli.auth.{UserAccount, UserRole}
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.services._
@@ -52,7 +52,7 @@ trait ServiceMocks {
           enabled = false,
           user = AboutUser(
             name = "name",
-            role = Role.User,
+            role = UserRole.User,
             instanceRegex = "instances"
           )
         ),

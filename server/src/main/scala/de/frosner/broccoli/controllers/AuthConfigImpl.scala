@@ -1,7 +1,6 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.auth.UserAccount
-import de.frosner.broccoli.models.Role
+import de.frosner.broccoli.auth.{UserAccount, UserRole}
 import de.frosner.broccoli.services.SecurityService
 import jp.t2v.lab.play2.auth._
 import play.api.{Environment, Mode}
@@ -24,7 +23,7 @@ trait AuthConfigImpl extends AuthConfig {
 
   type User = UserAccount
 
-  type Authority = Role
+  type Authority = UserRole
 
   val idTag: ClassTag[Id] = scala.reflect.classTag[Id]
 
@@ -56,9 +55,9 @@ trait AuthConfigImpl extends AuthConfig {
 
   def authorize(user: User, authority: Authority)(implicit ctx: ExecutionContext): Future[Boolean] = Future.successful {
     user.role match {
-      case Role.Administrator => true
-      case Role.Operator      => authority == Role.Operator || authority == Role.User
-      case Role.User          => authority == Role.User
+      case UserRole.Administrator => true
+      case UserRole.Operator      => authority == UserRole.Operator || authority == UserRole.User
+      case UserRole.User          => authority == UserRole.User
     }
   }
 

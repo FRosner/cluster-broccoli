@@ -5,13 +5,12 @@ import javax.inject.Inject
 
 import cats.instances.future._
 import cats.syntax.either._
-import de.frosner.broccoli.auth.UserAccount
+import de.frosner.broccoli.auth.UserRole.syntax._
+import de.frosner.broccoli.auth.{UserAccount, UserRole}
 import de.frosner.broccoli.http.ToHTTPResult.ops._
-import de.frosner.broccoli.instances.NomadInstances
-import de.frosner.broccoli.instances.InstanceNotFoundException
+import de.frosner.broccoli.instances.{InstanceNotFoundException, NomadInstances}
 import de.frosner.broccoli.models.InstanceCreation.instanceCreationReads
 import de.frosner.broccoli.models.InstanceUpdate.instanceUpdateReads
-import de.frosner.broccoli.models.Role.syntax._
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.models.{Allocation, LogStreamKind, TaskLog, Task => NomadTask}
 import de.frosner.broccoli.services._
@@ -100,7 +99,7 @@ object InstanceController {
     for {
       user <- Either
         .right[InstanceError, UserAccount](loggedIn)
-        .ensure(InstanceError.RolesRequired(Role.Administrator): InstanceError)(_.role == Role.Administrator)
+        .ensure(InstanceError.RolesRequired(UserRole.Administrator): InstanceError)(_.role == UserRole.Administrator)
       _ <- Either
         .fromOption(instanceCreation.parameters.get("id"), InstanceError.IdMissing: InstanceError)
         .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex): InstanceError)(_.matches(user.instanceRegex))
@@ -117,7 +116,7 @@ object InstanceController {
     for {
       user <- Either
         .right[InstanceError, UserAccount](loggedIn)
-        .ensure(InstanceError.RolesRequired(Role.Administrator): InstanceError)(_.role == Role.Administrator)
+        .ensure(InstanceError.RolesRequired(UserRole.Administrator): InstanceError)(_.role == UserRole.Administrator)
       instanceId <- Either
         .right[InstanceError, String](id)
         .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex): InstanceError)(_.matches(user.instanceRegex))
@@ -144,8 +143,8 @@ object InstanceController {
     for {
       user <- Either
         .right[InstanceError, UserAccount](loggedIn)
-        .ensure(InstanceError.RolesRequired(Role.Administrator, Role.Operator))(u =>
-          u.role == Role.Administrator || u.role == Role.Operator)
+        .ensure(InstanceError.RolesRequired(UserRole.Administrator, UserRole.Operator))(u =>
+          u.role == UserRole.Administrator || u.role == UserRole.Operator)
       instanceId <- Either
         .right[InstanceError, String](id)
         .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
@@ -156,9 +155,9 @@ object InstanceController {
           // Ensure that at least one parameter of the status update is set
           u.status.orElse(u.parameterValues).orElse(u.selectedTemplate).isDefined
         }
-        .ensure(InstanceError.RolesRequired(Role.Administrator)) { u =>
+        .ensure(InstanceError.RolesRequired(UserRole.Administrator)) { u =>
           // Ensure that only administrators can update parameter values or instance templates
-          user.role == Role.Administrator || (u.parameterValues.isEmpty && u.selectedTemplate.isEmpty)
+          user.role == UserRole.Administrator || (u.parameterValues.isEmpty && u.selectedTemplate.isEmpty)
         }
       updatedInstance <- Either
         .fromTry(
