@@ -34,7 +34,7 @@ object OutgoingMessage {
     case object UpdateInstanceSuccess extends Type
     case object UpdateInstanceError extends Type
     case object GetInstanceTasksSuccess extends Type
-    case object GetInstanceTasksFailure extends Type
+    case object GetInstanceTasksError extends Type
   }
 
   final case class ListTemplates(templates: Seq[Template]) extends OutgoingMessage
@@ -72,7 +72,7 @@ object OutgoingMessage {
       case UpdateInstanceSuccess(result)   => write(Type.UpdateInstanceSuccess, result)
       case UpdateInstanceError(error)      => write(Type.UpdateInstanceError, error)
       case GetInstanceTasksSuccess(result) => write(Type.GetInstanceTasksSuccess, result)
-      case GetInstanceTasksError(error)    => write(Type.GetInstanceTasksFailure, error)
+      case GetInstanceTasksError(error)    => write(Type.GetInstanceTasksError, error)
     }
 
   private def write[P](`type`: Type, payload: P)(implicit writesP: Writes[P]): JsObject =
