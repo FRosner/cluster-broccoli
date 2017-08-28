@@ -79,7 +79,7 @@ payloadDecoder t =
             Decode.map GetInstanceTasksSuccessMessage InstanceTasks.decoder
 
         "getInstanceTasksError" ->
-            Decode.map GetInstanceTasksErrorMessage InstanceError.decoder
+            Decode.map2 GetInstanceTasksErrorMessage (field "instanceId" Decode.string) (field "error" InstanceError.decoder)
 
         s ->
             Decode.fail <| "Unknown message type: " ++ s
@@ -190,10 +190,10 @@ updateFromMessage model message =
         GetInstanceTasksSuccessMessage result ->
             ( { model | tasks = Dict.insert result.instanceId result.tasks model.tasks }, Cmd.none )
 
-        GetInstanceTasksErrorMessage error ->
-            ( model
-            , showError "Failed to get tasks of the instance" (error.reason)
-            )
+        GetInstanceTasksErrorMessage instanceId error ->
+            -- When we failed to get tasks of an instance clear the tasks of the instance, and swallow the error since
+            -- we'll retry soon anyway.
+            ( { model | tasks = Dict.insert instanceId [] model.tasks }, Cmd.none )
 
         ErrorMessage error ->
             ( model

@@ -51,7 +51,7 @@ type IncomingWsMessage
     | UpdateInstanceSuccessMessage InstanceUpdated
     | UpdateInstanceErrorMessage InstanceError
     | GetInstanceTasksSuccessMessage InstanceTasks
-    | GetInstanceTasksErrorMessage InstanceError
+    | GetInstanceTasksErrorMessage InstanceId InstanceError
     | ErrorMessage String
 
 

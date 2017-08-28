@@ -55,6 +55,6 @@ class BroccoliMessageHandler @Inject()(instances: NomadInstances, instanceServic
       case GetInstanceTasks(instanceId) =>
         instances
           .getInstanceTasks(user)(instanceId)
-          .fold(GetInstanceTasksError, GetInstanceTasksSuccess)
+          .fold(GetInstanceTasksError(instanceId, _), GetInstanceTasksSuccess)
     }
 }

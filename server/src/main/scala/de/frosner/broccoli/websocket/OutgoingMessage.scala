@@ -49,7 +49,7 @@ object OutgoingMessage {
   final case class UpdateInstanceSuccess(result: InstanceUpdated) extends OutgoingMessage
   final case class UpdateInstanceError(error: InstanceError) extends OutgoingMessage
   final case class GetInstanceTasksSuccess(tasks: InstanceTasks) extends OutgoingMessage
-  final case class GetInstanceTasksError(error: InstanceError) extends OutgoingMessage
+  final case class GetInstanceTasksError(instanceId: String, error: InstanceError) extends OutgoingMessage
 
   /**
     * JSON writes for a message outgoing to a websocket.
@@ -72,7 +72,8 @@ object OutgoingMessage {
       case UpdateInstanceSuccess(result)   => write(Type.UpdateInstanceSuccess, result)
       case UpdateInstanceError(error)      => write(Type.UpdateInstanceError, error)
       case GetInstanceTasksSuccess(result) => write(Type.GetInstanceTasksSuccess, result)
-      case GetInstanceTasksError(error)    => write(Type.GetInstanceTasksError, error)
+      case error: GetInstanceTasksError =>
+        write(Type.GetInstanceTasksError, error)(Json.writes[GetInstanceTasksError])
     }
 
   private def write[P](`type`: Type, payload: P)(implicit writesP: Writes[P]): JsObject =

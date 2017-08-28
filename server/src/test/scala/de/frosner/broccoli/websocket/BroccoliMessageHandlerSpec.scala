@@ -43,7 +43,7 @@ class BroccoliMessageHandlerSpec
         val outgoingMessage = new BroccoliMessageHandler(instances, mock[InstanceService])
           .processMessage(account)(IncomingMessage.GetInstanceTasks(id))
 
-        outgoingMessage must beEqualTo(OutgoingMessage.GetInstanceTasksError(error)).await
+        outgoingMessage must beEqualTo(OutgoingMessage.GetInstanceTasksError(id, error)).await
       }.setGen2(Gen.identifier)
     }
   }
