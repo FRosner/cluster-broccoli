@@ -1,10 +1,11 @@
-package de.frosner.broccoli.instances
+package de.frosner.broccoli.instances.storage.couchdb
 
 import java.util.concurrent.TimeUnit
 
+import de.frosner.broccoli.instances.InstanceNotFoundException
+import de.frosner.broccoli.instances.storage.InstanceStorage
 import de.frosner.broccoli.models.Instance
 import play.api.libs.json.{JsObject, _}
-import play.api.libs.json._
 import play.api.libs.ws.WSClient
 
 import scala.concurrent.Await
@@ -15,7 +16,7 @@ import scala.util.Try
   * Instance storage using CouchDB as a peristence layer.
   * On construction it is checking whether the instance DB exists and creating it if it doesn't.
   */
-case class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSClient) extends InstanceStorage {
+class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSClient) extends InstanceStorage {
 
   import Instance.{instancePersistenceReads, instancePersistenceWrites}
 

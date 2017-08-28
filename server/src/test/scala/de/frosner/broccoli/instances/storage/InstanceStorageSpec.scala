@@ -1,4 +1,4 @@
-package de.frosner.broccoli.instances
+package de.frosner.broccoli.instances.storage
 
 import de.frosner.broccoli.models.{Instance, ParameterInfo, Template}
 import org.specs2.mutable.Specification

@@ -1,14 +1,15 @@
-package de.frosner.broccoli.instances
+package de.frosner.broccoli.instances.storage.filesystem
 
 import java.io._
 
+import de.frosner.broccoli.instances.storage.InstanceStorage
 import de.frosner.broccoli.models.Instance
 import play.api.libs.json.Json
 
 import scala.util.{Failure, Success, Try}
 
 @volatile
-case class FileSystemInstanceStorage(storageDirectory: File) extends InstanceStorage {
+class FileSystemInstanceStorage(storageDirectory: File) extends InstanceStorage {
 
   import Instance.{instancePersistenceReads, instancePersistenceWrites}
 

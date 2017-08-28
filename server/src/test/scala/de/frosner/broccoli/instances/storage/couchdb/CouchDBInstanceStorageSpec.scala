@@ -1,23 +1,18 @@
-package de.frosner.broccoli.services
+package de.frosner.broccoli.instances.storage.couchdb
 
-import java.io.{File, FileNotFoundException, FileOutputStream, PrintStream}
 import java.net.ConnectException
-import java.nio.file.Paths
-import java.util.UUID
 
+import de.frosner.broccoli.instances.InstanceNotFoundException
+import de.frosner.broccoli.models.Instance.{instancePersistenceReads, instancePersistenceWrites}
 import de.frosner.broccoli.models.{Instance, Template}
-import Instance.{instancePersistenceReads, instancePersistenceWrites}
-import de.frosner.broccoli.instances.{CouchDBInstanceStorage, InstanceNotFoundException}
 import org.specs2.mutable.Specification
-import play.core.server.Server
-import play.api.Play
-import play.api.routing.sird._
-import play.api.mvc._
 import play.api.libs.json._
+import play.api.mvc._
+import play.api.routing.sird._
 import play.api.test._
+import play.core.server.Server
 
-import scala.io.Source
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 class CouchDBInstanceStorageSpec extends Specification {
 
@@ -43,7 +38,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should beAnInstanceOf[
+          new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should beAnInstanceOf[
             CouchDBInstanceStorage]
         }
       }
@@ -65,7 +60,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should beAnInstanceOf[
+          new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should beAnInstanceOf[
             CouchDBInstanceStorage]
         }
       }
@@ -87,7 +82,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should throwA[
+          new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should throwA[
             IllegalArgumentException]
         }
       }
@@ -95,7 +90,7 @@ class CouchDBInstanceStorageSpec extends Specification {
 
     "fail if the database cannot be reached" in {
       WsTestClient.withClient { client =>
-        CouchDBInstanceStorage(s"http://localhost:43643", "", client) should throwA[ConnectException]
+        new CouchDBInstanceStorage(s"http://localhost:43643", "", client) should throwA[ConnectException]
       }
     }
 
@@ -113,7 +108,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           locked === true
         }
       }
@@ -131,7 +126,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should throwA[
+          new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client) should throwA[
             IllegalArgumentException]
         }
       }
@@ -159,7 +154,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client).close()
+          new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client).close()
           released === true
         }
       }
@@ -195,7 +190,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          val storage = new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           storage.readInstances() === Success(Set(instance))
         }
       }
@@ -227,7 +222,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          val storage = new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           storage.readInstances(_ == "notexistingdsds") === Success(Set.empty[Instance])
         }
       }
@@ -260,7 +255,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          val storage = new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           storage.readInstances().failed.get should beAnInstanceOf[IllegalStateException]
         }
       }
@@ -282,7 +277,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          val storage = new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           storage.readInstances().isFailure === true
         }
       }
@@ -315,7 +310,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          val storage = new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           storage.readInstance(instance.id) === Success(instance)
         }
       }
@@ -337,7 +332,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          val storage = new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           storage.readInstance(instance.id) === Failure(InstanceNotFoundException(instance.id))
         }
       }
@@ -360,7 +355,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          val storage = new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           storage.readInstance(instance.id).failed.get should beAnInstanceOf[JsResultException]
         }
       }
@@ -382,7 +377,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          val storage = new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           storage.readInstance(instance.id).failed.get should beAnInstanceOf[IllegalStateException]
         }
       }
@@ -412,7 +407,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          val storage = new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           storage.writeInstance(instance) === Success(instance)
         }
       }
@@ -441,7 +436,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          val storage = new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           storage.writeInstance(instance) === Success(instance)
         }
       }
@@ -463,7 +458,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          val storage = new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           storage.writeInstance(instance).failed.get should beAnInstanceOf[IllegalStateException]
         }
       }
@@ -489,7 +484,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          val storage = new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           storage.writeInstance(instance).failed.get should beAnInstanceOf[IllegalStateException]
         }
       }
@@ -520,7 +515,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          val storage = new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           storage.deleteInstance(instance) === Success(instance)
         }
       }
@@ -547,7 +542,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          val storage = new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           storage.deleteInstance(instance).failed.get should beAnInstanceOf[IllegalStateException]
         }
       }
@@ -570,7 +565,7 @@ class CouchDBInstanceStorageSpec extends Specification {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val storage = CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
+          val storage = new CouchDBInstanceStorage(s"http://localhost:$port", "broccoli_instances", client)
           storage.deleteInstance(instance).failed.get should beAnInstanceOf[InstanceNotFoundException]
         }
       }

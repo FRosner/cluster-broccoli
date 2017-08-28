@@ -24,7 +24,8 @@ RUN echo "#!/bin/bash" > /usr/bin/consul && \
 
 # put cluster broccoli
 ADD cluster-broccoli-dist /cluster-broccoli-dist
-
+# Add configuration to use couchdb
+ADD couchdb.conf /couchdb.conf
 ADD templates /cluster-broccoli-dist/templates
 RUN mkdir /cluster-broccoli-dist/instances
 RUN ln -s /cluster-broccoli-dist/bin/cluster-broccoli /usr/bin/cluster-broccoli
