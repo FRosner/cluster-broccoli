@@ -2,8 +2,8 @@ package de.frosner.broccoli.nomad
 
 import java.net.ConnectException
 
-import cats.MonadError
 import cats.data.EitherT
+import cats.syntax.either._
 import cats.instances.future._
 import com.netaporter.uri.Uri
 import com.netaporter.uri.dsl._
@@ -160,8 +160,7 @@ class NomadHttpClient(baseUri: Uri, client: WSClient)(implicit context: Executio
     * @return The response in the nomad monad, with some exceptions caught.
     */
   private def lift(response: Future[WSResponse]): NomadT[WSResponse] =
-    MonadError[NomadT, Throwable].recoverWith(EitherT.right(response)) {
-      case _: ConnectException => EitherT.leftT(NomadError.Unreachable)
-    }
-
+    EitherT(response.map(_.asRight).recover {
+      case _: ConnectException => NomadError.Unreachable.asLeft
+    })
 }
