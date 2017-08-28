@@ -36,7 +36,7 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
     EitherT
       .pure[Future, InstanceError](tag[Job.Id](id))
       .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
-      .semiflatMap(nomadClient.getAllocationsForJob)
+      .flatMap(id => nomadClient.getAllocationsForJob(id).leftMap(toInstanceError(id)))
       .map { allocations =>
         InstanceTasks(
           id,
@@ -81,6 +81,7 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
     } yield log.contents
 
   private def toInstanceError(jobId: String @@ Job.Id)(nomadError: NomadError): InstanceError = nomadError match {
-    case NomadError.NotFound => InstanceError.NotFound(jobId)
+    case NomadError.NotFound    => InstanceError.NotFound(jobId)
+    case NomadError.Unreachable => InstanceError.NomadUnreachable
   }
 }

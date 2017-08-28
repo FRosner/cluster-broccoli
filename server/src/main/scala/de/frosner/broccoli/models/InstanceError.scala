@@ -75,6 +75,13 @@ object InstanceError {
   }
 
   /**
+    * Nomad is not reachable.
+    */
+  final case object NomadUnreachable extends InstanceError {
+    override val reason: String = "Nomad unreachable"
+  }
+
+  /**
     * A generic error thrown while operating on an instance.
     *
     * @param throwable The throwable thrown by the operation
@@ -102,6 +109,7 @@ object InstanceError {
     case _: InvalidParameters => Results.BadRequest
     case _: UserRegexDenied   => Results.Forbidden
     case _: RolesRequired     => Results.Forbidden
+    case NomadUnreachable     => Results.NotFound
     case _: Generic           => Results.BadRequest
   }
 

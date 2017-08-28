@@ -12,4 +12,8 @@ object NomadError {
     */
   final case object NotFound extends NomadError
 
+  /**
+    * Nomad was not reachable
+    */
+  final case object Unreachable extends NomadError
 }
