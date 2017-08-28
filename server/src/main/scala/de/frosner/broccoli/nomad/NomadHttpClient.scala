@@ -54,7 +54,7 @@ class NomadHttpClient(baseUri: Uri, client: WSClient)(implicit context: Executio
           .url(v1 / "allocation" / id)
           .withHeaders(ACCEPT -> JSON)
           .get())
-      .ensureOr(toError)(_.status == OK)
+      .ensureOr(fromHTTPError)(_.status == OK)
       .map(_.json.as[Allocation])
 
   /**
@@ -90,7 +90,7 @@ class NomadHttpClient(baseUri: Uri, client: WSClient)(implicit context: Executio
             .url(v1 / "node" / allocation.nodeId)
             .withHeaders(ACCEPT -> JSON)
             .get())
-        .ensureOr(toError)(_.status == OK)
+        .ensureOr(fromHTTPError)(_.status == OK)
         .map(_.json.as[Node])
       nodeAddress = parseNodeAddress(allocationNode.httpAddress)
       log <- EitherT
@@ -116,10 +116,34 @@ class NomadHttpClient(baseUri: Uri, client: WSClient)(implicit context: Executio
             )
             .withHeaders(ACCEPT -> TEXT)
             .get())
-        .ensureOr(toError)(_.status == OK)
+        .ensureOr(fromClientHTTPError)(_.status == OK)
     } yield TaskLog(stream, tag[TaskLog.Contents](log.body))
 
-  private def toError(response: WSResponse): NomadError = response.status match {
+  /**
+    * Create a Nomad error from a HTTP error response from the client API, ie, /v1/client/….
+    *
+    * As of Nomad 0.5.x this API does not return any semantic error codes; all errors map to status code 500, with some
+    * information about the error in the plain text request body.
+    *
+    * This method tries and guess the cause of the error and turn the 500 into a reasonable NomadError.
+    *
+    * If you're not requesting the client API, use fromHTTPError!.
+    *
+    * @param response The response of the client API
+    * @return A best guess NomadError corresponding to the response.
+    */
+  private def fromClientHTTPError(response: WSResponse): NomadError = response.status match {
+    case INTERNAL_SERVER_ERROR if response.body.trim().startsWith("unknown allocation ID") => NomadError.NotFound
+    case _                                                                                 => fromHTTPError(response)
+  }
+
+  /**
+    * Create a Nomad error from a HTTP error response.
+    *
+    * @param response The error response
+    * @return The corresponding NomadError
+    */
+  private def fromHTTPError(response: WSResponse): NomadError = response.status match {
     case NOT_FOUND => NomadError.NotFound
     // For unexpected errors throw an exception instead to trigger logging
     case _ => throw new UnexpectedNomadHttpApiError(response)
