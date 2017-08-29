@@ -29,9 +29,9 @@ class NomadHttpClient(
 )(implicit override val executionContext: ExecutionContext)
     extends NomadClient {
 
-  private class NodeClient(nodeUri: Uri) extends NomadNodeClient {
+  private class NodeClient(nodeV1Uri: Uri) extends NomadNodeClient {
 
-    private val v1Client: Uri = nodeUri / "v1" / "client"
+    private val v1Client: Uri = nodeV1Uri / "client"
 
     /**
       * Get the log of a task on an allocation.
