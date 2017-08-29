@@ -19,6 +19,9 @@ import Html.Events exposing (onClick, onCheck, onInput, onSubmit)
 import Dict exposing (..)
 import Set exposing (Set)
 import Date
+import Filesize
+import Round
+import Maybe.Extra exposing (unwrap)
 
 
 checkboxColumnWidth =
@@ -377,6 +380,8 @@ instanceTasksView instance instanceTasks =
                                 [ th [] [ text "Allocation ID" ]
                                 , th [ class "text-center" ] [ text "State" ]
                                 , th [ style [ ( "width", "100%" ) ] ] [ text "Task" ]
+                                , th [ class "text-center" ] [ text "CPU" ]
+                                , th [ class "text-center" ] [ text "Memory" ]
                                 , th [ class "text-center" ] [ text "Task logs" ]
                                 ]
                             ]
@@ -437,6 +442,11 @@ instanceAllocationRow instance index task =
                 [ span [ class ("label " ++ labelKind) ] [ text description ]
                 ]
             , td [] [ text task.taskName ]
+            , td [ class "text-center" ]
+                [ text (unwrap "unknown" (Round.round 2) task.cpuTicksUsed)
+                ]
+            , td [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
+                [ text (unwrap "unknown" Filesize.format task.memoryBytesUsed) ]
             , td
                 -- Do not wrap buttons in this cell
                 [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]

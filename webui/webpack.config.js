@@ -83,7 +83,7 @@ module.exports = {
         test: /\.elm$/,
         exclude: [/elm-stuff/, /node-modules/],
         use: [
-          { loader: 'elm-hot-loader' },
+          // { loader: 'elm-hot-loader' },
           {
             loader: 'babel-loader',
             options: {
