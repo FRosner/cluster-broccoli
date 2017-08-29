@@ -2,16 +2,18 @@ package de.frosner.broccoli.controllers
 
 import javax.inject.Inject
 
+import cats.data.EitherT
+import cats.instances.future._
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.websocket.{IncomingMessage, OutgoingMessage, WebSocketMessageHandler}
 import jp.t2v.lab.play2.auth.BroccoliWebsocketSecurity
-import play.api.{Environment, Logger}
 import play.api.cache.CacheApi
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.iteratee._
 import play.api.libs.json._
 import play.api.mvc._
+import play.api.{Environment, Logger}
 
 import scala.concurrent.Future
 
@@ -40,13 +42,24 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
 
       // TODO receive string and try json decoding here because I can handle the error better
       val in = Enumeratee.mapM[Msg] { incomingMessage =>
-        Json
-          .fromJson[IncomingMessage](incomingMessage)
-          .map(messageHandler.processMessage(user))
-          .recoverTotal { error =>
-            log.warn(s"Can't parse a message from $connectionId: $error")
-            Future.successful(OutgoingMessage.Error(s"Failed to parse message message: $error"))
+        EitherT
+          .fromEither(Json.fromJson[IncomingMessage](incomingMessage).asEither)
+          .leftMap[OutgoingMessage] { jsonErrors =>
+            log.warn(s"Can't parse a message from $connectionId: $jsonErrors")
+            OutgoingMessage.Error(s"Failed to parse message message: $jsonErrors")
           }
+          .semiflatMap { incomingMessage =>
+            // Catch all exceptions from the message handler and map them to a generic error message to send over the
+            // websocket, to prevent the Enumeratee from stopping at the failure, causing the websocket to be closed and
+            // preventing all future messages.
+            messageHandler.processMessage(user)(incomingMessage).recover {
+              case exception =>
+                log.error(s"Message handler threw exception for message $incomingMessage: ${exception.getMessage}",
+                          exception)
+                OutgoingMessage.Error("Unexpected error in message handler")
+            }
+          }
+          .merge
       } transform Iteratee
         .foreach[OutgoingMessage](msg => webSocketService.send(connectionId, Json.toJson(msg)))
         .map { _ =>
