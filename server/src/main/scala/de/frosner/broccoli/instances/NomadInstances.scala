@@ -35,22 +35,22 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
     *         didn't exist.  If the user may not access the instance return an InstanceError instead.
     */
   def getInstanceTasks(user: Account)(id: String): InstanceT[InstanceTasks] =
-    EitherT
-      .pure[Future, InstanceError](tag[Job.Id](id))
-      .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
-      .flatMap(id => nomadClient.getAllocationsForJob(id).leftMap(toInstanceError(id)))
-      .map { allocations =>
-        InstanceTasks(
-          id,
-          // Invert the order "allocation -> task" into "task -> allocation" (see doc comment)
-          allocations.payload
-            .flatMap(allocation =>
-              allocation.taskStates.map {
-                case (taskName, events) => AllocatedTask(taskName, events.state, allocation.id, allocation.clientStatus)
-            })
-            .sortBy(_.taskName)
-        )
-      }
+    for {
+      jobId <- EitherT
+        .pure[Future, InstanceError](tag[Job.Id](id))
+        .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
+      allocations <- nomadClient.getAllocationsForJob(jobId).leftMap(toInstanceError(jobId))
+    } yield
+      InstanceTasks(
+        jobId,
+        // Invert the order "allocation -> task" into "task -> allocation" (see doc comment)
+        allocations.payload
+          .flatMap(allocation =>
+            allocation.taskStates.map {
+              case (taskName, events) => AllocatedTask(taskName, events.state, allocation.id, allocation.clientStatus)
+          })
+          .sortBy(_.taskName)
+      )
 
   def getInstanceLog(user: Account)(
       instanceId: String,
