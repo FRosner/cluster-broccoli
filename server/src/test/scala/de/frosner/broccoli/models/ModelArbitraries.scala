@@ -12,7 +12,7 @@ trait ModelArbitraries {
 
   implicit val arbitraryRole: Arbitrary[Role] = Arbitrary(Gen.oneOf(Role.values))
 
-  implicit def arbitraryAccount(implicit arbRole: Arbitrary[Role]): Arbitrary[Account] = Arbitrary {
+  implicit def arbitraryUserAccount(implicit arbRole: Arbitrary[Role]): Arbitrary[UserAccount] = Arbitrary {
     for {
       id <- Gen.identifier.label("id")
       password <- Gen.identifier.label("password")

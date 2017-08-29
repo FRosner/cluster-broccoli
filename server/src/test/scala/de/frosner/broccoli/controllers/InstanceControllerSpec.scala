@@ -302,7 +302,7 @@ class InstanceControllerSpec
 
   "tasks" should {
     "return tasks from the instance service" in { implicit ee: ExecutionEnv =>
-      prop { (user: Account, instanceTasks: InstanceTasks) =>
+      prop { (user: UserAccount, instanceTasks: InstanceTasks) =>
         val securityService = mock[SecurityService]
         securityService.authMode returns "conf"
         securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
@@ -328,7 +328,7 @@ class InstanceControllerSpec
     }
 
     "return errors from the instance service" in { implicit ee: ExecutionEnv =>
-      prop { (instanceId: String, user: Account, error: InstanceError) =>
+      prop { (instanceId: String, user: UserAccount, error: InstanceError) =>
         val securityService = mock[SecurityService]
         securityService.authMode returns "conf"
         securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
