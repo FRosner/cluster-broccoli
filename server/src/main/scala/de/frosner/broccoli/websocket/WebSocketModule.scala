@@ -8,6 +8,6 @@ import net.codingwell.scalaguice.ScalaModule
   */
 class WebSocketModule extends AbstractModule with ScalaModule {
   override def configure(): Unit =
-    bind[WebSocketMessageHandler].to[BroccoliMessageHandler]
+    bind[WebSocketMessageHandler].to[CachedBroccoliMessageHandler]
 
 }
