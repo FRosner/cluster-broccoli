@@ -23,7 +23,73 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
   * A client for the HTTP API of Nomad.
   */
-class NomadHttpClient(baseUri: Uri, client: WSClient)(implicit context: ExecutionContext) extends NomadClient {
+class NomadHttpClient(
+    baseUri: Uri,
+    client: WSClient
+)(implicit override val executionContext: ExecutionContext)
+    extends NomadClient {
+
+  private class NodeClient(nodeUri: Uri) extends NomadNodeClient {
+
+    private val v1Client: Uri = nodeUri / "v1" / "client"
+
+    /**
+      * Get the log of a task on an allocation.
+      *
+      * @param allocationId The ID of the allocation
+      * @param taskName     The name of the task
+      * @param stream       The kind of log to fetch
+      * @return The task log
+      */
+    override def getTaskLog(
+        allocationId: @@[String, Allocation.Id],
+        taskName: @@[String, Task.Name],
+        stream: LogStreamKind,
+        offset: Option[@@[Quantity[Information], TaskLog.Offset]]
+    ): NomadT[TaskLog] =
+      lift(
+        client
+          .url(v1Client / "fs" / "logs" / allocationId)
+          .withQueryString(
+            Seq("task" -> taskName,
+                "type" -> stream.entryName,
+                // Request the plain text log without framing and do not follow the log
+                "plain" -> "true",
+                "follow" -> "false") ++
+              offset
+                .map { size =>
+                  Seq(
+                    // If an offset is given, at the corresponding parameters to the query
+                    "origin" -> "end",
+                    // Round to nearest integer get the (double) value out, and convert it to an integral string
+                    "offset" -> (size in Bytes).rint.value.toInt.toString
+                  )
+                }
+                .getOrElse(Seq.empty): _*
+          )
+          .withHeaders(ACCEPT -> TEXT)
+          .get())
+        .ensureOr(fromClientHTTPError)(_.status == OK)
+        .map(log => TaskLog(stream, tag[TaskLog.Contents](log.body)))
+
+    /**
+      * Create a Nomad error from a HTTP error response from the client API, ie, /v1/client/….
+      *
+      * As of Nomad 0.5.x this API does not return any semantic error codes; all errors map to status code 500, with some
+      * information about the error in the plain text request body.
+      *
+      * This method tries and guess the cause of the error and turn the 500 into a reasonable NomadError.
+      *
+      * If you're not requesting the client API, use fromHTTPError!.
+      *
+      * @param response The response of the client API
+      * @return A best guess NomadError corresponding to the response.
+      */
+    private def fromClientHTTPError(response: WSResponse): NomadError = response.status match {
+      case INTERNAL_SERVER_ERROR if response.body.trim().startsWith("unknown allocation ID") => NomadError.NotFound
+      case _                                                                                 => fromHTTPError(response)
+    }
+  }
 
   /**
     * The base URI for the Nomad V1 HTTP API
@@ -53,78 +119,20 @@ class NomadHttpClient(baseUri: Uri, client: WSClient)(implicit context: Executio
       .ensureOr(fromHTTPError)(_.status == OK)
       .map(_.json.as[Allocation])
 
-  /**
-    * Get the log of a task on an allocation.
-    *
-    * Nomad provides logs of tasks, but getting hold of these involves a few requests as Nomad only exposes logs as part
-    * of the client API.  This API has an important restriction: We must request those endpoints from the node that runs
-    * the allocation of interest.  We cannot simply ask any other Nomad server, ie, the one Broccoli uses for everything
-    * else.
-    *
-    * So we
-    *
-    * - request the allocation to find out the ID of the node it runs on,
-    * - request information about the node with that ID to get the HTTP API address of the node,
-    * - and finally ask that address for the logs.
-    *
-    * @param allocationId The ID of the allocation
-    * @param taskName     The name of the task
-    * @param stream       The kind of log to fetch
-    * @return The task log
-    */
-  override def getTaskLog(
-      allocationId: String @@ Allocation.Id,
-      taskName: String @@ Task.Name,
-      stream: LogStreamKind,
-      offset: Option[Quantity[Information] @@ TaskLog.Offset]
-  ): NomadT[TaskLog] =
-    for {
-      allocation <- getAllocation(allocationId)
-      allocationNode <- lift(client.url(v1 / "node" / allocation.nodeId).withHeaders(ACCEPT -> JSON).get())
-        .ensureOr(fromHTTPError)(_.status == OK)
-        .map(_.json.as[Node])
-      nodeAddress = parseNodeAddress(allocationNode.httpAddress)
-      log <- lift(
-        client
-          .url(v1.copy(host = nodeAddress.host, port = nodeAddress.port) / "client" / "fs" / "logs" / allocationId)
-          .withQueryString(
-            Seq("task" -> taskName,
-                "type" -> stream.entryName,
-                // Request the plain text log without framing and do not follow the log
-                "plain" -> "true",
-                "follow" -> "false") ++
-              offset
-                .map { size =>
-                  Seq(
-                    // If an offset is given, at the corresponding parameters to the query
-                    "origin" -> "end",
-                    // Round to nearest integer get the (double) value out, and convert it to an integral string
-                    "offset" -> (size in Bytes).rint.value.toInt.toString
-                  )
-                }
-                .getOrElse(Seq.empty): _*
-          )
-          .withHeaders(ACCEPT -> TEXT)
-          .get())
-        .ensureOr(fromClientHTTPError)(_.status == OK)
-    } yield TaskLog(stream, tag[TaskLog.Contents](log.body))
+  override def getNode(id: @@[String, Node.Id]): NomadT[Node] =
+    lift(client.url(v1 / "node" / id).withHeaders(ACCEPT -> JSON).get())
+      .ensureOr(fromHTTPError)(_.status == OK)
+      .map(_.json.as[Node])
 
   /**
-    * Create a Nomad error from a HTTP error response from the client API, ie, /v1/client/….
+    * Get a client to access a specific Nomad node.
     *
-    * As of Nomad 0.5.x this API does not return any semantic error codes; all errors map to status code 500, with some
-    * information about the error in the plain text request body.
-    *
-    * This method tries and guess the cause of the error and turn the 500 into a reasonable NomadError.
-    *
-    * If you're not requesting the client API, use fromHTTPError!.
-    *
-    * @param response The response of the client API
-    * @return A best guess NomadError corresponding to the response.
+    * @param node The node to access
+    * @return A client to access the given node.
     */
-  private def fromClientHTTPError(response: WSResponse): NomadError = response.status match {
-    case INTERNAL_SERVER_ERROR if response.body.trim().startsWith("unknown allocation ID") => NomadError.NotFound
-    case _                                                                                 => fromHTTPError(response)
+  override def nodeClient(node: Node): NomadNodeClient = {
+    val nodeAddress = parseNodeAddress(node.httpAddress)
+    new NodeClient(v1.copy(host = nodeAddress.host, port = nodeAddress.port))
   }
 
   /**

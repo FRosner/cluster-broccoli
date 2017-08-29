@@ -71,12 +71,12 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
         .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
       // Check whether the allocation really belongs to the instance.  If it doesn't, ie, if the user tries to access
       // an allocation from another instance hide that the allocation even exists by returning 404
-      _ <- nomadClient
+      allocation <- nomadClient
         .getAllocation(allocationId)
         .leftMap(toInstanceError(jobId))
         .ensure(InstanceError.NotFound(instanceId))(_.jobId == jobId)
       log <- nomadClient
-        .getTaskLog(allocationId, taskName, logKind, offset)
+        .onAllocationNode(allocation)(_.getTaskLog(allocationId, taskName, logKind, offset))
         .leftMap(toInstanceError(jobId))
     } yield log.contents
 
