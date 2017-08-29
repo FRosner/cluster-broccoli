@@ -34,6 +34,16 @@ class NomadHttpClient(
     private val v1Client: Uri = nodeV1Uri / "client"
 
     /**
+      * Get resource usage statistics of an allocation.
+      *
+      * @param allocationId The ID of the allocation
+      * @return The resource statistics of the allocation with the given ID.
+      */
+    override def getAllocationStats(allocationId: @@[String, Allocation.Id]): NomadT[AllocationStats] =
+      lift(client.url(v1Client / "allocation" / allocationId / "stats").withHeaders(ACCEPT -> JSON).get())
+        .map(response => response.json.as[AllocationStats])
+
+    /**
       * Get the log of a task on an allocation.
       *
       * @param allocationId The ID of the allocation

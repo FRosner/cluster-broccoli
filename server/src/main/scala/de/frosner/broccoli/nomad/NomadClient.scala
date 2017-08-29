@@ -74,6 +74,14 @@ trait NomadClient {
 trait NomadNodeClient {
 
   /**
+    * Get resource usage statistics of an allocation.
+    *
+    * @param allocationId The ID of the allocation
+    * @return The resource statistics of the allocation with the given ID.
+    */
+  def getAllocationStats(allocationId: String @@ Allocation.Id): NomadT[AllocationStats]
+
+  /**
     * Get the log of a task on an allocation.
     *
     * @param allocationId The ID of the allocation

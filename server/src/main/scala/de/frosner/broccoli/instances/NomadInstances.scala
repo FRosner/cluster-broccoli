@@ -3,13 +3,23 @@ package de.frosner.broccoli.instances
 import javax.inject.Inject
 
 import cats.data.EitherT
+import cats.syntax.traverse._
 import cats.instances.future._
+import cats.instances.list._
 import de.frosner.broccoli.models.{Account, AllocatedTask, InstanceError, InstanceTasks}
-import de.frosner.broccoli.nomad.NomadClient
-import de.frosner.broccoli.nomad.models.{Allocation, Job, LogStreamKind, NomadError, TaskLog, Task => NomadTask}
+import de.frosner.broccoli.nomad.{NomadClient, NomadT}
+import de.frosner.broccoli.nomad.models.{
+  Allocation,
+  AllocationStats,
+  Job,
+  LogStreamKind,
+  NomadError,
+  TaskLog,
+  Task => NomadTask
+}
 import shapeless.tag
 import shapeless.tag.@@
-import squants.information.Information
+import squants.information.{Bytes, Information}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -40,14 +50,34 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
         .pure[Future, InstanceError](tag[Job.Id](id))
         .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
       allocations <- nomadClient.getAllocationsForJob(jobId).leftMap(toInstanceError(jobId))
+      resources <- allocations.payload.toList
+        .map { allocation =>
+          nomadClient.onAllocationNode(allocation)(_.getAllocationStats(allocation.id).map(allocation.id -> _))
+        }
+        .sequence[NomadT, (String @@ Allocation.Id, AllocationStats)]
+        .map(_.toMap)
+        .leftMap(toInstanceError(jobId))
     } yield
       InstanceTasks(
         jobId,
-        // Invert the order "allocation -> task" into "task -> allocation" (see doc comment)
+        // Flatten tasks into allocated tasks
         allocations.payload
           .flatMap(allocation =>
             allocation.taskStates.map {
-              case (taskName, events) => AllocatedTask(taskName, events.state, allocation.id, allocation.clientStatus)
+              case (taskName, events) =>
+                val taskResources = for {
+                  allocationResources <- resources.get(allocation.id)
+                  taskResources <- allocationResources.tasks.get(taskName)
+                } yield taskResources
+
+                AllocatedTask(
+                  taskName,
+                  events.state,
+                  allocation.id,
+                  allocation.clientStatus,
+                  taskResources.map(_.resourceUsage.cpuStats.totalTicks),
+                  taskResources.map(_.resourceUsage.memoryStats.rss)
+                )
           })
           .sortBy(_.taskName)
       )

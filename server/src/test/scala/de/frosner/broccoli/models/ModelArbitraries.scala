@@ -4,6 +4,7 @@ import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models.ServiceStatus.ServiceStatus
 import de.frosner.broccoli.nomad.models.{ClientStatus, TaskState}
 import org.scalacheck.{Arbitrary, Gen}
+import squants.information.Bytes
 
 /**
   * Scalacheck arbitrary instances for Broccoli models.
@@ -132,7 +133,9 @@ trait ModelArbitraries {
         taskState <- arbTaskState.arbitrary
         allocationId <- Gen.uuid.label("allocationId")
         clientStatus <- arbClientStatus.arbitrary
-      } yield AllocatedTask(taskName, taskState, allocationId.toString, clientStatus)
+        cpuTicks <- Gen.option(Gen.chooseNum(0.0, 100.0)).label("cpuTicks")
+        memoryUsage <- Gen.option(Gen.chooseNum(0, Int.MaxValue).map(Bytes(_))).label("memoryUsage")
+      } yield AllocatedTask(taskName, taskState, allocationId.toString, clientStatus, cpuTicks, memoryUsage)
     }
 
   implicit def arbitraryInstanceTasks(implicit arbTask: Arbitrary[AllocatedTask]): Arbitrary[InstanceTasks] =
