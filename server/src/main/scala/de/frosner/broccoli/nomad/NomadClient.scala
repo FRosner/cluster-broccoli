@@ -14,13 +14,15 @@ import scala.concurrent.Future
   */
 trait NomadClient {
 
+  type NomadT[R] = EitherT[Future, NomadError, R]
+
   /**
     * Get allocations for a job.
     *
     * @param jobId The ID of the job
     * @return The list of allocations for the job
     */
-  def getAllocationsForJob(jobId: String @@ Job.Id): Future[WithId[immutable.Seq[Allocation]]]
+  def getAllocationsForJob(jobId: String @@ Job.Id): NomadT[WithId[immutable.Seq[Allocation]]]
 
   /**
     * Get an allocation.
@@ -28,7 +30,7 @@ trait NomadClient {
     * @param id The alloction to query
     * @return The allocation or an error
     */
-  def getAllocation(id: String @@ Allocation.Id): EitherT[Future, NomadError, Allocation]
+  def getAllocation(id: String @@ Allocation.Id): NomadT[Allocation]
 
   /**
     * Get the log of a task on an allocation.
@@ -44,5 +46,5 @@ trait NomadClient {
       taskName: String @@ Task.Name,
       stream: LogStreamKind,
       offset: Option[Quantity[Information] @@ TaskLog.Offset]
-  ): EitherT[Future, NomadError, TaskLog]
+  ): NomadT[TaskLog]
 }

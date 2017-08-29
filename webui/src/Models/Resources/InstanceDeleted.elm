@@ -14,4 +14,4 @@ decoder : Decode.Decoder InstanceDeleted
 decoder =
     Decode.map2 InstanceDeleted
         (field "instanceId" Decode.string)
-        (field "instanceWithStatus" Instance.decoder)
+        (field "instance" Instance.decoder)

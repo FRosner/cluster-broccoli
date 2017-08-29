@@ -1,8 +1,9 @@
 package de.frosner.broccoli.nomad
 
+import cats.instances.future._
 import com.netaporter.uri.Uri
 import com.netaporter.uri.dsl._
-import de.frosner.broccoli.nomad.models.Job
+import de.frosner.broccoli.nomad.models.{Allocation, Job, WithId}
 import de.frosner.broccoli.test.contexts.WSClientContext
 import de.frosner.broccoli.test.contexts.docker.BroccoliDockerContext
 import de.frosner.broccoli.test.contexts.docker.BroccoliTestService.{Broccoli, Nomad}
@@ -13,6 +14,7 @@ import org.specs2.specification.mutable.ExecutionEnvironment
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
 
+import scala.collection.immutable
 import scala.concurrent.blocking
 import scala.concurrent.duration._
 
@@ -59,9 +61,10 @@ class NomadHttpClientIntegrationSpec
               blocking(Thread.sleep(1.seconds.toMillis))
               response
             })
-          allocations <- client.getAllocationsForJob(shapeless.tag[Job.Id](identifier))
+          allocations <- client.getAllocationsForJob(shapeless.tag[Job.Id](identifier)).value
         } yield {
-          (allocations.jobId === identifier) and (allocations.payload must have length 1)
+          allocations must beRight(
+            (v: WithId[immutable.Seq[Allocation]]) => (v.jobId === identifier) and (v.payload must have length 1))
         }).await(5, broccoliDockerConfig.startupPatience + 2.seconds)
       }
     }

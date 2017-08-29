@@ -1,14 +1,17 @@
 package de.frosner.broccoli.nomad
 
-import cats.instances.future._
+import java.net.ConnectException
+
 import cats.data.EitherT
+import cats.syntax.either._
+import cats.instances.future._
 import com.netaporter.uri.Uri
 import com.netaporter.uri.dsl._
 import de.frosner.broccoli.nomad.models._
 import play.api.http.HeaderNames._
-import play.api.http.Status._
 import play.api.http.MimeTypes.{JSON, TEXT}
-import play.api.libs.ws.{WSClient, WSRequest, WSResponse}
+import play.api.http.Status._
+import play.api.libs.ws.{WSClient, WSResponse}
 import shapeless.tag
 import shapeless.tag.@@
 import squants.Quantity
@@ -33,12 +36,10 @@ class NomadHttpClient(baseUri: Uri, client: WSClient)(implicit context: Executio
     * @param jobId The ID of the job
     * @return The list of allocations for the job
     */
-  override def getAllocationsForJob(jobId: String @@ Job.Id): Future[WithId[immutable.Seq[Allocation]]] =
+  override def getAllocationsForJob(jobId: String @@ Job.Id): NomadT[WithId[immutable.Seq[Allocation]]] =
     for {
-      response <- client
-        .url(v1 / "job" / jobId / "allocations")
-        .withHeaders(ACCEPT -> JSON)
-        .get()
+      response <- lift(client.url(v1 / "job" / jobId / "allocations").withHeaders(ACCEPT -> JSON).get())
+        .ensureOr(fromHTTPError)(_.status == OK)
     } yield WithId(jobId, response.json.as[immutable.Seq[Allocation]])
 
   /**
@@ -47,13 +48,8 @@ class NomadHttpClient(baseUri: Uri, client: WSClient)(implicit context: Executio
     * @param id The alloction to query
     * @return The allocation or an error
     */
-  override def getAllocation(id: String @@ Allocation.Id): EitherT[Future, NomadError, Allocation] =
-    EitherT
-      .right(
-        client
-          .url(v1 / "allocation" / id)
-          .withHeaders(ACCEPT -> JSON)
-          .get())
+  override def getAllocation(id: String @@ Allocation.Id): NomadT[Allocation] =
+    lift(client.url(v1 / "allocation" / id).withHeaders(ACCEPT -> JSON).get())
       .ensureOr(fromHTTPError)(_.status == OK)
       .map(_.json.as[Allocation])
 
@@ -81,41 +77,35 @@ class NomadHttpClient(baseUri: Uri, client: WSClient)(implicit context: Executio
       taskName: String @@ Task.Name,
       stream: LogStreamKind,
       offset: Option[Quantity[Information] @@ TaskLog.Offset]
-  ): EitherT[Future, NomadError, TaskLog] =
+  ): NomadT[TaskLog] =
     for {
       allocation <- getAllocation(allocationId)
-      allocationNode <- EitherT
-        .right(
-          client
-            .url(v1 / "node" / allocation.nodeId)
-            .withHeaders(ACCEPT -> JSON)
-            .get())
+      allocationNode <- lift(client.url(v1 / "node" / allocation.nodeId).withHeaders(ACCEPT -> JSON).get())
         .ensureOr(fromHTTPError)(_.status == OK)
         .map(_.json.as[Node])
       nodeAddress = parseNodeAddress(allocationNode.httpAddress)
-      log <- EitherT
-        .right(
-          client
-            .url(v1.copy(host = nodeAddress.host, port = nodeAddress.port) / "client" / "fs" / "logs" / allocationId)
-            .withQueryString(
-              Seq("task" -> taskName,
-                  "type" -> stream.entryName,
-                  // Request the plain text log without framing and do not follow the log
-                  "plain" -> "true",
-                  "follow" -> "false") ++
-                offset
-                  .map { size =>
-                    Seq(
-                      // If an offset is given, at the corresponding parameters to the query
-                      "origin" -> "end",
-                      // Round to nearest integer get the (double) value out, and convert it to an integral string
-                      "offset" -> (size in Bytes).rint.value.toInt.toString
-                    )
-                  }
-                  .getOrElse(Seq.empty): _*
-            )
-            .withHeaders(ACCEPT -> TEXT)
-            .get())
+      log <- lift(
+        client
+          .url(v1.copy(host = nodeAddress.host, port = nodeAddress.port) / "client" / "fs" / "logs" / allocationId)
+          .withQueryString(
+            Seq("task" -> taskName,
+                "type" -> stream.entryName,
+                // Request the plain text log without framing and do not follow the log
+                "plain" -> "true",
+                "follow" -> "false") ++
+              offset
+                .map { size =>
+                  Seq(
+                    // If an offset is given, at the corresponding parameters to the query
+                    "origin" -> "end",
+                    // Round to nearest integer get the (double) value out, and convert it to an integral string
+                    "offset" -> (size in Bytes).rint.value.toInt.toString
+                  )
+                }
+                .getOrElse(Seq.empty): _*
+          )
+          .withHeaders(ACCEPT -> TEXT)
+          .get())
         .ensureOr(fromClientHTTPError)(_.status == OK)
     } yield TaskLog(stream, tag[TaskLog.Contents](log.body))
 
@@ -161,4 +151,16 @@ class NomadHttpClient(baseUri: Uri, client: WSClient)(implicit context: Executio
     case _                     => Uri()
   }
 
+  /**
+    * Lift a WSResponse into the Nomad Either transformer.
+    *
+    * Transforms some exceptions into proper Nomad errors.
+    *
+    * @param response The response
+    * @return The response in the nomad monad, with some exceptions caught.
+    */
+  private def lift(response: Future[WSResponse]): NomadT[WSResponse] =
+    EitherT(response.map(_.asRight).recover {
+      case _: ConnectException => NomadError.Unreachable.asLeft
+    })
 }
