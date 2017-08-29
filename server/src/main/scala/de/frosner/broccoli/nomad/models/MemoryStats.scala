@@ -3,7 +3,6 @@ package de.frosner.broccoli.nomad.models
 import play.api.libs.json.{JsPath, Reads}
 import shapeless.tag
 import shapeless.tag.@@
-import squants.Quantity
 import squants.information.{Bytes, Information}
 
 /**
@@ -11,7 +10,7 @@ import squants.information.{Bytes, Information}
   *
   * @param rss Residual memory in bytes
   */
-final case class MemoryStats(rss: Quantity[Information] @@ MemoryStats.RSS)
+final case class MemoryStats(rss: Information @@ MemoryStats.RSS)
 
 object MemoryStats {
   sealed trait RSS

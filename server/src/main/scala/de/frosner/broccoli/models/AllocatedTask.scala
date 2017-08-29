@@ -21,7 +21,7 @@ final case class AllocatedTask(
     allocationId: String,
     clientStatus: ClientStatus,
     cpuTicksUsed: Option[Double],
-    memoryUsed: Option[Quantity[Information]]
+    memoryUsed: Option[Information]
 )
 
 object AllocatedTask {
@@ -32,7 +32,7 @@ object AllocatedTask {
       "allocationId" -> task.allocationId,
       "clientStatus" -> task.clientStatus,
       "cpuTicksUsed" -> task.cpuTicksUsed,
-      "memoryBytesUsed" -> task.memoryUsed.map(_.to(Bytes))
+      "memoryBytesUsed" -> task.memoryUsed.map(_.toBytes.toInt)
     )
   }
 }
