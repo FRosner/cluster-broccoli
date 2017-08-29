@@ -3,7 +3,7 @@ module Model exposing (Model, Route(..), initial)
 import Models.Resources.Template exposing (Template, TemplateId)
 import Models.Resources.Instance exposing (Instance, InstanceId)
 import Models.Resources.AboutInfo exposing (AboutInfo)
-import Models.Resources.Task exposing (Task)
+import Models.Resources.AllocatedTask exposing (AllocatedTask)
 import Models.Ui.BodyUiModel as BodyUiModel exposing (BodyUiModel)
 import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
 import Models.Ui.Notifications exposing (Errors)
@@ -26,7 +26,7 @@ type alias Model =
     , loginForm : LoginForm
     , authRequired : Maybe Bool
     , instances : Dict InstanceId Instance
-    , tasks : Dict InstanceId (List Task)
+    , tasks : Dict InstanceId (List AllocatedTask)
     , templates : Dict TemplateId Template
     , bodyUiModel : BodyUiModel
     , wsConnected : Bool

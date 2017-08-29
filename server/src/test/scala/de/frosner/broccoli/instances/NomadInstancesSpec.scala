@@ -39,10 +39,10 @@ class NomadInstancesSpec
             result <- new NomadInstances(client).getInstanceTasks(user.copy(instanceRegex = id))(id).value
           } yield
             result must beRight[InstanceTasks] { instanceTasks: InstanceTasks =>
-              val tasks = allocations.flatMap(_.taskStates).groupBy(_._1).mapValues(_.map(_._2))
               (instanceTasks.instanceId must beEqualTo(id)) and
-                (instanceTasks.tasks must have length tasks.size) and
-                (instanceTasks.tasks.map(_.name) must containTheSameElementsAs(tasks.keys.toSeq))
+                (instanceTasks.allocatedTasks must have length allocations.map(_.taskStates.size).sum) and
+                (instanceTasks.allocatedTasks.map(_.taskName) must containTheSameElementsAs(
+                  allocations.flatMap(_.taskStates.keys)))
             }
         }.await
       // Reduce the size of the generated values; we don't need to check this against huge allocation lists

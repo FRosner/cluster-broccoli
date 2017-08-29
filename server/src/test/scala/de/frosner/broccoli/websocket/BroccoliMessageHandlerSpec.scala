@@ -23,7 +23,7 @@ class BroccoliMessageHandlerSpec
 
   "The Broccoli Message Handler" should {
     "send back instance tasks" in { implicit ee: ExecutionEnv =>
-      prop { (account: UserAccount, id: String, tasks: List[Task]) =>
+      prop { (account: UserAccount, id: String, tasks: List[AllocatedTask]) =>
         val instances = mock[NomadInstances]
         val instanceTasks = InstanceTasks(id, tasks)
         instances.getInstanceTasks(account)(id) returns EitherT.pure[Future, InstanceError](instanceTasks)

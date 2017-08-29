@@ -8,13 +8,13 @@ import play.api.mvc.Results
   * The tasks of an instance.
   *
   * @param instanceId The ID of the instance
-  * @param tasks The tasks of the instance
+  * @param allocatedTasks Allocated tasks of the instance
   */
-final case class InstanceTasks(instanceId: String, tasks: Seq[Task])
+final case class InstanceTasks(instanceId: String, allocatedTasks: Seq[AllocatedTask])
 
 object InstanceTasks {
   implicit val instanceTasksWrites: Writes[InstanceTasks] = Json.writes[InstanceTasks]
 
   implicit val instanceTasksToHTTPResult: ToHTTPResult[InstanceTasks] =
-    ToHTTPResult.instance(v => Results.Ok(Json.toJson(v.tasks)))
+    ToHTTPResult.instance(v => Results.Ok(Json.toJson(v.allocatedTasks)))
 }

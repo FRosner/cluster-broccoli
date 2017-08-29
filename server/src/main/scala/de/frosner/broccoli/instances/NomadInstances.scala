@@ -4,7 +4,7 @@ import javax.inject.Inject
 
 import cats.instances.future._
 import cats.data.EitherT
-import de.frosner.broccoli.models.{Account, InstanceError, InstanceTasks, Task}
+import de.frosner.broccoli.models.{Account, AllocatedTask, InstanceError, InstanceTasks}
 import de.frosner.broccoli.nomad.NomadClient
 import de.frosner.broccoli.nomad.models.{Allocation, Job, LogStreamKind, NomadError, TaskLog, Task => NomadTask}
 import shapeless.tag
@@ -21,7 +21,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionContext) {
 
   /**
-    * Get all tasks of the given instance.
+    * Get all allocated tasks of the given instance.
     *
     * In Nomad the hierarchy is normally "allocation -> tasks in that allocation".  However allocations have generic
     * UUID whereas tasks have human-readable names, so we believe that tasks are easier as an "entry point" for the user
@@ -42,18 +42,11 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
           id,
           // Invert the order "allocation -> task" into "task -> allocation" (see doc comment)
           allocations.payload
-            .flatMap(allocation => allocation.taskStates.mapValues(_ -> allocation))
-            .groupBy {
-              case (taskName, _) => taskName
-            }
-            .map {
-              case (taskId, items) =>
-                Task(taskId, items.map {
-                  case (_, (events, allocation)) =>
-                    Task.Allocation(allocation.id, allocation.clientStatus, events.state)
-                })
-            }
-            .toSeq
+            .flatMap(allocation =>
+              allocation.taskStates.map {
+                case (taskName, events) => AllocatedTask(taskName, events.state, allocation.id, allocation.clientStatus)
+            })
+            .sortBy(_.taskName)
         )
       }
 

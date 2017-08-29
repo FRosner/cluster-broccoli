@@ -20,7 +20,7 @@ class InstanceTasksSpec
     }
 
     "convert the tasks to a JSON body" in prop { (instanceTasks: InstanceTasks) =>
-      contentAsJson(Future.successful(instanceTasks.toHTTPResult)) === Json.toJson(instanceTasks.tasks)
+      contentAsJson(Future.successful(instanceTasks.toHTTPResult)) === Json.toJson(instanceTasks.allocatedTasks)
     }
   }
 }

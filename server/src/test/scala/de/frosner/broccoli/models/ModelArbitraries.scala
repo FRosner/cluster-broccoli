@@ -122,31 +122,26 @@ trait ModelArbitraries {
         Gen.identifier.label("message").map(message => InstanceError.Generic(new Throwable(message)))
       ))
 
-  implicit def arbitraryTaskAllocation(
+  implicit def arbitraryAllocatedTask(
       implicit arbClientStatus: Arbitrary[ClientStatus],
       arbTaskState: Arbitrary[TaskState]
-  ): Arbitrary[Task.Allocation] =
+  ): Arbitrary[AllocatedTask] =
     Arbitrary {
       for {
-        id <- Gen.uuid
-        clientStatus <- arbClientStatus.arbitrary
+        taskName <- Gen.identifier.label("taskName")
         taskState <- arbTaskState.arbitrary
-      } yield Task.Allocation(id.toString, clientStatus, taskState)
+        allocationId <- Gen.uuid.label("allocationId")
+        clientStatus <- arbClientStatus.arbitrary
+      } yield AllocatedTask(taskName, taskState, allocationId.toString, clientStatus)
     }
 
-  implicit def arbitraryTask(implicit arbAllocation: Arbitrary[Task.Allocation]): Arbitrary[Task] = Arbitrary {
-    for {
-      name <- Gen.identifier.label("name")
-      allocations <- Gen.listOf(arbAllocation.arbitrary)
-    } yield Task(name, allocations)
-  }
-
-  implicit def arbitraryInstanceTasks(implicit arbTask: Arbitrary[Task]): Arbitrary[InstanceTasks] = Arbitrary {
-    for {
-      id <- Gen.identifier.label("id")
-      tasks <- Gen.listOf(arbTask.arbitrary)
-    } yield InstanceTasks(id, tasks)
-  }
+  implicit def arbitraryInstanceTasks(implicit arbTask: Arbitrary[AllocatedTask]): Arbitrary[InstanceTasks] =
+    Arbitrary {
+      for {
+        id <- Gen.identifier.label("id")
+        tasks <- Gen.listOf(arbTask.arbitrary)
+      } yield InstanceTasks(id, tasks)
+    }
 }
 
 /**
