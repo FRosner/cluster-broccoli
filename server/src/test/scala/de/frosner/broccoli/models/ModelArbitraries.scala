@@ -5,6 +5,7 @@ import de.frosner.broccoli.models.ServiceStatus.ServiceStatus
 import de.frosner.broccoli.nomad.models.{ClientStatus, TaskState}
 import org.scalacheck.{Arbitrary, Gen}
 import squants.information.Bytes
+import squants.time.Megahertz
 
 /**
   * Scalacheck arbitrary instances for Broccoli models.
@@ -133,7 +134,7 @@ trait ModelArbitraries {
         taskState <- arbTaskState.arbitrary
         allocationId <- Gen.uuid.label("allocationId")
         clientStatus <- arbClientStatus.arbitrary
-        cpuTicks <- Gen.option(Gen.chooseNum(0.0, 100.0)).label("cpuTicks")
+        cpuTicks <- Gen.option(Gen.chooseNum(0.0, 10000.0).map(Megahertz(_))).label("cpuTicks")
         memoryUsage <- Gen.option(Gen.chooseNum(0, Int.MaxValue).map(Bytes(_))).label("memoryUsage")
       } yield AllocatedTask(taskName, taskState, allocationId.toString, clientStatus, cpuTicks, memoryUsage)
     }

@@ -19,7 +19,7 @@ type alias AllocatedTask =
     , taskState : TaskState
     , allocationId : AllocationId
     , clientStatus : ClientStatus
-    , cpuTicksUsed : Maybe Float
+    , cpuTicksMhzUsed : Maybe Float
     , memoryBytesUsed : Maybe Int
     }
 
@@ -33,5 +33,5 @@ decoder =
         (field "taskState" TaskState.decoder)
         (field "allocationId" string)
         (field "clientStatus" ClientStatus.decoder)
-        (field "cpuTicksUsed" (nullable float))
+        (field "cpuTicksMhzUsed" (nullable float))
         (field "memoryBytesUsed" (nullable int))

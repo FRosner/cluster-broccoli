@@ -4,6 +4,7 @@ import de.frosner.broccoli.nomad.models._
 import org.scalacheck.{Arbitrary, Gen}
 import shapeless.tag
 import squants.information.Bytes
+import squants.time.Megahertz
 
 /**
   * Arbitrary instances for Nomad models.
@@ -30,7 +31,10 @@ trait ModelArbitraries {
   } yield Allocation(id, jobId, nodeId, clientStatus, tasks))
 
   implicit val arbitraryCpuStatus: Arbitrary[CpuStats] = Arbitrary(for {
-    ticks <- Gen.chooseNum[Double](0, 100).label("totalTicks").map(tag[CpuStats.TotalTicks](_))
+    ticks <- Gen
+      .chooseNum[Double](0, 10000)
+      .map(ticks => tag[CpuStats.TotalTicks](Megahertz(ticks)))
+      .label("totalTicks")
   } yield CpuStats(ticks))
 
   implicit val arbitraryMemoryStats: Arbitrary[MemoryStats] = Arbitrary(for {

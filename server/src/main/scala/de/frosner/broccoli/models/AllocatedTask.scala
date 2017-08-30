@@ -4,6 +4,7 @@ import de.frosner.broccoli.nomad.models.{ClientStatus, TaskState}
 import play.api.libs.json.{Json, Writes}
 import squants.Quantity
 import squants.information.{Bytes, Information}
+import squants.time.Frequency
 
 /**
   * An allocated task.
@@ -20,7 +21,7 @@ final case class AllocatedTask(
     taskState: TaskState,
     allocationId: String,
     clientStatus: ClientStatus,
-    cpuTicksUsed: Option[Double],
+    cpuTicksUsed: Option[Frequency],
     memoryUsed: Option[Information]
 )
 
@@ -31,7 +32,7 @@ object AllocatedTask {
       "taskState" -> task.taskState,
       "allocationId" -> task.allocationId,
       "clientStatus" -> task.clientStatus,
-      "cpuTicksUsed" -> task.cpuTicksUsed,
+      "cpuTicksMhzUsed" -> task.cpuTicksUsed.map(_.toMegahertz),
       "memoryBytesUsed" -> task.memoryUsed.map(_.toBytes.toInt)
     )
   }

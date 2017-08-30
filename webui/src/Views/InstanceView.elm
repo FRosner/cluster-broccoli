@@ -442,8 +442,8 @@ instanceAllocationRow instance index task =
                 [ span [ class ("label " ++ labelKind) ] [ text description ]
                 ]
             , td [] [ text task.taskName ]
-            , td [ class "text-center" ]
-                [ text (unwrap "unknown" (Round.round 2) task.cpuTicksUsed)
+            , td [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
+                [ text (unwrap "unknown" (\mhz -> (Round.round 2 mhz) ++ " MHz") task.cpuTicksMhzUsed)
                 ]
             , td [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
                 [ text (unwrap "unknown" Filesize.format task.memoryBytesUsed) ]
