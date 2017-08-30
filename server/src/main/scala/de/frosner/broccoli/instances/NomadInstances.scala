@@ -52,7 +52,10 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
       allocations <- nomadClient.getAllocationsForJob(jobId).leftMap(toInstanceError(jobId))
       resources <- allocations.payload.toList
         .map { allocation =>
-          nomadClient.onAllocationNode(allocation)(_.getAllocationStats(allocation.id).map(allocation.id -> _))
+          for {
+            node <- nomadClient.allocationNodeClient(allocation)
+            stats <- node.getAllocationStats(allocation.id)
+          } yield allocation.id -> stats
         }
         .sequence[NomadT, (String @@ Allocation.Id, AllocationStats)]
         .map(_.toMap)
@@ -100,9 +103,8 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
         .getAllocation(allocationId)
         .leftMap(toInstanceError(jobId))
         .ensure(InstanceError.NotFound(instanceId))(_.jobId == jobId)
-      log <- nomadClient
-        .onAllocationNode(allocation)(_.getTaskLog(allocationId, taskName, logKind, offset))
-        .leftMap(toInstanceError(jobId))
+      node <- nomadClient.allocationNodeClient(allocation).leftMap(toInstanceError(jobId))
+      log <- node.getTaskLog(allocationId, taskName, logKind, offset).leftMap(toInstanceError(jobId))
     } yield log.contents
 
   private def toInstanceError(jobId: String @@ Job.Id)(nomadError: NomadError): InstanceError = nomadError match {

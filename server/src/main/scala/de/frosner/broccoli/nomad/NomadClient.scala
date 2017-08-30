@@ -52,18 +52,15 @@ trait NomadClient {
   def nodeClient(node: Node): NomadNodeClient
 
   /**
-    * Run a block on the node of an allocation.
+    * Get the client to access the specific Nomad node running the given allocation.
     *
-    * @param allocation The allocation
-    * @param action The action to execute
-    * @tparam R The result of the action
-    * @return The result of the action, or any nomad error
+    * @param allocation The allocation whose node to access
+    * @return A client for the allocation's node
     */
-  def onAllocationNode[R](allocation: Allocation)(action: NomadNodeClient => NomadT[R]): NomadT[R] =
+  def allocationNodeClient(allocation: Allocation): NomadT[NomadNodeClient] =
     for {
       node <- getNode(allocation.nodeId)
-      result <- action(nodeClient(node))
-    } yield result
+    } yield nodeClient(node)
 }
 
 /**
