@@ -540,7 +540,7 @@ defaultTasks =
           , taskState = TaskRunning
           , allocationId = "a1"
           , clientStatus = ClientRunning
-          , cpuTicksUsed = Nothing
+          , cpuTicksMhzUsed = Nothing
           , memoryBytesUsed = Nothing
           }
         ]
