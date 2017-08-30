@@ -70,10 +70,13 @@ class BroccoliMessageHandler @Inject()(
   * Reduces load on Nomad.
   *
   * @param underlying The underlying message handler.
+  * @param cache The cache to use for responses
+  * @param
   */
 class CachedBroccoliMessageHandler @Inject()(
     underlying: BroccoliMessageHandler,
-    cache: CacheApi
+    cache: CacheApi,
+    cacheTimeout: Duration
 )(implicit ec: ExecutionContext)
     extends WebSocketMessageHandler {
 
