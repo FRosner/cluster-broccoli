@@ -35,13 +35,13 @@ class NomadInstancesSpec
 
           nodeClient
             .getAllocationStats(Matchers.any[String @@ Allocation.Id]())
-            .returns(EitherT.pure[Future, NomadError](AllocationStats(resourceUsage, Map.empty)))
+            .returns(EitherT.pure(AllocationStats(resourceUsage, Map.empty)))
 
-          client.allocationNodeClient(Matchers.any[Allocation]).returns(EitherT.pure[Future, NomadError](nodeClient))
-          client.getJob(shapeless.tag[Job.Id](id)).returns(EitherT.pure[Future, NomadError](Job(Seq.empty)))
+          client.allocationNodeClient(Matchers.any[Allocation]).returns(EitherT.pure(nodeClient))
+          client.getJob(shapeless.tag[Job.Id](id)).returns(EitherT.pure(Job(Seq.empty)))
           client
             .getAllocationsForJob(shapeless.tag[Job.Id](id))
-            .returns(EitherT.pure[Future, NomadError](WithId(id, allocations)))
+            .returns(EitherT.pure(WithId(id, allocations)))
 
           {
             for {
@@ -62,7 +62,17 @@ class NomadInstancesSpec
 
       "include resources in instance tasks" in todo
 
-      "fail to get instance tasks if the job wasn't found" in todo
+      "fail to get instance tasks if the job wasn't found" in prop { (user: UserAccount, id: String) =>
+        val client = mock[NomadClient]
+        client.getJob(shapeless.tag[Job.Id](id)).returns(EitherT.leftT(NomadError.NotFound))
+        client.getAllocationsForJob(shapeless.tag[Job.Id](id)).returns(EitherT.pure(WithId(id, List.empty)))
+
+        {
+          for {
+            result <- new NomadInstances(client).getInstanceTasks(user.copy(instanceRegex = id))(id).value
+          } yield result must beLeft[InstanceError](InstanceError.NotFound(id))
+        }.await
+      }.setGen2(Gen.identifier)
 
       "fail to get instance tasks when the user may not access the instance" in prop {
         (user: UserAccount, id: String) =>
@@ -80,7 +90,7 @@ class NomadInstancesSpec
 
         client
           .getAllocationsForJob(shapeless.tag[Job.Id](id))
-          .returns(EitherT.leftT[Future, WithId[immutable.Seq[Allocation]]](error))
+          .returns(EitherT.leftT(error))
 
         {
           for {
