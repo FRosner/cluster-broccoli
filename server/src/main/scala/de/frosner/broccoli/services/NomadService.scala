@@ -146,12 +146,13 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
         task <- group.tasks
         service <- task.services.getOrElse(Seq.empty)
       } yield service.name
-    } yield services
-
-    services.foreach { services =>
+    } yield {
       log.debug(s"${ws.url(nomadBaseUrl + s"/v1/job/$id").uri} => ${services.mkString(", ")}")
       consulService.requestServiceStatus(id, services)
+
+      services
     }
+
     services.onFailure {
       case throwable =>
         log.error(s"Requesting services for $id failed: ${throwable.getMessage}", throwable)
