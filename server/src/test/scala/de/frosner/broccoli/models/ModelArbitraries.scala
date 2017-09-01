@@ -4,8 +4,9 @@ import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models.ServiceStatus.ServiceStatus
 import de.frosner.broccoli.nomad.models.{ClientStatus, TaskState}
 import org.scalacheck.{Arbitrary, Gen}
-import squants.information.Bytes
-import squants.time.Megahertz
+import shapeless.tag
+import squants.information.Megabytes
+import squants.time.Gigahertz
 
 /**
   * Scalacheck arbitrary instances for Broccoli models.
@@ -124,9 +125,31 @@ trait ModelArbitraries {
         Gen.identifier.label("message").map(message => InstanceError.Generic(new Throwable(message)))
       ))
 
+  implicit val arbitraryAllocatedTaskResources: Arbitrary[AllocatedTask.Resources] = Arbitrary(
+    for {
+      cpuRequired <- Gen
+        .option(Gen.chooseNum[Double](0, 3).map(Gigahertz(_)))
+        .map(tag[AllocatedTask.CPUUsed](_))
+        .label("CPU Used")
+      cpuUsed <- Gen
+        .option(Gen.chooseNum[Double](0, 3).map(Gigahertz(_)))
+        .map(tag[AllocatedTask.CPURequired](_))
+        .label("CPU Required")
+      memoryRequired <- Gen
+        .option(Gen.chooseNum[Int](0, 10000).map(Megabytes(_)))
+        .map(tag[AllocatedTask.MemoryRequired](_))
+        .label("Memory Used")
+      memoryUsed <- Gen
+        .option(Gen.chooseNum[Int](0, 10000).map(Megabytes(_)))
+        .map(tag[AllocatedTask.MemoryUsed](_))
+        .label("Memory Required")
+    } yield AllocatedTask.Resources(cpuUsed, cpuRequired, memoryRequired, memoryUsed)
+  )
+
   implicit def arbitraryAllocatedTask(
       implicit arbClientStatus: Arbitrary[ClientStatus],
-      arbTaskState: Arbitrary[TaskState]
+      arbTaskState: Arbitrary[TaskState],
+      arbResources: Arbitrary[AllocatedTask.Resources]
   ): Arbitrary[AllocatedTask] =
     Arbitrary {
       for {
@@ -134,9 +157,8 @@ trait ModelArbitraries {
         taskState <- arbTaskState.arbitrary
         allocationId <- Gen.uuid.label("allocationId")
         clientStatus <- arbClientStatus.arbitrary
-        cpuTicks <- Gen.option(Gen.chooseNum(0.0, 10000.0).map(Megahertz(_))).label("cpuTicks")
-        memoryUsage <- Gen.option(Gen.chooseNum(0, Int.MaxValue).map(Bytes(_))).label("memoryUsage")
-      } yield AllocatedTask(taskName, taskState, allocationId.toString, clientStatus, cpuTicks, memoryUsage)
+        resources <- arbResources.arbitrary
+      } yield AllocatedTask(taskName, taskState, allocationId.toString, clientStatus, resources)
     }
 
   implicit def arbitraryInstanceTasks(implicit arbTask: Arbitrary[AllocatedTask]): Arbitrary[InstanceTasks] =

@@ -4,13 +4,13 @@ import cats.data.EitherT
 import cats.instances.future._
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad
-import de.frosner.broccoli.nomad.{NomadClient, NomadNodeClient}
 import de.frosner.broccoli.nomad.models._
+import de.frosner.broccoli.nomad.{NomadClient, NomadNodeClient}
+import org.mockito.Matchers
 import org.scalacheck.Gen
 import org.specs2.ScalaCheck
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mock.Mockito
-import org.mockito.Matchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.mutable.ExecutionEnvironment
 import shapeless.tag.@@
@@ -53,8 +53,8 @@ class NomadInstancesSpec
                   (instanceTasks.allocatedTasks must have length allocations.map(_.taskStates.size).sum) and
                   (instanceTasks.allocatedTasks.map(_.taskName) must containTheSameElementsAs(
                     allocations.flatMap(_.taskStates.keys))) and
-                  (instanceTasks.allocatedTasks must contain(
-                    (task: AllocatedTask) => (task.cpuTicksUsed must beNone) and (task.memoryUsed must beNone)).foreach)
+                  (instanceTasks.allocatedTasks must contain((task: AllocatedTask) =>
+                    (task.resources.cpuUsed must beNone) and (task.resources.memoryUsed must beNone)).foreach)
               }
           }.await
         // Reduce the size of the generated values; we don't need to check this against huge allocation lists

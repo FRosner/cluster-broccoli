@@ -2,8 +2,8 @@ package de.frosner.broccoli.models
 
 import de.frosner.broccoli.nomad.models.{ClientStatus, TaskState}
 import play.api.libs.json.{Json, Writes}
-import squants.Quantity
-import squants.information.{Bytes, Information}
+import shapeless.tag.@@
+import squants.information.Information
 import squants.time.Frequency
 
 /**
@@ -21,19 +21,41 @@ final case class AllocatedTask(
     taskState: TaskState,
     allocationId: String,
     clientStatus: ClientStatus,
-    cpuTicksUsed: Option[Frequency],
-    memoryUsed: Option[Information]
+    resources: AllocatedTask.Resources
 )
 
 object AllocatedTask {
+  sealed trait CPURequired
+  sealed trait CPUUsed
+  sealed trait MemoryRequired
+  sealed trait MemoryUsed
+
+  final case class Resources(
+      cpuRequired: Option[Frequency] @@ CPURequired,
+      cpuUsed: Option[Frequency] @@ CPUUsed,
+      memoryRequired: Option[Information] @@ MemoryRequired,
+      memoryUsed: Option[Information] @@ MemoryUsed
+  )
+
+  object Resources {
+    implicit val resourcesTaskWrites: Writes[Resources] = Writes { resources =>
+      Json
+        .obj(
+          "cpuRequiredMhz" -> resources.cpuRequired.map(_.toMegahertz),
+          "cpuUsedMhz" -> resources.cpuUsed.map(_.toMegahertz),
+          "memoryRequiredBytes" -> resources.memoryRequired.map(_.toBytes),
+          "memoryUsedBytes" -> resources.memoryUsed.map(_.toBytes)
+        )
+    }
+  }
+
   implicit val allocatedTaskWrites: Writes[AllocatedTask] = Writes { task =>
     Json.obj(
       "taskName" -> task.taskName,
       "taskState" -> task.taskState,
       "allocationId" -> task.allocationId,
       "clientStatus" -> task.clientStatus,
-      "cpuTicksMhzUsed" -> task.cpuTicksUsed.map(_.toMegahertz),
-      "memoryBytesUsed" -> task.memoryUsed.map(_.toBytes.toInt)
+      "resources" -> task.resources
     )
   }
 }

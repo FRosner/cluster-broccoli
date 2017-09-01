@@ -443,10 +443,10 @@ instanceAllocationRow instance index task =
                 ]
             , td [] [ text task.taskName ]
             , td [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
-                [ text (unwrap "unknown" (\mhz -> (Round.round 2 mhz) ++ " MHz") task.cpuTicksMhzUsed)
+                [ text (unwrap "unknown" (\mhz -> (Round.round 2 mhz) ++ " MHz") task.resources.cpuUsedMhz)
                 ]
             , td [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
-                [ text (unwrap "unknown" Filesize.format task.memoryBytesUsed) ]
+                [ text (unwrap "unknown" Filesize.format task.resources.memoryUsedBytes) ]
             , td
                 -- Do not wrap buttons in this cell
                 [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
