@@ -1,6 +1,6 @@
 package de.frosner.broccoli.nomad.models
 
-import de.frosner.broccoli.util.Resources
+import de.frosner.broccoli.util
 import org.specs2.mutable.Specification
 import play.api.libs.json.Json
 
@@ -10,7 +10,7 @@ class AllocationSpec extends Specification {
 
     "decode from JSON" in {
       val allocations = Json
-        .parse(Resources.readAsString("/de/frosner/broccoli/services/nomad/allocations.json"))
+        .parse(util.Resources.readAsString("/de/frosner/broccoli/services/nomad/allocations.json"))
         .validate[List[Allocation]]
         .asEither
 
