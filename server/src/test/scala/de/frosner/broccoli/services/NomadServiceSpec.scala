@@ -31,7 +31,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
         shapeless.tag[Resources.CPU](20.megahertz),
         shapeless.tag[Resources.Memory](1.gigabytes)
       )
-      val task = Task(Some(Seq(service)), resources)
+      val task = Task(shapeless.tag[Task.Name]("foo"), resources, Some(Seq(service)))
       val taskGroup = TaskGroup(Seq(task))
       val job = Job(Seq(taskGroup))
       val consulService = mock(classOf[ConsulService])
@@ -58,8 +58,8 @@ class NomadServiceSpec extends Specification with ServiceMocks {
         shapeless.tag[Resources.CPU](100.megahertz),
         shapeless.tag[Resources.Memory](100.megabytes)
       )
-      val task1 = Task(Some(Seq(service1)), resources)
-      val task2 = Task(None, resources)
+      val task1 = Task(shapeless.tag[Task.Name]("foo1"), resources, Some(Seq(service1)))
+      val task2 = Task(shapeless.tag[Task.Name]("foo2"), resources, None)
       val taskGroup1 = TaskGroup(Seq(task1))
       val taskGroup2 = TaskGroup(Seq(task2))
       val job = Job(Seq(taskGroup1, taskGroup2))
