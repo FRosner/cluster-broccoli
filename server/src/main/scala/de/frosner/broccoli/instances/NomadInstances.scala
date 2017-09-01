@@ -2,14 +2,24 @@ package de.frosner.broccoli.instances
 
 import javax.inject.Inject
 
-import cats.instances.future._
 import cats.data.EitherT
-import de.frosner.broccoli.models.{Account, InstanceError, InstanceTasks, Task}
-import de.frosner.broccoli.nomad.NomadClient
-import de.frosner.broccoli.nomad.models.{Allocation, Job, LogStreamKind, NomadError, TaskLog, Task => NomadTask}
+import cats.syntax.traverse._
+import cats.instances.future._
+import cats.instances.list._
+import de.frosner.broccoli.models.{Account, AllocatedTask, InstanceError, InstanceTasks}
+import de.frosner.broccoli.nomad.{NomadClient, NomadT}
+import de.frosner.broccoli.nomad.models.{
+  Allocation,
+  AllocationStats,
+  Job,
+  LogStreamKind,
+  NomadError,
+  TaskLog,
+  Task => NomadTask
+}
 import shapeless.tag
 import shapeless.tag.@@
-import squants.information.Information
+import squants.information.{Bytes, Information}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -20,8 +30,10 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionContext) {
 
+  type InstanceT[R] = EitherT[Future, InstanceError, R]
+
   /**
-    * Get all tasks of the given instance.
+    * Get all allocated tasks of the given instance.
     *
     * In Nomad the hierarchy is normally "allocation -> tasks in that allocation".  However allocations have generic
     * UUID whereas tasks have human-readable names, so we believe that tasks are easier as an "entry point" for the user
@@ -32,30 +44,46 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
     * @return All tasks of the given instance with their allocations, or an empty list if the instance has no tasks or
     *         didn't exist.  If the user may not access the instance return an InstanceError instead.
     */
-  def getInstanceTasks(user: Account)(id: String): EitherT[Future, InstanceError, InstanceTasks] =
-    EitherT
-      .pure[Future, InstanceError](tag[Job.Id](id))
-      .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
-      .flatMap(id => nomadClient.getAllocationsForJob(id).leftMap(toInstanceError(id)))
-      .map { allocations =>
-        InstanceTasks(
-          id,
-          // Invert the order "allocation -> task" into "task -> allocation" (see doc comment)
-          allocations.payload
-            .flatMap(allocation => allocation.taskStates.mapValues(_ -> allocation))
-            .groupBy {
-              case (taskName, _) => taskName
-            }
-            .map {
-              case (taskId, items) =>
-                Task(taskId, items.map {
-                  case (_, (events, allocation)) =>
-                    Task.Allocation(allocation.id, allocation.clientStatus, events.state)
-                })
-            }
-            .toSeq
-        )
-      }
+  def getInstanceTasks(user: Account)(id: String): InstanceT[InstanceTasks] =
+    for {
+      jobId <- EitherT
+        .pure[Future, InstanceError](tag[Job.Id](id))
+        .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
+      allocations <- nomadClient.getAllocationsForJob(jobId).leftMap(toInstanceError(jobId))
+      resources <- allocations.payload.toList
+        .map { allocation =>
+          for {
+            node <- nomadClient.allocationNodeClient(allocation)
+            stats <- node.getAllocationStats(allocation.id)
+          } yield allocation.id -> stats
+        }
+        .sequence[NomadT, (String @@ Allocation.Id, AllocationStats)]
+        .map(_.toMap)
+        .leftMap(toInstanceError(jobId))
+    } yield
+      InstanceTasks(
+        jobId,
+        // Flatten tasks into allocated tasks
+        allocations.payload
+          .flatMap(allocation =>
+            allocation.taskStates.map {
+              case (taskName, events) =>
+                val taskResources = for {
+                  allocationResources <- resources.get(allocation.id)
+                  taskResources <- allocationResources.tasks.get(taskName)
+                } yield taskResources
+
+                AllocatedTask(
+                  taskName,
+                  events.state,
+                  allocation.id,
+                  allocation.clientStatus,
+                  taskResources.map(_.resourceUsage.cpuStats.totalTicks),
+                  taskResources.map(_.resourceUsage.memoryStats.rss)
+                )
+          })
+          .sortBy(_.taskName)
+      )
 
   def getInstanceLog(user: Account)(
       instanceId: String,
@@ -63,7 +91,7 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
       taskName: String @@ NomadTask.Name,
       logKind: LogStreamKind,
       offset: Option[Information @@ TaskLog.Offset]
-  ): EitherT[Future, InstanceError, String] =
+  ): InstanceT[String] =
     for {
       // Check whether the user is allowed to see the instance
       jobId <- EitherT
@@ -71,13 +99,12 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
         .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
       // Check whether the allocation really belongs to the instance.  If it doesn't, ie, if the user tries to access
       // an allocation from another instance hide that the allocation even exists by returning 404
-      _ <- nomadClient
+      allocation <- nomadClient
         .getAllocation(allocationId)
         .leftMap(toInstanceError(jobId))
         .ensure(InstanceError.NotFound(instanceId))(_.jobId == jobId)
-      log <- nomadClient
-        .getTaskLog(allocationId, taskName, logKind, offset)
-        .leftMap(toInstanceError(jobId))
+      node <- nomadClient.allocationNodeClient(allocation).leftMap(toInstanceError(jobId))
+      log <- node.getTaskLog(allocationId, taskName, logKind, offset).leftMap(toInstanceError(jobId))
     } yield log.contents
 
   private def toInstanceError(jobId: String @@ Job.Id)(nomadError: NomadError): InstanceError = nomadError match {

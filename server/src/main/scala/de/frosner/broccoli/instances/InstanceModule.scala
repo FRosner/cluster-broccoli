@@ -12,8 +12,6 @@ import play.api.Logger
   * Provide instance storage and template rendering implementations.
   */
 class InstanceModule extends AbstractModule with ScalaModule {
-  private val log = Logger(getClass)
-
   override def configure(): Unit = {}
 
   /**

@@ -3,12 +3,12 @@ module Views.InstanceView exposing (view)
 import Models.Resources.ServiceStatus exposing (..)
 import Models.Resources.JobStatus as JobStatus exposing (..)
 import Models.Resources.Role exposing (Role(..))
-import Models.Resources.Task exposing (Task)
+import Models.Resources.AllocatedTask exposing (AllocatedTask)
 import Models.Resources.Instance exposing (Instance)
 import Models.Resources.TaskState exposing (TaskState(..))
 import Models.Resources.LogKind exposing (LogKind(..))
 import Models.Resources.ClientStatus exposing (ClientStatus(ClientComplete))
-import Models.Resources.Allocation as Allocation exposing (Allocation, shortAllocationId)
+import Models.Resources.Allocation exposing (shortAllocationId)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 import Views.ParameterFormView as ParameterFormView
@@ -19,6 +19,9 @@ import Html.Events exposing (onClick, onCheck, onInput, onSubmit)
 import Dict exposing (..)
 import Set exposing (Set)
 import Date
+import Filesize
+import Round
+import Maybe.Extra exposing (unwrap)
 
 
 checkboxColumnWidth =
@@ -344,31 +347,22 @@ instanceDetailView instance instanceTasks maybeInstanceParameterForm visibleSecr
             ]
 
 
-{-| Get active, ie, non-complete tasks of an allocation.
-
-Filter all complete allocations and attach the task name to every allocation.
-
-We remove complete allocations because Nomad 0.5.x (possibly other versions as
-well) returns all complete and thus dead allocations for stopped jobs, whereas
-it only returns non-complete allocations for running jobs.
-
-If we did not filter complete allocations the user would see dead allocations
-suddenly popping up in the UI when they stopped the task—which would be
-somewhat confusing.
-
--}
-getActiveAllocations : Task -> List ( String, Allocation )
-getActiveAllocations task =
-    task.allocations
-        |> List.filter (.clientStatus >> (/=) ClientComplete)
-        |> List.map ((,) task.name)
-
-
-instanceTasksView : Instance -> Maybe (List Task) -> Html msg
+instanceTasksView : Instance -> Maybe (List AllocatedTask) -> Html msg
 instanceTasksView instance instanceTasks =
     let
         allocatedTasks =
-            case Maybe.map (List.concatMap getActiveAllocations) instanceTasks of
+            -- Filter all complete allocations and attach the task name to every
+            -- allocation.
+            --
+            -- We remove complete allocations because Nomad 0.5.x (possibly
+            -- other versions as well) returns all complete and thus dead
+            -- allocations for stopped jobs, whereas it only returns
+            -- non-complete allocations for running jobs.
+            --
+            -- If we did not filter complete allocations the user would see dead
+            -- allocations suddenly popping up in the UI when they stopped the
+            -- task—which would be somewhat confusing.
+            case Maybe.map (List.filter (.clientStatus >> (/=) ClientComplete)) instanceTasks of
                 Nothing ->
                     [ i [ class "fa fa-spinner fa-spin" ] [] ]
 
@@ -386,6 +380,8 @@ instanceTasksView instance instanceTasks =
                                 [ th [] [ text "Allocation ID" ]
                                 , th [ class "text-center" ] [ text "State" ]
                                 , th [ style [ ( "width", "100%" ) ] ] [ text "Task" ]
+                                , th [ class "text-center" ] [ text "CPU" ]
+                                , th [ class "text-center" ] [ text "Memory" ]
                                 , th [ class "text-center" ] [ text "Task logs" ]
                                 ]
                             ]
@@ -404,15 +400,15 @@ instanceTasksView instance instanceTasks =
 
 {-| Get the URL to a task log of an instance
 -}
-logUrl : Instance -> String -> Allocation -> LogKind -> String
-logUrl instance taskName allocation kind =
+logUrl : Instance -> AllocatedTask -> LogKind -> String
+logUrl instance task kind =
     String.concat
         [ "/downloads/instances/"
         , instance.id
         , "/allocations/"
-        , allocation.id
+        , task.allocationId
         , "/tasks/"
-        , taskName
+        , task.taskName
         , "/logs/"
         , case kind of
             StdOut ->
@@ -426,11 +422,11 @@ logUrl instance taskName allocation kind =
         ]
 
 
-instanceAllocationRow : Instance -> Int -> ( String, Allocation ) -> Html msg
-instanceAllocationRow instance index ( taskName, allocation ) =
+instanceAllocationRow : Instance -> Int -> AllocatedTask -> Html msg
+instanceAllocationRow instance index task =
     let
         ( description, labelKind ) =
-            case allocation.taskState of
+            case task.taskState of
                 TaskDead ->
                     ( "dead", "label-danger" )
 
@@ -441,23 +437,28 @@ instanceAllocationRow instance index ( taskName, allocation ) =
                     ( "running", "label-success" )
     in
         tr []
-            [ td [] [ code [] [ text (shortAllocationId allocation.id) ] ]
+            [ td [] [ code [] [ text (shortAllocationId task.allocationId) ] ]
             , td [ class "text-center" ]
                 [ span [ class ("label " ++ labelKind) ] [ text description ]
                 ]
-            , td [] [ text taskName ]
+            , td [] [ text task.taskName ]
+            , td [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
+                [ text (unwrap "unknown" (\mhz -> (Round.round 2 mhz) ++ " MHz") task.cpuTicksMhzUsed)
+                ]
+            , td [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
+                [ text (unwrap "unknown" Filesize.format task.memoryBytesUsed) ]
             , td
                 -- Do not wrap buttons in this cell
                 [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
                 [ a
-                    [ href (logUrl instance taskName allocation StdOut)
+                    [ href (logUrl instance task StdOut)
                     , target "_blank"
                     , class "btn btn-default btn-xs"
                     ]
                     [ text "stdout" ]
                 , text " "
                 , a
-                    [ href (logUrl instance taskName allocation StdErr)
+                    [ href (logUrl instance task StdErr)
                     , target "_blank"
                     , class "btn btn-default btn-xs"
                     ]

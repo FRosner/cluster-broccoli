@@ -1,20 +1,23 @@
 package de.frosner.broccoli.nomad
 
-import cats.data.EitherT
+import cats.instances.future._
 import de.frosner.broccoli.nomad.models._
 import shapeless.tag.@@
 import squants.Quantity
 import squants.information.Information
 
 import scala.collection.immutable
-import scala.concurrent.Future
+import scala.concurrent.ExecutionContext
 
 /**
   * A client for Nomad.
   */
 trait NomadClient {
 
-  type NomadT[R] = EitherT[Future, NomadError, R]
+  /**
+    * The execution context for actions of this client.
+    */
+  implicit def executionContext: ExecutionContext
 
   /**
     * Get allocations for a job.
@@ -31,6 +34,49 @@ trait NomadClient {
     * @return The allocation or an error
     */
   def getAllocation(id: String @@ Allocation.Id): NomadT[Allocation]
+
+  /**
+    * Get a node.
+    *
+    * @param id The node to query
+    * @return The node data
+    */
+  def getNode(id: String @@ Node.Id): NomadT[Node]
+
+  /**
+    * Get a client to access a specific Nomad node.
+    *
+    * @param node The node to access
+    * @return A client to access the given node.
+    */
+  def nodeClient(node: Node): NomadNodeClient
+
+  /**
+    * Get the client to access the specific Nomad node running the given allocation.
+    *
+    * @param allocation The allocation whose node to access
+    * @return A client for the allocation's node
+    */
+  def allocationNodeClient(allocation: Allocation): NomadT[NomadNodeClient] =
+    for {
+      node <- getNode(allocation.nodeId)
+    } yield nodeClient(node)
+}
+
+/**
+  * A client for Nomad nodes.
+  *
+  * These actions need to be invoked directly on a particular node, ie, require to obtain access to a node first.
+  */
+trait NomadNodeClient {
+
+  /**
+    * Get resource usage statistics of an allocation.
+    *
+    * @param allocationId The ID of the allocation
+    * @return The resource statistics of the allocation with the given ID.
+    */
+  def getAllocationStats(allocationId: String @@ Allocation.Id): NomadT[AllocationStats]
 
   /**
     * Get the log of a task on an allocation.

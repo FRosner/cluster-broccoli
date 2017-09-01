@@ -2,7 +2,7 @@ module Views.Body exposing (view)
 
 import Views.TemplateView as TemplateView
 import Models.Resources.Instance exposing (Instance, InstanceId)
-import Models.Resources.Task exposing (Task)
+import Models.Resources.AllocatedTask exposing (AllocatedTask)
 import Models.Resources.Role exposing (Role)
 import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
 import Models.Ui.BodyUiModel exposing (BodyUiModel)
@@ -12,7 +12,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 
 
-view : Dict TemplateId Template -> Dict InstanceId Instance -> Dict InstanceId (List Task) -> BodyUiModel -> Maybe Role -> Html UpdateBodyViewMsg
+view : Dict TemplateId Template -> Dict InstanceId Instance -> Dict InstanceId (List AllocatedTask) -> BodyUiModel -> Maybe Role -> Html UpdateBodyViewMsg
 view templates instances tasks bodyUiModel maybeRole =
     div
         [ class "container" ]

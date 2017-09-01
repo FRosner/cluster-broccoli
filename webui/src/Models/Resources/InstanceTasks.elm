@@ -1,7 +1,7 @@
 module Models.Resources.InstanceTasks exposing (..)
 
 import Models.Resources.Instance exposing (InstanceId)
-import Models.Resources.Task as Task exposing (Task)
+import Models.Resources.AllocatedTask as AllocatedTask exposing (AllocatedTask)
 import Json.Decode exposing (Decoder, string, field, map2, list)
 
 
@@ -9,7 +9,7 @@ import Json.Decode exposing (Decoder, string, field, map2, list)
 -}
 type alias InstanceTasks =
     { instanceId : InstanceId
-    , tasks : List Task
+    , allocatedTasks : List AllocatedTask
     }
 
 
@@ -19,4 +19,4 @@ decoder : Decoder InstanceTasks
 decoder =
     map2 InstanceTasks
         (field "instanceId" string)
-        (field "tasks" (list Task.decoder))
+        (field "allocatedTasks" (list AllocatedTask.decoder))

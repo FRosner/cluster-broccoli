@@ -2,14 +2,20 @@ package de.frosner.broccoli.test.contexts.docker
 
 import cats.instances.all._
 import cats.syntax.all._
-import org.specs2.control.Debug
 import org.specs2.execute.{AsResult, Result}
 import org.specs2.specification.AroundEach
+import shapeless.tag
+import shapeless.tag.@@
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.sys.process._
 import scala.util.{Failure, Success, Try}
+
+/**
+  * Type tag for container handles
+  */
+trait ContainerHandle
 
 /**
   * Start configured services from the Broccoli Test image before the test and stop-kill all containers after every
@@ -36,15 +42,10 @@ trait BroccoliDockerContext extends AroundEach {
     }
   }
 
-  private type ContainerHandle = String
-
-  private def spawnContainers(): List[ContainerHandle] = {
-    val handles = broccoliDockerConfig.services.toList
-      .map { service =>
-        spawnContainer(service)
-      }
+  private def spawnContainers(): List[String @@ ContainerHandle] = {
+    val handles = broccoliDockerConfig.services.toList.map(spawnContainer)
     // Go through all started containers; throw the first exception seen, or return all handles if successful
-    handles.sequence[Try, ContainerHandle] match {
+    handles.sequence[Try, String @@ ContainerHandle] match {
       case Success(h)   => h
       case Failure(exc) =>
         // Stop all running containers and then throw the error
@@ -55,12 +56,12 @@ trait BroccoliDockerContext extends AroundEach {
     }
   }
 
-  private def stopContainers(handles: List[ContainerHandle]): Unit =
+  private def stopContainers(handles: List[String @@ ContainerHandle]): Unit =
     // Stop all containers, throwing the first exception seen
     handles.map(stopContainer).sequence_.get
 
-  private def spawnContainer(service: BroccoliTestService): Try[ContainerHandle] = Try {
-    (Seq(
+  private def spawnContainer(service: BroccoliTestService): Try[String @@ ContainerHandle] = Try {
+    val run = Seq(
       "sudo", // Docker requires root.
       "docker",
       "run",
@@ -69,10 +70,11 @@ trait BroccoliDockerContext extends AroundEach {
       "--net",
       "host", // Use host network to interconnect all services
       "frosner/cluster-broccoli-test"
-    ) ++ service.command).!!.trim
+    ) ++ service.command
+    tag[ContainerHandle](run.!!.trim)
   }
 
-  private def stopContainer(handle: ContainerHandle): Try[Unit] =
+  private def stopContainer(handle: String @@ ContainerHandle): Try[Unit] =
     Try {
       Seq("sudo", "docker", "stop", handle).!!
       ()
@@ -92,9 +94,10 @@ object BroccoliDockerContext {
   object Configuration {
 
     /**
+      * Create a configuration to start the given services.
       *
-      * @param services
-      * @return
+      * @param services The services to start
+      * @return The corresponding configuration
       */
     def services(service: BroccoliTestService, services: BroccoliTestService*): Configuration =
       Configuration(services.toSet + service, 3.seconds)

@@ -5,7 +5,7 @@ import Models.Resources.Role as Role exposing (Role(..))
 import Models.Resources.Template as Template exposing (Template, TemplateId)
 import Models.Resources.Instance as Instance exposing (Instance, InstanceId)
 import Models.Resources.JobStatus exposing (JobStatus(..))
-import Models.Resources.Task exposing (Task)
+import Models.Resources.AllocatedTask exposing (AllocatedTask)
 import Models.Resources.TaskState exposing (TaskState(..))
 import Models.Resources.ClientStatus exposing (ClientStatus(..))
 import Models.Ui.BodyUiModel as BodyUiModel exposing (BodyUiModel)
@@ -532,17 +532,16 @@ defaultInstances =
         |> Dict.fromList
 
 
-defaultTasks : Dict InstanceId (List Task)
+defaultTasks : Dict InstanceId (List AllocatedTask)
 defaultTasks =
     [ ( "i1", [] )
     , ( "i2"
-      , [ { name = "t1"
-          , allocations =
-                [ { id = "a1"
-                  , taskState = TaskRunning
-                  , clientStatus = ClientRunning
-                  }
-                ]
+      , [ { taskName = "t1"
+          , taskState = TaskRunning
+          , allocationId = "a1"
+          , clientStatus = ClientRunning
+          , cpuTicksMhzUsed = Nothing
+          , memoryBytesUsed = Nothing
           }
         ]
       )

@@ -24,7 +24,6 @@ class NomadModule extends AbstractModule with ScalaModule {
     * @return The nomad part of that configuration
     */
   @Provides
-  @Singleton
   def provideNomadConfiguration(config: BroccoliConfiguration): NomadConfiguration = config.nomad
 
   /**
