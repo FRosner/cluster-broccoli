@@ -28,7 +28,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
     "ask consul for the services that nomad returns" in {
       val service1 = Service("my-service")
       val task1 = Task(Some(Seq(service1)))
-      val taskGroup1 = TaskGroup(Some(Seq(task1)))
+      val taskGroup1 = TaskGroup(Seq(task1))
       val job = Job(Seq(taskGroup1))
       val consulService = mock(classOf[ConsulService])
       Server.withRouter() {
@@ -52,8 +52,8 @@ class NomadServiceSpec extends Specification with ServiceMocks {
       val service1 = Service("my-service")
       val task1 = Task(Some(Seq(service1)))
       val task2 = Task(None)
-      val taskGroup1 = TaskGroup(Some(Seq(task1)))
-      val taskGroup2 = TaskGroup(Some(Seq(task2)))
+      val taskGroup1 = TaskGroup(Seq(task1))
+      val taskGroup2 = TaskGroup(Seq(task2))
       val job = Job(Seq(taskGroup1, taskGroup2))
       val consulService = mock(classOf[ConsulService])
       Server.withRouter() {

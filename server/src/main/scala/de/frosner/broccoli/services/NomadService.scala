@@ -144,7 +144,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
       }
     }
     val eventuallyJobServiceIds = jobResponse.map { job =>
-      val tasks = job.taskGroups.flatMap(_.tasks.getOrElse(Seq.empty))
+      val tasks = job.taskGroups.flatMap(_.tasks)
       val services = tasks.flatMap(_.services.getOrElse(Seq.empty))
       services.map(_.name)
     }
