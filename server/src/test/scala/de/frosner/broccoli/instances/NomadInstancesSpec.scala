@@ -60,7 +60,11 @@ class NomadInstancesSpec
         // Reduce the size of the generated values; we don't need to check this against huge allocation lists
       }.setGen2(Gen.identifier.label("id")).set(maxSize = 10)
 
-      "fail to get instance tasks from nomad when the user may not access the instance" in prop {
+      "include resources in instance tasks" in todo
+
+      "fail to get instance tasks if the job wasn't found" in todo
+
+      "fail to get instance tasks when the user may not access the instance" in prop {
         (user: UserAccount, id: String) =>
           (!id.matches(user.instanceRegex)) ==> {
             for {
@@ -71,7 +75,7 @@ class NomadInstancesSpec
           }.await
       }.set(minTestsOk = 5)
 
-      "fail when Nomad fails" in prop { (user: UserAccount, id: String, error: NomadError) =>
+      "fail to get instance tasks when Nomad fails" in prop { (user: UserAccount, id: String, error: NomadError) =>
         val client = mock[NomadClient]
 
         client
