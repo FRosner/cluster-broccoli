@@ -38,7 +38,7 @@ class NomadInstancesSpec
             .returns(EitherT.pure[Future, NomadError](AllocationStats(resourceUsage, Map.empty)))
 
           client.allocationNodeClient(Matchers.any[Allocation]).returns(EitherT.pure[Future, NomadError](nodeClient))
-
+          client.getJob(shapeless.tag[Job.Id](id)).returns(EitherT.pure[Future, NomadError](Job(Seq.empty)))
           client
             .getAllocationsForJob(shapeless.tag[Job.Id](id))
             .returns(EitherT.pure[Future, NomadError](WithId(id, allocations)))
