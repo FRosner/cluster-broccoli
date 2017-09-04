@@ -499,9 +499,6 @@ resourceUsageBar tooltip current required =
                 "progress-bar-warning"
             else
                 "progress-bar-success"
-
-        percentage =
-            (Round.round 0 (ratio * 100)) ++ "%"
     in
         div
             [ class "progress"
@@ -515,9 +512,12 @@ resourceUsageBar tooltip current required =
                 , attribute "aria-valuemin" "0"
                 , attribute "aria-valuenow" (Round.round 2 current)
                 , attribute "aria-valuemax" (Round.round 2 current)
-                , style [ ( "width", percentage ), ( "min-width", "2.5em" ) ]
+                , style
+                    [ ( "width", (Round.round 0 (100 * (Basics.min 1.0 ratio))) ++ "%" )
+                    , ( "min-width", "2.5em" )
+                    ]
                 ]
-                [ text percentage ]
+                [ text (Round.round 0 (ratio * 100)), text "%" ]
             ]
 
 
