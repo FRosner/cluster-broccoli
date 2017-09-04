@@ -1,5 +1,6 @@
 package de.frosner.broccoli.services
 
+import de.frosner.broccoli.auth.{Role, UserAccount}
 import de.frosner.broccoli.controllers.ServiceMocks
 import de.frosner.broccoli.models._
 import org.specs2.mutable.Specification

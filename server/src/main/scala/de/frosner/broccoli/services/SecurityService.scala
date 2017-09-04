@@ -3,9 +3,9 @@ package de.frosner.broccoli.services
 import javax.inject.{Inject, Singleton}
 
 import com.mohiva.play.silhouette.api.util.Credentials
+import de.frosner.broccoli.auth.{Account, Role, UserAccount}
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.conf.IllegalConfigException
-import de.frosner.broccoli.models.{Account, Role, UserAccount}
 import play.api.Configuration
 
 import scala.collection.JavaConverters._

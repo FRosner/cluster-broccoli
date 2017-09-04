@@ -1,5 +1,6 @@
 package de.frosner.broccoli.models
 
+import de.frosner.broccoli.auth.{Account, Role, UserAccount}
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models.ServiceStatus.ServiceStatus
 import de.frosner.broccoli.nomad.models.{ClientStatus, TaskState}

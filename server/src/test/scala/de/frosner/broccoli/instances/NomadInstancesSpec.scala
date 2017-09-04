@@ -2,6 +2,7 @@ package de.frosner.broccoli.instances
 
 import cats.data.EitherT
 import cats.instances.future._
+import de.frosner.broccoli.auth.UserAccount
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad
 import de.frosner.broccoli.nomad.models._

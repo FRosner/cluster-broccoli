@@ -1,6 +1,6 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.models.{Account, Role}
+import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.services.SecurityService
 import jp.t2v.lab.play2.auth._
 import play.api.{Environment, Mode}

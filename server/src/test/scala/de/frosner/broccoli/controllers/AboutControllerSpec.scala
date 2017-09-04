@@ -1,7 +1,7 @@
 package de.frosner.broccoli.controllers
 
+import de.frosner.broccoli.auth.{Anonymous, Role, UserAccount}
 import de.frosner.broccoli.services._
-import de.frosner.broccoli.models.{Anonymous, Role, UserAccount}
 import org.mockito.Mockito._
 import play.api.cache.CacheApi
 import play.api.{Application, Environment}

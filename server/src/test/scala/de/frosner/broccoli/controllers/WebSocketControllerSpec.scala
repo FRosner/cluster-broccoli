@@ -4,6 +4,7 @@ import de.frosner.broccoli.models._
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.RemoveSecrets.ToRemoveSecretsOps
+import de.frosner.broccoli.auth.{Account, Role, UserAccount}
 import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.nomad
 import de.frosner.broccoli.websocket.{BroccoliMessageHandler, IncomingMessage, OutgoingMessage}
