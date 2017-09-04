@@ -3,7 +3,7 @@ package de.frosner.broccoli.controllers
 import cats.data.EitherT
 import cats.instances.future._
 import com.mohiva.play.silhouette.api.util.Credentials
-import de.frosner.broccoli.auth.{Account, Role}
+import de.frosner.broccoli.auth.{Account, AuthMode, Role}
 import de.frosner.broccoli.http.ToHTTPResult
 import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.instances.InstanceNotFoundException
@@ -306,7 +306,7 @@ class InstanceControllerSpec
     "return tasks from the instance service" in { implicit ee: ExecutionEnv =>
       prop { (user: Account, instanceTasks: InstanceTasks) =>
         val securityService = mock[SecurityService]
-        securityService.authMode returns "conf"
+        securityService.authMode returns AuthMode.Conf
         securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
         securityService.getAccount(user.name) returns Some(user)
 
@@ -332,7 +332,7 @@ class InstanceControllerSpec
     "return errors from the instance service" in { implicit ee: ExecutionEnv =>
       prop { (instanceId: String, user: Account, error: InstanceError) =>
         val securityService = mock[SecurityService]
-        securityService.authMode returns "conf"
+        securityService.authMode returns AuthMode.Conf
         securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
         securityService.getAccount(user.name) returns Some(user)
         val instances = mock[NomadInstances]
@@ -356,7 +356,7 @@ class InstanceControllerSpec
     "fail if not authenticated" in {
       prop { (instanceId: String) =>
         val securityService = mock[SecurityService]
-        securityService.authMode returns "conf"
+        securityService.authMode returns AuthMode.Conf
         val controller = InstanceController(
           mock[NomadInstances],
           mock[InstanceService],
