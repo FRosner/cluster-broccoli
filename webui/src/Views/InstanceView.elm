@@ -473,7 +473,7 @@ instanceAllocationRow instance index task =
 cpuUsageBar : Float -> Float -> Html msg
 cpuUsageBar current required =
     resourceUsageBar
-        ((Round.round 0 current) ++ " / " ++ (Round.round 0 required) ++ " MHz CPU")
+        ((Round.round 0 current) ++ " MHz / " ++ (Round.round 0 required) ++ " MHz CPU used")
         current
         required
 
@@ -481,7 +481,7 @@ cpuUsageBar current required =
 memoryUsageBar : Int -> Int -> Html msg
 memoryUsageBar current required =
     resourceUsageBar
-        ((Filesize.format current) ++ " of " ++ (Filesize.format required) ++ " used")
+        ((Filesize.format current) ++ " of " ++ (Filesize.format required) ++ " memory used")
         (toFloat current)
         (toFloat required)
 
