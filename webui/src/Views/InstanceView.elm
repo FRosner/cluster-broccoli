@@ -489,8 +489,19 @@ memoryUsageBar current required =
 resourceUsageBar : String -> Float -> Float -> Html msg
 resourceUsageBar tooltip current required =
     let
+        ratio =
+            current / required
+
+        context =
+            if ratio >= 1.0 then
+                "progress-bar-danger"
+            else if ratio >= 0.8 then
+                "progress-bar-warning"
+            else
+                "progress-bar-success"
+
         percentage =
-            (Round.round 0 ((current / required) * 100)) ++ "%"
+            (Round.round 0 (ratio * 100)) ++ "%"
     in
         div
             [ class "progress"
@@ -499,6 +510,7 @@ resourceUsageBar tooltip current required =
             ]
             [ div
                 [ class "progress-bar"
+                , class context
                 , attribute "role" "progressbar"
                 , attribute "aria-valuemin" "0"
                 , attribute "aria-valuenow" (Round.round 2 current)
