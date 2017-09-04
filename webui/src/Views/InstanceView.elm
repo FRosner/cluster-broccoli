@@ -443,10 +443,13 @@ instanceAllocationRow instance index task =
                 ]
             , td [] [ text task.taskName ]
             , td [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
-                [ text (unwrap "unknown" (\mhz -> (Round.round 2 mhz) ++ " MHz") task.resources.cpuUsedMhz)
+                [ Maybe.withDefault (text "Unknown")
+                    (Maybe.map2 resourceUsageBar task.resources.cpuUsedMhz task.resources.cpuRequiredMhz)
                 ]
             , td [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
-                [ text (unwrap "unknown" Filesize.format task.resources.memoryUsedBytes) ]
+                [ Maybe.withDefault (text "Unknown")
+                    (Maybe.map2 resourceUsageBar task.resources.memoryUsedBytes task.resources.memoryRequiredBytes)
+                ]
             , td
                 -- Do not wrap buttons in this cell
                 [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
@@ -464,6 +467,22 @@ instanceAllocationRow instance index task =
                     ]
                     [ text "stderr" ]
                 ]
+            ]
+
+
+resourceUsageBar : Float -> Float -> Html msg
+resourceUsageBar current required =
+    let
+        percentage =
+            (Round.round 0 ((current / required) * 100)) ++ "%"
+    in
+        div [ class "progress", style [ ( "width", "100px" ) ] ]
+            [ div
+                [ class "progress-bar"
+                , attribute "role" "progressbar"
+                , style [ ( "width", percentage ), ( "min-width", "2.5em" ) ]
+                ]
+                [ text percentage ]
             ]
 
 
