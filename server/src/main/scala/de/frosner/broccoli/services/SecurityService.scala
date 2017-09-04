@@ -2,6 +2,7 @@ package de.frosner.broccoli.services
 
 import javax.inject.{Inject, Singleton}
 
+import com.mohiva.play.silhouette.api.services.IdentityService
 import com.mohiva.play.silhouette.api.util.Credentials
 import de.frosner.broccoli.auth.{Account, AuthConfiguration, AuthMode, Role}
 import de.frosner.broccoli.conf
@@ -12,7 +13,7 @@ import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 @Singleton()
-case class SecurityService @Inject()(configuration: AuthConfiguration) {
+case class SecurityService @Inject()(configuration: AuthConfiguration, identityService: IdentityService[Account]) {
 
   private val log = play.api.Logger(getClass)
 

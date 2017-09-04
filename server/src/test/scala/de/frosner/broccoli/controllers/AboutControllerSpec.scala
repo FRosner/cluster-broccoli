@@ -15,7 +15,7 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
 
     "return the about object with authentication" in new WithApplication {
       val account = Account("user", "pass", ".*", Role.Administrator)
-      val aboutInfoService = withDummyValues(mock(classOf[AboutInfoService]))
+      val aboutInfoService = withDummyValues(mock[AboutInfoService])
       testWithAllAuths(account) { securityService =>
         AboutController(aboutInfoService, securityService, cacheApi, playEnv)
       } { controller =>
@@ -29,9 +29,9 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
 
     "return the about object without authentication" in new WithApplication {
       val account = anonymous
-      val aboutInfoService = withDummyValues(mock(classOf[AboutInfoService]))
+      val aboutInfoService = withDummyValues(mock[AboutInfoService])
       val controller =
-        AboutController(aboutInfoService, withAuthNone(mock(classOf[SecurityService])), cacheApi, playEnv)
+        AboutController(aboutInfoService, withAuthNone(mock[SecurityService]), cacheApi, playEnv)
       val result = controller.about(FakeRequest().withBody(()))
       status(result) must be equalTo 200 and {
         contentAsJson(result) must be equalTo Json.toJson(aboutInfoService.aboutInfo(account))

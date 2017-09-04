@@ -1,12 +1,15 @@
 package de.frosner.broccoli.services
 
+import com.mohiva.play.silhouette.api.services.IdentityService
 import com.mohiva.play.silhouette.api.util.Credentials
 import de.frosner.broccoli.auth.{Account, AuthConfiguration, AuthMode, Role}
+import org.mockito.Mock
+import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 
 import scala.concurrent.duration.Duration
 
-class SecurityServiceSpec extends Specification {
+class SecurityServiceSpec extends Specification with Mockito {
 
   def configWithAccounts(accounts: Seq[Account]): AuthConfiguration =
     AuthConfiguration(
@@ -27,28 +30,30 @@ class SecurityServiceSpec extends Specification {
       allowedFailedLogins = 3
     )
 
+  val identityService = mock[IdentityService[Account]]
+
   val account = Account("frank", "pass", "^test.*", Role.Administrator)
 
   "An authentication check" should {
 
     "succeed if the account matches" in {
-      SecurityService(configWithAccounts(List(account)))
+      SecurityService(configWithAccounts(List(account)), identityService)
         .isAllowedToAuthenticate(Credentials(account.name, account.password)) === true
     }
 
     "fail if the username does not exist" in {
-      SecurityService(configWithAccounts(List(account)))
+      SecurityService(configWithAccounts(List(account)), identityService)
         .isAllowedToAuthenticate(Credentials("new", account.password)) === false
     }
 
     "fail if the password does not matche" in {
-      SecurityService(configWithAccounts(List(account)))
+      SecurityService(configWithAccounts(List(account)), identityService)
         .isAllowedToAuthenticate(Credentials(account.name, "new")) === false
     }
 
     "succeed if the number of failed logins is equal to the allowed ones" in {
       val failedCredentials = Credentials(account.name, password = "new")
-      val service = SecurityService(configWithAccounts(List(account)))
+      val service = SecurityService(configWithAccounts(List(account)), identityService)
       val failedAttempts = for (attemptNo <- 1 to service.allowedFailedLogins) {
         service.isAllowedToAuthenticate(failedCredentials)
       }
@@ -57,7 +62,7 @@ class SecurityServiceSpec extends Specification {
 
     "fail if the number of failed logins is greater than the allowed number" in {
       val failedCredentials = Credentials(account.name, password = "new")
-      val service = SecurityService(configWithAccounts(List(account)))
+      val service = SecurityService(configWithAccounts(List(account)), identityService)
       val failedAttempts = for (attemptNo <- 0 to service.allowedFailedLogins) {
         service.isAllowedToAuthenticate(failedCredentials)
       }
@@ -65,19 +70,4 @@ class SecurityServiceSpec extends Specification {
     }
 
   }
-
-  "Finding accounts by id" should {
-
-    "find an existing account" in {
-      SecurityService(configWithAccounts(List(account)))
-        .getAccount(account.name) === Some(account)
-    }
-
-    "not return anything if the name does not exist" in {
-      SecurityService(configWithAccounts(List(account)))
-        .getAccount("notExisting") === None
-    }
-
-  }
-
 }

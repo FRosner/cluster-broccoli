@@ -6,6 +6,7 @@ import com.mohiva.play.silhouette.api.util.Credentials
 import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.services.{SecurityService, WebSocketService}
 import jp.t2v.lab.play2.auth.test.Helpers._
+import org.mockito.Matchers
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import play.api.mvc.MultipartFormData
@@ -29,7 +30,7 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
           securityService,
           cacheApi,
           playEnv,
-          mock(classOf[WebSocketService])
+          mock[WebSocketService]
         )
       } { controller =>
         controller.verify
@@ -53,10 +54,10 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
 
     "return 200 and a session ID in a cookie on successful login" in new WithApplication {
       val controller = SecurityController(
-        withAuthConf(mock(classOf[SecurityService]), List(account)),
+        withAuthConf(mock[SecurityService], List(account)),
         cacheApi,
         playEnv,
-        mock(classOf[WebSocketService])
+        mock[WebSocketService]
       )
       val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, account.password))
       val result = controller.login.apply(requestWithData)
@@ -67,10 +68,10 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
 
     "return 401 when the POST request is valid but the authentication failed" in new WithApplication {
       val controller = SecurityController(
-        withAuthConf(mock(classOf[SecurityService]), List(account)),
+        withAuthConf(mock[SecurityService], List(account)),
         cacheApi,
         playEnv,
-        mock(classOf[WebSocketService])
+        mock[WebSocketService]
       )
       when(controller.securityService.isAllowedToAuthenticate(Credentials(account.name, account.password)))
         .thenReturn(false)
@@ -81,10 +82,10 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
 
     "return 400 when the POST request is invalid" in new WithApplication {
       val controller = SecurityController(
-        withAuthConf(mock(classOf[SecurityService]), List(account)),
+        withAuthConf(mock[SecurityService], List(account)),
         cacheApi,
         playEnv,
-        mock(classOf[WebSocketService])
+        mock[WebSocketService]
       )
       val result = controller.login.apply(FakeRequest().withLoggedIn(controller)(account.name))
       status(result) must be equalTo 400
@@ -92,27 +93,27 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
 
     "cancel an existing websocket connection if already logged in" in new WithApplication {
       val controller = SecurityController(
-        withAuthConf(mock(classOf[SecurityService]), List(account)),
+        withAuthConf(mock[SecurityService], List(account)),
         cacheApi,
         playEnv,
-        mock(classOf[WebSocketService])
+        mock[WebSocketService]
       )
       val result = controller.login.apply(FakeRequest().withLoggedIn(controller)(account.name))
       Await.ready(result, Duration(5, TimeUnit.SECONDS))
-      verify(controller.webSocketService).closeConnections(anyString())
+      verify(controller.webSocketService).closeConnections(Matchers.anyString())
     }
 
     "don't cancel anything if it is the first login" in new WithApplication {
       val controller = SecurityController(
-        withAuthConf(mock(classOf[SecurityService]), List(account)),
+        withAuthConf(mock[SecurityService], List(account)),
         cacheApi,
         playEnv,
-        mock(classOf[WebSocketService])
+        mock[WebSocketService]
       )
       val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, account.password))
       val result = controller.login.apply(requestWithData)
       Await.ready(result, Duration(5, TimeUnit.SECONDS))
-      verify(controller.webSocketService, times(0)).closeConnections(anyString())
+      verify(controller.webSocketService, times(0)).closeConnections(Matchers.anyString())
     }
 
   }
@@ -121,10 +122,10 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
 
     "return 200 and an empty cookie on successful logout" in new WithApplication {
       val controller = SecurityController(
-        withAuthConf(mock(classOf[SecurityService]), List(account)),
+        withAuthConf(mock[SecurityService], List(account)),
         cacheApi,
         playEnv,
-        mock(classOf[WebSocketService])
+        mock[WebSocketService]
       )
       val result = controller.logout.apply(FakeRequest().withLoggedIn(controller)(account.name).withBody(()))
       (status(result) must be equalTo 200) and
@@ -134,14 +135,14 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
 
     "cancel the websocket connection" in new WithApplication {
       val controller = SecurityController(
-        withAuthConf(mock(classOf[SecurityService]), List(account)),
+        withAuthConf(mock[SecurityService], List(account)),
         cacheApi,
         playEnv,
-        mock(classOf[WebSocketService])
+        mock[WebSocketService]
       )
       val result = controller.logout.apply(FakeRequest().withLoggedIn(controller)(account.name).withBody(()))
       Await.ready(result, Duration(5, TimeUnit.SECONDS))
-      verify(controller.webSocketService).closeConnections(anyString())
+      verify(controller.webSocketService).closeConnections(Matchers.anyString())
     }
 
   }

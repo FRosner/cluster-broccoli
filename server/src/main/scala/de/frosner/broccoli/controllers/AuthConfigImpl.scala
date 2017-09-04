@@ -1,5 +1,7 @@
 package de.frosner.broccoli.controllers
 
+import com.mohiva.play.silhouette.api.LoginInfo
+import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.services.SecurityService
 import jp.t2v.lab.play2.auth._
@@ -37,7 +39,7 @@ trait AuthConfigImpl extends AuthConfig {
   }
 
   def resolveUser(id: Id)(implicit ctx: ExecutionContext): Future[Option[User]] =
-    Future.successful(securityService.getAccount(id))
+    securityService.identityService.retrieve(LoginInfo(CredentialsProvider.ID, id))
 
   def loginSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
     Future.successful(Results.Ok(JsString("Login successful!"))) // the content is not used anyway as the controller replaces it
