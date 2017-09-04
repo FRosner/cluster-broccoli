@@ -29,7 +29,7 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
 
       testWithAllAuths { securityService =>
         TemplateController(
-          withTemplates(mock(classOf[TemplateService]), List(template)),
+          withTemplates(mock[TemplateService], List(template)),
           securityService,
           playEnv,
           cacheApi
@@ -73,7 +73,7 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
 
       testWithAllAuths { securityService =>
         TemplateController(
-          withTemplates(mock(classOf[TemplateService]), List(template)),
+          withTemplates(mock[TemplateService], List(template)),
           securityService,
           playEnv,
           cacheApi
@@ -95,7 +95,7 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "return 404 if the template does not exist" in new WithApplication {
-      val templateService = mock(classOf[TemplateService])
+      val templateService = mock[TemplateService]
       when(templateService.template("id")).thenReturn(None)
 
       testWithAllAuths { securityService =>

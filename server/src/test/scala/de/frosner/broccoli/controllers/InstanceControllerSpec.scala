@@ -2,7 +2,10 @@ package de.frosner.broccoli.controllers
 
 import cats.data.EitherT
 import cats.instances.future._
+import com.mohiva.play.silhouette.api.LoginInfo
+import com.mohiva.play.silhouette.api.services.IdentityService
 import com.mohiva.play.silhouette.api.util.Credentials
+import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import de.frosner.broccoli.auth.{Account, AuthMode, Role}
 import de.frosner.broccoli.http.ToHTTPResult
 import de.frosner.broccoli.instances.NomadInstances
@@ -308,7 +311,9 @@ class InstanceControllerSpec
         val securityService = mock[SecurityService]
         securityService.authMode returns AuthMode.Conf
         securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
-        securityService.getAccount(user.name) returns Some(user)
+        val identityService = mock[IdentityService[Account]]
+        securityService.identityService returns identityService
+        identityService.retrieve(LoginInfo(CredentialsProvider.ID, user.name)) returns Future.successful(Some(user))
 
         val instances = mock[NomadInstances]
         instances.getInstanceTasks(user)(instanceTasks.instanceId) returns EitherT.pure[Future, InstanceError](
@@ -334,7 +339,10 @@ class InstanceControllerSpec
         val securityService = mock[SecurityService]
         securityService.authMode returns AuthMode.Conf
         securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
-        securityService.getAccount(user.name) returns Some(user)
+        val identityService = mock[IdentityService[Account]]
+        securityService.identityService returns identityService
+        identityService.retrieve(LoginInfo(CredentialsProvider.ID, user.name)) returns Future.successful(Some(user))
+
         val instances = mock[NomadInstances]
         instances.getInstanceTasks(user)(instanceId) returns EitherT.leftT[Future, InstanceTasks](error)
 
@@ -357,6 +365,7 @@ class InstanceControllerSpec
       prop { (instanceId: String) =>
         val securityService = mock[SecurityService]
         securityService.authMode returns AuthMode.Conf
+        val identityService = mock[IdentityService[Account]]
         val controller = InstanceController(
           mock[NomadInstances],
           mock[InstanceService],

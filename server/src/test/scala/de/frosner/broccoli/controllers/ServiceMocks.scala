@@ -1,15 +1,21 @@
 package de.frosner.broccoli.controllers
 
+import com.mohiva.play.silhouette.api.LoginInfo
+import com.mohiva.play.silhouette.api.services.IdentityService
 import com.mohiva.play.silhouette.api.util.Credentials
+import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import de.frosner.broccoli.auth.{Account, AuthMode, Role}
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.services._
 import org.mockito.Mockito._
 import org.mockito.internal.util.MockUtil
-import org.mockito.Matchers._
+import org.mockito.Matchers
+import org.specs2.mock.Mockito
 
-trait ServiceMocks {
+import scala.concurrent.Future
+
+trait ServiceMocks extends Mockito {
 
   private val mockUtil = new MockUtil()
   private def requireMock(obj: AnyRef): Unit = require(
@@ -19,50 +25,49 @@ trait ServiceMocks {
 
   def withAuthConf(securityService: SecurityService, allowed: Iterable[Account]): SecurityService = {
     requireMock(securityService)
+    val identityService = mock[IdentityService[Account]]
     allowed.foreach { account =>
-      when(securityService.getAccount(account.name)).thenReturn(Some(account))
-      val credentials = Credentials(account.name, account.password)
-      when(securityService.isAllowedToAuthenticate(credentials)).thenReturn(true)
+      identityService.retrieve(LoginInfo(CredentialsProvider.ID, account.name)) returns Future.successful(Some(account))
+      securityService.identityService returns identityService
+      securityService.isAllowedToAuthenticate(Credentials(account.name, account.password)) returns true
     }
-    when(securityService.authMode).thenReturn(AuthMode.Conf)
+    securityService.authMode returns AuthMode.Conf
     securityService
   }
 
   def withAuthNone(securityService: SecurityService): SecurityService = {
     requireMock(securityService)
-    when(securityService.authMode).thenReturn(AuthMode.None)
+    securityService.authMode returns AuthMode.None
     securityService
   }
 
   def withDummyValues(aboutInfoService: AboutInfoService): AboutInfoService = {
     requireMock(aboutInfoService)
-    when(aboutInfoService.aboutInfo(any(classOf[Account]))).thenReturn(
-      AboutInfo(
-        project = AboutProject(
-          name = "project",
-          version = "version"
+    aboutInfoService.aboutInfo(Matchers.any(classOf[Account])) returns AboutInfo(
+      project = AboutProject(
+        name = "project",
+        version = "version"
+      ),
+      scala = AboutScala(
+        version = "scala"
+      ),
+      sbt = AboutSbt(
+        version = "sbt"
+      ),
+      auth = AboutAuth(
+        enabled = false,
+        user = AboutUser(
+          name = "name",
+          role = Role.User,
+          instanceRegex = "instances"
+        )
+      ),
+      services = AboutServices(
+        clusterManager = AboutClusterManager(
+          connected = true
         ),
-        scala = AboutScala(
-          version = "scala"
-        ),
-        sbt = AboutSbt(
-          version = "sbt"
-        ),
-        auth = AboutAuth(
-          enabled = false,
-          user = AboutUser(
-            name = "name",
-            role = Role.User,
-            instanceRegex = "instances"
-          )
-        ),
-        services = AboutServices(
-          clusterManager = AboutClusterManager(
-            connected = true
-          ),
-          serviceDiscovery = AboutServiceDiscovery(
-            connected = true
-          )
+        serviceDiscovery = AboutServiceDiscovery(
+          connected = true
         )
       )
     )
@@ -71,30 +76,30 @@ trait ServiceMocks {
 
   def withConsulReachable(consulService: ConsulService): ConsulService = {
     requireMock(consulService)
-    when(consulService.isConsulReachable).thenReturn(true)
+    consulService.isConsulReachable returns true
     consulService
   }
 
   def withNomadReachable(nomadService: NomadService): NomadService = {
     requireMock(nomadService)
-    when(nomadService.isNomadReachable).thenReturn(true)
+    nomadService.isNomadReachable returns true
     nomadService
   }
 
   def withTemplates(templateService: TemplateService, templates: Seq[Template]): TemplateService = {
     requireMock(templateService)
-    when(templateService.getTemplates).thenReturn(templates)
+    templateService.getTemplates returns templates
     templates.foreach { template =>
-      when(templateService.template(template.id)).thenReturn(Some(template))
+      templateService.template(template.id) returns Some(template)
     }
     templateService
   }
 
   def withInstances(instanceService: InstanceService, instances: Seq[InstanceWithStatus]): InstanceService = {
     requireMock(instanceService)
-    when(instanceService.getInstances).thenReturn(instances)
+    instanceService.getInstances returns instances
     instances.foreach { instance =>
-      when(instanceService.getInstance(instance.instance.id)).thenReturn(Some(instance))
+      instanceService.getInstance(instance.instance.id) returns Some(instance)
     }
     instanceService
   }
