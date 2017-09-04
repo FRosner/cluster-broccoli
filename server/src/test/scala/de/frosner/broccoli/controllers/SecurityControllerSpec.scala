@@ -3,7 +3,7 @@ package de.frosner.broccoli.controllers
 import java.util.concurrent.TimeUnit
 
 import com.mohiva.play.silhouette.api.util.Credentials
-import de.frosner.broccoli.auth.{Role, UserAccount}
+import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.services.{SecurityService, WebSocketService}
 import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Matchers._
@@ -19,7 +19,7 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
-  val account = UserAccount("frank", "pass", ".*", Role.Administrator)
+  val account = Account("frank", "pass", ".*", Role.Administrator)
 
   "verify" should {
 

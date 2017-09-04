@@ -3,7 +3,7 @@ package de.frosner.broccoli.services
 import com.google.common.collect.ImmutableMap
 import com.mohiva.play.silhouette.api.util.Credentials
 import com.typesafe.config.{ConfigException, ConfigFactory, ConfigValueFactory}
-import de.frosner.broccoli.auth.{Account, Role, UserAccount}
+import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.conf
 import org.specs2.mutable.Specification
 import play.api.Configuration
@@ -13,7 +13,7 @@ import scala.util.Success
 
 class SecurityServiceSpec extends Specification {
 
-  def configWithAccounts(accounts: Iterable[UserAccount]): Configuration = {
+  def configWithAccounts(accounts: Iterable[Account]): Configuration = {
     val accountsJava = accounts.map { account =>
       ImmutableMap.of(
         conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY,
@@ -35,7 +35,7 @@ class SecurityServiceSpec extends Specification {
     Configuration(config)
   }
 
-  val account = UserAccount("frank", "pass", "^test.*", Role.Administrator)
+  val account = Account("frank", "pass", "^test.*", Role.Administrator)
 
   "An authentication check" should {
 
@@ -129,7 +129,7 @@ class SecurityServiceSpec extends Specification {
           ConfigValueFactory.fromIterable(accountsJava)
         )
 
-      val userAccount: Account = UserAccount(
+      val userAccount = Account(
         name = account.name,
         password = account.password,
         instanceRegex = ".*",

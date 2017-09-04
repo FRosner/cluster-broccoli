@@ -2,7 +2,7 @@ package de.frosner.broccoli.instances
 
 import cats.data.EitherT
 import cats.instances.future._
-import de.frosner.broccoli.auth.UserAccount
+import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad
 import de.frosner.broccoli.nomad.models._
@@ -30,7 +30,7 @@ class NomadInstancesSpec
   override def is(implicit executionEnv: ExecutionEnv): Any =
     "NomadInstances" should {
       "get instance tasks from nomad" in prop {
-        (user: UserAccount, id: String, allocations: List[Allocation], resourceUsage: ResourceUsage) =>
+        (user: Account, id: String, allocations: List[Allocation], resourceUsage: ResourceUsage) =>
           val client = mock[NomadClient]
           val nodeClient = mock[NomadNodeClient]
 
@@ -76,7 +76,7 @@ class NomadInstancesSpec
       }.setGen2(Gen.identifier)
 
       "fail to get instance tasks when the user may not access the instance" in prop {
-        (user: UserAccount, id: String) =>
+        (user: Account, id: String) =>
           (!id.matches(user.instanceRegex)) ==> {
             for {
               result <- new NomadInstances(mock[NomadClient]).getInstanceTasks(user)(id).value
@@ -86,7 +86,7 @@ class NomadInstancesSpec
           }.await
       }.set(minTestsOk = 5)
 
-      "fail to get instance tasks when Nomad fails" in prop { (user: UserAccount, id: String, error: NomadError) =>
+      "fail to get instance tasks when Nomad fails" in prop { (user: Account, id: String, error: NomadError) =>
         val client = mock[NomadClient]
 
         client
