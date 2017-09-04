@@ -442,11 +442,11 @@ instanceAllocationRow instance index task =
                 [ span [ class ("label " ++ labelKind) ] [ text description ]
                 ]
             , td [] [ text task.taskName ]
-            , td [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
+            , td []
                 [ Maybe.withDefault (text "Unknown")
                     (Maybe.map2 cpuUsageBar task.resources.cpuUsedMhz task.resources.cpuRequiredMhz)
                 ]
-            , td [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
+            , td []
                 [ Maybe.withDefault (text "Unknown")
                     (Maybe.map2 memoryUsageBar task.resources.memoryUsedBytes task.resources.memoryRequiredBytes)
                 ]
