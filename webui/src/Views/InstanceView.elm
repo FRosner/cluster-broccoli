@@ -444,11 +444,11 @@ instanceAllocationRow instance index task =
             , td [] [ text task.taskName ]
             , td [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
                 [ Maybe.withDefault (text "Unknown")
-                    (Maybe.map2 resourceUsageBar task.resources.cpuUsedMhz task.resources.cpuRequiredMhz)
+                    (Maybe.map2 cpuUsageBar task.resources.cpuUsedMhz task.resources.cpuRequiredMhz)
                 ]
             , td [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
                 [ Maybe.withDefault (text "Unknown")
-                    (Maybe.map2 resourceUsageBar task.resources.memoryUsedBytes task.resources.memoryRequiredBytes)
+                    (Maybe.map2 memoryUsageBar task.resources.memoryUsedBytes task.resources.memoryRequiredBytes)
                 ]
             , td
                 -- Do not wrap buttons in this cell
@@ -470,13 +470,33 @@ instanceAllocationRow instance index task =
             ]
 
 
-resourceUsageBar : Float -> Float -> Html msg
-resourceUsageBar current required =
+cpuUsageBar : Float -> Float -> Html msg
+cpuUsageBar current required =
+    resourceUsageBar
+        ((Round.round 0 current) ++ " / " ++ (Round.round 0 required) ++ " MHz CPU")
+        current
+        required
+
+
+memoryUsageBar : Int -> Int -> Html msg
+memoryUsageBar current required =
+    resourceUsageBar
+        ((Filesize.format current) ++ " of " ++ (Filesize.format required) ++ " used")
+        (toFloat current)
+        (toFloat required)
+
+
+resourceUsageBar : String -> Float -> Float -> Html msg
+resourceUsageBar tooltip current required =
     let
         percentage =
             (Round.round 0 ((current / required) * 100)) ++ "%"
     in
-        div [ class "progress", style [ ( "width", "100px" ) ] ]
+        div
+            [ class "progress"
+            , style [ ( "width", "100px" ) ]
+            , title tooltip
+            ]
             [ div
                 [ class "progress-bar"
                 , attribute "role" "progressbar"

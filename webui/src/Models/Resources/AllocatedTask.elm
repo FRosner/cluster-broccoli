@@ -28,8 +28,8 @@ type alias AllocatedTask =
 type alias Resources =
     { cpuRequiredMhz : Maybe Float
     , cpuUsedMhz : Maybe Float
-    , memoryRequiredBytes : Maybe Float
-    , memoryUsedBytes : Maybe Float
+    , memoryRequiredBytes : Maybe Int
+    , memoryUsedBytes : Maybe Int
     }
 
 
@@ -38,8 +38,8 @@ resourcesDecoder =
     Decode.map4 Resources
         (field "cpuRequiredMhz" (nullable float))
         (field "cpuUsedMhz" (nullable float))
-        (field "memoryRequiredBytes" (nullable float))
-        (field "memoryUsedBytes" (nullable float))
+        (field "memoryRequiredBytes" (nullable int))
+        (field "memoryUsedBytes" (nullable int))
 
 
 {-| } Decode an allocated task from JSON.
