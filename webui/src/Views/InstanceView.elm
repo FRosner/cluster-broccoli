@@ -480,6 +480,9 @@ resourceUsageBar current required =
             [ div
                 [ class "progress-bar"
                 , attribute "role" "progressbar"
+                , attribute "aria-valuemin" "0"
+                , attribute "aria-valuenow" (Round.round 2 current)
+                , attribute "aria-valuemax" (Round.round 2 current)
                 , style [ ( "width", percentage ), ( "min-width", "2.5em" ) ]
                 ]
                 [ text percentage ]
