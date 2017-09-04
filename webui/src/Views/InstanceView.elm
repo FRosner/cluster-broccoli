@@ -493,7 +493,7 @@ resourceUsageBar tooltip current required =
             current / required
 
         context =
-            if ratio >= 1.0 then
+            if ratio > 1.0 then
                 "progress-bar-danger"
             else if ratio >= 0.8 then
                 "progress-bar-warning"
