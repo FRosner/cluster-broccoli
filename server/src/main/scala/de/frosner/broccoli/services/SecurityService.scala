@@ -3,7 +3,7 @@ package de.frosner.broccoli.services
 import javax.inject.{Inject, Singleton}
 
 import com.mohiva.play.silhouette.api.util.Credentials
-import de.frosner.broccoli.auth.{Account, Role, UserAccount}
+import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.conf.IllegalConfigException
 import play.api.Configuration
@@ -144,7 +144,7 @@ object SecurityService {
         .getConfigList(conf.AUTH_MODE_CONF_ACCOUNTS_KEY)
         .asScala
         .map { account =>
-          UserAccount(
+          Account(
             name = account.getString(conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY),
             password = account.getString(conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY),
             instanceRegex = account.getString(conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY),

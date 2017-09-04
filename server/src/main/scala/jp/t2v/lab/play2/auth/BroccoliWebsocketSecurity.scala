@@ -1,6 +1,6 @@
 package jp.t2v.lab.play2.auth
 
-import de.frosner.broccoli.auth.Anonymous
+import de.frosner.broccoli.auth.Account.anonymous
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.controllers.AuthConfigImpl
 import de.frosner.broccoli.services.SecurityService
@@ -46,13 +46,13 @@ trait BroccoliWebsocketSecurity extends AsyncAuth with AuthConfigImpl {
               authenticationFailed(req).map(result => Left(result))
           }
       case conf.AUTH_MODE_NONE =>
-        Future.successful(Right(f(None, Anonymous, req)))
+        Future.successful(Right(f(None, anonymous, req)))
       case other => throw new IllegalStateException(s"Unrecognized auth mode: ${securityService.authMode}")
     }
 
   implicit def loggedIn(implicit req: RequestWithAttributes[_]): User = securityService.authMode match {
     case conf.AUTH_MODE_CONF => req.get(AuthKey).get
-    case conf.AUTH_MODE_NONE => Anonymous.asInstanceOf[User]
+    case conf.AUTH_MODE_NONE => anonymous
     case other               => throw new IllegalStateException(s"Unrecognized auth mode: ${securityService.authMode}")
   }
 

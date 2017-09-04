@@ -1,7 +1,6 @@
 package de.frosner.broccoli
 
-import de.frosner.broccoli.auth.{Role, UserAccount}
-import play.api.Configuration
+import de.frosner.broccoli.auth.{Account, Role}
 
 package object conf {
 
@@ -37,7 +36,7 @@ package object conf {
 
   val AUTH_MODE_CONF_ACCOUNTS_KEY = "broccoli.auth.conf.accounts"
   val AUTH_MODE_CONF_ACCOUNTS_DEFAULT = Iterable(
-    UserAccount(
+    Account(
       name = "administrator",
       password = "broccoli",
       instanceRegex = ".*",

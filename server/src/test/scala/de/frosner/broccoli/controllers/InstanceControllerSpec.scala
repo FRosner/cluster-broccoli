@@ -3,7 +3,7 @@ package de.frosner.broccoli.controllers
 import cats.data.EitherT
 import cats.instances.future._
 import com.mohiva.play.silhouette.api.util.Credentials
-import de.frosner.broccoli.auth.{Account, Role, UserAccount}
+import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.http.ToHTTPResult
 import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.instances.InstanceNotFoundException
@@ -38,21 +38,21 @@ class InstanceControllerSpec
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
-  val accountWithRegex = UserAccount(
+  val accountWithRegex = Account(
     name = "user",
     password = "pass",
     instanceRegex = "^matching-.*",
     role = Role.Administrator
   )
 
-  val operator = UserAccount(
+  val operator = Account(
     name = "Operator",
     password = "pass",
     instanceRegex = ".*",
     role = Role.Operator
   )
 
-  val user = UserAccount(
+  val user = Account(
     name = "User",
     password = "pass",
     instanceRegex = ".*",
@@ -304,7 +304,7 @@ class InstanceControllerSpec
 
   "tasks" should {
     "return tasks from the instance service" in { implicit ee: ExecutionEnv =>
-      prop { (user: UserAccount, instanceTasks: InstanceTasks) =>
+      prop { (user: Account, instanceTasks: InstanceTasks) =>
         val securityService = mock[SecurityService]
         securityService.authMode returns "conf"
         securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
@@ -330,7 +330,7 @@ class InstanceControllerSpec
     }
 
     "return errors from the instance service" in { implicit ee: ExecutionEnv =>
-      prop { (instanceId: String, user: UserAccount, error: InstanceError) =>
+      prop { (instanceId: String, user: Account, error: InstanceError) =>
         val securityService = mock[SecurityService]
         securityService.authMode returns "conf"
         securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
