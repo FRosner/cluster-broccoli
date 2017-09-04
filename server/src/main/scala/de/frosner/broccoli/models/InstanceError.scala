@@ -1,5 +1,6 @@
 package de.frosner.broccoli.models
 
+import de.frosner.broccoli.auth.Role
 import de.frosner.broccoli.http.ToHTTPResult
 import play.api.libs.json.{Json, Writes}
 import play.api.mvc.Results

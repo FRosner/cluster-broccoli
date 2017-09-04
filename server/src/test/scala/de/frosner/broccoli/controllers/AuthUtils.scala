@@ -1,15 +1,15 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.models.{Account, Role, UserAccount}
+import de.frosner.broccoli.auth.{Account, Role, UserAccount}
 import de.frosner.broccoli.services.SecurityService
-import org.specs2.matcher.MatchResult
-import org.specs2.matcher.MatchersImplicits._
-import play.api.mvc.{Action, AnyContentAsEmpty, Result}
-import play.api.test._
-import play.api.test.Helpers._
 import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Mockito._
+import org.specs2.matcher.MatchResult
+import org.specs2.matcher.MatchersImplicits._
 import play.api.cache.CacheApi
+import play.api.mvc.{Action, AnyContentAsEmpty, Result}
+import play.api.test.Helpers._
+import play.api.test._
 import play.api.{Application, Environment}
 
 import scala.concurrent.Future

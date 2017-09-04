@@ -1,6 +1,6 @@
 package de.frosner.broccoli
 
-import de.frosner.broccoli.models.{Role, UserAccount}
+import de.frosner.broccoli.auth.{Role, UserAccount}
 import play.api.Configuration
 
 package object conf {

@@ -2,6 +2,7 @@ package de.frosner.broccoli.services
 
 import javax.inject.{Inject, Singleton}
 
+import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models._
 

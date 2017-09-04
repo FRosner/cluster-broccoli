@@ -4,11 +4,11 @@ import javax.inject.Inject
 
 import cats.Apply
 import cats.data.EitherT
-import cats.syntax.traverse._
 import cats.instances.future._
 import cats.instances.list._
-import de.frosner.broccoli.models.{Account, AllocatedTask, InstanceError, InstanceTasks}
-import de.frosner.broccoli.nomad.{NomadClient, NomadT}
+import cats.syntax.traverse._
+import de.frosner.broccoli.auth.Account
+import de.frosner.broccoli.models.{AllocatedTask, InstanceError, InstanceTasks}
 import de.frosner.broccoli.nomad.models.{
   Allocation,
   AllocationStats,
@@ -18,9 +18,10 @@ import de.frosner.broccoli.nomad.models.{
   TaskLog,
   Task => NomadTask
 }
+import de.frosner.broccoli.nomad.{NomadClient, NomadT}
 import shapeless.tag
 import shapeless.tag.@@
-import squants.information.{Bytes, Information}
+import squants.information.Information
 
 import scala.concurrent.{ExecutionContext, Future}
 

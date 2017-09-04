@@ -3,8 +3,8 @@ package de.frosner.broccoli.services
 import com.google.common.collect.ImmutableMap
 import com.mohiva.play.silhouette.api.util.Credentials
 import com.typesafe.config.{ConfigException, ConfigFactory, ConfigValueFactory}
+import de.frosner.broccoli.auth.{Account, Role, UserAccount}
 import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.{Account, Role, UserAccount}
 import org.specs2.mutable.Specification
 import play.api.Configuration
 

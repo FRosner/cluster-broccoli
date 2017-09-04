@@ -1,6 +1,7 @@
 package de.frosner.broccoli.controllers
 
 import com.mohiva.play.silhouette.api.util.Credentials
+import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.services._

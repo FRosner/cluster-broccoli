@@ -4,8 +4,8 @@ import java.util.UUID
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import javax.inject.{Inject, Singleton}
 
+import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.controllers._
-import de.frosner.broccoli.models.Account
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.websocket.OutgoingMessage
 import play.api.libs.iteratee.{Concurrent, Enumerator}
