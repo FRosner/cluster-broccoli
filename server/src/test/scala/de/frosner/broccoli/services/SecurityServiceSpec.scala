@@ -1,6 +1,7 @@
 package de.frosner.broccoli.services
 
-import com.google.common.collect.{ImmutableMap}
+import com.google.common.collect.ImmutableMap
+import com.mohiva.play.silhouette.api.util.Credentials
 import com.typesafe.config.{ConfigException, ConfigFactory, ConfigValueFactory}
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models.{Account, Role, UserAccount}
@@ -40,35 +41,35 @@ class SecurityServiceSpec extends Specification {
 
     "succeed if the account matches" in {
       SecurityService(configWithAccounts(List(account)))
-        .isAllowedToAuthenticate(account) === true
+        .isAllowedToAuthenticate(Credentials(account.name, account.password)) === true
     }
 
     "fail if the username does not exist" in {
       SecurityService(configWithAccounts(List(account)))
-        .isAllowedToAuthenticate(account.copy(name = "new")) === false
+        .isAllowedToAuthenticate(Credentials("new", account.password)) === false
     }
 
     "fail if the password does not matche" in {
       SecurityService(configWithAccounts(List(account)))
-        .isAllowedToAuthenticate(account.copy(password = "new")) === false
+        .isAllowedToAuthenticate(Credentials(account.name, "new")) === false
     }
 
     "succeed if the number of failed logins is equal to the allowed ones" in {
-      val failedCredentials = account.copy(password = "new")
+      val failedCredentials = Credentials(account.name, password = "new")
       val service = SecurityService(configWithAccounts(List(account)))
       val failedAttempts = for (attemptNo <- 1 to service.allowedFailedLogins) {
         service.isAllowedToAuthenticate(failedCredentials)
       }
-      service.isAllowedToAuthenticate(account) === true
+      service.isAllowedToAuthenticate(Credentials(account.name, account.password)) === true
     }
 
     "fail if the number of failed logins is greater than the allowed number" in {
-      val failedCredentials = account.copy(password = "new")
+      val failedCredentials = Credentials(account.name, password = "new")
       val service = SecurityService(configWithAccounts(List(account)))
       val failedAttempts = for (attemptNo <- 0 to service.allowedFailedLogins) {
         service.isAllowedToAuthenticate(failedCredentials)
       }
-      service.isAllowedToAuthenticate(account) === false
+      service.isAllowedToAuthenticate(Credentials(account.name, account.password)) === false
     }
 
   }
