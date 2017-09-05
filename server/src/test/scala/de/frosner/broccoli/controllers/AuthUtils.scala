@@ -39,7 +39,7 @@ trait AuthUtils extends ServiceMocks {
   def testWithAllAuths[T <: AuthConfigImpl, B](controller: SecurityService => T)(action: T => Action[B])(
       requestModifier: FakeRequest[AnyContentAsEmpty.type] => FakeRequest[B])(
       matcher: (T, Future[Result]) => MatchResult[_]): MatchResult[_] = {
-    val account = Account("user", "pass", ".*", Role.Administrator)
+    val account = Account("user", ".*", Role.Administrator)
     val noAuthController = controller(withAuthNone(mock[SecurityService]))
     val noAuthRequest = requestModifier(FakeRequest())
     val noAuthResult = action(noAuthController).apply(noAuthRequest)

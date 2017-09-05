@@ -29,7 +29,7 @@ class SecurityServiceSpec extends Specification with Mockito with ExecutionEnvir
             a =>
               AuthConfiguration.ConfAccount(
                 a.name,
-                a.password,
+                "",
                 a.instanceRegex,
                 a.role
             ))
@@ -39,14 +39,14 @@ class SecurityServiceSpec extends Specification with Mockito with ExecutionEnvir
 
   val identityService = mock[IdentityService[Account]]
 
-  val account = Account("frank", "pass", "^test.*", Role.Administrator)
+  val account = Account("frank", "^test.*", Role.Administrator)
 
   override def is(implicit executionEnv: ExecutionEnv): Any =
     "An authentication check" should {
 
       "succeed if the credentials provider authenticates" in {
         val login = LoginInfo(CredentialsProvider.ID, account.name)
-        val credentials = Credentials(account.name, account.password)
+        val credentials = Credentials(account.name, "pass")
 
         val credentialsProvider = mock[CredentialsProvider]
         credentialsProvider.authenticate(credentials) returns Future.successful(login)
@@ -56,7 +56,7 @@ class SecurityServiceSpec extends Specification with Mockito with ExecutionEnvir
       }
 
       "fail if the credentials provider fails to authenticate" in {
-        val credentials = Credentials(account.name, account.password)
+        val credentials = Credentials(account.name, "pass")
 
         val credentialsProvider = mock[CredentialsProvider]
         credentialsProvider.authenticate(credentials) returns Future.failed(new InvalidPasswordException("foo"))
@@ -66,7 +66,7 @@ class SecurityServiceSpec extends Specification with Mockito with ExecutionEnvir
       }
 
       "succeed if the number of failed logins is equal to the allowed ones" in {
-        val credentials = Credentials(account.name, account.password)
+        val credentials = Credentials(account.name, "pass")
         val failedCredentials = credentials.copy(password = "foo")
         val login = LoginInfo(CredentialsProvider.ID, credentials.identifier)
 
@@ -78,11 +78,11 @@ class SecurityServiceSpec extends Specification with Mockito with ExecutionEnvir
         val failedAttempts = for (attemptNo <- 1 to service.allowedFailedLogins) {
           service.authenticate(failedCredentials) must beNone.await
         }
-        service.authenticate(Credentials(account.name, account.password)) must beSome(login).await
+        service.authenticate(credentials) must beSome(login).await
       }
 
       "fail if the number of failed logins is greater than the allowed number" in {
-        val credentials = Credentials(account.name, account.password)
+        val credentials = Credentials(account.name, "password")
         val failedCredentials = credentials.copy(password = "foo")
         val login = LoginInfo(CredentialsProvider.ID, credentials.identifier)
 

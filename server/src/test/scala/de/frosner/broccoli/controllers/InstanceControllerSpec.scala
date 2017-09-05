@@ -43,21 +43,18 @@ class InstanceControllerSpec
 
   val accountWithRegex = Account(
     name = "user",
-    password = "pass",
     instanceRegex = "^matching-.*",
     role = Role.Administrator
   )
 
   val operator = Account(
     name = "Operator",
-    password = "pass",
     instanceRegex = ".*",
     role = Role.Operator
   )
 
   val user = Account(
     name = "User",
-    password = "pass",
     instanceRegex = ".*",
     role = Role.User
   )
