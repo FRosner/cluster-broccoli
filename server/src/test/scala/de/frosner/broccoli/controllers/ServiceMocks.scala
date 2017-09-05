@@ -28,7 +28,7 @@ trait ServiceMocks extends Mockito {
     allowed.foreach { account =>
       identityService.retrieve(LoginInfo(CredentialsProvider.ID, account.name)) returns Future.successful(Some(account))
       securityService.identityService returns identityService
-      securityService.authenticate(Credentials(account.name, account.password)) returns Future.successful(
+      securityService.authenticate(Credentials(account.name, "password")) returns Future.successful(
         Some(LoginInfo(CredentialsProvider.ID, account.name)))
     }
     securityService.authMode returns AuthMode.Conf

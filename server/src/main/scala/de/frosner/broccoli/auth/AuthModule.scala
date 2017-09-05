@@ -42,7 +42,7 @@ class AuthModule extends AbstractModule with ScalaModule {
       case AuthMode.None => Seq(Account.anonymous)
       case AuthMode.Conf =>
         config.conf.accounts.map(
-          account => Account(account.username, account.password, account.instanceRegex, account.role)
+          account => Account(account.username, account.instanceRegex, account.role)
         )
     }
     new InMemoryIdentityService(accounts)

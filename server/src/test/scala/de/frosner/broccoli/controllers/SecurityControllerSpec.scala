@@ -21,7 +21,7 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
-  val account = Account("frank", "pass", ".*", Role.Administrator)
+  val account = Account("frank", ".*", Role.Administrator)
 
   "verify" should {
 
@@ -60,7 +60,7 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
         playEnv,
         mock[WebSocketService]
       )
-      val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, account.password))
+      val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, "password"))
       val result = controller.login.apply(requestWithData)
       (status(result) must be equalTo 200) and
         (header("Set-Cookie", result) should beSome.which((s: String) =>
@@ -75,10 +75,10 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
         mock[WebSocketService]
       )
 
-      controller.securityService.authenticate(Credentials(account.name, account.password)) returns
+      controller.securityService.authenticate(Credentials(account.name, "password")) returns
         Future.successful(None)
 
-      val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, account.password))
+      val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, "password"))
       val result = controller.login.apply(requestWithData)
       status(result) must be equalTo 401
     }
@@ -113,7 +113,7 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
         playEnv,
         mock[WebSocketService]
       )
-      val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, account.password))
+      val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, "password"))
       val result = controller.login.apply(requestWithData)
       Await.ready(result, Duration(5, TimeUnit.SECONDS))
       verify(controller.webSocketService, times(0)).closeConnections(Matchers.anyString())
@@ -147,7 +147,5 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
       Await.ready(result, Duration(5, TimeUnit.SECONDS))
       verify(controller.webSocketService).closeConnections(Matchers.anyString())
     }
-
   }
-
 }

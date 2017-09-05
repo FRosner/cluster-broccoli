@@ -38,7 +38,6 @@ package object conf {
   val AUTH_MODE_CONF_ACCOUNTS_DEFAULT = Iterable(
     Account(
       name = "administrator",
-      password = "broccoli",
       instanceRegex = ".*",
       role = AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT
     ))

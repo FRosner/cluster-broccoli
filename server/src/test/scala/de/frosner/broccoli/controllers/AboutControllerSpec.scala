@@ -14,7 +14,7 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
   "about" should {
 
     "return the about object with authentication" in new WithApplication {
-      val account = Account("user", "pass", ".*", Role.Administrator)
+      val account = Account("user", ".*", Role.Administrator)
       val aboutInfoService = withDummyValues(mock[AboutInfoService])
       testWithAllAuths(account) { securityService =>
         AboutController(aboutInfoService, securityService, cacheApi, playEnv)

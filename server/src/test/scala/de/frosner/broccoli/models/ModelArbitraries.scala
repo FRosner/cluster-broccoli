@@ -19,10 +19,9 @@ trait ModelArbitraries {
   implicit def arbitraryAccount(implicit arbRole: Arbitrary[Role]): Arbitrary[Account] = Arbitrary {
     for {
       id <- Gen.identifier.label("id")
-      password <- Gen.identifier.label("password")
       instanceRegex <- Gen.identifier.label("instanceRegex")
       role <- arbRole.arbitrary
-    } yield Account(id, password, instanceRegex, role)
+    } yield Account(id, instanceRegex, role)
   }
 
   implicit var arbitraryParameterInfo: Arbitrary[ParameterInfo] = Arbitrary {
