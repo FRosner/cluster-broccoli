@@ -45,7 +45,4 @@ case class SecurityService @Inject()(configuration: AuthConfiguration, identityS
     }
     allowed
   }
-
-  def getAccount(id: String): Option[Account] = accounts.find(_.name == id)
-
 }
