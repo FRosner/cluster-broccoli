@@ -107,6 +107,18 @@ class NomadHttpClient(
   private val v1: Uri = baseUri / "v1"
 
   /**
+    * Get a job.
+    *
+    * @param jobId The ID of the job
+    * @return The job
+    */
+  override def getJob(jobId: @@[String, Job.Id]): NomadT[Job] =
+    for {
+      response <- lift(client.url(v1 / "job" / jobId).withHeaders(ACCEPT -> JSON).get())
+        .ensureOr(fromHTTPError)(_.status == OK)
+    } yield response.json.as[Job]
+
+  /**
     * Get allocations for a job.
     *
     * @param jobId The ID of the job

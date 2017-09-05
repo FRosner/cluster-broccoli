@@ -1,6 +1,6 @@
 module Models.Resources.AllocatedTask exposing (..)
 
-import Json.Decode as Decode exposing (field, list, string, int, float, nullable)
+import Json.Decode as Decode exposing (Decoder, field, list, string, int, float, nullable)
 import Models.Resources.TaskState as TaskState exposing (TaskState)
 import Models.Resources.Allocation exposing (AllocationId)
 import Models.Resources.ClientStatus as ClientStatus exposing (ClientStatus)
@@ -19,19 +19,36 @@ type alias AllocatedTask =
     , taskState : TaskState
     , allocationId : AllocationId
     , clientStatus : ClientStatus
-    , cpuTicksMhzUsed : Maybe Float
-    , memoryBytesUsed : Maybe Int
+    , resources : Resources
     }
 
 
-{-| Decode an allocated task from JSON.
+{-| Resources of an allocated task
 -}
-decoder : Decode.Decoder AllocatedTask
+type alias Resources =
+    { cpuRequiredMhz : Maybe Float
+    , cpuUsedMhz : Maybe Float
+    , memoryRequiredBytes : Maybe Int
+    , memoryUsedBytes : Maybe Int
+    }
+
+
+resourcesDecoder : Decoder Resources
+resourcesDecoder =
+    Decode.map4 Resources
+        (field "cpuRequiredMhz" (nullable float))
+        (field "cpuUsedMhz" (nullable float))
+        (field "memoryRequiredBytes" (nullable int))
+        (field "memoryUsedBytes" (nullable int))
+
+
+{-| } Decode an allocated task from JSON.
+-}
+decoder : Decoder AllocatedTask
 decoder =
-    Decode.map6 AllocatedTask
+    Decode.map5 AllocatedTask
         (field "taskName" string)
         (field "taskState" TaskState.decoder)
         (field "allocationId" string)
         (field "clientStatus" ClientStatus.decoder)
-        (field "cpuTicksMhzUsed" (nullable float))
-        (field "memoryBytesUsed" (nullable int))
+        (field "resources" resourcesDecoder)

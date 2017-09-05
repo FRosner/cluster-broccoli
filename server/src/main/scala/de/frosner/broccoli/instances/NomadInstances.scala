@@ -2,6 +2,7 @@ package de.frosner.broccoli.instances
 
 import javax.inject.Inject
 
+import cats.Apply
 import cats.data.EitherT
 import cats.syntax.traverse._
 import cats.instances.future._
@@ -49,7 +50,15 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
       jobId <- EitherT
         .pure[Future, InstanceError](tag[Job.Id](id))
         .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
-      allocations <- nomadClient.getAllocationsForJob(jobId).leftMap(toInstanceError(jobId))
+      // Request job information and allocations in parallel, to get the required resources for tasks and the actual
+      // allocated tasks and their resources.  We can't extract the pair with a pattern unfortunately because as of
+      // Scala 2.11 the compiler still tries to insert .withFilter calls even for irrefutable patterns, which EitherT
+      // doesn't have.
+      jobAndAllocations <- Apply[NomadT]
+        .tuple2(nomadClient.getJob(jobId), nomadClient.getAllocationsForJob(jobId))
+        .leftMap(toInstanceError(jobId))
+      job = jobAndAllocations._1
+      allocations = jobAndAllocations._2
       resources <- allocations.payload.toList
         .map { allocation =>
           for {
@@ -60,7 +69,12 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
         .sequence[NomadT, (String @@ Allocation.Id, AllocationStats)]
         .map(_.toMap)
         .leftMap(toInstanceError(jobId))
-    } yield
+    } yield {
+      val taskResources = (for {
+        group <- job.taskGroups
+        task <- group.tasks
+      } yield task.name -> task.resources).toMap
+
       InstanceTasks(
         jobId,
         // Flatten tasks into allocated tasks
@@ -68,22 +82,23 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
           .flatMap(allocation =>
             allocation.taskStates.map {
               case (taskName, events) =>
-                val taskResources = for {
+                val taskResourceUsage = for {
                   allocationResources <- resources.get(allocation.id)
                   taskResources <- allocationResources.tasks.get(taskName)
                 } yield taskResources
 
-                AllocatedTask(
-                  taskName,
-                  events.state,
-                  allocation.id,
-                  allocation.clientStatus,
-                  taskResources.map(_.resourceUsage.cpuStats.totalTicks),
-                  taskResources.map(_.resourceUsage.memoryStats.rss)
+                val allocatedTaskResources = AllocatedTask.Resources(
+                  tag[AllocatedTask.CPURequired](taskResources.get(taskName).map(_.cpu)),
+                  tag[AllocatedTask.CPUUsed](taskResourceUsage.map(_.resourceUsage.cpuStats.totalTicks)),
+                  tag[AllocatedTask.MemoryRequired](taskResources.get(taskName).map(_.memory)),
+                  tag[AllocatedTask.MemoryUsed](taskResourceUsage.map(_.resourceUsage.memoryStats.rss))
                 )
+
+                AllocatedTask(taskName, events.state, allocation.id, allocation.clientStatus, allocatedTaskResources)
           })
           .sortBy(_.taskName)
       )
+    }
 
   def getInstanceLog(user: Account)(
       instanceId: String,

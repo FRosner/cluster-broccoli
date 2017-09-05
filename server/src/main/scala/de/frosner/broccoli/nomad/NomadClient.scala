@@ -20,6 +20,14 @@ trait NomadClient {
   implicit def executionContext: ExecutionContext
 
   /**
+    * Get a job.
+    *
+    * @param jobId The ID of the job
+    * @return The job
+    */
+  def getJob(jobId: String @@ Job.Id): NomadT[Job]
+
+  /**
     * Get allocations for a job.
     *
     * @param jobId The ID of the job

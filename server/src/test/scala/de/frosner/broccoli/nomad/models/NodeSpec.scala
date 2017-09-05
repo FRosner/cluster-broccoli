@@ -1,6 +1,6 @@
 package de.frosner.broccoli.nomad.models
 
-import de.frosner.broccoli.util.Resources
+import de.frosner.broccoli.util
 import org.specs2.mutable.Specification
 import play.api.libs.json.Json
 
@@ -8,7 +8,7 @@ class NodeSpec extends Specification {
   "Node" should {
     "decode from JSON" in {
       val node = Json
-        .parse(Resources.readAsString("/de/frosner/broccoli/services/nomad/node.json"))
+        .parse(util.Resources.readAsString("/de/frosner/broccoli/services/nomad/node.json"))
         .validate[Node]
         .asEither
 

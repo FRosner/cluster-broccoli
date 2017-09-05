@@ -134,31 +134,30 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
   // https://www.playframework.com/documentation/2.5.x/ScalaCache
 
   def requestServices(id: String): Future[Seq[String]] = {
-    val queryUrl = nomadBaseUrl + s"/v1/job/$id"
-    val jobRequest = ws.url(queryUrl)
-    val jobResponse = jobRequest.get().map { response =>
-      if (response.status == 200) {
+    val services = for {
+      response <- ws.url(nomadBaseUrl + s"/v1/job/$id").get()
+      job = if (response.status == 200) {
         response.json.as[Job]
       } else {
         throw new Exception(s"Received ${response.statusText} (${response.status})")
       }
+      services = for {
+        group <- job.taskGroups
+        task <- group.tasks
+        service <- task.services.getOrElse(Seq.empty)
+      } yield service.name
+    } yield {
+      log.debug(s"${ws.url(nomadBaseUrl + s"/v1/job/$id").uri} => ${services.mkString(", ")}")
+      consulService.requestServiceStatus(id, services)
+
+      services
     }
-    val eventuallyJobServiceIds = jobResponse.map { job =>
-      val taskGroups = job.taskGroups.getOrElse(Seq.empty)
-      val tasks = taskGroups.flatMap(_.tasks.getOrElse(Seq.empty))
-      val services = tasks.flatMap(_.services.getOrElse(Seq.empty))
-      services.map(_.name)
-    }
-    val eventuallyRequestedServices = eventuallyJobServiceIds.map { jobServiceIds =>
-      log.debug(s"${jobRequest.uri} => ${jobServiceIds.mkString(", ")}")
-      consulService.requestServiceStatus(id, jobServiceIds)
-      jobServiceIds
-    }
-    eventuallyRequestedServices.onFailure {
+
+    services.onFailure {
       case throwable =>
-        log.error(s"Requesting services for $id failed: $throwable")
+        log.error(s"Requesting services for $id failed: ${throwable.getMessage}", throwable)
     }
-    eventuallyRequestedServices
+    services
   }
 
   def startJob(job: JsValue): Try[Unit] = {
