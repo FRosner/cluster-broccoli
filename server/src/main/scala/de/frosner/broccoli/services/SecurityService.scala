@@ -40,9 +40,6 @@ case class SecurityService @Inject()(
   val cookieSecure: Boolean = configuration.cookie.secure
   val allowMultiLogin: Boolean = configuration.session.allowMultiLogin
 
-  private val accounts: Set[Account] =
-    configuration.conf.accounts.map(a => Account(a.username, a.password, a.instanceRegex, a.role)).toSet
-
   @volatile
   private var failedLoginAttempts: Map[String, Int] = Map.empty
 
