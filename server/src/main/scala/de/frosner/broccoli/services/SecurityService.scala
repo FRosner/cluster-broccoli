@@ -4,13 +4,7 @@ import javax.inject.{Inject, Singleton}
 
 import com.mohiva.play.silhouette.api.services.IdentityService
 import com.mohiva.play.silhouette.api.util.Credentials
-import de.frosner.broccoli.auth.{Account, AuthConfiguration, AuthMode, Role}
-import de.frosner.broccoli.conf
-import de.frosner.broccoli.conf.IllegalConfigException
-import play.api.Configuration
-
-import scala.collection.JavaConverters._
-import scala.util.{Failure, Success, Try}
+import de.frosner.broccoli.auth.{Account, AuthConfiguration, AuthMode}
 
 @Singleton()
 case class SecurityService @Inject()(configuration: AuthConfiguration, identityService: IdentityService[Account]) {
