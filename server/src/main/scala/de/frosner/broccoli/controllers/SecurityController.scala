@@ -2,7 +2,11 @@ package de.frosner.broccoli.controllers
 
 import javax.inject.Inject
 
+import cats.data.{EitherT, OptionT}
+import cats.instances.future._
+import cats.syntax.either._
 import com.mohiva.play.silhouette.api.util.Credentials
+import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import de.frosner.broccoli.services.{SecurityService, WebSocketService}
 import jp.t2v.lab.play2.auth.{BroccoliSimpleAuthorization, LoginLogout}
 import play.api.{Environment, Logger}
@@ -40,35 +44,32 @@ case class SecurityController @Inject()(
       case Some((id, true)) => log.info(s"Removing websocket connection of $id due to another login")
       case _                =>
     }
-    loginForm
-      .bindFromRequest()
-      .fold(
-        formWithErrors => Future.successful(Results.BadRequest),
-        account => {
-          if (securityService.isAllowedToAuthenticate(account)) {
-            log.info(s"Login successful for user '${account.identifier}'.")
-            gotoLoginSucceeded(account.identifier).flatMap { result =>
-              resolveUser(account.identifier).map { maybeUser =>
-                val userResult = Results.Ok(Json.toJson(maybeUser.get))
-                result.copy(
-                  header = result.header.copy(
-                    headers = userResult.header.headers
-                      .get("Content-Type")
-                      .map { contentType =>
-                        result.header.headers.updated("Content-Type", contentType)
-                      }
-                      .getOrElse(result.header.headers)
-                  ),
-                  body = userResult.body
-                )
-              }
+    (for {
+      credentials <- EitherT.fromEither[Future](
+        loginForm.bindFromRequest().fold(Function.const(Results.BadRequest.asLeft), _.asRight))
+      _ <- EitherT
+        .pure(securityService.isAllowedToAuthenticate(credentials))
+        .ensure {
+          log.info(s"Login failed for user '${credentials.identifier}'.")
+          Results.Unauthorized
+        }(identity)
+      _ = log.info(s"Login successful for user '${credentials.identifier}'.")
+      result <- EitherT.right(gotoLoginSucceeded(credentials.identifier))
+      user <- OptionT(resolveUser(credentials.identifier)).toRight(Results.Unauthorized)
+    } yield {
+      val userResult = Results.Ok(Json.toJson(user))
+      result.copy(
+        header = result.header.copy(
+          headers = userResult.header.headers
+            .get("Content-Type")
+            .map { contentType =>
+              result.header.headers.updated("Content-Type", contentType)
             }
-          } else {
-            log.info(s"Login failed for user '${account.identifier}'.")
-            Future.successful(Results.Unauthorized)
-          }
-        }
+            .getOrElse(result.header.headers)
+        ),
+        body = userResult.body
       )
+    }).merge
   }
 
   def logout = Action.async(parse.empty) { implicit request =>
