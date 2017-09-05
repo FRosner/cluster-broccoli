@@ -1,6 +1,6 @@
 package de.frosner.broccoli.controllers
 
-import cats.data.EitherT
+import cats.data.{EitherT, OptionT}
 import cats.instances.future._
 import com.mohiva.play.silhouette.api.LoginInfo
 import com.mohiva.play.silhouette.api.services.IdentityService
@@ -308,12 +308,13 @@ class InstanceControllerSpec
   "tasks" should {
     "return tasks from the instance service" in { implicit ee: ExecutionEnv =>
       prop { (user: Account, instanceTasks: InstanceTasks) =>
+        val login = LoginInfo(CredentialsProvider.ID, user.name)
         val securityService = mock[SecurityService]
         securityService.authMode returns AuthMode.Conf
-        securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
+        securityService.authenticate(Matchers.any[Credentials]) returns Future.successful(Some(login))
         val identityService = mock[IdentityService[Account]]
         securityService.identityService returns identityService
-        identityService.retrieve(LoginInfo(CredentialsProvider.ID, user.name)) returns Future.successful(Some(user))
+        identityService.retrieve(login) returns Future.successful(Some(user))
 
         val instances = mock[NomadInstances]
         instances.getInstanceTasks(user)(instanceTasks.instanceId) returns EitherT.pure[Future, InstanceError](
@@ -336,12 +337,13 @@ class InstanceControllerSpec
 
     "return errors from the instance service" in { implicit ee: ExecutionEnv =>
       prop { (instanceId: String, user: Account, error: InstanceError) =>
+        val login = LoginInfo(CredentialsProvider.ID, user.name)
         val securityService = mock[SecurityService]
         securityService.authMode returns AuthMode.Conf
-        securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
+        securityService.authenticate(Matchers.any[Credentials]) returns Future.successful(Some(login))
         val identityService = mock[IdentityService[Account]]
         securityService.identityService returns identityService
-        identityService.retrieve(LoginInfo(CredentialsProvider.ID, user.name)) returns Future.successful(Some(user))
+        identityService.retrieve(login) returns Future.successful(Some(user))
 
         val instances = mock[NomadInstances]
         instances.getInstanceTasks(user)(instanceId) returns EitherT.leftT[Future, InstanceTasks](error)

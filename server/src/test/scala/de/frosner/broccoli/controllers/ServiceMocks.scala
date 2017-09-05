@@ -1,16 +1,15 @@
 package de.frosner.broccoli.controllers
 
+import cats.data.OptionT
 import com.mohiva.play.silhouette.api.LoginInfo
 import com.mohiva.play.silhouette.api.services.IdentityService
 import com.mohiva.play.silhouette.api.util.Credentials
 import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import de.frosner.broccoli.auth.{Account, AuthMode, Role}
-import de.frosner.broccoli.conf
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.services._
-import org.mockito.Mockito._
-import org.mockito.internal.util.MockUtil
 import org.mockito.Matchers
+import org.mockito.internal.util.MockUtil
 import org.specs2.mock.Mockito
 
 import scala.concurrent.Future
@@ -29,7 +28,8 @@ trait ServiceMocks extends Mockito {
     allowed.foreach { account =>
       identityService.retrieve(LoginInfo(CredentialsProvider.ID, account.name)) returns Future.successful(Some(account))
       securityService.identityService returns identityService
-      securityService.isAllowedToAuthenticate(Credentials(account.name, account.password)) returns true
+      securityService.authenticate(Credentials(account.name, account.password)) returns Future.successful(
+        Some(LoginInfo(CredentialsProvider.ID, account.name)))
     }
     securityService.authMode returns AuthMode.Conf
     securityService

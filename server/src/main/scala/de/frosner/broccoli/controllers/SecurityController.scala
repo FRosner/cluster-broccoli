@@ -47,15 +47,9 @@ case class SecurityController @Inject()(
     (for {
       credentials <- EitherT.fromEither[Future](
         loginForm.bindFromRequest().fold(Function.const(Results.BadRequest.asLeft), _.asRight))
-      _ <- EitherT
-        .pure(securityService.isAllowedToAuthenticate(credentials))
-        .ensure {
-          log.info(s"Login failed for user '${credentials.identifier}'.")
-          Results.Unauthorized
-        }(identity)
-      _ = log.info(s"Login successful for user '${credentials.identifier}'.")
-      result <- EitherT.right(gotoLoginSucceeded(credentials.identifier))
-      user <- OptionT(resolveUser(credentials.identifier)).toRight(Results.Unauthorized)
+      login <- OptionT(securityService.authenticate(credentials)).toRight(Results.Unauthorized)
+      result <- EitherT.right(gotoLoginSucceeded(login.providerKey))
+      user <- OptionT(resolveUser(login.providerKey)).toRight(Results.Unauthorized)
     } yield {
       val userResult = Results.Ok(Json.toJson(user))
       result.copy(
