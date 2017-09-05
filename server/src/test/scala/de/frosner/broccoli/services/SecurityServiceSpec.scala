@@ -1,15 +1,22 @@
 package de.frosner.broccoli.services
 
+import cats.data.OptionT
+import com.mohiva.play.silhouette.api.LoginInfo
 import com.mohiva.play.silhouette.api.services.IdentityService
 import com.mohiva.play.silhouette.api.util.Credentials
+import com.mohiva.play.silhouette.impl.exceptions.InvalidPasswordException
+import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import de.frosner.broccoli.auth.{Account, AuthConfiguration, AuthMode, Role}
 import org.mockito.Mock
+import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
+import org.specs2.specification.mutable.ExecutionEnvironment
 
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
-class SecurityServiceSpec extends Specification with Mockito {
+class SecurityServiceSpec extends Specification with Mockito with ExecutionEnvironment {
 
   def configWithAccounts(accounts: Seq[Account]): AuthConfiguration =
     AuthConfiguration(
@@ -34,40 +41,61 @@ class SecurityServiceSpec extends Specification with Mockito {
 
   val account = Account("frank", "pass", "^test.*", Role.Administrator)
 
-  "An authentication check" should {
+  override def is(implicit executionEnv: ExecutionEnv): Any =
+    "An authentication check" should {
 
-    "succeed if the account matches" in {
-      SecurityService(configWithAccounts(List(account)), identityService)
-        .isAllowedToAuthenticate(Credentials(account.name, account.password)) === true
-    }
+      "succeed if the credentials provider authenticates" in {
+        val login = LoginInfo(CredentialsProvider.ID, account.name)
+        val credentials = Credentials(account.name, account.password)
 
-    "fail if the username does not exist" in {
-      SecurityService(configWithAccounts(List(account)), identityService)
-        .isAllowedToAuthenticate(Credentials("new", account.password)) === false
-    }
+        val credentialsProvider = mock[CredentialsProvider]
+        credentialsProvider.authenticate(credentials) returns Future.successful(login)
 
-    "fail if the password does not matche" in {
-      SecurityService(configWithAccounts(List(account)), identityService)
-        .isAllowedToAuthenticate(Credentials(account.name, "new")) === false
-    }
-
-    "succeed if the number of failed logins is equal to the allowed ones" in {
-      val failedCredentials = Credentials(account.name, password = "new")
-      val service = SecurityService(configWithAccounts(List(account)), identityService)
-      val failedAttempts = for (attemptNo <- 1 to service.allowedFailedLogins) {
-        service.isAllowedToAuthenticate(failedCredentials)
+        SecurityService(configWithAccounts(List(account)), credentialsProvider, identityService)
+          .authenticate(credentials) must beSome(login).await
       }
-      service.isAllowedToAuthenticate(Credentials(account.name, account.password)) === true
-    }
 
-    "fail if the number of failed logins is greater than the allowed number" in {
-      val failedCredentials = Credentials(account.name, password = "new")
-      val service = SecurityService(configWithAccounts(List(account)), identityService)
-      val failedAttempts = for (attemptNo <- 0 to service.allowedFailedLogins) {
-        service.isAllowedToAuthenticate(failedCredentials)
+      "fail if the credentials provider fails to authenticate" in {
+        val credentials = Credentials(account.name, account.password)
+
+        val credentialsProvider = mock[CredentialsProvider]
+        credentialsProvider.authenticate(credentials) returns Future.failed(new InvalidPasswordException("foo"))
+
+        SecurityService(configWithAccounts(List(account)), credentialsProvider, identityService)
+          .authenticate(credentials) must beNone.await
       }
-      service.isAllowedToAuthenticate(Credentials(account.name, account.password)) === false
-    }
 
-  }
+      "succeed if the number of failed logins is equal to the allowed ones" in {
+        val credentials = Credentials(account.name, account.password)
+        val failedCredentials = credentials.copy(password = "foo")
+        val login = LoginInfo(CredentialsProvider.ID, credentials.identifier)
+
+        val credentialsProvider = mock[CredentialsProvider]
+        credentialsProvider.authenticate(failedCredentials) returns Future.failed(new InvalidPasswordException("foo"))
+        credentialsProvider.authenticate(credentials) returns Future.successful(login)
+
+        val service = SecurityService(configWithAccounts(List(account)), credentialsProvider, identityService)
+        val failedAttempts = for (attemptNo <- 1 to service.allowedFailedLogins) {
+          service.authenticate(failedCredentials) must beNone.await
+        }
+        service.authenticate(Credentials(account.name, account.password)) must beSome(login).await
+      }
+
+      "fail if the number of failed logins is greater than the allowed number" in {
+        val credentials = Credentials(account.name, account.password)
+        val failedCredentials = credentials.copy(password = "foo")
+        val login = LoginInfo(CredentialsProvider.ID, credentials.identifier)
+
+        val credentialsProvider = mock[CredentialsProvider]
+        credentialsProvider.authenticate(failedCredentials) returns Future.failed(new InvalidPasswordException("foo"))
+        credentialsProvider.authenticate(credentials) returns Future.successful(login)
+
+        val service = SecurityService(configWithAccounts(List(account)), credentialsProvider, identityService)
+        val failedAttempts = for (attemptNo <- 0 to service.allowedFailedLogins) {
+          service.authenticate(failedCredentials) must beNone.await
+        }
+        service.authenticate(credentials) must beNone.await
+      }
+
+    }
 }

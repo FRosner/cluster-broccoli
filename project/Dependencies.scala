@@ -85,6 +85,8 @@ object Dependencies {
   val silhouette: Seq[ModuleID] = Seq(
     "com.mohiva" %% "play-silhouette" % Versions.silhouette,
     "com.mohiva" %% "play-silhouette-crypto-jca" % Versions.silhouette,
+    "com.mohiva" %% "play-silhouette-password-bcrypt" % Versions.silhouette,
+    "com.mohiva" %% "play-silhouette-persistence" % Versions.silhouette,
     "com.mohiva" %% "play-silhouette-testkit" % Versions.silhouette % Test
   )
 

@@ -2,19 +2,20 @@ package de.frosner.broccoli.controllers
 
 import java.util.concurrent.TimeUnit
 
+import cats.data.OptionT
+import cats.instances.future._
+import com.mohiva.play.silhouette.api.LoginInfo
 import com.mohiva.play.silhouette.api.util.Credentials
 import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.services.{SecurityService, WebSocketService}
 import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Matchers
-import org.mockito.Matchers._
 import org.mockito.Mockito._
 import play.api.mvc.MultipartFormData
 import play.api.test._
 
-import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import scala.concurrent.duration.TimeUnit
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 class SecurityControllerSpec extends PlaySpecification with AuthUtils {
 
@@ -73,8 +74,10 @@ class SecurityControllerSpec extends PlaySpecification with AuthUtils {
         playEnv,
         mock[WebSocketService]
       )
-      when(controller.securityService.isAllowedToAuthenticate(Credentials(account.name, account.password)))
-        .thenReturn(false)
+
+      controller.securityService.authenticate(Credentials(account.name, account.password)) returns
+        Future.successful(None)
+
       val requestWithData = FakeRequest().withMultipartFormDataBody(loginFormData(account.name, account.password))
       val result = controller.login.apply(requestWithData)
       status(result) must be equalTo 401
