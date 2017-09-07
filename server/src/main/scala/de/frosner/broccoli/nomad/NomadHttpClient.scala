@@ -19,6 +19,7 @@ import squants.information.{Bytes, Information}
 
 import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
 /**
   * A client for the HTTP API of Nomad.
@@ -41,7 +42,14 @@ class NomadHttpClient(
       */
     override def getAllocationStats(allocationId: @@[String, Allocation.Id]): NomadT[AllocationStats] =
       lift(client.url(v1Client / "allocation" / allocationId / "stats").withHeaders(ACCEPT -> JSON).get())
-        .map(response => response.json.as[AllocationStats])
+        .subflatMap(
+          response =>
+            // If parsing allocation stats fails we treat it as a not-found allocation.
+            // This is done because Nomad might return something malformed while the allocation is still being built.
+            Try(response.json.as[AllocationStats]) match {
+              case Success(x) => x.asRight
+              case Failure(t) => NomadError.NotFound.asLeft
+          })
 
     /**
       * Get the log of a task on an allocation.
