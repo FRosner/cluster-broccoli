@@ -37,19 +37,15 @@ class NomadHttpClient(
     /**
       * Get resource usage statistics of an allocation.
       *
+      * If parsing allocation stats fails we treat it as a not-found allocation.
+        This is done because Nomad might return something malformed while the allocation is still being built.
+      *
       * @param allocationId The ID of the allocation
       * @return The resource statistics of the allocation with the given ID.
       */
     override def getAllocationStats(allocationId: @@[String, Allocation.Id]): NomadT[AllocationStats] =
       lift(client.url(v1Client / "allocation" / allocationId / "stats").withHeaders(ACCEPT -> JSON).get())
-        .subflatMap(
-          response =>
-            // If parsing allocation stats fails we treat it as a not-found allocation.
-            // This is done because Nomad might return something malformed while the allocation is still being built.
-            Try(response.json.as[AllocationStats]) match {
-              case Success(x) => x.asRight
-              case Failure(t) => NomadError.NotFound.asLeft
-          })
+        .subflatMap(response => response.json.validate[AllocationStats].asEither.leftMap(_ => NomadError.NotFound))
 
     /**
       * Get the log of a task on an allocation.
