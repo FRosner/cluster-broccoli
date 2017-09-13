@@ -50,6 +50,12 @@ module.exports = {
       title: 'Cluster Broccoli',
       // Create a mount point for our elm app
       appMountId: 'main',
+      meta: [
+        {
+          name: 'viewport',
+          content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'
+        }
+      ],
       links: [
         // Link favicons
         {
