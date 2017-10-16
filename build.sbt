@@ -95,7 +95,7 @@ lazy val root = project
   .settings(
     inThisBuild(
       List(
-        version := "0.7.0-SNAPSHOT",
+        version := "0.7.0",
         scalaVersion := "2.11.11",
         // Build settings
         scalacOptions ++= List(
