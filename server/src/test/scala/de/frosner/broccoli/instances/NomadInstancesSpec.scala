@@ -2,6 +2,7 @@ package de.frosner.broccoli.instances
 
 import cats.data.EitherT
 import cats.instances.future._
+import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad
 import de.frosner.broccoli.nomad.models._
@@ -29,7 +30,7 @@ class NomadInstancesSpec
   override def is(implicit executionEnv: ExecutionEnv): Any =
     "NomadInstances" should {
       "get instance tasks from nomad" in prop {
-        (user: UserAccount, id: String, allocations: List[Allocation], resourceUsage: ResourceUsage) =>
+        (user: Account, id: String, allocations: List[Allocation], resourceUsage: ResourceUsage) =>
           val client = mock[NomadClient]
           val nodeClient = mock[NomadNodeClient]
 
@@ -62,7 +63,7 @@ class NomadInstancesSpec
 
       "include resources in instance tasks" in todo
 
-      "fail to get instance tasks if the job wasn't found" in prop { (user: UserAccount, id: String) =>
+      "fail to get instance tasks if the job wasn't found" in prop { (user: Account, id: String) =>
         val client = mock[NomadClient]
         client.getJob(shapeless.tag[Job.Id](id)).returns(EitherT.leftT(NomadError.NotFound))
         client.getAllocationsForJob(shapeless.tag[Job.Id](id)).returns(EitherT.pure(WithId(id, List.empty)))
@@ -74,18 +75,17 @@ class NomadInstancesSpec
         }.await
       }.setGen2(Gen.identifier)
 
-      "fail to get instance tasks when the user may not access the instance" in prop {
-        (user: UserAccount, id: String) =>
-          (!id.matches(user.instanceRegex)) ==> {
-            for {
-              result <- new NomadInstances(mock[NomadClient]).getInstanceTasks(user)(id).value
-            } yield {
-              result must beLeft[InstanceError](InstanceError.UserRegexDenied(id, user.instanceRegex))
-            }
-          }.await
+      "fail to get instance tasks when the user may not access the instance" in prop { (user: Account, id: String) =>
+        (!id.matches(user.instanceRegex)) ==> {
+          for {
+            result <- new NomadInstances(mock[NomadClient]).getInstanceTasks(user)(id).value
+          } yield {
+            result must beLeft[InstanceError](InstanceError.UserRegexDenied(id, user.instanceRegex))
+          }
+        }.await
       }.set(minTestsOk = 5)
 
-      "fail to get instance tasks when Nomad fails" in prop { (user: UserAccount, id: String, error: NomadError) =>
+      "fail to get instance tasks when Nomad fails" in prop { (user: Account, id: String, error: NomadError) =>
         val client = mock[NomadClient]
 
         client

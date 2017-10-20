@@ -1,4 +1,4 @@
-package de.frosner.broccoli.models
+package de.frosner.broccoli.auth
 
 import de.frosner.broccoli.RemoveSecrets
 import enumeratum._

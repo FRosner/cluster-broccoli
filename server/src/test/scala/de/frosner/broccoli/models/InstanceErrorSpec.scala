@@ -1,5 +1,6 @@
 package de.frosner.broccoli.models
 
+import de.frosner.broccoli.auth.Role
 import de.frosner.broccoli.http.ToHTTPResult
 import org.specs2.ScalaCheck
 import org.scalacheck.Gen

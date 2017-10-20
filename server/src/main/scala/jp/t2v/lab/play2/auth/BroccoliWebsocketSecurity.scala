@@ -1,8 +1,9 @@
 package jp.t2v.lab.play2.auth
 
+import de.frosner.broccoli.auth.Account.anonymous
+import de.frosner.broccoli.auth.AuthMode
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.controllers.AuthConfigImpl
-import de.frosner.broccoli.models.Anonymous
 import de.frosner.broccoli.services.SecurityService
 import jp.t2v.lab.play2.stackc.{RequestAttributeKey, RequestWithAttributes}
 import play.api.Logger
@@ -26,7 +27,7 @@ trait BroccoliWebsocketSecurity extends AsyncAuth with AuthConfigImpl {
       f: (Option[AuthenticityToken], User, RequestHeader) => (Iteratee[A, _], Enumerator[A]))
     : Future[Either[Result, (Iteratee[A, _], Enumerator[A])]] =
     securityService.authMode match {
-      case conf.AUTH_MODE_CONF =>
+      case AuthMode.Conf =>
         val maybeToken = extractToken(req)
         val tokenString = maybeToken.getOrElse("<session ID missing>")
         val maybeUser = restoreUser(req, scala.concurrent.ExecutionContext.Implicits.global)
@@ -45,15 +46,13 @@ trait BroccoliWebsocketSecurity extends AsyncAuth with AuthConfigImpl {
               log.info(s"Websocket to ${req.remoteAddress} not established because of missing authentication") // TODO log level
               authenticationFailed(req).map(result => Left(result))
           }
-      case conf.AUTH_MODE_NONE =>
-        Future.successful(Right(f(None, Anonymous, req)))
-      case other => throw new IllegalStateException(s"Unrecognized auth mode: ${securityService.authMode}")
+      case AuthMode.None =>
+        Future.successful(Right(f(None, anonymous, req)))
     }
 
   implicit def loggedIn(implicit req: RequestWithAttributes[_]): User = securityService.authMode match {
-    case conf.AUTH_MODE_CONF => req.get(AuthKey).get
-    case conf.AUTH_MODE_NONE => Anonymous.asInstanceOf[User]
-    case other               => throw new IllegalStateException(s"Unrecognized auth mode: ${securityService.authMode}")
+    case AuthMode.Conf => req.get(AuthKey).get
+    case AuthMode.None => anonymous
   }
 
 }

@@ -2,6 +2,7 @@ package de.frosner.broccoli.services
 
 import javax.inject.{Inject, Singleton}
 
+import de.frosner.broccoli.auth.{Account, AuthMode}
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.models._
 
@@ -22,7 +23,7 @@ class AboutInfoService @Inject()(nomadService: NomadService,
       version = de.frosner.broccoli.build.BuildInfo.sbtVersion
     ),
     auth = AboutAuth(
-      enabled = securityService.authMode != conf.AUTH_MODE_NONE,
+      enabled = securityService.authMode != AuthMode.None,
       user = AboutUser(
         name = loggedIn.name,
         role = loggedIn.role,

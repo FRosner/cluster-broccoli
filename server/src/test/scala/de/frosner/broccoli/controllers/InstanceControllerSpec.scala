@@ -1,7 +1,12 @@
 package de.frosner.broccoli.controllers
 
-import cats.data.EitherT
+import cats.data.{EitherT, OptionT}
 import cats.instances.future._
+import com.mohiva.play.silhouette.api.LoginInfo
+import com.mohiva.play.silhouette.api.services.IdentityService
+import com.mohiva.play.silhouette.api.util.Credentials
+import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
+import de.frosner.broccoli.auth.{Account, AuthMode, Role}
 import de.frosner.broccoli.http.ToHTTPResult
 import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.instances.InstanceNotFoundException
@@ -36,23 +41,20 @@ class InstanceControllerSpec
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
-  val accountWithRegex = UserAccount(
+  val accountWithRegex = Account(
     name = "user",
-    password = "pass",
     instanceRegex = "^matching-.*",
     role = Role.Administrator
   )
 
-  val operator = UserAccount(
+  val operator = Account(
     name = "Operator",
-    password = "pass",
     instanceRegex = ".*",
     role = Role.Operator
   )
 
-  val user = UserAccount(
+  val user = Account(
     name = "User",
-    password = "pass",
     instanceRegex = ".*",
     role = Role.User
   )
@@ -302,11 +304,14 @@ class InstanceControllerSpec
 
   "tasks" should {
     "return tasks from the instance service" in { implicit ee: ExecutionEnv =>
-      prop { (user: UserAccount, instanceTasks: InstanceTasks) =>
+      prop { (user: Account, instanceTasks: InstanceTasks) =>
+        val login = LoginInfo(CredentialsProvider.ID, user.name)
         val securityService = mock[SecurityService]
-        securityService.authMode returns "conf"
-        securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
-        securityService.getAccount(user.name) returns Some(user)
+        securityService.authMode returns AuthMode.Conf
+        securityService.authenticate(Matchers.any[Credentials]) returns Future.successful(Some(login))
+        val identityService = mock[IdentityService[Account]]
+        securityService.identityService returns identityService
+        identityService.retrieve(login) returns Future.successful(Some(user))
 
         val instances = mock[NomadInstances]
         instances.getInstanceTasks(user)(instanceTasks.instanceId) returns EitherT.pure[Future, InstanceError](
@@ -328,11 +333,15 @@ class InstanceControllerSpec
     }
 
     "return errors from the instance service" in { implicit ee: ExecutionEnv =>
-      prop { (instanceId: String, user: UserAccount, error: InstanceError) =>
+      prop { (instanceId: String, user: Account, error: InstanceError) =>
+        val login = LoginInfo(CredentialsProvider.ID, user.name)
         val securityService = mock[SecurityService]
-        securityService.authMode returns "conf"
-        securityService.isAllowedToAuthenticate(Matchers.any[Credentials]) returns true
-        securityService.getAccount(user.name) returns Some(user)
+        securityService.authMode returns AuthMode.Conf
+        securityService.authenticate(Matchers.any[Credentials]) returns Future.successful(Some(login))
+        val identityService = mock[IdentityService[Account]]
+        securityService.identityService returns identityService
+        identityService.retrieve(login) returns Future.successful(Some(user))
+
         val instances = mock[NomadInstances]
         instances.getInstanceTasks(user)(instanceId) returns EitherT.leftT[Future, InstanceTasks](error)
 
@@ -354,7 +363,8 @@ class InstanceControllerSpec
     "fail if not authenticated" in {
       prop { (instanceId: String) =>
         val securityService = mock[SecurityService]
-        securityService.authMode returns "conf"
+        securityService.authMode returns AuthMode.Conf
+        val identityService = mock[IdentityService[Account]]
         val controller = InstanceController(
           mock[NomadInstances],
           mock[InstanceService],

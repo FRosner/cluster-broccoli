@@ -1,11 +1,10 @@
 package de.frosner.broccoli.controllers
 
+import de.frosner.broccoli.auth.Account.anonymous
+import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.services._
-import de.frosner.broccoli.models.{Anonymous, Role, UserAccount}
 import org.mockito.Mockito._
-import play.api.cache.CacheApi
-import play.api.{Application, Environment}
-import play.api.libs.json.{JsBoolean, JsObject, JsString, Json}
+import play.api.libs.json.Json
 import play.api.test._
 
 class AboutControllerSpec extends PlaySpecification with AuthUtils {
@@ -15,8 +14,8 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
   "about" should {
 
     "return the about object with authentication" in new WithApplication {
-      val account = UserAccount("user", "pass", ".*", Role.Administrator)
-      val aboutInfoService = withDummyValues(mock(classOf[AboutInfoService]))
+      val account = Account("user", ".*", Role.Administrator)
+      val aboutInfoService = withDummyValues(mock[AboutInfoService])
       testWithAllAuths(account) { securityService =>
         AboutController(aboutInfoService, securityService, cacheApi, playEnv)
       } { controller =>
@@ -29,10 +28,10 @@ class AboutControllerSpec extends PlaySpecification with AuthUtils {
     }
 
     "return the about object without authentication" in new WithApplication {
-      val account = Anonymous
-      val aboutInfoService = withDummyValues(mock(classOf[AboutInfoService]))
+      val account = anonymous
+      val aboutInfoService = withDummyValues(mock[AboutInfoService])
       val controller =
-        AboutController(aboutInfoService, withAuthNone(mock(classOf[SecurityService])), cacheApi, playEnv)
+        AboutController(aboutInfoService, withAuthNone(mock[SecurityService]), cacheApi, playEnv)
       val result = controller.about(FakeRequest().withBody(()))
       status(result) must be equalTo 200 and {
         contentAsJson(result) must be equalTo Json.toJson(aboutInfoService.aboutInfo(account))

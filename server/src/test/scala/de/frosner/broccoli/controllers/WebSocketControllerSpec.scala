@@ -4,6 +4,7 @@ import de.frosner.broccoli.models._
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.RemoveSecrets.ToRemoveSecretsOps
+import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.nomad
 import de.frosner.broccoli.websocket.{BroccoliMessageHandler, IncomingMessage, OutgoingMessage}
@@ -75,7 +76,7 @@ class WebSocketControllerSpec
     expectations.foreach {
       case (maybeInstanceRegexAndRole, outMsg) =>
         val maybeAccount = maybeInstanceRegexAndRole.map {
-          case (instanceRegex, role) => UserAccount("user", "pass", instanceRegex, role)
+          case (instanceRegex, role) => Account("user", instanceRegex, role)
         }
         val securityService = maybeAccount
           .map { account =>
@@ -110,7 +111,7 @@ class WebSocketControllerSpec
   "WebSocketController" should {
 
     "establish a websocket connection correctly (with authentication)" in new WithApplication {
-      val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val account = Account("user", ".*", Role.Administrator)
       val instanceService = withInstances(mock[InstanceService], Seq.empty)
       val controller = WebSocketController(
         webSocketService = mock[WebSocketService],
@@ -128,7 +129,7 @@ class WebSocketControllerSpec
     }
 
     "establish a websocket connection correctly (without authentication)" in new WithApplication {
-      val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val account = Account("user", ".*", Role.Administrator)
       val instanceService = withInstances(mock[InstanceService], Seq.empty)
       val controller = WebSocketController(
         webSocketService = mock[WebSocketService],
@@ -147,7 +148,7 @@ class WebSocketControllerSpec
     }
 
     "decline the websocket connection if not authenticated" in new WithApplication {
-      val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val account = Account("user", ".*", Role.Administrator)
       val instanceService = withInstances(mock[InstanceService], Seq.empty)
       val controller = WebSocketController(
         webSocketService = mock[WebSocketService],
@@ -167,7 +168,7 @@ class WebSocketControllerSpec
     }
 
     "send about info, template and instance list after establishing the connection" in new WithApplication {
-      val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val account = Account("user", ".*", Role.Administrator)
       val instances = Seq(
         instanceWithStatus
       )

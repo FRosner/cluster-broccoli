@@ -1,5 +1,6 @@
 package de.frosner.broccoli.models
 
+import de.frosner.broccoli.auth.Role
 import play.api.libs.json.{Json, Reads, Writes}
 
 case class AboutInfo(project: AboutProject, scala: AboutScala, sbt: AboutSbt, auth: AboutAuth, services: AboutServices)
