@@ -2,178 +2,73 @@ package de.frosner.broccoli.services
 
 import javax.inject.{Inject, Singleton}
 
-import de.frosner.broccoli.conf
-import de.frosner.broccoli.conf.IllegalConfigException
-import de.frosner.broccoli.models.{Account, Credentials, Role, UserAccount}
-import play.api.Configuration
+import cats.data.{EitherT, OptionT}
+import cats.instances.future._
+import cats.syntax.either._
+import com.mohiva.play.silhouette.api.LoginInfo
+import com.mohiva.play.silhouette.api.services.IdentityService
+import com.mohiva.play.silhouette.api.util.Credentials
+import com.mohiva.play.silhouette.impl.exceptions.{IdentityNotFoundException, InvalidPasswordException}
+import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
+import de.frosner.broccoli.auth.{Account, AuthConfiguration, AuthMode}
 
-import scala.collection.JavaConverters._
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.{ExecutionContext, Future}
+
+sealed trait LoginError
+
+object LoginError {
+  final case object InvalidPassword extends LoginError
+  final case object UnknownUser extends LoginError
+  final case object Locked extends LoginError
+}
 
 @Singleton()
-case class SecurityService @Inject()(configuration: Configuration) {
+case class SecurityService @Inject()(
+    configuration: AuthConfiguration,
+    credentialsProvider: CredentialsProvider,
+    identityService: IdentityService[Account]
+)(implicit ec: ExecutionContext) {
 
   private val log = play.api.Logger(getClass)
 
-  // TODO check if setting it wrong will exit also in production
-  private lazy val sessionTimeOutString: Option[String] = configuration.getString(conf.AUTH_SESSION_TIMEOUT_KEY)
-  private lazy val sessionTimeOutTry: Try[Int] = sessionTimeOutString match {
-    case Some(string) =>
-      Try(string.toInt).flatMap { int =>
-        if (int >= 1) Success(int) else Failure(new Exception())
-      }
-    case None => Success(conf.AUTH_SESSION_TIMEOUT_DEFAULT)
-  }
-  if (sessionTimeOutTry.isFailure) {
-    log.error(
-      s"Invalid ${conf.AUTH_SESSION_TIMEOUT_DEFAULT} specified: '${sessionTimeOutString.get}'. Needs to be a positive integer.")
-    System.exit(1)
-  }
-  lazy val sessionTimeoutInSeconds = sessionTimeOutTry.get
-  log.info(s"${conf.AUTH_SESSION_TIMEOUT_KEY}=$sessionTimeoutInSeconds")
+  val sessionTimeoutInSeconds: Int = configuration.session.timeout.toSeconds.toInt
 
-  lazy val allowedFailedLogins = SecurityService.tryAllowedFailedLogins(configuration) match {
-    case Success(value) => {
-      log.info(s"${conf.AUTH_ALLOWED_FAILED_LOGINS_KEY}=$value")
-      value
-    }
-    case Failure(throwable) => {
-      log.error(throwable.toString)
-      System.exit(1)
-      throw throwable
-    }
-  }
+  val allowedFailedLogins: Int = configuration.allowedFailedLogins
 
-  lazy val authMode: String = {
-    val maybeAuthMode = configuration.getString(conf.AUTH_MODE_KEY)
-    val result = maybeAuthMode match {
-      case Some(mode) => {
-        if (Set(conf.AUTH_MODE_CONF, conf.AUTH_MODE_NONE).contains(mode)) {
-          mode
-        } else {
-          val errorMessage = s"Invalid ${conf.AUTH_MODE_KEY}: $mode"
-          log.error(errorMessage)
-          System.exit(1)
-          throw new IllegalArgumentException(errorMessage)
-        }
-      }
-      case None => {
-        conf.AUTH_MODE_DEFAULT
-      }
-    }
-    log.info(s"${conf.AUTH_MODE_KEY}=$result")
-    result
-  }
+  val authMode: AuthMode = configuration.mode
 
-  lazy val cookieSecure: Boolean = {
-    val parsed = SecurityService.tryCookieSecure(configuration) match {
-      case Success(value) => value
-      case Failure(throwable) =>
-        log.error(s"Error parsing ${conf.AUTH_COOKIE_SECURE_KEY}: $throwable")
-        System.exit(1)
-        throw throwable
-    }
-    log.info(s"${conf.AUTH_COOKIE_SECURE_KEY}=$parsed")
-    parsed
-  }
-
-  lazy val allowMultiLogin: Boolean = {
-    val parsed = SecurityService.tryAllowMultiLogin(configuration) match {
-      case Success(value) => value
-      case Failure(throwable) =>
-        log.error(s"Error parsing ${conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_KEY}: $throwable")
-        System.exit(1)
-        throw throwable
-    }
-    log.info(s"${conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_KEY}=$parsed")
-    parsed
-  }
-
-  private lazy val accounts: Set[Account] = {
-    val accounts = SecurityService.tryAccounts(configuration) match {
-      case Success(userObjects) => userObjects.toSet
-      case Failure(throwable) => {
-        log.error(s"Error parsing ${conf.AUTH_MODE_CONF_ACCOUNTS_KEY}: $throwable")
-        System.exit(1)
-        throw throwable
-      }
-    }
-    log.info(s"Extracted ${accounts.size} accounts from ${conf.AUTH_MODE_CONF_ACCOUNTS_KEY}")
-    accounts
-  }
+  val cookieSecure: Boolean = configuration.cookie.secure
+  val allowMultiLogin: Boolean = configuration.session.allowMultiLogin
 
   @volatile
   private var failedLoginAttempts: Map[String, Int] = Map.empty
 
-  // TODO store failed logins (reset on successful login) and only allowToAuthenticate if not blocked
-
-  def isAllowedToAuthenticate(credentials: Credentials): Boolean = {
-    val credentialsFailedLoginAttempts = failedLoginAttempts.getOrElse(credentials.name, 0)
-    val allowed = if (credentialsFailedLoginAttempts <= allowedFailedLogins) {
-      accounts.exists { account =>
-        account.name == credentials.name && account.password == credentials.password
-      }
-    } else {
-      log.warn(
-        s"Credentials for '${credentials.name}' exceeded the allowed number of failed logins: " +
-          s"$allowedFailedLogins (has $credentialsFailedLoginAttempts)")
-      false
-    }
-    if (!allowed) {
-      failedLoginAttempts = failedLoginAttempts.updated(credentials.name, credentialsFailedLoginAttempts + 1)
-    }
-    allowed
-  }
-
-  def getAccount(id: String): Option[Account] = accounts.find(_.name == id)
-
-}
-
-object SecurityService {
-
-  private[services] def tryAllowMultiLogin(configuration: Configuration): Try[Boolean] = Try {
-    configuration
-      .getBoolean(conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_KEY)
-      .getOrElse(conf.AUTH_SESSION_ALLOW_MULTI_LOGIN_DEFAULT)
-  }
-
-  private[services] def tryAccounts(configuration: Configuration): Try[Iterable[Account]] = Try {
-    if (configuration.underlying.hasPath(conf.AUTH_MODE_CONF_ACCOUNTS_KEY)) {
-      configuration.underlying
-        .getConfigList(conf.AUTH_MODE_CONF_ACCOUNTS_KEY)
-        .asScala
-        .map { account =>
-          UserAccount(
-            name = account.getString(conf.AUTH_MODE_CONF_ACCOUNT_USERNAME_KEY),
-            password = account.getString(conf.AUTH_MODE_CONF_ACCOUNT_PASSWORD_KEY),
-            instanceRegex = account.getString(conf.AUTH_MODE_CONF_ACCOUNT_INSTANCEREGEX_KEY),
-            role = if (account.hasPath(conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY)) {
-              Role.withNameInsensitive(account.getString(conf.AUTH_MODE_CONF_ACCOUNT_ROLE_KEY))
-            } else {
-              conf.AUTH_MODE_CONF_ACCOUNT_ROLE_DEFAULT
-            }
-          )
+  /**
+    * Authenticate some credentials.
+    *
+    * @param credentials The credentials to authenticate
+    * @return The corresponding login information, or None if authentication failed.
+    */
+  def authenticate(credentials: Credentials): Future[Option[LoginInfo]] =
+    EitherT
+      .rightT(credentials)
+      .ensure(LoginError.Locked)(c => failedLoginAttempts.getOrElse(c.identifier, 0) <= allowedFailedLogins)
+      .flatMapF(credentialsProvider.authenticate(_).map(_.asRight).recover {
+        case _: InvalidPasswordException  => LoginError.InvalidPassword.asLeft
+        case _: IdentityNotFoundException => LoginError.UnknownUser.asLeft
+      })
+      .leftMap { error =>
+        // Login if an account was locked
+        val attempts = failedLoginAttempts.getOrElse(credentials.identifier, 0)
+        if (error == LoginError.Locked) {
+          log.warn(
+            s"Credentials for '${credentials.identifier}' exceeded the allowed number of failed logins: " +
+              s"$allowedFailedLogins (has $attempts)")
         }
-    } else {
-      conf.AUTH_MODE_CONF_ACCOUNTS_DEFAULT
-    }
-  }
-
-  private[services] def tryCookieSecure(configuration: Configuration): Try[Boolean] = Try {
-    configuration.getBoolean(conf.AUTH_COOKIE_SECURE_KEY).getOrElse(conf.AUTH_COOKIE_SECURE_DEFAULT)
-  }
-
-  private[services] def tryAllowedFailedLogins(configuration: Configuration): Try[Int] = Try {
-    val stringOption = configuration.getInt(conf.AUTH_ALLOWED_FAILED_LOGINS_KEY)
-    stringOption match {
-      case Some(int) => {
-        if (int >= 1)
-          int
-        else
-          throw new IllegalConfigException(conf.AUTH_ALLOWED_FAILED_LOGINS_KEY, "Must be a positive Integer.")
+        // Track the failed attempt
+        failedLoginAttempts = failedLoginAttempts.updated(credentials.identifier, attempts + 1)
+        error
       }
-      case None => conf.AUTH_ALLOWED_FAILED_LOGINS_DEFAULT
-    }
-  }
-
+      .toOption
+      .value
 }

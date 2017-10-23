@@ -34,7 +34,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
       val task = Task(shapeless.tag[Task.Name]("foo"), resources, Some(Seq(service)))
       val taskGroup = TaskGroup(Seq(task))
       val job = Job(Seq(taskGroup))
-      val consulService = mock(classOf[ConsulService])
+      val consulService = mock[ConsulService]
       Server.withRouter() {
         case GET(p"/v1/job/my-job") =>
           Action {
@@ -63,7 +63,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
       val taskGroup1 = TaskGroup(Seq(task1))
       val taskGroup2 = TaskGroup(Seq(task2))
       val job = Job(Seq(taskGroup1, taskGroup2))
-      val consulService = mock(classOf[ConsulService])
+      val consulService = mock[ConsulService]
       Server.withRouter() {
         case GET(p"/v1/job/my-job") =>
           Action {

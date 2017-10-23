@@ -5,12 +5,13 @@ import javax.inject.Inject
 
 import cats.instances.future._
 import cats.syntax.either._
+import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.http.ToHTTPResult.ops._
 import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.instances.InstanceNotFoundException
 import de.frosner.broccoli.models.InstanceCreation.instanceCreationReads
 import de.frosner.broccoli.models.InstanceUpdate.instanceUpdateReads
-import de.frosner.broccoli.models.Role.syntax._
+import de.frosner.broccoli.auth.Role.syntax._
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.models.{Allocation, LogStreamKind, TaskLog, Task => NomadTask}
 import de.frosner.broccoli.services._

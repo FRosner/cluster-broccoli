@@ -18,6 +18,8 @@ object Dependencies {
 
     val squants = "1.3.0"
 
+    val silhouette = "4.0.0"
+
     val pureconfig = "0.7.2"
   }
 
@@ -76,6 +78,17 @@ object Dependencies {
     * Scala syntax for Guice, to declare custom modules
     */
   val scalaguice: ModuleID = "net.codingwell" %% "scala-guice" % "4.1.0"
+
+  /**
+    * Authentication framework for Play.
+    */
+  val silhouette: Seq[ModuleID] = Seq(
+    "com.mohiva" %% "play-silhouette" % Versions.silhouette,
+    "com.mohiva" %% "play-silhouette-crypto-jca" % Versions.silhouette,
+    "com.mohiva" %% "play-silhouette-password-bcrypt" % Versions.silhouette,
+    "com.mohiva" %% "play-silhouette-persistence" % Versions.silhouette,
+    "com.mohiva" %% "play-silhouette-testkit" % Versions.silhouette % Test
+  )
 
   /**
     * Load configuration into case classes.

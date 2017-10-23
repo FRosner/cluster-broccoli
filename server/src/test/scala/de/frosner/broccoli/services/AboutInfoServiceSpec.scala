@@ -1,20 +1,20 @@
 package de.frosner.broccoli.services
 
+import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.controllers.ServiceMocks
 import de.frosner.broccoli.models._
 import org.specs2.mutable.Specification
-import org.mockito.Mockito._
 
 class AboutInfoServiceSpec extends Specification with ServiceMocks {
 
   "Requesting about info" should {
 
     "return the correct about info" in {
-      val account = UserAccount("user", "pass", ".*", Role.Administrator)
+      val account = Account("user", ".*", Role.Administrator)
       val service = new AboutInfoService(
-        nomadService = withNomadReachable(mock(classOf[NomadService])),
-        consulService = withConsulReachable(mock(classOf[ConsulService])),
-        securityService = withAuthNone(mock(classOf[SecurityService]))
+        nomadService = withNomadReachable(mock[NomadService]),
+        consulService = withConsulReachable(mock[ConsulService]),
+        securityService = withAuthNone(mock[SecurityService])
       )
       service.aboutInfo(account) === AboutInfo(
         project = AboutProject(

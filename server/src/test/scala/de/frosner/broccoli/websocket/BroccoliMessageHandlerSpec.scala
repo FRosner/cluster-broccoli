@@ -2,6 +2,7 @@ package de.frosner.broccoli.websocket
 
 import cats.data.EitherT
 import cats.instances.future._
+import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad
@@ -23,7 +24,7 @@ class BroccoliMessageHandlerSpec
 
   "The Broccoli Message Handler" should {
     "send back instance tasks" in { implicit ee: ExecutionEnv =>
-      prop { (account: UserAccount, id: String, tasks: List[AllocatedTask]) =>
+      prop { (account: Account, id: String, tasks: List[AllocatedTask]) =>
         val instances = mock[NomadInstances]
         val instanceTasks = InstanceTasks(id, tasks)
         instances.getInstanceTasks(account)(id) returns EitherT.pure[Future, InstanceError](instanceTasks)
@@ -36,7 +37,7 @@ class BroccoliMessageHandlerSpec
     }
 
     "send back an error if instance tasks failed" in { implicit ee: ExecutionEnv =>
-      prop { (account: UserAccount, id: String, error: InstanceError) =>
+      prop { (account: Account, id: String, error: InstanceError) =>
         val instances = mock[NomadInstances]
         instances.getInstanceTasks(account)(id) returns EitherT.leftT[Future, InstanceTasks](error)
 

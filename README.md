@@ -77,14 +77,3 @@ See [Play configuration](https://www.playframework.com/documentation/2.5.x/Confi
 | -------- | ----------- | ------- |
 | `broccoli.consul.url` | Address of your consul server | `http://localhost:8500` |
 | `broccoli.consul.lookup` | Lookup method used for consul. Options: `ip` or `dns` (recommended).| `ip` |
-
-### [Security](https://github.com/FRosner/cluster-broccoli/wiki/Security)
-
-| Property | Description | Default |
-| -------- | ----------- | ------- |
-| `broccoli.auth.mode` | Authentication and authorization mode (`none` or `conf`). | `none` |
-| `broccoli.auth.conf.accounts` | User accounts when running in `conf` mode. | `[{username:administrator, password:broccoli, role:administrator, instanceRegex:".*"}]` |
-| `broccoli.auth.session.timeout` | Cookie session timeout (in seconds). | `3600` |
-| `broccoli.auth.session.allowMultiLogin` | Allow a user to have multiple valid sessions. | `true` |
-| `broccoli.auth.cookie.secure` | Whether to mark the cookie as secure (switch off if running on HTTP). | `true` |
-| `broccoli.auth.allowedFailedLogins` | Number of allowed failed logins before an account is blocked. | `3` |

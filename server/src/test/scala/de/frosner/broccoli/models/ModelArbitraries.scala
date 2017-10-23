@@ -1,5 +1,6 @@
 package de.frosner.broccoli.models
 
+import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models.ServiceStatus.ServiceStatus
 import de.frosner.broccoli.nomad.models.{ClientStatus, TaskState}
@@ -15,13 +16,12 @@ trait ModelArbitraries {
 
   implicit val arbitraryRole: Arbitrary[Role] = Arbitrary(Gen.oneOf(Role.values))
 
-  implicit def arbitraryUserAccount(implicit arbRole: Arbitrary[Role]): Arbitrary[UserAccount] = Arbitrary {
+  implicit def arbitraryAccount(implicit arbRole: Arbitrary[Role]): Arbitrary[Account] = Arbitrary {
     for {
       id <- Gen.identifier.label("id")
-      password <- Gen.identifier.label("password")
       instanceRegex <- Gen.identifier.label("instanceRegex")
       role <- arbRole.arbitrary
-    } yield UserAccount(id, password, instanceRegex, role)
+    } yield Account(id, instanceRegex, role)
   }
 
   implicit var arbitraryParameterInfo: Arbitrary[ParameterInfo] = Arbitrary {
