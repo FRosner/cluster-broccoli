@@ -3,10 +3,9 @@ package de.frosner.broccoli.templates
 import java.nio.file.{FileSystems, Files}
 
 import com.typesafe.config.ConfigFactory
-import de.frosner.broccoli.BroccoliConfiguration
 import pureconfig._
 import pureconfig.module.enumeratum._
-import de.frosner.broccoli.models.{Meta, ParameterInfo, Template}
+import de.frosner.broccoli.models.{ParameterInfo, Template}
 import play.api.libs.json.Json
 
 import scala.collection.JavaConverters._
@@ -44,12 +43,15 @@ class DirectoryTemplateSource(directory: String) extends TemplateSource {
         val templateId = templateDirectory.getFileName.toString
         val metaFile = templateDirectory.resolve("meta.json")
         val templateInfo =
-          loadConfigOrThrow[TemplateInfo](ConfigFactory.parseFile(templateDirectory.resolve("template.conf").toFile))
+          loadConfigOrThrow[TemplateConfig.TemplateInfo](
+            ConfigFactory.parseFile(templateDirectory.resolve("template.conf").toFile))
         Template(
           id = templateId,
           template = templateFileContent,
           description = templateInfo.description.getOrElse(s"$templateId template"),
-          parameterInfos = templateInfo.parameters.map(_.map(p => p.id -> p).toMap).getOrElse(Map.empty)
+          parameterInfos = templateInfo.parameters
+            .map(_.map { case (id, parameter) => id -> ParameterInfo.fromTemplateInfoParameter(id, parameter) })
+            .getOrElse(Map.empty)
         )
       }
       tryTemplate.failed.map(throwable => log.error(s"Parsing template '$templateDirectory' failed: $throwable"))
