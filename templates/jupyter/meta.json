@@ -1,8 +1,0 @@
-{
-  "description": "Open source, interactive data science and scientific computing across over 40 programming languages.",
-  "parameters": {
-    "id": {
-      "type": "string"
-    }
-  }
-}
