@@ -1,5 +1,5 @@
 {
-  "selectedTemplate": "zeppelin",
+  "selectedTemplate": "jupyter",
   "parameterValues": {
     "id": "test"
   }

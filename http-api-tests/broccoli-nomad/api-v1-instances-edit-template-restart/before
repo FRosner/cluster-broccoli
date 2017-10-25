@@ -10,7 +10,7 @@ curl -H 'Content-Type: application/json' \
 sleep $BROCCOLI_SLEEP_SHORT
 
 curl -H 'Content-Type: application/json' \
-  -X POST -d '{ "selectedTemplate": "zeppelin", "parameterValues": { "id": "test" } }' \
+  -X POST -d '{ "selectedTemplate": "jupyter", "parameterValues": { "id": "test" } }' \
   'http://localhost:9000/api/v1/instances/test'
 sleep $BROCCOLI_SLEEP_SHORT
 
