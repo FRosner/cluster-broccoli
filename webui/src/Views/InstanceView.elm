@@ -22,6 +22,8 @@ import Date
 import Filesize
 import Round
 import Maybe.Extra exposing (unwrap)
+import Date.Extra.Format as DateFormat
+import Date.Extra.Config.Config_en_us as Config_en_us
 
 
 checkboxColumnWidth =
@@ -544,7 +546,11 @@ periodicRunView periodicRun =
             ]
             [ icon "fa fa-clock-o" []
             , text " "
-            , text (periodicRunDateView (Date.fromTime (toFloat periodicRun.utcSeconds)))
+            , (periodicRun.utcSeconds * 1000)
+                |> toFloat
+                |> Date.fromTime
+                |> DateFormat.format Config_en_us.config "%Y-%m-%d %H:%M:%S"
+                |> text
             ]
         , text " "
         , jobStatusView periodicRun.status
