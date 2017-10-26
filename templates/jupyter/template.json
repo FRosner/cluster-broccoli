@@ -12,23 +12,24 @@
         "Constraints": null,
         "TaskGroups": [
             {
-                "Name": "jupyter",
+                "Name": "{{id}}",
                 "Count": 1,
                 "Constraints": null,
                 "Tasks": [
                     {
-                        "Name": "jupyter",
-                        "Driver": "raw_exec",
+                        "Name": "{{id}}",
+                        "Driver": "docker",
                         "User": "",
                         "Config": {
-                            "command": "nomad-docker-wrapper",
-                            "args": ["-p", "${NOMAD_PORT_ui}:8888",
-                              "jupyter/datascience-notebook"]
+                            "image": "jupyter/minimal-notebook",
+                            "port_map": [
+                                {
+                                    "ui": 8888
+                                }
+                            ]
                         },
                         "Constraints": null,
-                        "Env": {
-                            "NOMAD_DOCKER_CONTAINER_NAME": "{{id}}"
-                        },
+                        "Env": null,
                         "Services": [
                             {
                                 "Id": "",
@@ -79,13 +80,7 @@
                             "MaxFiles": 10,
                             "MaxFileSizeMB": 10
                         },
-                        "Artifacts": [
-                            {
-                                "GetterSource": "https://raw.githubusercontent.com/FRosner/nomad-docker-wrapper/1.2.1/nomad-docker-wrapper",
-                                "GetterOptions": {},
-                                "RelativeDest": "local/"
-                            }
-                        ]
+                        "Artifacts": null
                     }
                 ],
                 "RestartPolicy": {

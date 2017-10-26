@@ -1,6 +1,6 @@
 {
-  "id": "zeppelin",
-  "description": "A web-based notebook that enables interactive data analytics. You can make beautiful data-driven, interactive and collaborative documents with SQL, Scala and more.",
+  "id": "jupyter",
+  "description": "Open source, interactive data science and scientific computing across over 40 programming languages.",
   "parameters": [
     "id"
   ],
@@ -10,5 +10,5 @@
       "type": "string"
     }
   },
-  "version": "8e57100c23ffe1a46ac7cb765647c984"
+  "version": "1f664311cbc1b4c2002834390745d658"
 }
