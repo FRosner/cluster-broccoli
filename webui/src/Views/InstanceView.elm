@@ -549,7 +549,7 @@ periodicRunView periodicRun =
             , (periodicRun.utcSeconds * 1000)
                 |> toFloat
                 |> Date.fromTime
-                |> DateFormat.format Config_en_us.config "%Y-%m-%d %H:%M:%S"
+                |> DateFormat.format Config_en_us.config "%Y-%m-%d %H:%M:%S UTC%z"
                 |> text
             ]
         , text " "
