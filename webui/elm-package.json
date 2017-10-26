@@ -16,7 +16,8 @@
         "elm-lang/navigation": "2.1.0 <= v < 3.0.0",
         "evancz/url-parser": "2.0.1 <= v < 3.0.0",
         "myrho/elm-round": "1.0.2 <= v < 2.0.0",
-        "panosoft/elm-websocket-client": "3.0.2 <= v <= 3.0.2"
+        "panosoft/elm-websocket-client": "3.0.2 <= v <= 3.0.2",
+        "rluiten/elm-date-extra": "9.2.0 <= v < 10.0.0"
     },
     "dependency-sources": {
         "panosoft/elm-websocket-client": {
