@@ -8,22 +8,22 @@
       "enabled"
     ],
     "parameterInfos": {
-      "URL": {
-        "id": "URL",
-        "default": "localhost:8000",
-        "type": "string"
-      },
       "enabled": {
         "id": "enabled",
         "default": "true",
         "type": "raw"
+      },
+      "URL": {
+        "id": "URL",
+        "default": "localhost:8000",
+        "type": "string"
       },
       "id": {
         "id": "id",
         "type": "string"
       }
     },
-    "version": "d4570b781a67d498a9ff5a326ae5f89c"
+    "version": "26c9f9e974f7ea648e54696f6bf5f1bf"
   },
   {
     "id": "http-server",

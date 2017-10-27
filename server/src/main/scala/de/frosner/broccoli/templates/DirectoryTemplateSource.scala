@@ -2,7 +2,10 @@ package de.frosner.broccoli.templates
 
 import java.nio.file.{FileSystems, Files}
 
-import de.frosner.broccoli.models.{Meta, ParameterInfo, Template}
+import com.typesafe.config.ConfigFactory
+import pureconfig._
+import pureconfig.module.enumeratum._
+import de.frosner.broccoli.models.{ParameterInfo, Template}
 import play.api.libs.json.Json
 
 import scala.collection.JavaConverters._
@@ -39,42 +42,17 @@ class DirectoryTemplateSource(directory: String) extends TemplateSource {
         val templateFileContent = Source.fromFile(templateDirectory.resolve("template.json").toString).mkString
         val templateId = templateDirectory.getFileName.toString
         val metaFile = templateDirectory.resolve("meta.json")
-        val metaFileContent = Try(Source.fromFile(metaFile.toString).mkString)
-        val metaInformation = metaFileContent.map(content => Json.fromJson[Meta](Json.parse(content)).get)
-        val defaultDescription = s"$templateId template"
-        val description = metaInformation
-          .map(_.description.getOrElse {
-            log.warn(s"No description for $metaFile. Using default template description.")
-            defaultDescription
-          })
-          .recover {
-            case throwable =>
-              log.warn(
-                s"Failed to get description of $metaFile: ${throwable.getMessage}. Using default template description.",
-                throwable)
-              defaultDescription
-          }
-          .get
-
-        val parameterInfos: Map[String, ParameterInfo] =
-          metaInformation
-            .map(meta =>
-              meta.parameters
-                .getOrElse {
-                  log.warn(s"No parameters for $metaFile. Using default parameters.")
-                  Map.empty[String, Meta.Parameter]
-                }
-                .map {
-                  case (id, parameter) => id -> ParameterInfo.fromMetaParameter(id, parameter)
-              })
-            .recover {
-              case throwable =>
-                log.warn(s"Failed to get parameters of $metaFile: ${throwable.getMessage}. Using default parameters.",
-                         throwable)
-                Map.empty[String, ParameterInfo]
-            }
-            .get
-        Template(templateId, templateFileContent, description, parameterInfos)
+        val templateInfo =
+          loadConfigOrThrow[TemplateConfig.TemplateInfo](
+            ConfigFactory.parseFile(templateDirectory.resolve("template.conf").toFile))
+        Template(
+          id = templateId,
+          template = templateFileContent,
+          description = templateInfo.description.getOrElse(s"$templateId template"),
+          parameterInfos = templateInfo.parameters
+            .map(_.map { case (id, parameter) => id -> ParameterInfo.fromTemplateInfoParameter(id, parameter) })
+            .getOrElse(Map.empty)
+        )
       }
       tryTemplate.failed.map(throwable => log.error(s"Parsing template '$templateDirectory' failed: $throwable"))
       tryTemplate.toOption

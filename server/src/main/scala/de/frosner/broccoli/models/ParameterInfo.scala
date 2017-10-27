@@ -1,5 +1,6 @@
 package de.frosner.broccoli.models
 
+import de.frosner.broccoli.templates.TemplateConfig
 import play.api.libs.json.Json
 
 // TODO add display name and description also
@@ -15,6 +16,6 @@ object ParameterInfo {
 
   implicit val parameterInfoReads = Json.reads[ParameterInfo]
 
-  def fromMetaParameter(id: String, parameter: Meta.Parameter): ParameterInfo =
+  def fromTemplateInfoParameter(id: String, parameter: TemplateConfig.Parameter): ParameterInfo =
     ParameterInfo(id, parameter.name, parameter.default, parameter.secret, parameter.`type`)
 }
