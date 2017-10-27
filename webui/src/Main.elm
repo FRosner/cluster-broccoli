@@ -46,7 +46,12 @@ update msg model =
                 l =
                     Debug.log "ConnectError" ( url, error )
             in
-                ( { model | wsConnected = False }
+                ( { model
+                    | wsConnected = False
+                    , aboutInfo = Nothing
+                    , templates = Dict.empty
+                    , instances = Dict.empty
+                  }
                 , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
                 )
 
