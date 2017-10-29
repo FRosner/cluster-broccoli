@@ -3,6 +3,7 @@ package de.frosner.broccoli.instances
 import javax.inject.Singleton
 
 import com.google.inject.{AbstractModule, Provides}
+import com.hubspot.jinjava.JinjavaConfig
 import de.frosner.broccoli.BroccoliConfiguration
 import de.frosner.broccoli.templates.TemplateRenderer
 import net.codingwell.scalaguice.ScalaModule
@@ -19,6 +20,6 @@ class InstanceModule extends AbstractModule with ScalaModule {
     */
   @Provides
   @Singleton
-  def provideTemplateRenderer(config: BroccoliConfiguration): TemplateRenderer =
-    new TemplateRenderer
+  def provideTemplateRenderer(config: BroccoliConfiguration, jinjavaConfig: JinjavaConfig): TemplateRenderer =
+    new TemplateRenderer(jinjavaConfig)
 }

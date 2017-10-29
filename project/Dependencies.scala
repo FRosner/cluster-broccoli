@@ -117,4 +117,9 @@ object Dependencies {
     */
   val commonsLang: ModuleID = "org.apache.commons" % "commons-lang3" % "3.6"
 
+  /**
+    * Jinja templating engine implemented in Java
+    */
+  val jinJava: ModuleID = "com.hubspot.jinjava" % "jinjava" % "2.2.9"
+
 }

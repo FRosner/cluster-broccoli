@@ -1,14 +1,16 @@
 package de.frosner.broccoli.templates
 
 import de.frosner.broccoli.models._
+import com.hubspot.jinjava.JinjavaConfig
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import play.api.libs.json.{JsNumber, JsString}
 
-import scala.util.{Failure, Try}
+import scala.collection.JavaConversions._
 
 class TemplateRendererSpec extends Specification with Mockito {
-  val templateRenderer = new TemplateRenderer
+  val templateRenderer =
+    new TemplateRenderer(JinjavaConfig.newBuilder().withFailOnUnknownTokens(true).build())
 
   "TemplateRenderer" should {
     "render the template correctly when an instance contains a single parameter" in {
@@ -99,6 +101,48 @@ class TemplateRendererSpec extends Specification with Mockito {
         parameterValues = Map("id" -> StringParameterValue("Frank"), "age" -> IntParameterValue(50))
       )
       templateRenderer.renderJson(instance) === JsString("Frank 50")
+    }
+
+    "parse correctly jinja2 local variables" in {
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = "{% for x in [1,2,3] %}{{ id }}{{ x }}{% endfor %}",
+          description = "desc",
+          parameterInfos = Map.empty
+        ),
+        parameterValues = Map("id" -> "^.*$")
+      )
+      templateRenderer.renderJson(instance) === JsString("123")
+    }
+
+    "parse correctly jinja2 conditions" in {
+      val template = "\"{% if id > 0 %}greater than zero{% else %}less than or equal to zero{% endif %}\""
+
+      val instance1 = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = template,
+          description = "desc",
+          parameterInfos = Map.empty
+        ),
+        parameterValues = Map("id" -> "10")
+      )
+      templateRenderer.renderJson(instance1) === JsString("greater than zero")
+
+      val instance2 = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = template,
+          description = "desc",
+          parameterInfos = Map.empty
+        ),
+        parameterValues = Map("id" -> "-3")
+      )
+      templateRenderer.renderJson(instance2) === JsString("less than or equal to zero")
     }
 
     "parse the template correctly when it has Decimal parameters" in {

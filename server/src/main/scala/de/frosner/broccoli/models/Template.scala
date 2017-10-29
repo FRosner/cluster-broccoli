@@ -1,26 +1,21 @@
 package de.frosner.broccoli.models
 
-import java.util.regex.Pattern
-
+import com.hubspot.jinjava.Jinjava
+import de.frosner.broccoli.models.ParameterInfo.parameterInfoWrites
 import org.apache.commons.codec.digest.DigestUtils
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
-import scala.collection.mutable.ArrayBuffer
-
-import ParameterInfo.parameterInfoWrites
+import scala.collection.JavaConversions._
 
 case class Template(id: String, template: String, description: String, parameterInfos: Map[String, ParameterInfo])
     extends Serializable {
 
   @transient
   lazy val parameters: Set[String] = {
-    val matcher = Template.TemplatePattern.matcher(template)
-    var variables = ArrayBuffer[String]()
-    while (matcher.find()) {
-      variables += matcher.group(1)
-    }
-    val uniqueVariables = variables.toSet
+    val jinjava = new Jinjava()
+    val renderResult = jinjava.renderForResult(template, Map.empty[String, String])
+    val uniqueVariables = renderResult.getContext.getResolvedValues.toSet
     require(
       uniqueVariables.contains("id"),
       s"There needs to be an 'id' field in the template for Broccoli to work. Parameters defined: ${uniqueVariables}")
@@ -34,8 +29,6 @@ case class Template(id: String, template: String, description: String, parameter
 }
 
 object Template {
-
-  val TemplatePattern = Pattern.compile("\\{\\{([A-Za-z][A-Za-z0-9\\-\\_\\_]*)\\}\\}")
 
   implicit val templateApiWrites: Writes[Template] = (
     (JsPath \ "id").write[String] and

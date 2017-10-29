@@ -6,7 +6,6 @@ import com.google.inject.{AbstractModule, Provides}
 import de.frosner.broccoli.BroccoliConfiguration
 import de.frosner.broccoli.signal.UnixSignalManager
 import net.codingwell.scalaguice.ScalaModule
-import play.api.Configuration
 
 /**
   * Provide a template source from the Play configuration
@@ -27,5 +26,4 @@ class TemplateModule extends AbstractModule with ScalaModule {
       new CachedTemplateSource(new DirectoryTemplateSource(config.templates.path)),
       signalManager
     )
-
 }
