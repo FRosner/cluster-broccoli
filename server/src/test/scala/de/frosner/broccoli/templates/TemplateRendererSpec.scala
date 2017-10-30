@@ -108,13 +108,13 @@ class TemplateRendererSpec extends Specification with Mockito {
         id = "1",
         template = Template(
           id = "1",
-          template = "{% for x in [1,2,3] %}{{ id }}{{ x }}{% endfor %}",
+          template = "\"{% for x in [1,2,3] %}{{ id }}{{ x }}{% endfor %}\"",
           description = "desc",
           parameterInfos = Map.empty
         ),
-        parameterValues = Map("id" -> "^.*$")
+        parameterValues = Map("id" -> "1")
       )
-      templateRenderer.renderJson(instance) === JsString("123")
+      templateRenderer.renderJson(instance) === JsString("111213")
     }
 
     "parse correctly jinja2 conditions" in {
