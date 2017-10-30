@@ -1,6 +1,7 @@
 package de.frosner.broccoli.templates
 
-import com.hubspot.jinjava.interpret.RenderResult
+import com.hubspot.jinjava.interpret.{FatalTemplateErrorsException, RenderResult}
+import com.hubspot.jinjava.interpret.TemplateError.ErrorType
 import com.hubspot.jinjava.{Jinjava, JinjavaConfig}
 import de.frosner.broccoli.models.Instance
 import play.api.libs.json.{JsValue, Json}
@@ -33,6 +34,12 @@ class TemplateRenderer(jinjavaConfig: JinjavaConfig) {
 
   def renderJson(instance: Instance): JsValue = {
     val renderResult = renderForResult(instance)
+    val fatalErrors = renderResult.getErrors.filter(error => error.getSeverity == ErrorType.FATAL)
+
+    if (!fatalErrors.isEmpty()) {
+      throw new FatalTemplateErrorsException(instance.template.template, fatalErrors)
+    }
+
     Json.parse(renderResult.getOutput)
   }
 }
