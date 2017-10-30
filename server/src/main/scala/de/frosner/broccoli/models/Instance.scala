@@ -21,28 +21,6 @@ case class Instance(id: String, template: Template, parameterValues: Map[String,
 
   requireParameterValueConsistency(parameterValues, template)
 
-  def updateParameterValues(newParameterValues: Map[String, ParameterValue]): Try[Instance] =
-    Try {
-      require(newParameterValues("id") == parameterValues("id"), s"The parameter value 'id' must not be changed.")
-
-      Instance(
-        id = this.id,
-        template = this.template,
-        parameterValues = newParameterValues
-      )
-    }
-
-  def updateTemplate(newTemplate: Template, newParameterValues: Map[String, ParameterValue]): Try[Instance] =
-    Try {
-      require(newParameterValues("id") == parameterValues("id"), s"The parameter value 'id' must not be changed.")
-
-      Instance(
-        id = this.id,
-        template = newTemplate,
-        parameterValues = newParameterValues
-      )
-    }
-
 }
 
 object Instance {

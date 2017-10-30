@@ -2,6 +2,7 @@ package de.frosner.broccoli.templates
 
 import de.frosner.broccoli.models._
 import com.hubspot.jinjava.JinjavaConfig
+import com.hubspot.jinjava.interpret.FatalTemplateErrorsException
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import play.api.libs.json.{JsNumber, JsString}
@@ -110,9 +111,9 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = "\"{% for x in [1,2,3] %}{{ id }}{{ x }}{% endfor %}\"",
           description = "desc",
-          parameterInfos = Map.empty
+          parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))
         ),
-        parameterValues = Map("id" -> "1")
+        parameterValues = Map("id" -> RawParameterValue("1"))
       )
       templateRenderer.renderJson(instance) === JsString("111213")
     }
@@ -126,9 +127,9 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = template,
           description = "desc",
-          parameterInfos = Map.empty
+          parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))
         ),
-        parameterValues = Map("id" -> "10")
+        parameterValues = Map("id" -> RawParameterValue("10"))
       )
       templateRenderer.renderJson(instance1) === JsString("greater than zero")
 
@@ -138,11 +139,25 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = template,
           description = "desc",
-          parameterInfos = Map.empty
+          parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))
         ),
-        parameterValues = Map("id" -> "-3")
+        parameterValues = Map("id" -> RawParameterValue("-3"))
       )
       templateRenderer.renderJson(instance2) === JsString("less than or equal to zero")
+    }
+
+    "throws an exception if the template contains no default and no value" in {
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = "\"{{id}} {{age}}\"",
+          description = "desc",
+          parameterInfos = Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = ParameterType.Raw, None))
+        ),
+        parameterValues = Map("id" -> RawParameterValue("Frank"))
+      )
+      templateRenderer.renderJson(instance) must throwA[FatalTemplateErrorsException]
     }
 
     "parse the template correctly when it has Decimal parameters" in {
