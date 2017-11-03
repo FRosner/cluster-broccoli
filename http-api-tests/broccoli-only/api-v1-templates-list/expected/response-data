@@ -8,19 +8,21 @@
       "enabled"
     ],
     "parameterInfos": {
+      "id": {
+        "id": "id",
+        "type": "string"
+      },
       "enabled": {
         "id": "enabled",
         "default": "true",
-        "type": "raw"
+        "type": "raw",
+        "orderIndex": 2
       },
       "URL": {
         "id": "URL",
         "default": "localhost:8000",
-        "type": "string"
-      },
-      "id": {
-        "id": "id",
-        "type": "string"
+        "type": "string",
+        "orderIndex": 1
       }
     },
     "version": "51d1c2a8322e612f42b304b533249d17"
