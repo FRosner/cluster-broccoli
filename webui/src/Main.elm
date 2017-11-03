@@ -74,7 +74,12 @@ update msg model =
                 l =
                     Debug.log "SuccessDisconnect" url
             in
-                ( { model | wsConnected = False }
+                ( { model
+                    | wsConnected = False
+                    , aboutInfo = Nothing
+                    , templates = Dict.empty
+                    , instances = Dict.empty
+                  }
                 , Cmd.none
                 )
 
