@@ -8,7 +8,8 @@ case class ParameterInfo(id: String,
                          name: Option[String],
                          default: Option[String],
                          secret: Option[Boolean],
-                         `type`: Option[ParameterType])
+                         `type`: Option[ParameterType],
+                         orderIndex: Option[Int])
 
 object ParameterInfo {
 
@@ -17,5 +18,5 @@ object ParameterInfo {
   implicit val parameterInfoReads = Json.reads[ParameterInfo]
 
   def fromTemplateInfoParameter(id: String, parameter: TemplateConfig.Parameter): ParameterInfo =
-    ParameterInfo(id, parameter.name, parameter.default, parameter.secret, parameter.`type`)
+    ParameterInfo(id, parameter.name, parameter.default, parameter.secret, parameter.`type`, parameter.orderIndex)
 }

@@ -8,22 +8,24 @@
       "enabled"
     ],
     "parameterInfos": {
+      "id": {
+        "id": "id",
+        "type": "string"
+      },
       "enabled": {
         "id": "enabled",
         "default": "true",
-        "type": "raw"
+        "type": "raw",
+        "orderIndex": 2
       },
       "URL": {
         "id": "URL",
         "default": "localhost:8000",
-        "type": "string"
-      },
-      "id": {
-        "id": "id",
-        "type": "string"
+        "type": "string",
+        "orderIndex": 1
       }
     },
-    "version": "26c9f9e974f7ea648e54696f6bf5f1bf"
+    "version": "51d1c2a8322e612f42b304b533249d17"
   },
   {
     "id": "http-server",
@@ -52,7 +54,7 @@
         "type": "string"
       }
     },
-    "version": "e1ee8d8dd92a3b1bed4392da1cdea8c6"
+    "version": "1721c964c355a8590c1c994d443ca1cf"
   },
   {
     "id": "jupyter",
@@ -66,6 +68,6 @@
         "type": "string"
       }
     },
-    "version": "1f664311cbc1b4c2002834390745d658"
+    "version": "dcba087274c4f613c3026006f9fa3016"
   }
 ]

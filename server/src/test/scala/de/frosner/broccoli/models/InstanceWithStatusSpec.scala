@@ -25,7 +25,8 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
                 name = None,
                 default = None,
                 secret = Some(true),
-                `type` = Some(ParameterType.String)
+                `type` = Some(ParameterType.String),
+                orderIndex = None
               )
             )
           ),
@@ -51,7 +52,8 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
                 name = None,
                 default = None,
                 secret = Some(true),
-                `type` = Some(ParameterType.String)
+                `type` = Some(ParameterType.String),
+                orderIndex = None
               )
             )
           ),
@@ -81,14 +83,16 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
                 name = None,
                 default = None,
                 secret = Some(true),
-                `type` = Some(ParameterType.String)
+                `type` = Some(ParameterType.String),
+                orderIndex = None
               ),
               "id" -> ParameterInfo(
                 id = "secret id",
                 name = None,
                 default = None,
                 secret = Some(true),
-                `type` = Some(ParameterType.String)
+                `type` = Some(ParameterType.String),
+                orderIndex = None
               )
             )
           ),
@@ -114,14 +118,16 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
                 name = None,
                 default = None,
                 secret = Some(true),
-                `type` = Some(ParameterType.String)
+                `type` = Some(ParameterType.String),
+                orderIndex = None
               ),
               "id" -> ParameterInfo(
                 id = "secret id",
                 name = None,
                 default = None,
                 secret = Some(true),
-                `type` = Some(ParameterType.String)
+                `type` = Some(ParameterType.String),
+                orderIndex = None
               )
             )
           ),

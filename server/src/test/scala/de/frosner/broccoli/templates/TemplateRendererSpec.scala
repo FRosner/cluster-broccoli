@@ -27,7 +27,8 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos = Map("age" -> ParameterInfo("age", None, Some("50"), secret = Some(false), `type` = None))
+          parameterInfos =
+            Map("age" -> ParameterInfo("age", None, Some("50"), secret = Some(false), `type` = None, orderIndex = None))
         ),
         parameterValues = Map("id" -> "Frank")
       )
@@ -41,8 +42,13 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = """"{{id}}"""",
           description = "desc",
-          parameterInfos =
-            Map("id" -> ParameterInfo("id", None, None, secret = Some(false), `type` = Some(ParameterType.String)))
+          parameterInfos = Map(
+            "id" -> ParameterInfo("id",
+                                  None,
+                                  None,
+                                  secret = Some(false),
+                                  `type` = Some(ParameterType.String),
+                                  orderIndex = None))
         ),
         parameterValues = Map("id" -> "\"Frank")
       )
@@ -70,7 +76,8 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos = Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = None))
+          parameterInfos =
+            Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = None, orderIndex = None))
         ),
         parameterValues = Map("id" -> "Frank", "age" -> "50")
       )
@@ -85,7 +92,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         .sanitize(
           "parameter",
           parameterValue,
-          Map("parameter" -> ParameterInfo("parameter", None, None, None, Some(ParameterType.Raw)))) === parameterValue
+          Map("parameter" -> ParameterInfo("parameter", None, None, None, Some(ParameterType.Raw), None))) === parameterValue
     }
 
     "escape the value if it is a string" in {
@@ -93,7 +100,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         .sanitize(
           "parameter",
           """ "value  """,
-          Map("parameter" -> ParameterInfo("parameter", None, None, None, Some(ParameterType.String)))) === """ \"value  """
+          Map("parameter" -> ParameterInfo("parameter", None, None, None, Some(ParameterType.String), None))) === """ \"value  """
     }
 
     "pick the default parameter type if the type for the parameter is not specified in ParameterInfos" in {
