@@ -37,7 +37,8 @@ trait ModelArbitraries {
         name = name,
         default = default,
         secret = secret,
-        `type` = type_
+        `type` = type_,
+        orderIndex = None
       )
   }
 
@@ -49,7 +50,7 @@ trait ModelArbitraries {
       templateDescription <- Gen.identifier.label("description")
       templateParameters <- Gen.listOf(arbParameterInfo.arbitrary).label("parameterInfos")
     } yield {
-      val idParameter = ParameterInfo(id = "id", None, None, None, None)
+      val idParameter = ParameterInfo(id = "id", None, None, None, None, None)
       val template = templateParameters.map(i => s"{{${i.id}}}").mkString(" ")
       Template(
         id = templateId,

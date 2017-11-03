@@ -23,7 +23,8 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
                                 name = Some("myname"),
                                 default = Some("myid"),
                                 secret = Some(false),
-                                `type` = None)
+                                `type` = None,
+                                orderIndex = None)
         )
       )
 

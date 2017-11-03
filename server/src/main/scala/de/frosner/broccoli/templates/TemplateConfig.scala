@@ -9,6 +9,7 @@ object TemplateConfig {
   final case class Parameter(name: Option[String],
                              default: Option[String],
                              secret: Option[Boolean],
-                             `type`: Option[ParameterType])
+                             `type`: Option[ParameterType],
+                             orderIndex: Option[Int])
 
 }

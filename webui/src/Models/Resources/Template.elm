@@ -22,6 +22,7 @@ type alias ParameterInfo =
     , name : Maybe String
     , default : Maybe String
     , secret : Maybe Bool
+    , orderIndex : Maybe Float
     }
 
 
@@ -39,8 +40,9 @@ decoder =
 
 
 parameterInfoDecoder =
-    Decode.map4 ParameterInfo
+    Decode.map5 ParameterInfo
         (field "id" Decode.string)
         (Decode.maybe (field "name" Decode.string))
         (Decode.maybe (field "default" Decode.string))
         (Decode.maybe (field "secret" Decode.bool))
+        (Decode.maybe (field "orderIndex" Decode.float))

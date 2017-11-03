@@ -56,12 +56,14 @@ class TemplateSpec extends Specification {
         template = "template JSON {{id}}",
         description = "desc",
         parameterInfos = Map.empty
-      ).version !== Template(id = "test",
-                             template = "template JSON {{id}}",
-                             description = "desc",
-                             parameterInfos = Map(
-                               "id" -> ParameterInfo("id", None, None, secret = Some(false), `type` = None)
-                             )).version
+      ).version !== Template(
+        id = "test",
+        template = "template JSON {{id}}",
+        description = "desc",
+        parameterInfos = Map(
+          "id" -> ParameterInfo("id", None, None, secret = Some(false), `type` = None, orderIndex = None)
+        )
+      ).version
     }
 
   }

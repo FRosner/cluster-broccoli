@@ -1,7 +1,8 @@
-module Utils.ParameterUtils exposing (getOtherParameters)
+module Utils.ParameterUtils exposing (getOtherParametersSorted)
 
-import List exposing (filter, sortBy)
-import String exposing (toLower)
+import List
+import String
+import Tuple
 
 
 {-| Get other parameters, in alphabetical order.
@@ -13,6 +14,8 @@ Note: We sort parameters by their ID not by their user-visible name, so the sort
 might seem different.
 
 -}
-getOtherParameters : List String -> List String
-getOtherParameters params =
-    filter ((/=) "id") params |> sortBy toLower
+getOtherParametersSorted : List ( Float, String ) -> List String
+getOtherParametersSorted params =
+    List.filter (\( orderIndex, param ) -> param /= "id") params
+        |> List.sortBy (\( orderIndex, param ) -> ( orderIndex, String.toLower param ))
+        |> List.map Tuple.second

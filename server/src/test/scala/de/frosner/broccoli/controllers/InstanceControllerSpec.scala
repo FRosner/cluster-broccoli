@@ -72,7 +72,8 @@ class InstanceControllerSpec
             name = Some("secret"),
             default = Some("value"),
             secret = Some(true),
-            `type` = None
+            `type` = None,
+            orderIndex = None
           )
         )
       ),

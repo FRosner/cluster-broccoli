@@ -41,7 +41,8 @@ class WebSocketControllerSpec
             name = None,
             default = Some("value"),
             secret = Some(true),
-            `type` = None
+            `type` = None,
+            orderIndex = None
           )
         )
       ),
