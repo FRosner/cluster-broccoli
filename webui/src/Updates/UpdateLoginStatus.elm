@@ -65,20 +65,25 @@ updateLoginStatus message model =
                 )
 
         FetchVerify (Err error) ->
-            case error of
-                BadStatus response ->
-                    case response.status.code of
-                        403 ->
-                            ( { model | authRequired = Just True }
-                            , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
-                            )
+            if (not (model.wsConnected)) then
+                case error of
+                    BadStatus response ->
+                        case response.status.code of
+                            403 ->
+                                ( { model | authRequired = Just True }
+                                , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
+                                )
 
-                        _ ->
-                            ( model
-                            , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
-                            )
+                            _ ->
+                                ( model
+                                , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
+                                )
 
-                _ ->
-                    ( model
-                    , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
-                    )
+                    _ ->
+                        ( model
+                        , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
+                        )
+            else
+                ( model
+                , Cmd.none
+                )
