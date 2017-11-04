@@ -7,7 +7,7 @@ import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (Instan
 import Views.Styles exposing (instanceViewElementStyle)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
-import Utils.ParameterUtils exposing (getOtherParametersSorted)
+import Utils.ParameterUtils as ParameterUtils
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onCheck, onInput, onSubmit, on)
@@ -99,16 +99,8 @@ parametersView parametersH instance template maybeInstanceParameterForm visibleS
     let
         otherParameters =
             template.parameters
-                |> List.map
-                    (\p ->
-                        ( template.parameterInfos
-                            |> Dict.get p
-                            |> Maybe.andThen (\i -> i.orderIndex)
-                            |> Maybe.withDefault (1 / 0)
-                        , p
-                        )
-                    )
-                |> getOtherParametersSorted
+                |> ParameterUtils.zipWithOrderIndex template.parameterInfos
+                |> ParameterUtils.getOtherParametersSorted
 
         otherParameterValues =
             Dict.remove "id" instance.parameterValues
@@ -315,16 +307,8 @@ newView template maybeInstanceParameterForm visibleSecrets =
     let
         otherParameters =
             template.parameters
-                |> List.map
-                    (\p ->
-                        ( template.parameterInfos
-                            |> Dict.get p
-                            |> Maybe.andThen (\i -> i.orderIndex)
-                            |> Maybe.withDefault (1 / 0)
-                        , p
-                        )
-                    )
-                |> getOtherParametersSorted
+                |> ParameterUtils.zipWithOrderIndex template.parameterInfos
+                |> ParameterUtils.getOtherParametersSorted
 
         otherParameterInfos =
             Dict.remove "id" template.parameterInfos

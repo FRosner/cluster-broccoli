@@ -1,8 +1,9 @@
 module Utils.ParameterUtilsSuite exposing (tests)
 
-import Utils.ParameterUtils exposing (getOtherParametersSorted)
+import Utils.ParameterUtils exposing (getOtherParametersSorted, zipWithOrderIndex)
 import Test exposing (test, describe, Test)
 import Expect
+import Dict exposing (Dict)
 
 
 tests : Test
@@ -29,5 +30,41 @@ tests =
                     Expect.equal
                         [ "bar", "FOO" ]
                         (getOtherParametersSorted [ ( 1, "FOO" ), ( 1, "bar" ) ])
+            ]
+        , describe "zipWithOrderIndex"
+            [ test "assign infinity if no order index is given" <|
+                \() ->
+                    Expect.equal
+                        [ ( 1 / 0, "a" ), ( 1 / 0, "b" ), ( 1 / 0, "c" ) ]
+                        (zipWithOrderIndex
+                            Dict.empty
+                            [ "a", "b", "c" ]
+                        )
+            , test "zip the order index correctly" <|
+                \() ->
+                    Expect.equal
+                        [ ( 2, "a" ), ( 1, "b" ) ]
+                        (zipWithOrderIndex
+                            (Dict.fromList
+                                [ ( "a"
+                                  , { id = "a"
+                                    , default = Nothing
+                                    , secret = Nothing
+                                    , name = Nothing
+                                    , orderIndex = Just 2
+                                    }
+                                  )
+                                , ( "b"
+                                  , { id = "b"
+                                    , default = Nothing
+                                    , secret = Nothing
+                                    , name = Nothing
+                                    , orderIndex = Just 1
+                                    }
+                                  )
+                                ]
+                            )
+                            [ "a", "b" ]
+                        )
             ]
         ]
