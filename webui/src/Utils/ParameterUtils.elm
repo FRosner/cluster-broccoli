@@ -5,7 +5,7 @@ import String
 import Tuple
 
 
-{-| Get other parameters, in alphabetical order.
+{-| Get other parameters, in order of the order-index and then alphabetical order.
 
 "Other" parameters are all parameters except "id" which receives special treatment of being shown
 first in all cases.
