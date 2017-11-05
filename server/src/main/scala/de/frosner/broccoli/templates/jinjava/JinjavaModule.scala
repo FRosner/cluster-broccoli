@@ -4,6 +4,7 @@ import javax.inject.Singleton
 
 import com.google.inject.{AbstractModule, Provides}
 import com.hubspot.jinjava.JinjavaConfig
+import de.frosner.broccoli.BroccoliConfiguration
 import net.codingwell.scalaguice.ScalaModule
 
 /**
@@ -13,7 +14,8 @@ class JinjavaModule extends AbstractModule with ScalaModule {
   override def configure(): Unit = {}
   @Provides
   @Singleton
-  def provideJinjavaConfig(config: JinjavaConfiguration): JinjavaConfig =
+  def provideJinjavaConfig(broccoliConfiguration: BroccoliConfiguration): JinjavaConfig = {
+    val config = broccoliConfiguration.templates.jinjava
     JinjavaConfig
       .newBuilder()
       .withMaxRenderDepth(config.maxRenderDepth)
@@ -25,4 +27,5 @@ class JinjavaModule extends AbstractModule with ScalaModule {
       .withNestedInterpretationEnabled(config.nestedInterpretationEnabled)
       .withFailOnUnknownTokens(config.failOnUnknownTokens)
       .build()
+  }
 }
