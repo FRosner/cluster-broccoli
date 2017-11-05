@@ -6,7 +6,6 @@ import Model exposing (Model)
 import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
 import Utils.CmdUtils as CmdUtils
 import Ws
-import Time
 import Debug
 import Routing
 import Http exposing (Error(..))
@@ -71,17 +70,17 @@ updateLoginStatus message model =
                         case response.status.code of
                             403 ->
                                 ( { model | authRequired = Just True }
-                                , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
+                                , Ws.attemptReconnect
                                 )
 
                             _ ->
                                 ( model
-                                , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
+                                , Ws.attemptReconnect
                                 )
 
                     _ ->
                         ( model
-                        , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
+                        , Ws.attemptReconnect
                         )
             else
                 ( model

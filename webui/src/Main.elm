@@ -14,7 +14,6 @@ import Utils.CmdUtils as CmdUtils
 import Routing
 import Model exposing (Model)
 import Ws
-import Time
 import Html exposing (..)
 import Navigation exposing (Location)
 import Dict exposing (Dict)
@@ -52,7 +51,7 @@ update msg model =
                     , templates = Dict.empty
                     , instances = Dict.empty
                   }
-                , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
+                , Ws.attemptReconnect
                 )
 
         WsConnect url ->

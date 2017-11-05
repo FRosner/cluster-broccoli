@@ -1,4 +1,4 @@
-module Ws exposing (update, listen, send, connect, disconnect)
+module Ws exposing (update, listen, send, connect, disconnect, attemptReconnect)
 
 import Json.Decode as Decode exposing (Decoder, field, andThen)
 import Models.Resources.AboutInfo as AboutInfo
@@ -17,6 +17,7 @@ import Updates.Messages exposing (..)
 import Messages exposing (..)
 import Array exposing (Array)
 import Set
+import Time
 import Dict
 import Websocket
 import Json.Encode as Encode
@@ -275,3 +276,8 @@ locationToWsUrl location =
             , location.host
             , wsRelativePath
             ]
+
+
+attemptReconnect : Cmd AnyMsg
+attemptReconnect =
+    CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
