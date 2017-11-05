@@ -13,7 +13,7 @@ class TemplateSourceSpec extends Specification {
     "work" in {
       val id = "templateId"
       val templateString = "Hello {{ id }}"
-      val templateInfo = TemplateInfo(None, Some(Map("id" -> Parameter(Some("id"), None, None, None))))
+      val templateInfo = TemplateInfo(None, Some(Map("id" -> Parameter(Some("id"), None, None, None, None))))
       val convertDashesToUnderscores = false
       val template =
         templateSource.loadTemplate(id, templateString, templateInfo, convertDashesToUnderscores).get
