@@ -23,16 +23,12 @@ class TemplateSpec extends Specification {
       Template("test", "Hallo {{id}}. I like {{id}}.", "desc", Map.empty).parameters === Set("id")
     }
 
+    "does not support dashes in the parameter names" in {
+      Template("test", "Hallo {{id}} {{person-name}}", "desc", Map.empty).parameters === Set("id", "person", "name")
+    }
+
     "support underscores in the parameter names" in {
       Template("test", "Hallo {{id}} {{person_name}}", "desc", Map.empty).parameters === Set("id", "person_name")
-    }
-
-    "require an 'id' parameter (no parameter)" in {
-      Template("test", "Hallo", "desc", Map.empty).parameters must throwA[IllegalArgumentException]
-    }
-
-    "require an 'id' parameter (wrong parameter)" in {
-      Template("test", "Hallo {{bla}}", "desc", Map.empty).parameters must throwA[IllegalArgumentException]
     }
 
     "create the template version correctly in" in {

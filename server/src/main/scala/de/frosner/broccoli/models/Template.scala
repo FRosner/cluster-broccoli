@@ -16,9 +16,6 @@ case class Template(id: String, template: String, description: String, parameter
     val jinjava = new Jinjava()
     val renderResult = jinjava.renderForResult(template, Map.empty[String, String])
     val uniqueVariables = renderResult.getContext.getResolvedValues.toSet
-    require(
-      uniqueVariables.contains("id"),
-      s"There needs to be an 'id' field in the template for Broccoli to work. Parameters defined: ${uniqueVariables}")
     uniqueVariables
   }
 
