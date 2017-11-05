@@ -6,7 +6,6 @@ import Model exposing (Model)
 import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
 import Utils.CmdUtils as CmdUtils
 import Ws
-import Time
 import Debug
 import Routing
 import Http exposing (Error(..))
@@ -65,20 +64,25 @@ updateLoginStatus message model =
                 )
 
         FetchVerify (Err error) ->
-            case error of
-                BadStatus response ->
-                    case response.status.code of
-                        403 ->
-                            ( { model | authRequired = Just True }
-                            , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
-                            )
+            if (not (model.wsConnected)) then
+                case error of
+                    BadStatus response ->
+                        case response.status.code of
+                            403 ->
+                                ( { model | authRequired = Just True }
+                                , Ws.attemptReconnect
+                                )
 
-                        _ ->
-                            ( model
-                            , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
-                            )
+                            _ ->
+                                ( model
+                                , Ws.attemptReconnect
+                                )
 
-                _ ->
-                    ( model
-                    , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
-                    )
+                    _ ->
+                        ( model
+                        , Ws.attemptReconnect
+                        )
+            else
+                ( model
+                , Cmd.none
+                )

@@ -14,7 +14,6 @@ import Utils.CmdUtils as CmdUtils
 import Routing
 import Model exposing (Model)
 import Ws
-import Time
 import Html exposing (..)
 import Navigation exposing (Location)
 import Dict exposing (Dict)
@@ -46,8 +45,13 @@ update msg model =
                 l =
                     Debug.log "ConnectError" ( url, error )
             in
-                ( { model | wsConnected = False }
-                , CmdUtils.delayMsg (5 * Time.second) AttemptReconnect
+                ( { model
+                    | wsConnected = False
+                    , aboutInfo = Nothing
+                    , templates = Dict.empty
+                    , instances = Dict.empty
+                  }
+                , Ws.attemptReconnect
                 )
 
         WsConnect url ->
@@ -69,7 +73,12 @@ update msg model =
                 l =
                     Debug.log "SuccessDisconnect" url
             in
-                ( { model | wsConnected = False }
+                ( { model
+                    | wsConnected = False
+                    , aboutInfo = Nothing
+                    , templates = Dict.empty
+                    , instances = Dict.empty
+                  }
                 , Cmd.none
                 )
 
