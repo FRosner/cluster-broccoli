@@ -4,9 +4,9 @@
     "id": "http-server",
     "description": "A simple Python HTTP request handler. This class serves files from the current directory and below, directly mapping the directory structure to HTTP requests.",
     "parameters": [
+      "cpu",
       "id",
-      "secret",
-      "cpu"
+      "secret"
     ],
     "parameterInfos": {
       "cpu": {
