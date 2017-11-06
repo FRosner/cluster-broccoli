@@ -7,6 +7,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
 import scala.collection.JavaConversions._
+import scala.collection.immutable.TreeSet
 
 case class Template(id: String, template: String, description: String, parameterInfos: Map[String, ParameterInfo])
     extends Serializable {
@@ -15,7 +16,8 @@ case class Template(id: String, template: String, description: String, parameter
   lazy val parameters: Set[String] = {
     val jinjava = new Jinjava()
     val renderResult = jinjava.renderForResult(template, Map.empty[String, String])
-    val uniqueVariables = renderResult.getContext.getResolvedValues.toSet
+    // TODO: get rid of this after the integration tests are in Scala https://travis-ci.org/FRosner/cluster-broccoli/jobs/297629476#L1771
+    val uniqueVariables = TreeSet.empty[String] ++ renderResult.getContext.getResolvedValues.toSet
     uniqueVariables
   }
 
