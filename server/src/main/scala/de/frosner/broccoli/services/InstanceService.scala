@@ -14,7 +14,6 @@ import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.NomadClient
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}

@@ -6,17 +6,16 @@ import javax.inject.{Inject, Singleton}
 import de.frosner.broccoli.conf
 import de.frosner.broccoli.logging.logExecutionTime
 import de.frosner.broccoli.models.{Service, ServiceStatus}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.{Configuration, Logger}
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 @Singleton()
-class ConsulService @Inject()(configuration: Configuration, ws: WSClient) {
+class ConsulService @Inject()(configuration: Configuration, ws: WSClient)(implicit ec: ExecutionContext) {
 
   private val log = Logger(getClass)
 

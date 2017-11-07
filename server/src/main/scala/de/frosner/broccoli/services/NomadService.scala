@@ -12,13 +12,12 @@ import play.api.libs.json._
 import play.api.libs.ws.WSClient
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 @Singleton
-class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulService: ConsulService, ws: WSClient) {
-
-  implicit val defaultContext = play.api.libs.concurrent.Execution.Implicits.defaultContext
+class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulService: ConsulService, ws: WSClient)(
+    implicit ec: ExecutionContext) {
 
   private val nomadBaseUrl = nomadConfiguration.url
 

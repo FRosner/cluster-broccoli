@@ -15,6 +15,7 @@ import play.api.test._
 import play.core.server.Server
 import squants.information.InformationConversions._
 import squants.time.FrequencyConversions._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
