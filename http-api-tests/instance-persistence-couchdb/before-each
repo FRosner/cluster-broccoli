@@ -1,6 +1,6 @@
 #!/bin/bash
-docker pull couchdb
-docker run --rm -d --net host couchdb > couchdb.did
+docker pull couchdb:1.7.0
+docker run --rm -d --net host couchdb:1.7.0 > couchdb.did
 
 sleep $BROCCOLI_SLEEP_MEDIUM
 
