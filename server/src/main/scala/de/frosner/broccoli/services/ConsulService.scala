@@ -110,7 +110,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient)(implic
           }
       }
     }
-    val serviceResponse = Try(Await.result(Future.sequence(serviceResponses), Duration(5, TimeUnit.SECONDS)))
+    val serviceResponse = Future.sequence(serviceResponses)
     def unknownService(name: String) = Service(
       name = name,
       protocol = "",
@@ -118,7 +118,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient)(implic
       port = 80,
       status = ServiceStatus.Unknown
     )
-    serviceResponse match {
+    serviceResponse.onComplete {
       case Success(services) => {
         val healthyOrUnhealthyServices = services.flatten.map(service => (service.name, service)).toMap
         val allServices = serviceNames.map { name =>
@@ -129,7 +129,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient)(implic
       }
       case Failure(throwable) =>
         consulReachable = false
-        log.error(s"Failed to get service statuses from Consul: ${throwable.toString}")
+        log.error(s"Failed to get service statuses for job '$jobId' from Consul: ${throwable.toString}")
         val unknownServices = serviceNames.map(unknownService)
         serviceStatuses = serviceStatuses.updated(jobId, unknownServices)
     }
