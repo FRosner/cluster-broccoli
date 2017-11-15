@@ -129,7 +129,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient)(implic
       }
       case Failure(throwable) =>
         consulReachable = false
-        log.error(s"Failed to get service statuses from Consul: ${throwable.toString}")
+        log.error(s"Failed to get service statuses for job '$jobId' from Consul: ${throwable.toString}")
         val unknownServices = serviceNames.map(unknownService)
         serviceStatuses = serviceStatuses.updated(jobId, unknownServices)
     }
