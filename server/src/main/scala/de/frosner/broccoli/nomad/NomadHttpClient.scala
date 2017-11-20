@@ -45,7 +45,13 @@ class NomadHttpClient(
       */
     override def getAllocationStats(allocationId: @@[String, Allocation.Id]): NomadT[AllocationStats] =
       lift(client.url(v1Client / "allocation" / allocationId / "stats").withHeaders(ACCEPT -> JSON).get())
-        .subflatMap(response => response.json.validate[AllocationStats].asEither.leftMap(_ => NomadError.NotFound))
+        .subflatMap { response =>
+          val maybeAllocationStats = for {
+            responseJson <- Try(response.json).toOption
+            allocationStats <- responseJson.validate[AllocationStats].asOpt
+          } yield allocationStats
+          maybeAllocationStats.toRight(NomadError.NotFound)
+        }
 
     /**
       * Get the log of a task on an allocation.
