@@ -15,6 +15,8 @@ class FileSystemInstanceStorage(storageDirectory: File) extends InstanceStorage 
 
   protected val log = play.api.Logger(getClass)
 
+  log.info(s"Starting $this")
+
   require(storageDirectory.isDirectory && storageDirectory.canWrite,
           s"'$storageDirectory' needs to be a writable directory")
 

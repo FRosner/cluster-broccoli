@@ -9,13 +9,16 @@ import cats.instances.future.{getClass, _}
 import de.frosner.broccoli.instances.{InstanceConfiguration, _}
 import de.frosner.broccoli.templates.TemplateRenderer
 import de.frosner.broccoli.instances.storage.InstanceStorage
+import de.frosner.broccoli.logging
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.NomadClient
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
 
-import scala.concurrent.Future
+import scala.concurrent
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 @Singleton
@@ -29,6 +32,9 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                                 instanceStorage: InstanceStorage,
                                 config: Configuration) {
   private val log = play.api.Logger(getClass)
+
+  log.info(s"Starting $this")
+
   // FIXME: refactor out together with the polling scheduler
   private lazy val pollingFrequencySeconds = {
     val pollingFrequency = config.getLong("broccoli.polling.frequency").get
@@ -40,17 +46,91 @@ class InstanceService @Inject()(nomadClient: NomadClient,
   }
   log.info(s"Nomad/Consul polling frequency set to $pollingFrequencySeconds seconds")
 
-  private val scheduler = new ScheduledThreadPoolExecutor(1)
-  private val task = new Runnable {
+  private val nomadScheduler = new ScheduledThreadPoolExecutor(1)
+  private val nomadTask = new Runnable {
     def run() =
-      nomadService.requestStatuses(instances.values.map(_.id).toSet)
+      logging.logExecutionTime(s"Syncing with Nomad") {
+        val nomadResult = Try {
+          Await
+            .result(nomadService
+                      .requestStatuses(instances.values.map(_.id).toSet),
+                    60.seconds) // TODO make timeout configurable
+        }
+        nomadResult match {
+          case Success(statuses) =>
+            jobStatuses = statuses
+            setNomadReachable()
+          case Failure(throwable) =>
+            jobStatuses = Map.empty
+            setNomadNotReachable()
+        }
+      }(log.info(_))
   }
-  private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0L, pollingFrequencySeconds, TimeUnit.SECONDS)
+  private val scheduledNomadTask =
+    nomadScheduler.scheduleWithFixedDelay(nomadTask, 0L, pollingFrequencySeconds, TimeUnit.SECONDS)
+
+  @volatile
+  private var nomadReachable: Boolean = false
+
+  def setNomadNotReachable() = {
+    nomadReachable = false
+    serviceStatuses = Map.empty
+  }
+
+  def setNomadReachable() =
+    nomadReachable = true
+
+  def isNomadReachable: Boolean =
+    nomadReachable
+
+  private val consulScheduler = new ScheduledThreadPoolExecutor(1)
+  private val consulTask = new Runnable {
+    def run() =
+      logging.logExecutionTime(s"Syncing with Consul") {
+        val consulResult = Try {
+          Await.result(consulService
+                         .requestServicesStatuses(jobStatuses.map {
+                           case (jobId, (jobStatus, periodicRuns, services)) => (jobId, services)
+                         }),
+                       60.seconds) // TODO make timeout configurable
+        }
+        consulResult match {
+          case Success(result) =>
+            serviceStatuses = result
+            if (result.nonEmpty) // if we didn't get any results we don't really know if consul is fine
+              setConsulReachable()
+          case Failure(throwable) =>
+            serviceStatuses = Map.empty
+            setConsulNotReachable()
+        }
+      }(log.info(_))
+  }
+  private val scheduledConsulTask =
+    consulScheduler.scheduleWithFixedDelay(consulTask, 0L, pollingFrequencySeconds, TimeUnit.SECONDS)
 
   sys.addShutdownHook {
-    scheduledTask.cancel(false)
-    scheduler.shutdown()
+    scheduledNomadTask.cancel(false)
+    scheduledConsulTask.cancel(false)
+    nomadScheduler.shutdown()
+    consulScheduler.shutdown()
   }
+
+  def getServiceStatusesOrDefault(id: String): Seq[Service] =
+    serviceStatuses.getOrElse(id, Seq.empty)
+
+  @volatile
+  private var consulReachable: Boolean = false
+
+  def setConsulNotReachable() = {
+    consulReachable = false
+    serviceStatuses = Map.empty
+  }
+
+  def setConsulReachable() =
+    consulReachable = true
+
+  def isConsulReachable: Boolean =
+    consulReachable
 
   @volatile
   private var instancesMap: Map[String, Instance] = Map.empty
@@ -68,6 +148,12 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     instancesMap
   }
 
+  @volatile
+  var jobStatuses: Map[String, (JobStatus, Seq[PeriodicRun], Seq[String])] = Map.empty
+
+  @volatile
+  var serviceStatuses: Map[String, Seq[Service]] = Map.empty
+
   /*
     I have to make this initialization "lazy" (but there are not lazy vars in Scala),
     because Play does not like it when you use System.exit(1) during the construction
@@ -82,13 +168,29 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     }
   }
 
+  private def getJobStatusOrDefault(id: String): JobStatus =
+    if (nomadReachable) {
+      jobStatuses.get(id).map { case (status, periodicStatuses, services) => status }.getOrElse(JobStatus.Stopped)
+    } else {
+      JobStatus.Unknown
+    }
+
+  private def getPeriodicRunsOrDefault(id: String): Seq[PeriodicRun] = {
+    val periodicRuns = jobStatuses.get(id).map { case (status, periodic, services) => periodic }.getOrElse(Seq.empty)
+    if (nomadReachable) {
+      periodicRuns
+    } else {
+      periodicRuns.map(_.copy(status = JobStatus.Unknown))
+    }
+  }
+
   private def addStatuses(instance: Instance): InstanceWithStatus = {
     val instanceId = instance.id
     InstanceWithStatus(
       instance = instance,
-      status = nomadService.getJobStatusOrDefault(instanceId),
-      services = consulService.getServiceStatusesOrDefault(instanceId),
-      periodicRuns = nomadService.getPeriodicRunsOrDefault(instanceId)
+      status = getJobStatusOrDefault(instanceId),
+      services = getServiceStatusesOrDefault(instanceId),
+      periodicRuns = getPeriodicRunsOrDefault(instanceId)
     )
   }
 
@@ -178,7 +280,13 @@ class InstanceService @Inject()(nomadClient: NomadClient,
             case JobStatus.Running =>
               nomadService.startJob(templateRenderer.renderJson(instance)).map(_ => instance)
             case JobStatus.Stopped =>
-              nomadService.deleteJob(instance.id).map(_ => instance)
+              val deletedJob = nomadService.deleteJob(instance.id)
+              deletedJob
+                .map { job =>
+                  serviceStatuses -= job
+                  jobStatuses -= job
+                }
+                .map(_ => instance)
             case other =>
               Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
           }

@@ -33,21 +33,6 @@
     "id": "test-http"
   },
   "status": "running",
-  "services": [
-    {
-      "name": "test-http-web-ui-1",
-      "protocol": "",
-      "address": "",
-      "port": 80,
-      "status": "unknown"
-    },
-    {
-      "name": "test-http-web-ui-2",
-      "protocol": "",
-      "address": "",
-      "port": 80,
-      "status": "unknown"
-    }
-  ],
+  "services": [],
   "periodicRuns": []
 }

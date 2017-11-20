@@ -74,16 +74,11 @@ trait ServiceMocks extends Mockito {
     aboutInfoService
   }
 
-  def withConsulReachable(consulService: ConsulService): ConsulService = {
-    requireMock(consulService)
-    consulService.isConsulReachable returns true
-    consulService
-  }
-
-  def withNomadReachable(nomadService: NomadService): NomadService = {
-    requireMock(nomadService)
-    nomadService.isNomadReachable returns true
-    nomadService
+  def withNomadAndConsulReachable(instanceService: InstanceService): InstanceService = {
+    requireMock(instanceService)
+    instanceService.isNomadReachable returns true
+    instanceService.isConsulReachable returns true
+    instanceService
   }
 
   def withTemplates(templateService: TemplateService, templates: Seq[Template]): TemplateService = {

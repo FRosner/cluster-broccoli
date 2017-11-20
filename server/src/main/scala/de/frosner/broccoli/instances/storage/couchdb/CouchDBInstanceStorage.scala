@@ -22,6 +22,8 @@ class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSClient)
 
   protected val log = play.api.Logger(getClass)
 
+  log.info(s"Starting $this")
+
   private val dbUrlString = s"$couchBaseUrl/$dbName"
 
   private val dbLockUrl = ws.url(s"$couchBaseUrl/_config/broccoli/$dbName")
