@@ -12,8 +12,7 @@ class AboutInfoServiceSpec extends Specification with ServiceMocks {
     "return the correct about info" in {
       val account = Account("user", ".*", Role.Administrator)
       val service = new AboutInfoService(
-        nomadService = withNomadReachable(mock[NomadService]),
-        consulService = withConsulReachable(mock[ConsulService]),
+        instanceService = withNomadAndConsulReachable(mock[InstanceService]),
         securityService = withAuthNone(mock[SecurityService])
       )
       service.aboutInfo(account) === AboutInfo(

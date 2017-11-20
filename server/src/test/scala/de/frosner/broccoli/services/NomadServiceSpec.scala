@@ -36,8 +36,6 @@ class NomadServiceSpec extends Specification with ServiceMocks {
       val taskGroup = TaskGroup(Seq(task))
       val job = Job(Seq(taskGroup))
       val jobId = "my-job"
-      val consulService = mock[ConsulService]
-      when(consulService.requestServiceStatus(jobId, Seq(service.name))).thenReturn(Future.successful(()))
       Server.withRouter() {
         case GET(p"/v1/job/my-job") =>
           Action {
@@ -46,9 +44,8 @@ class NomadServiceSpec extends Specification with ServiceMocks {
       } { implicit port =>
         WsTestClient.withClient { client =>
           val configuration = NomadConfiguration(url = s"http://localhost:$port")
-          val nomadService = new NomadService(configuration, consulService, client)
+          val nomadService = new NomadService(configuration, client)
           val result = Await.result(nomadService.requestServices(jobId), Duration(5, TimeUnit.SECONDS))
-          verify(consulService).requestServiceStatus(jobId, Seq(service.name))
           result === Seq(service.name)
         }
       }
@@ -66,8 +63,6 @@ class NomadServiceSpec extends Specification with ServiceMocks {
       val taskGroup2 = TaskGroup(Seq(task2))
       val job = Job(Seq(taskGroup1, taskGroup2))
       val jobId = "my-job"
-      val consulService = mock[ConsulService]
-      when(consulService.requestServiceStatus(jobId, Seq(service1.name))).thenReturn(Future.successful(()))
       Server.withRouter() {
         case GET(p"/v1/job/my-job") =>
           Action {
@@ -76,9 +71,8 @@ class NomadServiceSpec extends Specification with ServiceMocks {
       } { implicit port =>
         WsTestClient.withClient { client =>
           val configuration = NomadConfiguration(url = s"http://localhost:$port")
-          val nomadService = new NomadService(configuration, consulService, client)
+          val nomadService = new NomadService(configuration, client)
           val result = Await.result(nomadService.requestServices(jobId), Duration(5, TimeUnit.SECONDS))
-          verify(consulService).requestServiceStatus(jobId, Seq(service1.name))
           result === Seq(service1.name)
         }
       }

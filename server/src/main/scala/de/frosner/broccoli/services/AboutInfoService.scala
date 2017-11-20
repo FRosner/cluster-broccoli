@@ -7,9 +7,7 @@ import de.frosner.broccoli.conf
 import de.frosner.broccoli.models._
 
 @Singleton
-class AboutInfoService @Inject()(nomadService: NomadService,
-                                 consulService: ConsulService,
-                                 securityService: SecurityService) {
+class AboutInfoService @Inject()(instanceService: InstanceService, securityService: SecurityService) {
 
   def aboutInfo(loggedIn: Account) = AboutInfo(
     project = AboutProject(
@@ -31,8 +29,8 @@ class AboutInfoService @Inject()(nomadService: NomadService,
       )
     ),
     services = AboutServices(
-      clusterManager = AboutClusterManager(connected = nomadService.isNomadReachable),
-      serviceDiscovery = AboutServiceDiscovery(connected = consulService.isConsulReachable)
+      clusterManager = AboutClusterManager(connected = instanceService.isNomadReachable),
+      serviceDiscovery = AboutServiceDiscovery(connected = instanceService.isConsulReachable)
     )
   )
 

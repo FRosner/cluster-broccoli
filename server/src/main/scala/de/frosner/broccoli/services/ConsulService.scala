@@ -19,8 +19,6 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient)(implic
 
   private val log = Logger(getClass)
 
-  @volatile
-  var serviceStatuses: Map[String, Seq[Service]] = Map.empty
   log.info(s"Starting $this")
 
   private lazy val consulBaseUrl = configuration.getString(conf.CONSUL_URL_KEY).getOrElse(conf.CONSUL_URL_DEFAULT)
@@ -55,17 +53,15 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient)(implic
     }
   }
 
-  def getServiceStatusesOrDefault(id: String): Seq[Service] =
-    serviceStatuses.getOrElse(id, Seq.empty)
+  def requestServicesStatuses(jobs: Map[String, Seq[String]]): Future[Map[String, Seq[Service]]] =
+    Future
+      .sequence(jobs.map {
+        case (jobId, services) =>
+          requestServiceStatus(jobId, services)
+      })
+      .map(_.toMap)
 
-  @volatile
-  private var consulReachable: Boolean = false
-
-  // TODO see why it is true although consul is not even running????
-  def isConsulReachable: Boolean =
-    consulReachable
-
-  def requestServiceStatus(jobId: String, serviceNames: Seq[String]): Future[Unit] = {
+  def requestServiceStatus(jobId: String, serviceNames: Seq[String]): Future[(String, Seq[Service])] = {
     val serviceResponses = serviceNames.map { name =>
       val catalogQueryUrl = consulBaseUrl + s"/v1/catalog/service/$name"
       val catalogRequest = ws.url(catalogQueryUrl)
@@ -125,16 +121,12 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient)(implic
         val allServices = serviceNames.map { name =>
           healthyOrUnhealthyServices.getOrElse(name, unknownService(name))
         }
-        consulReachable = true
-        serviceStatuses = serviceStatuses.updated(jobId, allServices)
+        (jobId, allServices)
       }
     }
-    serviceResponse.onFailure {
+    serviceResponseDone.onFailure {
       case throwable =>
-        consulReachable = false
         log.error(s"Failed to get service statuses for job '$jobId' from Consul: ${throwable.toString}")
-        val unknownServices = serviceNames.map(unknownService)
-        serviceStatuses = serviceStatuses.updated(jobId, unknownServices)
     }
     serviceResponseDone
   }

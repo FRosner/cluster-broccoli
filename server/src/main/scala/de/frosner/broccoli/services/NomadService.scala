@@ -16,48 +16,15 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 @Singleton
-class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulService: ConsulService, ws: WSClient)(
-    implicit ec: ExecutionContext) {
+class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClient)(implicit ec: ExecutionContext) {
 
   private val nomadBaseUrl = nomadConfiguration.url
 
   private val log = play.api.Logger(getClass)
 
-  @volatile
-  var jobStatuses: Map[String, (JobStatus, Seq[PeriodicRun])] = Map.empty
   log.info(s"Starting $this")
 
-  def getJobStatusOrDefault(id: String): JobStatus =
-    if (nomadReachable) {
-      jobStatuses.get(id).map { case (status, periodicStatuses) => status }.getOrElse(JobStatus.Stopped)
-    } else {
-      JobStatus.Unknown
-    }
-
-  def getPeriodicRunsOrDefault(id: String): Seq[PeriodicRun] = {
-    val periodicRuns = jobStatuses.get(id).map { case (status, periodic) => periodic }.getOrElse(Seq.empty)
-    if (nomadReachable) {
-      periodicRuns
-    } else {
-      periodicRuns.map(_.copy(status = JobStatus.Unknown))
-    }
-  }
-
-  @volatile
-  private var nomadReachable: Boolean = false
-
-  def setNomadNotReachable() = {
-    nomadReachable = false
-    consulService.serviceStatuses = Map.empty
-  }
-
-  def setNomadReachable() =
-    nomadReachable = true
-
-  def isNomadReachable: Boolean =
-    nomadReachable
-
-  def requestStatuses(instanceIds: Set[String]): Unit = {
+  def requestStatuses(instanceIds: Set[String]): Future[Map[String, (JobStatus, Seq[PeriodicRun], Seq[String])]] = {
     val queryUrl = nomadBaseUrl + "/v1/jobs"
     val jobsRequest = ws.url(queryUrl)
     val jobsResponse = jobsRequest.get().map(_.json.as[JsArray])
@@ -66,7 +33,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
         ((jsArray \\ "ID").map(_.as[JsString].value), (jsArray \\ "Status").map(_.as[JsString].value))
       (ids, statuses)
     })
-    val serviceRequestsDone = jobsWithTemplate.flatMap {
+    val idsAndStatusesWithPeriodicF = jobsWithTemplate.map {
       case (ids, statuses) => {
         log.debug(s"${jobsRequest.uri} => ${ids.zip(statuses).mkString(", ")}")
         val idsAndStatuses = ids.zip(statuses.map {
@@ -114,22 +81,32 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
           case (instanceId, instanceStatus) =>
             (instanceId, (instanceStatus, periodicStatuses.getOrElse(instanceId, Seq.empty)))
         }
-        setNomadReachable()
-        jobStatuses = idsAndStatusesWithPeriodic.toMap
-        Future.sequence(filteredIdsAndStatuses.map(p => requestServices(p._1)))
+        (filteredIdsAndStatuses.map { case (id, _) => id }, idsAndStatusesWithPeriodic.toMap)
       }
+    }
+    val serviceRequestsDone = idsAndStatusesWithPeriodicF.flatMap {
+      case (jobIdsThatExistOnNomad, idsAndStatusesWithPeriodic) =>
+        val servicesF = jobIdsThatExistOnNomad.map { id =>
+          requestServices(id).map(services => (id, services))
+        }
+        Future.sequence(servicesF).map { services =>
+          val servicesMap = services.toMap
+          idsAndStatusesWithPeriodic.map {
+            case (jobId, (jobStatus, periodicRuns)) =>
+              (jobId, (jobStatus, periodicRuns, servicesMap.getOrElse(jobId, Seq.empty)))
+          }
+        }
     }
     serviceRequestsDone.onFailure {
       case throwable: ConnectException => {
         log.error(
           s"Nomad did not respond when requesting services for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
-        setNomadNotReachable()
       }
       case throwable => {
         log.warn(s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
       }
     }
-    Await.ready(serviceRequestsDone, 60.seconds) // TODO make timeout configurable
+    serviceRequestsDone
   }
 
   // TODO should this go back to InstanceService or how? I mean I need to check the existing instances in order to know whether
@@ -151,14 +128,13 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
       } yield service.name
     } yield {
       log.debug(s"${ws.url(nomadBaseUrl + s"/v1/job/$id").uri} => ${services.mkString(", ")}")
-      consulService.requestServiceStatus(id, services).map(_ => services)
+      services
     }
-
     services.onFailure {
       case throwable =>
         log.error(s"Requesting services for $id failed: ${throwable.getMessage}", throwable)
     }
-    services.flatMap(identity)
+    services
   }
 
   def startJob(job: JsValue): Try[Unit] = {
@@ -175,7 +151,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
     }.flatten
   }
 
-  def deleteJob(id: String) = {
+  def deleteJob(id: String): Try[String] = {
     val queryUrl = nomadBaseUrl + s"/v1/job/$id"
     val request = ws.url(queryUrl)
     log.info(s"Sending deletion request to ${request.uri}")
@@ -184,8 +160,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
       if (result.status == 200) {
         // TODO doesn't work with periodic runs so we have to remove it, in order to avoid a memory leak we should use a cache with TTLs
         // jobStatuses -= id
-        consulService.serviceStatuses -= id
-        Success(())
+        Success(id)
       } else {
         Failure(NomadRequestFailed(request.uri.toString, result.status))
       }
