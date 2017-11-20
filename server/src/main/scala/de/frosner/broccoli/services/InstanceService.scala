@@ -45,7 +45,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     def run() =
       nomadService.requestStatuses(instances.values.map(_.id).toSet)
   }
-  private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0L, pollingFrequencySeconds, TimeUnit.SECONDS)
+  private val scheduledTask = scheduler.scheduleWithFixedDelay(task, 0L, pollingFrequencySeconds, TimeUnit.SECONDS)
 
   sys.addShutdownHook {
     scheduledTask.cancel(false)

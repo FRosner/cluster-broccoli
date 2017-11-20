@@ -64,7 +64,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient)(implic
   def isConsulReachable: Boolean =
     consulReachable
 
-  def requestServiceStatus(jobId: String, serviceNames: Seq[String]) = {
+  def requestServiceStatus(jobId: String, serviceNames: Seq[String]): Future[Unit] = {
     val serviceResponses = serviceNames.map { name =>
       val catalogQueryUrl = consulBaseUrl + s"/v1/catalog/service/$name"
       val catalogRequest = ws.url(catalogQueryUrl)
@@ -118,8 +118,8 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient)(implic
       port = 80,
       status = ServiceStatus.Unknown
     )
-    serviceResponse.onComplete {
-      case Success(services) => {
+    val serviceResponseDone = serviceResponse.map { services =>
+      {
         val healthyOrUnhealthyServices = services.flatten.map(service => (service.name, service)).toMap
         val allServices = serviceNames.map { name =>
           healthyOrUnhealthyServices.getOrElse(name, unknownService(name))
@@ -127,12 +127,15 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient)(implic
         consulReachable = true
         serviceStatuses = serviceStatuses.updated(jobId, allServices)
       }
-      case Failure(throwable) =>
+    }
+    serviceResponse.onFailure {
+      case throwable =>
         consulReachable = false
         log.error(s"Failed to get service statuses for job '$jobId' from Consul: ${throwable.toString}")
         val unknownServices = serviceNames.map(unknownService)
         serviceStatuses = serviceStatuses.updated(jobId, unknownServices)
     }
+    serviceResponseDone
   }
 
 }

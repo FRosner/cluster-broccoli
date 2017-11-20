@@ -11,7 +11,7 @@ import de.frosner.broccoli.nomad.models.Job
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
@@ -56,7 +56,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
   def isNomadReachable: Boolean =
     nomadReachable
 
-  def requestStatuses(instanceIds: Set[String]) = {
+  def requestStatuses(instanceIds: Set[String]): Unit = {
     val queryUrl = nomadBaseUrl + "/v1/jobs"
     val jobsRequest = ws.url(queryUrl)
     val jobsResponse = jobsRequest.get().map(_.json.as[JsArray])
@@ -65,8 +65,8 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
         ((jsArray \\ "ID").map(_.as[JsString].value), (jsArray \\ "Status").map(_.as[JsString].value))
       (ids, statuses)
     })
-    jobsWithTemplate.onComplete {
-      case Success((ids, statuses)) => {
+    val serviceRequestsDone = jobsWithTemplate.flatMap {
+      case (ids, statuses) => {
         log.debug(s"${jobsRequest.uri} => ${ids.zip(statuses).mkString(", ")}")
         val idsAndStatuses = ids.zip(statuses.map {
           case "running" => JobStatus.Running
@@ -115,17 +115,20 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
         }
         setNomadReachable()
         jobStatuses = idsAndStatusesWithPeriodic.toMap
-        filteredIdsAndStatuses.foreach(p => requestServices(p._1))
+        Future.sequence(filteredIdsAndStatuses.map(p => requestServices(p._1)))
       }
-      case Failure(throwable: ConnectException) => {
+    }
+    serviceRequestsDone.onFailure {
+      case throwable: ConnectException => {
         log.error(
           s"Nomad did not respond when requesting services for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
         setNomadNotReachable()
       }
-      case Failure(throwable) => {
+      case throwable => {
         log.warn(s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
       }
     }
+    Await.ready(serviceRequestsDone, 60.seconds) // TODO make timeout configurable
   }
 
   // TODO should this go back to InstanceService or how? I mean I need to check the existing instances in order to know whether
@@ -147,16 +150,14 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
       } yield service.name
     } yield {
       log.debug(s"${ws.url(nomadBaseUrl + s"/v1/job/$id").uri} => ${services.mkString(", ")}")
-      consulService.requestServiceStatus(id, services)
-
-      services
+      consulService.requestServiceStatus(id, services).map(_ => services)
     }
 
     services.onFailure {
       case throwable =>
         log.error(s"Requesting services for $id failed: ${throwable.getMessage}", throwable)
     }
-    services
+    services.flatMap(identity)
   }
 
   def startJob(job: JsValue): Try[Unit] = {
