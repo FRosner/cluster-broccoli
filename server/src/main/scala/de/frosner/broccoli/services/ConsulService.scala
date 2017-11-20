@@ -21,6 +21,7 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient)(implic
 
   @volatile
   var serviceStatuses: Map[String, Seq[Service]] = Map.empty
+  log.info(s"Starting $this")
 
   private lazy val consulBaseUrl = configuration.getString(conf.CONSUL_URL_KEY).getOrElse(conf.CONSUL_URL_DEFAULT)
   private lazy val consulDomain: Option[String] = {

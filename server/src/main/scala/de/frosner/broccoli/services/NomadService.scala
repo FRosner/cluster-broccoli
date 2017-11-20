@@ -25,6 +25,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, consulServi
 
   @volatile
   var jobStatuses: Map[String, (JobStatus, Seq[PeriodicRun])] = Map.empty
+  log.info(s"Starting $this")
 
   def getJobStatusOrDefault(id: String): JobStatus =
     if (nomadReachable) {

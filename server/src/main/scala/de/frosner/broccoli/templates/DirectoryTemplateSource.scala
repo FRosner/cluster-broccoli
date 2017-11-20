@@ -21,6 +21,8 @@ class DirectoryTemplateSource(directory: String) extends TemplateSource {
 
   private val log = play.api.Logger(getClass)
 
+  log.info(s"Starting $this")
+
   /**
     * @return The sequence of templates found in the directory
     */

@@ -30,6 +30,9 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                                 instanceStorage: InstanceStorage,
                                 config: Configuration) {
   private val log = play.api.Logger(getClass)
+
+  log.info(s"Starting $this")
+
   // FIXME: refactor out together with the polling scheduler
   private lazy val pollingFrequencySeconds = {
     val pollingFrequency = config.getLong("broccoli.polling.frequency").get

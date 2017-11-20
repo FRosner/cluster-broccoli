@@ -21,6 +21,8 @@ class WebSocketService @Inject()(templateService: TemplateService,
 
   private val log = play.api.Logger(getClass)
 
+  log.info(s"Starting $this")
+
   private val scheduler = new ScheduledThreadPoolExecutor(1)
   private val task = new Runnable {
     def run() = {
