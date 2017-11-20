@@ -97,7 +97,8 @@ class InstanceService @Inject()(nomadClient: NomadClient,
         consulResult match {
           case Success(result) =>
             serviceStatuses = result
-            setConsulReachable()
+            if (result.nonEmpty) // if we didn't get any results we don't really know if consul is fine
+              setConsulReachable()
           case Failure(throwable) =>
             serviceStatuses = Map.empty
             setConsulNotReachable()
