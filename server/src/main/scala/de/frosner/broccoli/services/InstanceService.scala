@@ -9,6 +9,7 @@ import cats.instances.future.{getClass, _}
 import de.frosner.broccoli.instances.{InstanceConfiguration, _}
 import de.frosner.broccoli.templates.TemplateRenderer
 import de.frosner.broccoli.instances.storage.InstanceStorage
+import de.frosner.broccoli.logging
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.NomadClient
@@ -43,7 +44,10 @@ class InstanceService @Inject()(nomadClient: NomadClient,
   private val scheduler = new ScheduledThreadPoolExecutor(1)
   private val task = new Runnable {
     def run() =
-      nomadService.requestStatuses(instances.values.map(_.id).toSet)
+      logging.logExecutionTime(s"Syncing with Nomad and Consul") {
+        nomadService.requestStatuses(instances.values.map(_.id).toSet)
+      }(log.info(_))
+
   }
   private val scheduledTask = scheduler.scheduleWithFixedDelay(task, 0L, pollingFrequencySeconds, TimeUnit.SECONDS)
 
