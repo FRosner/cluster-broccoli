@@ -6,6 +6,7 @@ import javax.inject.{Inject, Singleton}
 
 import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.controllers._
+import de.frosner.broccoli.logging
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.websocket.OutgoingMessage
 import play.api.libs.iteratee.{Concurrent, Enumerator}
@@ -25,17 +26,18 @@ class WebSocketService @Inject()(templateService: TemplateService,
 
   private val scheduler = new ScheduledThreadPoolExecutor(1)
   private val task = new Runnable {
-    def run() = {
-      broadcast { user =>
-        Json.toJson(OutgoingMessage.AboutInfoMsg(AboutController.about(aboutInfoService, user)))
-      }
-      broadcast { _ =>
-        Json.toJson(OutgoingMessage.ListTemplates(TemplateController.list(templateService)))
-      }
-      broadcast { user =>
-        Json.toJson(OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService)))
-      }
-    }
+    def run() =
+      logging.logExecutionTime(s"Updating ${connections.size} websocket clients") {
+        broadcast { user =>
+          Json.toJson(OutgoingMessage.AboutInfoMsg(AboutController.about(aboutInfoService, user)))
+        }
+        broadcast { _ =>
+          Json.toJson(OutgoingMessage.ListTemplates(TemplateController.list(templateService)))
+        }
+        broadcast { user =>
+          Json.toJson(OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService)))
+        }
+      }(log.info(_))
   }
   private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS)
 
