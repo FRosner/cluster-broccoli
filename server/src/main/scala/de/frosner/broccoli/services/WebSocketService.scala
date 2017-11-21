@@ -26,8 +26,11 @@ class WebSocketService @Inject()(templateService: TemplateService,
 
   private val scheduler = new ScheduledThreadPoolExecutor(1)
   private val task = new Runnable {
-    def run() =
-      logging.logExecutionTime(s"Updating ${connections.size} websocket clients") {
+    def run() = {
+      val numChannels = connections.foldLeft(0) {
+        case (n, (id, (account, channels))) => n + channels.size
+      }
+      logging.logExecutionTime(s"Updating $numChannels websocket channels for ${connections.size} sessions") {
         broadcast { user =>
           Json.toJson(OutgoingMessage.AboutInfoMsg(AboutController.about(aboutInfoService, user)))
         }
@@ -38,6 +41,7 @@ class WebSocketService @Inject()(templateService: TemplateService,
           Json.toJson(OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService)))
         }
       }(log.info(_))
+    }
   }
   private val scheduledTask = scheduler.scheduleWithFixedDelay(task, 0, 1, TimeUnit.SECONDS)
 
