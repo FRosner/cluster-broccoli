@@ -39,7 +39,7 @@ class WebSocketService @Inject()(templateService: TemplateService,
         }
       }(log.info(_))
   }
-  private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS)
+  private val scheduledTask = scheduler.scheduleWithFixedDelay(task, 0, 1, TimeUnit.SECONDS)
 
   @volatile
   private var connections: Map[String, (Account, Set[Concurrent.Channel[Msg]])] = Map.empty
