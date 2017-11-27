@@ -6,6 +6,7 @@ import javax.inject.{Inject, Singleton}
 
 import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.controllers._
+import de.frosner.broccoli.logging
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.websocket.OutgoingMessage
 import play.api.libs.iteratee.{Concurrent, Enumerator}
@@ -26,18 +27,23 @@ class WebSocketService @Inject()(templateService: TemplateService,
   private val scheduler = new ScheduledThreadPoolExecutor(1)
   private val task = new Runnable {
     def run() = {
-      broadcast { user =>
-        Json.toJson(OutgoingMessage.AboutInfoMsg(AboutController.about(aboutInfoService, user)))
+      val numChannels = connections.foldLeft(0) {
+        case (n, (id, (account, channels))) => n + channels.size
       }
-      broadcast { _ =>
-        Json.toJson(OutgoingMessage.ListTemplates(TemplateController.list(templateService)))
-      }
-      broadcast { user =>
-        Json.toJson(OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService)))
-      }
+      logging.logExecutionTime(s"Updating $numChannels websocket channels for ${connections.size} sessions") {
+        broadcast { user =>
+          Json.toJson(OutgoingMessage.AboutInfoMsg(AboutController.about(aboutInfoService, user)))
+        }
+        broadcast { _ =>
+          Json.toJson(OutgoingMessage.ListTemplates(TemplateController.list(templateService)))
+        }
+        broadcast { user =>
+          Json.toJson(OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService)))
+        }
+      }(log.info(_))
     }
   }
-  private val scheduledTask = scheduler.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS)
+  private val scheduledTask = scheduler.scheduleWithFixedDelay(task, 0, 1, TimeUnit.SECONDS)
 
   @volatile
   private var connections: Map[String, (Account, Set[Concurrent.Channel[Msg]])] = Map.empty
