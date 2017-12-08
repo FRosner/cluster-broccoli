@@ -27,7 +27,7 @@ class FileSystemInstanceStorage(storageDirectory: File) extends InstanceStorage 
     throw new IllegalStateException(s"Cannot lock $storageDirectory. Is there another Broccoli instance running?")
   }
 
-  def idToFileTemp(id: String): File = new File(storageDirectory, id + ".json_tmp")
+  def idToTempFile(id: String): File = new File(storageDirectory, id + ".json_tmp")
 
   def idToFile(id: String): File = new File(storageDirectory, id + ".json")
 
@@ -82,12 +82,12 @@ class FileSystemInstanceStorage(storageDirectory: File) extends InstanceStorage 
   @volatile
   override def writeInstanceImpl(instance: Instance): Try[Instance] = {
     val id = instance.id
-    val file = idToFileTemp(id)
-    val printStream = Try(new PrintStream(new FileOutputStream(file)))
+    val tempFile = idToTempFile(id)
+    val printStream = Try(new PrintStream(new FileOutputStream(tempFile)))
     val afterWrite = printStream.map(_.append(Json.toJson(instance).toString()))
     val finishWrite = printStream.map(_.close())
-    val finishMove = finishWrite.flatMap(_ =>
-      Try(Files.move(idToFileTemp(id).toPath, idToFile(id).toPath, StandardCopyOption.ATOMIC_MOVE)))
+    val finishMove =
+      finishWrite.flatMap(_ => Try(Files.move(tempFile.toPath, idToFile(id).toPath, StandardCopyOption.ATOMIC_MOVE)))
     finishMove.map(_ => instance)
   }
 
