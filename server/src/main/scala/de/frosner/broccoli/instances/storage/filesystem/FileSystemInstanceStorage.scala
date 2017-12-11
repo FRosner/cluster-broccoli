@@ -85,9 +85,9 @@ class FileSystemInstanceStorage(storageDirectory: File) extends InstanceStorage 
     val tempFile = idToTempFile(id)
     val printStream = Try(new PrintStream(new FileOutputStream(tempFile)))
     val afterWrite = printStream.map(_.append(Json.toJson(instance).toString()))
-    val finishWrite = afterWrite.map(_.close())
+    val finishWrite = printStream.map(_.close())
     val finishMove =
-      finishWrite.flatMap(_ => Try(Files.move(tempFile.toPath, idToFile(id).toPath, StandardCopyOption.ATOMIC_MOVE)))
+      afterWrite.flatMap(_ => Try(Files.move(tempFile.toPath, idToFile(id).toPath, StandardCopyOption.ATOMIC_MOVE)))
     finishMove.map(_ => instance)
   }
 
