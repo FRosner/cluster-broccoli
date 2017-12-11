@@ -53,6 +53,22 @@ class FileSystemInstanceStorageSpec extends Specification with TemporaryDirector
       storage.readInstance(instance.id) === Success(instance)
     }
 
+    "fail if the tmp file cannot be created" in { folder: Path =>
+      val folderFile = folder.toFile
+      val storage = new FileSystemInstanceStorage(folderFile)
+      val instanceFile = new File(folderFile, instance.id + ".json_tmp")
+      instanceFile.mkdir()
+      storage.writeInstance(instance).failed.get should beAnInstanceOf[FileNotFoundException]
+    }
+
+    "fail if the tmp file cannot be moved" in { folder: Path =>
+      val folderFile = folder.toFile
+      val storage = new FileSystemInstanceStorage(folderFile)
+      val instanceFile = new File(folderFile, instance.id + ".json")
+      instanceFile.mkdir()
+      storage.writeInstance(instance).failed.get should beAnInstanceOf[FileSystemException]
+    }
+
     "fail if the file is not readable" in { folder: Path =>
       val storage = new FileSystemInstanceStorage(folder.toFile)
       storage.writeInstance(instance)

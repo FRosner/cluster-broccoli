@@ -1,6 +1,7 @@
 package de.frosner.broccoli.instances.storage.filesystem
 
 import java.io._
+import java.nio.file._
 
 import de.frosner.broccoli.instances.storage.InstanceStorage
 import de.frosner.broccoli.models.Instance
@@ -25,6 +26,8 @@ class FileSystemInstanceStorage(storageDirectory: File) extends InstanceStorage 
   if (!lock.createNewFile()) {
     throw new IllegalStateException(s"Cannot lock $storageDirectory. Is there another Broccoli instance running?")
   }
+
+  def idToTempFile(id: String): File = new File(storageDirectory, id + ".json_tmp")
 
   def idToFile(id: String): File = new File(storageDirectory, id + ".json")
 
@@ -79,11 +82,13 @@ class FileSystemInstanceStorage(storageDirectory: File) extends InstanceStorage 
   @volatile
   override def writeInstanceImpl(instance: Instance): Try[Instance] = {
     val id = instance.id
-    val file = idToFile(id)
-    val printStream = Try(new PrintStream(new FileOutputStream(file)))
+    val tempFile = idToTempFile(id)
+    val printStream = Try(new PrintStream(new FileOutputStream(tempFile)))
     val afterWrite = printStream.map(_.append(Json.toJson(instance).toString()))
     printStream.map(_.close())
-    afterWrite.map(_ => instance)
+    val finishMove =
+      afterWrite.flatMap(_ => Try(Files.move(tempFile.toPath, idToFile(id).toPath, StandardCopyOption.ATOMIC_MOVE)))
+    finishMove.map(_ => instance)
   }
 
   @volatile
