@@ -2,8 +2,8 @@
 
 [![Build Status](https://travis-ci.org/FRosner/cluster-broccoli.svg?branch=master)](https://travis-ci.org/FRosner/cluster-broccoli)
 [![codecov](https://codecov.io/gh/FRosner/cluster-broccoli/branch/master/graph/badge.svg)](https://codecov.io/gh/FRosner/cluster-broccoli)
+[![Known Vulnerabilities](https://snyk.io/test/github/frosner/cluster-broccoli/badge.svg)](https://snyk.io/test/github/frosner/cluster-broccoli)
 [![Docker Pulls](https://img.shields.io/docker/pulls/frosner/cluster-broccoli.svg?maxAge=2592000)](https://hub.docker.com/r/frosner/cluster-broccoli/)
-[![](https://images.microbadger.com/badges/image/frosner/cluster-broccoli.svg)](https://microbadger.com/images/frosner/cluster-broccoli "Get your own image badge on microbadger.com")
 [![Gitter](https://badges.gitter.im/FRosner/cluster-broccoli.svg)](https://gitter.im/FRosner/cluster-broccoli?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ## Description
