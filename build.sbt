@@ -50,6 +50,16 @@ lazy val server = project
     version in Docker := Option(System.getenv("TRAVIS_COMMIT"))
       .map(_.substring(0, 8))
       .getOrElse((version in Compile).value),
+    // tag with the version but also the branch name (replacing '/' with '_')
+    dockerBuildOptions := List(
+      List("--force-rm", "-t", s"${dockerUsername.value.get}/${packageName.value}:${version.value}"),
+      Option(System.getenv("TRAVIS_BRANCH"))
+        .map(_.replaceAllLiterally("/", "_"))
+        .map { tag =>
+          List("-t", s"${dockerUsername.value.get}/${packageName.value}:${tag}")
+        }
+        .getOrElse(List.empty)
+    ).flatten,
     dockerUsername := Some("frosner"),
     // Build from OpenJDK
     dockerBaseImage := "openjdk:8-jre",
