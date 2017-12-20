@@ -50,10 +50,7 @@ lazy val server = project
     packageName in Docker := "cluster-broccoli",
     maintainer in Docker := "Frank Rosner",
     // On Travis CI, use the commit hash as primary version of the docker image
-    dockerAlias := com.typesafe.sbt.packager.docker.DockerAlias(registryHost = None,
-                                                                username = dockerUsername.value,
-                                                                name = (packageName in Docker).value,
-                                                                tag = None),
+    dockerAlias := dockerAlias.value.copy(tag = None),
     version in Docker := Option(System
       .getenv("TRAVIS_COMMIT"))
       .map(_.substring(0, 8))
