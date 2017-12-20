@@ -43,11 +43,19 @@ lazy val server = project
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.frosner.broccoli.build",
     PlayKeys.playMonitoredFiles ++= (sourceDirectories in (Compile, TwirlKeys.compileTemplates)).value,
+    dockerUsername := Some("frosner"),
+    // Build from OpenJDK
+    dockerBaseImage := "openjdk:8-jre",
     // Docker build settings
     packageName in Docker := "cluster-broccoli",
     maintainer in Docker := "Frank Rosner",
     // On Travis CI, use the commit hash as primary version of the docker image
-    version in Docker := Option(System.getenv("TRAVIS_COMMIT"))
+    dockerAlias := com.typesafe.sbt.packager.docker.DockerAlias(registryHost = None,
+                                                                username = dockerUsername.value,
+                                                                name = (packageName in Docker).value,
+                                                                tag = None),
+    version in Docker := Option(System
+      .getenv("TRAVIS_COMMIT"))
       .map(_.substring(0, 8))
       .getOrElse((version in Compile).value),
     // tag with the version but also the branch name (replacing '/' with '_')
@@ -62,9 +70,6 @@ lazy val server = project
         }
         .getOrElse(List.empty)
     ).flatten,
-    dockerUsername := Some("frosner"),
-    // Build from OpenJDK
-    dockerBaseImage := "openjdk:8-jre",
     // Upgrade the latest tag when we're building from master on Travis CI
     dockerUpdateLatest := Option(System.getenv("TRAVIS_BRANCH")).exists(_ == "master"),
     // Copy templates into the docker file
