@@ -52,11 +52,13 @@ lazy val server = project
       .getOrElse((version in Compile).value),
     // tag with the version but also the branch name (replacing '/' with '_')
     dockerBuildOptions := List(
-      List("--force-rm", "-t", s"${dockerUsername.value.get}/${packageName.value}:${version.value}"),
+      List("--force-rm",
+           "-t",
+           s"${dockerUsername.value.get}/${(packageName in Docker).value}:${(version in Docker).value}"),
       Option(System.getenv("TRAVIS_BRANCH"))
         .map(_.replaceAllLiterally("/", "_"))
         .map { tag =>
-          List("-t", s"${dockerUsername.value.get}/${packageName.value}:${tag}")
+          List("-t", s"${dockerUsername.value.get}/${(packageName in Docker).value}:$tag")
         }
         .getOrElse(List.empty)
     ).flatten,
