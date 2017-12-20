@@ -46,6 +46,10 @@ lazy val server = project
     // Docker build settings
     packageName in Docker := "cluster-broccoli",
     maintainer in Docker := "Frank Rosner",
+    // On Travis CI, use the commit hash as primary version of the docker image
+    version in Docker := Option(System.getenv("TRAVIS_COMMIT"))
+      .map(_.substring(0, 8))
+      .getOrElse((version in Compile).value),
     // tag with the version but also the branch name (replacing '/' with '_')
     dockerBuildOptions := List(
       List("--force-rm",
