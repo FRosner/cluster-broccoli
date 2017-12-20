@@ -49,7 +49,7 @@ jobs:
         - echo "TRAVIS_BRANCH = $TRAVIS_BRANCH"
         - echo "TRAVIS_PULL_REQUEST = $TRAVIS_PULL_REQUEST"
         - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
-        - 'if [ -z "$TRAVIS_COMMIT" ]; then sbt server/docker:publish; fi'
+        - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then sbt server/docker:publish; fi'
 
 
 before_cache:
