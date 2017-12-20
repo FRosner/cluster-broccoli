@@ -45,8 +45,11 @@ jobs:
     - stage: docker
       script:
         # Publish docker image
+        - echo "TRAVIS_COMMIT = $TRAVIS_COMMIT"
+        - echo "TRAVIS_BRANCH = $TRAVIS_BRANCH"
+        - echo "TRAVIS_PULL_REQUEST = $TRAVIS_PULL_REQUEST"
         - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
-        - sbt server/docker:publish
+        - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then sbt server/docker:publish; fi'
 
 
 before_cache:
