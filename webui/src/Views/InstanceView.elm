@@ -537,7 +537,7 @@ resourceUsageBar tooltip current required =
 
 
 periodicRunView instanceId periodicRun =
-    li []
+    li [ style [ ( "margin", "0 0 3px 0" ) ] ]
         [ code [ style [ ( "margin-right", "12px" ) ] ] [ text periodicRun.jobName ]
         , text " "
         , span
