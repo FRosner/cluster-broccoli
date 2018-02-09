@@ -8,8 +8,7 @@ import com.mohiva.play.silhouette.api.util.Credentials
 import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import de.frosner.broccoli.auth.{Account, AuthMode, Role}
 import de.frosner.broccoli.http.ToHTTPResult
-import de.frosner.broccoli.instances.NomadInstances
-import de.frosner.broccoli.instances.InstanceNotFoundException
+import de.frosner.broccoli.instances.{InstanceNotFoundException, NomadInstances, PeriodicJobNotFoundException}
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad
 import de.frosner.broccoli.services.{InstanceService, SecurityService}
@@ -533,7 +532,8 @@ class InstanceControllerSpec
           id = instanceWithStatus.instance.id,
           statusUpdater = Some(JobStatus.Running),
           parameterValuesUpdater = None,
-          templateSelector = None
+          templateSelector = None,
+          periodicJobsToStop = None
         )).thenReturn(Success(instanceWithStatus))
 
       testWithAllAuths { securityService =>
@@ -552,6 +552,7 @@ class InstanceControllerSpec
             instanceId = None,
             status = Some(JobStatus.Running),
             parameterValues = None,
+            periodicJobsToStop = None,
             selectedTemplate = None
           ))
       } { (controller, result) =>
@@ -570,7 +571,8 @@ class InstanceControllerSpec
             Map(
               "id" -> "new"
             )),
-          templateSelector = None
+          templateSelector = None,
+          periodicJobsToStop = None
         )).thenReturn(Success(instanceWithStatus))
 
       testWithAllAuths { securityService =>
@@ -589,6 +591,7 @@ class InstanceControllerSpec
             instanceId = None,
             status = None,
             parameterValues = Some(Map("id" -> "new")),
+            periodicJobsToStop = None,
             selectedTemplate = None
           ))
       } { (controller, result) =>
@@ -604,7 +607,8 @@ class InstanceControllerSpec
           id = instanceWithStatus.instance.id,
           statusUpdater = None,
           parameterValuesUpdater = None,
-          templateSelector = Some("newTemplate")
+          templateSelector = Some("newTemplate"),
+          periodicJobsToStop = None
         )).thenReturn(Success(instanceWithStatus))
 
       testWithAllAuths { securityService =>
@@ -623,11 +627,113 @@ class InstanceControllerSpec
             instanceId = None,
             status = None,
             parameterValues = None,
+            periodicJobsToStop = None,
             selectedTemplate = Some("newTemplate")
           ))
       } { (controller, result) =>
         (status(result) must be equalTo 200) and
           (contentAsJson(result) must be equalTo Json.toJson(instanceWithStatus))
+      }
+    }
+
+    "stop periodic jobs correctly" in new WithApplication {
+      val instanceService = withInstances(mock[InstanceService], List.empty)
+      val periodicJobName = instanceWithStatus.instance.id + "/periodic-1518101460"
+      when(
+        instanceService.updateInstance(
+          id = instanceWithStatus.instance.id,
+          statusUpdater = None,
+          parameterValuesUpdater = None,
+          templateSelector = None,
+          periodicJobsToStop = Some(List(periodicJobName))
+        )).thenReturn(Success(instanceWithStatus))
+
+      testWithAllAuths { securityService =>
+        InstanceController(
+          instanceService = instanceService,
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
+        )
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withBody(
+          InstanceUpdate(
+            instanceId = None,
+            status = None,
+            parameterValues = None,
+            periodicJobsToStop = Some(List(periodicJobName)),
+            selectedTemplate = None
+          ))
+      } { (controller, result) =>
+        (status(result) must be equalTo 200) and
+          (contentAsJson(result) must be equalTo Json.toJson(instanceWithStatus))
+      }
+    }
+
+    "fail if trying to stop a periodic job that does not belong to that instance" in new WithApplication {
+      val instanceService = withInstances(mock[InstanceService], List.empty)
+      val periodicJobName = instanceWithStatus.instance.id + "/periodic-1518101460"
+      when(
+        instanceService.updateInstance(
+          id = instanceWithStatus.instance.id,
+          statusUpdater = None,
+          parameterValuesUpdater = None,
+          templateSelector = None,
+          periodicJobsToStop = Some(List(periodicJobName))
+        )).thenReturn(Failure(PeriodicJobNotFoundException(instanceWithStatus.instance.id, periodicJobName)))
+
+      testWithAllAuths { securityService =>
+        InstanceController(
+          instanceService = instanceService,
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
+        )
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withBody(
+          InstanceUpdate(
+            instanceId = None,
+            status = None,
+            parameterValues = None,
+            periodicJobsToStop = Some(List(periodicJobName)),
+            selectedTemplate = None
+          ))
+      } { (controller, result) =>
+        status(result) must be equalTo 400
+      }
+    }
+
+    "not allow periodic job stopping when not running in admin or operator mode" in new WithApplication {
+      val instanceService = withInstances(mock[InstanceService], List.empty)
+      val periodicJobName = instanceWithStatus.instance.id + "/periodic-1518101460"
+
+      testWithAllAuths(user) { securityService =>
+        InstanceController(
+          instanceService = instanceService,
+          securityService = securityService,
+          playEnv = playEnv,
+          cacheApi = cacheApi,
+          instances = mock[NomadInstances]
+        )
+      } { controller =>
+        controller.update(instanceWithStatus.instance.id)
+      } { request =>
+        request.withBody(
+          InstanceUpdate(
+            instanceId = None,
+            status = None,
+            parameterValues = None,
+            periodicJobsToStop = Some(List(periodicJobName)),
+            selectedTemplate = None
+          ))
+      } { (controller, result) =>
+        status(result) must be equalTo 403
       }
     }
 
@@ -638,7 +744,8 @@ class InstanceControllerSpec
           id = instanceWithStatus.instance.id,
           statusUpdater = None,
           parameterValuesUpdater = None,
-          templateSelector = Some("newTemplate")
+          templateSelector = Some("newTemplate"),
+          periodicJobsToStop = None
         )).thenReturn(Failure(InstanceNotFoundException(instanceWithStatus.instance.id)))
 
       testWithAllAuths { securityService =>
@@ -657,6 +764,7 @@ class InstanceControllerSpec
             instanceId = None,
             status = None,
             parameterValues = None,
+            periodicJobsToStop = None,
             selectedTemplate = Some("newTemplate")
           ))
       } { (controller, result) =>
@@ -671,7 +779,8 @@ class InstanceControllerSpec
           id = instanceWithStatus.instance.id,
           statusUpdater = Some(JobStatus.Running),
           parameterValuesUpdater = None,
-          templateSelector = None
+          templateSelector = None,
+          periodicJobsToStop = None
         )).thenReturn(Success(instanceWithStatus))
 
       testWithAllAuths {
@@ -692,6 +801,7 @@ class InstanceControllerSpec
             instanceId = None,
             status = Some(JobStatus.Running),
             parameterValues = None,
+            periodicJobsToStop = None,
             selectedTemplate = None
           ))
       } { (controller, result) =>
@@ -718,6 +828,7 @@ class InstanceControllerSpec
             instanceId = None,
             status = None,
             parameterValues = None,
+            periodicJobsToStop = None,
             selectedTemplate = None
           ))
       } { (controller, result) =>
@@ -744,6 +855,7 @@ class InstanceControllerSpec
             instanceId = None,
             status = Some(JobStatus.Running),
             parameterValues = None,
+            periodicJobsToStop = None,
             selectedTemplate = None
           ))
       } { (controller, result) =>
@@ -770,6 +882,7 @@ class InstanceControllerSpec
             instanceId = None,
             status = None,
             parameterValues = Some(Map("id" -> "new")),
+            periodicJobsToStop = None,
             selectedTemplate = None
           ))
 
@@ -792,6 +905,7 @@ class InstanceControllerSpec
             instanceId = None,
             status = None,
             parameterValues = Some(Map("id" -> "new")),
+            periodicJobsToStop = None,
             selectedTemplate = None
           ))
 
@@ -819,6 +933,7 @@ class InstanceControllerSpec
           InstanceUpdate(
             instanceId = None,
             status = None,
+            periodicJobsToStop = None,
             parameterValues = None,
             selectedTemplate = Some("newTemplate")
           ))
@@ -840,6 +955,7 @@ class InstanceControllerSpec
           InstanceUpdate(
             instanceId = None,
             status = None,
+            periodicJobsToStop = None,
             parameterValues = None,
             selectedTemplate = Some("newTemplate")
           ))

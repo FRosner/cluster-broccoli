@@ -3,8 +3,8 @@ module Models.Resources.InstanceUpdate exposing (InstanceUpdate, encoder, decode
 import Json.Encode as Encode
 import Json.Decode as Decode
 import Dict exposing (Dict)
+import Set exposing (Set)
 import Maybe exposing (Maybe)
-import Models.Resources.ServiceStatus as ServiceStatus exposing (ServiceStatus)
 import Models.Resources.JobStatus as JobStatus exposing (JobStatus)
 import Models.Resources.Template exposing (TemplateId)
 import Models.Resources.Instance exposing (InstanceId)
@@ -15,15 +15,17 @@ type alias InstanceUpdate =
     , status : Maybe JobStatus
     , parameterValues : Maybe (Dict String String)
     , selectedTemplate : Maybe TemplateId
+    , periodicJobsToStop : Maybe (List String)
     }
 
 
 decoder =
-    Decode.map4 InstanceUpdate
+    Decode.map5 InstanceUpdate
         (Decode.field "instanceId" Decode.string)
         (Decode.maybe (Decode.field "status" JobStatus.decoder))
         (Decode.maybe (Decode.field "parameterValues" (Decode.dict Decode.string)))
         (Decode.maybe (Decode.field "selectedTemplate" Decode.string))
+        (Decode.maybe (Decode.field "periodicJobsToStop" (Decode.list Decode.string)))
 
 
 encoder instanceUpdate =
@@ -39,6 +41,9 @@ encoder instanceUpdate =
             , instanceUpdate.selectedTemplate
                 |> Maybe.map (\t -> [ ( "selectedTemplate", Encode.string t ) ])
                 |> Maybe.withDefault []
+            , instanceUpdate.periodicJobsToStop
+                |> Maybe.map (\t -> [ ( "periodicJobsToStop", periodicJobsToList t ) ])
+                |> Maybe.withDefault []
             ]
         )
 
@@ -49,3 +54,9 @@ parametersToObject parameters =
             |> Dict.toList
             |> List.map (\( k, v ) -> ( k, Encode.string v ))
         )
+
+
+periodicJobsToList jobs =
+    jobs
+        |> List.map (\j -> Encode.string j)
+        |> Encode.list

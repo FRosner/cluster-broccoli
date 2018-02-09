@@ -6,6 +6,10 @@ import javax.inject.{Inject, Singleton}
 
 import cats.data.EitherT
 import cats.instances.future.{getClass, _}
+import cats.Traverse
+import cats.instances.try_._
+import cats.instances.list._
+
 import de.frosner.broccoli.instances.{InstanceConfiguration, _}
 import de.frosner.broccoli.templates.TemplateRenderer
 import de.frosner.broccoli.instances.storage.InstanceStorage
@@ -233,7 +237,8 @@ class InstanceService @Inject()(nomadClient: NomadClient,
   def updateInstance(id: String,
                      statusUpdater: Option[JobStatus],
                      parameterValuesUpdater: Option[Map[String, String]],
-                     templateSelector: Option[String]): Try[InstanceWithStatus] = synchronized {
+                     templateSelector: Option[String],
+                     periodicJobsToStop: Option[Seq[String]]): Try[InstanceWithStatus] = synchronized {
     val updateInstanceId = id
     val parameterValuesUpdatesWithPossibleDefaults = parameterValuesUpdater.map { p =>
       p.filter {
@@ -273,7 +278,26 @@ class InstanceService @Inject()(nomadClient: NomadClient,
         }
       }
 
-      val updatedInstance = instanceWithPotentiallyUpdatedTemplateAndParameterValues.map { instance =>
+      val instanceWithPotentiallyStoppedPeriodicRuns =
+        instanceWithPotentiallyUpdatedTemplateAndParameterValues.flatMap { instance =>
+          val instancePeriodicRunNames = addStatuses(instance).periodicRuns.map(_.jobName)
+          periodicJobsToStop match {
+            case Some(toStop) =>
+              val nonExistingPeriodicJobs = toStop.toSet -- instancePeriodicRunNames.toSet
+              nonExistingPeriodicJobs.headOption match {
+                case None =>
+                  // Periodic jobs are all valid and belong to this instance
+                  val tryToDelete = Traverse[List].sequence(toStop.map(nomadService.deleteJob).toList)
+                  tryToDelete.map(_ => instance)
+                case Some(job) =>
+                  // There is at least one periodic job that doesn't belong to this instance
+                  Failure(PeriodicJobNotFoundException(instance.id, job))
+              }
+            case None => Success(instance)
+          }
+        }
+
+      val updatedInstance = instanceWithPotentiallyStoppedPeriodicRuns.flatMap { instance =>
         statusUpdater
           .map {
             // Update the instance status
@@ -294,7 +318,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
             // Don't update the instance status
             Success(instance)
           }
-      }.flatten
+      }
 
       updatedInstance match {
         case Failure(throwable)       => log.error(s"Error updating instance: $throwable")
@@ -320,7 +344,8 @@ class InstanceService @Inject()(nomadClient: NomadClient,
       id = id,
       statusUpdater = Some(JobStatus.Stopped),
       parameterValuesUpdater = None,
-      templateSelector = None
+      templateSelector = None,
+      periodicJobsToStop = None
     )
     val tryDelete = tryStopping
       .map(_.instance)
