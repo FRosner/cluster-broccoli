@@ -340,7 +340,7 @@ instanceDetailView instance instanceTasks maybeInstanceParameterForm visibleSecr
                        else
                         [ h5 [] [ text "Periodic Runs" ]
                         , ul []
-                            (List.map periodicRunView periodicRuns)
+                            (List.map (periodicRunView instance.id) periodicRuns)
                         ]
                       )
                     , [ instanceTasksView instance instanceTasks ]
@@ -536,7 +536,7 @@ resourceUsageBar tooltip current required =
             ]
 
 
-periodicRunView periodicRun =
+periodicRunView instanceId periodicRun =
     li []
         [ code [ style [ ( "margin-right", "12px" ) ] ] [ text periodicRun.jobName ]
         , text " "
@@ -554,6 +554,27 @@ periodicRunView periodicRun =
             ]
         , text " "
         , jobStatusView periodicRun.status
+        , text " "
+        , iconButton
+            "btn btn-default btn-xs"
+            "glyphicon glyphicon-stop"
+            "Stop Instance"
+            (List.append
+                [ onClick (StopPeriodicJobs instanceId [ periodicRun.jobName ])
+                , id <| String.concat [ "stop-instance-", instanceId ]
+                ]
+                (if
+                    (periodicRun.status
+                        == JobStatus.JobStopped
+                        || periodicRun.status
+                        == JobStatus.JobUnknown
+                    )
+                 then
+                    [ attribute "disabled" "disabled" ]
+                 else
+                    []
+                )
+            )
         ]
 
 

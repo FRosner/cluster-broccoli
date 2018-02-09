@@ -49,3 +49,4 @@ type UpdateBodyViewMsg
     | AttemptDeleteSelectedInstances TemplateId (Set String)
     | StartSelectedInstances (Set String)
     | StopSelectedInstances (Set String)
+    | StopPeriodicJobs String (List String)

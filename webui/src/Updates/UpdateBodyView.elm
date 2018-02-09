@@ -172,6 +172,7 @@ updateBodyView message oldBodyUiModel =
                                 maybeInstanceParameterForm
                             )
                             (Maybe.andThen (\f -> (Maybe.map (\t -> t.id)) f.selectedTemplate) maybeInstanceParameterForm)
+                            Nothing
                         )
                 in
                     ( { oldBodyUiModel
@@ -247,7 +248,7 @@ updateBodyView message oldBodyUiModel =
             StartInstance instanceId ->
                 let
                     message =
-                        (InstanceUpdate instanceId (Just JobStatus.JobRunning) Nothing Nothing)
+                        (InstanceUpdate instanceId (Just JobStatus.JobRunning) Nothing Nothing Nothing)
                 in
                     ( { oldBodyUiModel
                         | attemptedDeleteInstances = Nothing
@@ -258,7 +259,7 @@ updateBodyView message oldBodyUiModel =
             StopInstance instanceId ->
                 let
                     message =
-                        (InstanceUpdate instanceId (Just JobStatus.JobStopped) Nothing Nothing)
+                        (InstanceUpdate instanceId (Just JobStatus.JobStopped) Nothing Nothing Nothing)
                 in
                     ( { oldBodyUiModel
                         | attemptedDeleteInstances = Nothing
@@ -297,7 +298,7 @@ updateBodyView message oldBodyUiModel =
                   }
                 , selectedInstances
                     |> Set.toList
-                    |> List.map (\id -> CmdUtils.sendMsg (SendWsMsg (UpdateInstanceMessage (InstanceUpdate id (Just JobStatus.JobRunning) Nothing Nothing))))
+                    |> List.map (\id -> CmdUtils.sendMsg (SendWsMsg (UpdateInstanceMessage (InstanceUpdate id (Just JobStatus.JobRunning) Nothing Nothing Nothing))))
                     |> Cmd.batch
                 )
 
@@ -307,8 +308,18 @@ updateBodyView message oldBodyUiModel =
                   }
                 , selectedInstances
                     |> Set.toList
-                    |> List.map (\id -> CmdUtils.sendMsg (SendWsMsg (UpdateInstanceMessage (InstanceUpdate id (Just JobStatus.JobStopped) Nothing Nothing))))
+                    |> List.map (\id -> CmdUtils.sendMsg (SendWsMsg (UpdateInstanceMessage (InstanceUpdate id (Just JobStatus.JobStopped) Nothing Nothing Nothing))))
                     |> Cmd.batch
+                )
+
+            StopPeriodicJobs instanceId selectedJobs ->
+                ( { oldBodyUiModel
+                    | attemptedDeleteInstances = Nothing
+                  }
+                , InstanceUpdate instanceId Nothing Nothing Nothing (Just selectedJobs)
+                    |> UpdateInstanceMessage
+                    |> SendWsMsg
+                    |> CmdUtils.sendMsg
                 )
 
 
