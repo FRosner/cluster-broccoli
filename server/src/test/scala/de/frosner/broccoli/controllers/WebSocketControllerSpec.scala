@@ -330,6 +330,7 @@ class WebSocketControllerSpec
             "id" -> "blib"
           )
         ),
+        periodicJobsToStop = None,
         selectedTemplate = None
       )
 
@@ -357,7 +358,8 @@ class WebSocketControllerSpec
               id = instanceUpdate.instanceId.get,
               statusUpdater = instanceUpdate.status,
               parameterValuesUpdater = instanceUpdate.parameterValues,
-              templateSelector = instanceUpdate.selectedTemplate
+              templateSelector = instanceUpdate.selectedTemplate,
+              periodicJobsToStop = instanceUpdate.periodicJobsToStop
             )).thenReturn(Success(instanceWithStatus))
           controller
         },
@@ -382,6 +384,7 @@ class WebSocketControllerSpec
         instanceId = Some("id"),
         status = Some(JobStatus.Running),
         parameterValues = None,
+        periodicJobsToStop = None,
         selectedTemplate = None
       )
 
@@ -415,7 +418,8 @@ class WebSocketControllerSpec
               id = instanceUpdate.instanceId.get,
               statusUpdater = instanceUpdate.status,
               parameterValuesUpdater = instanceUpdate.parameterValues,
-              templateSelector = instanceUpdate.selectedTemplate
+              templateSelector = instanceUpdate.selectedTemplate,
+              periodicJobsToStop = instanceUpdate.periodicJobsToStop
             )).thenReturn(Success(instanceWithStatus))
           controller
         },
@@ -439,6 +443,7 @@ class WebSocketControllerSpec
         instanceId = Some("id"),
         status = None,
         parameterValues = None,
+        periodicJobsToStop = None,
         selectedTemplate = Some("templateId")
       )
 
@@ -466,7 +471,8 @@ class WebSocketControllerSpec
               id = instanceUpdate.instanceId.get,
               statusUpdater = instanceUpdate.status,
               parameterValuesUpdater = instanceUpdate.parameterValues,
-              templateSelector = instanceUpdate.selectedTemplate
+              templateSelector = instanceUpdate.selectedTemplate,
+              periodicJobsToStop = instanceUpdate.periodicJobsToStop
             )).thenReturn(Success(instanceWithStatus))
           controller
         },
@@ -480,6 +486,65 @@ class WebSocketControllerSpec
           Some((".*", Role.Operator)) -> OutgoingMessage.UpdateInstanceError(
             InstanceError.RolesRequired(Role.Administrator)
           ),
+          Some((".*", Role.User)) -> OutgoingMessage.UpdateInstanceError(
+            InstanceError.RolesRequired(Role.Administrator, Role.Operator)
+          )
+        )
+      )
+    }
+
+    "process instance periodic run stops correctly" in new WithApplication {
+      val instanceUpdate = InstanceUpdate(
+        instanceId = Some("id"),
+        status = None,
+        parameterValues = None,
+        periodicJobsToStop = Some(List("id/periodic-1518101460")),
+        selectedTemplate = None
+      )
+
+      val success = OutgoingMessage.UpdateInstanceSuccess(
+        InstanceUpdated(
+          instanceUpdate,
+          instanceWithStatus
+        )
+      )
+      val secretSuccess = OutgoingMessage.UpdateInstanceSuccess(
+        InstanceUpdated(
+          instanceUpdate,
+          instanceWithStatus.removeSecrets
+        )
+      )
+      val instanceService = withInstances(mock[InstanceService], Seq.empty)
+      testWs(
+        controllerSetup = { securityService =>
+          val controller = WebSocketController(
+            webSocketService = mock[WebSocketService],
+            templateService = withTemplates(mock[TemplateService], Seq.empty),
+            instanceService = instanceService,
+            aboutService = withDummyValues(mock[AboutInfoService]),
+            securityService = securityService,
+            messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
+            playEnv = playEnv,
+            cacheApi = cacheApi
+          )
+          when(
+            controller.instanceService.updateInstance(
+              id = instanceUpdate.instanceId.get,
+              statusUpdater = instanceUpdate.status,
+              parameterValuesUpdater = instanceUpdate.parameterValues,
+              templateSelector = instanceUpdate.selectedTemplate,
+              periodicJobsToStop = instanceUpdate.periodicJobsToStop
+            )).thenReturn(Success(instanceWithStatus))
+          controller
+        },
+        inMsg = IncomingMessage.UpdateInstance(instanceUpdate),
+        expectations = Map(
+          None -> success,
+          Some((".*", Role.Administrator)) -> success,
+          Some(("bla", Role.Administrator)) -> OutgoingMessage.UpdateInstanceError(
+            InstanceError.UserRegexDenied(instanceUpdate.instanceId.get, "bla")
+          ),
+          Some((".*", Role.Operator)) -> secretSuccess,
           Some((".*", Role.User)) -> OutgoingMessage.UpdateInstanceError(
             InstanceError.RolesRequired(Role.Administrator, Role.Operator)
           )

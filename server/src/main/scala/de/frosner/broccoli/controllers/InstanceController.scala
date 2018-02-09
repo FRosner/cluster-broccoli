@@ -7,8 +7,7 @@ import cats.instances.future._
 import cats.syntax.either._
 import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.http.ToHTTPResult.ops._
-import de.frosner.broccoli.instances.NomadInstances
-import de.frosner.broccoli.instances.InstanceNotFoundException
+import de.frosner.broccoli.instances.{InstanceNotFoundException, NomadInstances, PeriodicJobNotFoundException}
 import de.frosner.broccoli.models.InstanceCreation.instanceCreationReads
 import de.frosner.broccoli.models.InstanceUpdate.instanceUpdateReads
 import de.frosner.broccoli.auth.Role.syntax._
@@ -152,7 +151,7 @@ object InstanceController {
         .ensure(InstanceError.InvalidParameters(
           "Invalid request to update an instance. Please refer to the API documentation.")) { u =>
           // Ensure that at least one parameter of the status update is set
-          u.status.orElse(u.parameterValues).orElse(u.selectedTemplate).isDefined
+          u.status.orElse(u.parameterValues).orElse(u.selectedTemplate).orElse(u.periodicJobsToStop).isDefined
         }
         .ensure(InstanceError.RolesRequired(Role.Administrator)) { u =>
           // Ensure that only administrators can update parameter values or instance templates
@@ -160,13 +159,18 @@ object InstanceController {
         }
       updatedInstance <- Either
         .fromTry(
-          instanceService.updateInstance(instanceId, update.status, update.parameterValues, update.selectedTemplate))
+          instanceService.updateInstance(instanceId,
+                                         update.status,
+                                         update.parameterValues,
+                                         update.selectedTemplate,
+                                         update.periodicJobsToStop))
         .leftMap {
-          case throwable: FileNotFoundException     => InstanceError.NotFound(instanceId, Some(throwable))
-          case throwable: InstanceNotFoundException => InstanceError.NotFound(instanceId, Some(throwable))
-          case throwable: IllegalArgumentException  => InstanceError.InvalidParameters(throwable.getMessage)
-          case throwable: TemplateNotFoundException => InstanceError.TemplateNotFound(throwable.id)
-          case throwable                            => InstanceError.Generic(throwable)
+          case throwable: FileNotFoundException        => InstanceError.NotFound(instanceId, Some(throwable))
+          case throwable: InstanceNotFoundException    => InstanceError.NotFound(instanceId, Some(throwable))
+          case throwable: IllegalArgumentException     => InstanceError.InvalidParameters(throwable.getMessage)
+          case throwable: TemplateNotFoundException    => InstanceError.TemplateNotFound(throwable.id)
+          case throwable: PeriodicJobNotFoundException => InstanceError.InvalidParameters(throwable.getMessage)
+          case throwable                               => InstanceError.Generic(throwable)
         }
       // Do not expose instance secrets to Operators
     } yield InstanceUpdated(update, updatedInstance.removeSecretsForRole(user.role))
