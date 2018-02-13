@@ -3,10 +3,12 @@ package de.frosner.broccoli.instances
 import cats.data.EitherT
 import cats.instances.future._
 import de.frosner.broccoli.auth.Account
+import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad
 import de.frosner.broccoli.nomad.models._
 import de.frosner.broccoli.nomad.{NomadClient, NomadNodeClient}
+import de.frosner.broccoli.services.InstanceService
 import org.mockito.Matchers
 import org.scalacheck.Gen
 import org.specs2.ScalaCheck
@@ -27,12 +29,33 @@ class NomadInstancesSpec
     with nomad.ModelArbitraries
     with ExecutionEnvironment {
 
+  val dummyInstance = InstanceWithStatus(
+    instance = Instance(
+      id = "id",
+      template = Template(
+        id = "id",
+        template = "{{id}}",
+        description = "description",
+        parameterInfos = Map.empty
+      ),
+      parameterValues = Map("id" -> "id")
+    ),
+    status = JobStatus.Running,
+    services = Seq.empty,
+    periodicRuns = Seq.empty
+  )
+
   override def is(implicit executionEnv: ExecutionEnv): Any =
     "NomadInstances" should {
       "get instance tasks from nomad" in prop {
         (user: Account, id: String, allocations: List[Allocation], resourceUsage: ResourceUsage) =>
+          val instanceService = mock[InstanceService]
           val client = mock[NomadClient]
           val nodeClient = mock[NomadNodeClient]
+
+          instanceService
+            .getInstance(Matchers.any[String @@ Job.Id])
+            .returns(Some(dummyInstance.copy(instance = dummyInstance.instance.copy(id = id))))
 
           nodeClient
             .getAllocationStats(Matchers.any[String @@ Allocation.Id]())
@@ -47,7 +70,9 @@ class NomadInstancesSpec
           {
             for {
               // Make sure the user really has access to the instance by putting the ID into the instance regex
-              result <- new NomadInstances(client).getInstanceTasks(user.copy(instanceRegex = id))(id).value
+              result <- new NomadInstances(client, instanceService)
+                .getInstanceTasks(user.copy(instanceRegex = id))(id)
+                .value
             } yield
               result must beRight[InstanceTasks] { instanceTasks: InstanceTasks =>
                 (instanceTasks.instanceId must beEqualTo(id)) and
@@ -64,13 +89,21 @@ class NomadInstancesSpec
       "include resources in instance tasks" in todo
 
       "fail to get instance tasks if the job wasn't found" in prop { (user: Account, id: String) =>
+        val instanceService = mock[InstanceService]
         val client = mock[NomadClient]
+
+        instanceService
+          .getInstance(Matchers.any[String @@ Job.Id])
+          .returns(Some(dummyInstance.copy(instance = dummyInstance.instance.copy(id = id))))
+
         client.getJob(shapeless.tag[Job.Id](id)).returns(EitherT.leftT(NomadError.NotFound))
         client.getAllocationsForJob(shapeless.tag[Job.Id](id)).returns(EitherT.pure(WithId(id, List.empty)))
 
         {
           for {
-            result <- new NomadInstances(client).getInstanceTasks(user.copy(instanceRegex = id))(id).value
+            result <- new NomadInstances(client, instanceService)
+              .getInstanceTasks(user.copy(instanceRegex = id))(id)
+              .value
           } yield result must beLeft[InstanceError](InstanceError.NotFound(id))
         }.await
       }.setGen2(Gen.identifier)
@@ -78,7 +111,7 @@ class NomadInstancesSpec
       "fail to get instance tasks when the user may not access the instance" in prop { (user: Account, id: String) =>
         (!id.matches(user.instanceRegex)) ==> {
           for {
-            result <- new NomadInstances(mock[NomadClient]).getInstanceTasks(user)(id).value
+            result <- new NomadInstances(mock[NomadClient], mock[InstanceService]).getInstanceTasks(user)(id).value
           } yield {
             result must beLeft[InstanceError](InstanceError.UserRegexDenied(id, user.instanceRegex))
           }
@@ -87,6 +120,11 @@ class NomadInstancesSpec
 
       "fail to get instance tasks when Nomad fails" in prop { (user: Account, id: String, error: NomadError) =>
         val client = mock[NomadClient]
+        val instanceService = mock[InstanceService]
+
+        instanceService
+          .getInstance(Matchers.any[String @@ Job.Id])
+          .returns(Some(dummyInstance.copy(instance = dummyInstance.instance.copy(id = id))))
 
         client
           .getAllocationsForJob(shapeless.tag[Job.Id](id))
@@ -94,11 +132,29 @@ class NomadInstancesSpec
 
         {
           for {
-            result <- new NomadInstances(client).getInstanceTasks(user)(id).value
+            result <- new NomadInstances(client, instanceService).getInstanceTasks(user)(id).value
           } yield {
             result must beLeft[InstanceError]
           }
         }.await
+      }
+
+      "fail to get instance tasks when instance does not belong to Broccoli" in prop {
+        (user: Account, id: String, error: NomadError) =>
+          val client = mock[NomadClient]
+          val instanceService = mock[InstanceService]
+
+          instanceService
+            .getInstance(Matchers.any[String @@ Job.Id])
+            .returns(None)
+
+          {
+            for {
+              result <- new NomadInstances(client, instanceService).getInstanceTasks(user)(id).value
+            } yield {
+              result must beLeft[InstanceError]
+            }
+          }.await
       }
     }
 }
