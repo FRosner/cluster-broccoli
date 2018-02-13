@@ -343,14 +343,14 @@ instanceDetailView instance instanceTasks maybeInstanceParameterForm visibleSecr
                             (List.map (periodicRunView instance.id) periodicRuns)
                         ]
                       )
-                    , instanceTasksView instance instanceTasks
+                    , jobTasksView instance.id instanceTasks
                     ]
                 )
             ]
 
 
-instanceTasksView : Instance -> Maybe (List AllocatedTask) -> List (Html msg)
-instanceTasksView instance instanceTasks =
+jobTasksView : String -> Maybe (List AllocatedTask) -> List (Html msg)
+jobTasksView jobId instanceTasks =
     case Maybe.map (List.filter (.clientStatus >> (/=) ClientComplete)) instanceTasks of
         Nothing ->
             [ div
@@ -394,7 +394,7 @@ instanceTasksView instance instanceTasks =
                                     , th [ class "text-center" ] [ text "Task logs" ]
                                     ]
                                 ]
-                            , tbody [] <| List.indexedMap (instanceAllocationRow instance) allocations
+                            , tbody [] <| List.indexedMap (jobAllocationRow jobId) allocations
                             ]
                       ]
                     ]
@@ -404,11 +404,11 @@ instanceTasksView instance instanceTasks =
 
 {-| Get the URL to a task log of an instance
 -}
-logUrl : Instance -> AllocatedTask -> LogKind -> String
-logUrl instance task kind =
+logUrl : String -> AllocatedTask -> LogKind -> String
+logUrl jobId task kind =
     String.concat
         [ "/downloads/instances/"
-        , instance.id
+        , jobId
         , "/allocations/"
         , task.allocationId
         , "/tasks/"
@@ -426,8 +426,8 @@ logUrl instance task kind =
         ]
 
 
-instanceAllocationRow : Instance -> Int -> AllocatedTask -> Html msg
-instanceAllocationRow instance index task =
+jobAllocationRow : String -> Int -> AllocatedTask -> Html msg
+jobAllocationRow jobId index task =
     let
         ( description, labelKind ) =
             case task.taskState of
@@ -458,14 +458,14 @@ instanceAllocationRow instance index task =
                 -- Do not wrap buttons in this cell
                 [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
                 [ a
-                    [ href (logUrl instance task StdOut)
+                    [ href (logUrl jobId task StdOut)
                     , target "_blank"
                     , class "btn btn-default btn-xs"
                     ]
                     [ text "stdout" ]
                 , text " "
                 , a
-                    [ href (logUrl instance task StdErr)
+                    [ href (logUrl jobId task StdErr)
                     , target "_blank"
                     , class "btn btn-default btn-xs"
                     ]
