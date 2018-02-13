@@ -343,61 +343,60 @@ instanceDetailView instance instanceTasks maybeInstanceParameterForm visibleSecr
                             (List.map (periodicRunView instance.id) periodicRuns)
                         ]
                       )
-                    , [ instanceTasksView instance instanceTasks ]
+                    , instanceTasksView instance instanceTasks
                     ]
                 )
             ]
 
 
-instanceTasksView : Instance -> Maybe (List AllocatedTask) -> Html msg
+instanceTasksView : Instance -> Maybe (List AllocatedTask) -> List (Html msg)
 instanceTasksView instance instanceTasks =
-    let
-        allocatedTasks =
-            -- Filter all complete allocations and attach the task name to every
-            -- allocation.
-            --
-            -- We remove complete allocations because Nomad 0.5.x (possibly
-            -- other versions as well) returns all complete and thus dead
-            -- allocations for stopped jobs, whereas it only returns
-            -- non-complete allocations for running jobs.
-            --
-            -- If we did not filter complete allocations the user would see dead
-            -- allocations suddenly popping up in the UI when they stopped the
-            -- task—which would be somewhat confusing.
-            case Maybe.map (List.filter (.clientStatus >> (/=) ClientComplete)) instanceTasks of
-                Nothing ->
-                    [ i [ class "fa fa-spinner fa-spin" ] [] ]
+    case Maybe.map (List.filter (.clientStatus >> (/=) ClientComplete)) instanceTasks of
+        Nothing ->
+            [ h5 [] [ text "Allocated Tasks" ]
+            , i [ class "fa fa-spinner fa-spin" ] []
+            ]
 
-                Just [] ->
-                    [ text "No tasks have been allocated, yet." ]
+        Just [] ->
+            []
 
-                Just allocations ->
-                    [ table
-                        [ class "table table-condensed table-hover"
-                        ]
-                        [ thead
-                            -- Do not wrap table headers
-                            [ style [ ( "white-space", "nowrap" ) ] ]
-                            [ tr []
-                                [ th [] [ text "Allocation ID" ]
-                                , th [ class "text-center" ] [ text "State" ]
-                                , th [ style [ ( "width", "100%" ) ] ] [ text "Task" ]
-                                , th [ class "text-center" ] [ text "CPU" ]
-                                , th [ class "text-center" ] [ text "Memory" ]
-                                , th [ class "text-center" ] [ text "Task logs" ]
-                                ]
+        -- Filter all complete allocations and attach the task name to every
+        -- allocation.
+        --
+        -- We remove complete allocations because Nomad 0.5.x (possibly
+        -- other versions as well) returns all complete and thus dead
+        -- allocations for stopped jobs, whereas it only returns
+        -- non-complete allocations for running jobs.
+        --
+        -- If we did not filter complete allocations the user would see dead
+        -- allocations suddenly popping up in the UI when they stopped the
+        -- task—which would be somewhat confusing.
+        Just allocations ->
+            [ div
+                [ style instanceViewElementStyle ]
+                (List.concat
+                    [ [ h5 [] [ text "Allocated Tasks" ] ]
+                    , [ table
+                            [ class "table table-condensed table-hover"
                             ]
-                        , tbody [] <| List.indexedMap (instanceAllocationRow instance) allocations
-                        ]
+                            [ thead
+                                -- Do not wrap table headers
+                                [ style [ ( "white-space", "nowrap" ) ] ]
+                                [ tr []
+                                    [ th [] [ text "Allocation ID" ]
+                                    , th [ class "text-center" ] [ text "State" ]
+                                    , th [ style [ ( "width", "100%" ) ] ] [ text "Task" ]
+                                    , th [ class "text-center" ] [ text "CPU" ]
+                                    , th [ class "text-center" ] [ text "Memory" ]
+                                    , th [ class "text-center" ] [ text "Task logs" ]
+                                    ]
+                                ]
+                            , tbody [] <| List.indexedMap (instanceAllocationRow instance) allocations
+                            ]
+                      ]
                     ]
-    in
-        div
-            [ style instanceViewElementStyle ]
-            (List.concat
-                [ [ h5 [] [ text "Allocated Tasks" ] ]
-                , allocatedTasks
-                ]
-            )
+                )
+            ]
 
 
 {-| Get the URL to a task log of an instance
