@@ -353,8 +353,11 @@ instanceTasksView : Instance -> Maybe (List AllocatedTask) -> List (Html msg)
 instanceTasksView instance instanceTasks =
     case Maybe.map (List.filter (.clientStatus >> (/=) ClientComplete)) instanceTasks of
         Nothing ->
-            [ h5 [] [ text "Allocated Tasks" ]
-            , i [ class "fa fa-spinner fa-spin" ] []
+            [ div
+                [ style instanceViewElementStyle ]
+                [ h5 [] [ text "Allocated Tasks" ]
+                , i [ class "fa fa-spinner fa-spin" ] []
+                ]
             ]
 
         Just [] ->
