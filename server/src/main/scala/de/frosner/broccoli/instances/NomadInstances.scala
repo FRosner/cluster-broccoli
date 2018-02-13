@@ -3,12 +3,12 @@ package de.frosner.broccoli.instances
 import javax.inject.Inject
 
 import cats.Apply
-import cats.data.EitherT
+import cats.data.{EitherT, OptionT}
 import cats.instances.future._
 import cats.instances.list._
 import cats.syntax.traverse._
 import de.frosner.broccoli.auth.Account
-import de.frosner.broccoli.models.{AllocatedTask, InstanceError, InstanceTasks}
+import de.frosner.broccoli.models.{AllocatedTask, InstanceError, InstanceTasks, InstanceWithStatus}
 import de.frosner.broccoli.nomad.models.{
   Allocation,
   AllocationStats,
@@ -19,6 +19,7 @@ import de.frosner.broccoli.nomad.models.{
   Task => NomadTask
 }
 import de.frosner.broccoli.nomad.{NomadClient, NomadT}
+import de.frosner.broccoli.services.InstanceService
 import shapeless.tag
 import shapeless.tag.@@
 import squants.information.Information
@@ -30,7 +31,8 @@ import scala.concurrent.{ExecutionContext, Future}
   *
   * @param nomadClient A client to access the Nomad API.
   */
-class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionContext) {
+class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: InstanceService)(
+    implicit ec: ExecutionContext) {
 
   type InstanceT[R] = EitherT[Future, InstanceError, R]
 
@@ -48,13 +50,16 @@ class NomadInstances @Inject()(nomadClient: NomadClient)(implicit ec: ExecutionC
     */
   def getInstanceTasks(user: Account)(id: String): InstanceT[InstanceTasks] =
     for {
-      jobId <- EitherT
+      instanceId <- EitherT
         .pure[Future, InstanceError](tag[Job.Id](id))
         .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
       // Request job information and allocations in parallel, to get the required resources for tasks and the actual
       // allocated tasks and their resources.  We can't extract the pair with a pattern unfortunately because as of
       // Scala 2.11 the compiler still tries to insert .withFilter calls even for irrefutable patterns, which EitherT
       // doesn't have.
+      instance <- EitherT
+        .fromOption[Future](instanceService.getInstance(instanceId), InstanceError.NotFound(instanceId, None))
+      jobId = tag[Job.Id](instance.instance.id)
       jobAndAllocations <- Apply[NomadT]
         .tuple2(nomadClient.getJob(jobId), nomadClient.getAllocationsForJob(jobId))
         .leftMap(toInstanceError(jobId))
