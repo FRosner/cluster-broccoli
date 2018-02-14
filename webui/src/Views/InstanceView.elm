@@ -4,7 +4,9 @@ import Models.Resources.ServiceStatus exposing (..)
 import Models.Resources.JobStatus as JobStatus exposing (..)
 import Models.Resources.Role exposing (Role(..))
 import Models.Resources.AllocatedTask exposing (AllocatedTask)
-import Models.Resources.Instance exposing (Instance)
+import Models.Resources.PeriodicRun exposing (PeriodicRun)
+import Models.Resources.InstanceTasks exposing (InstanceTasks)
+import Models.Resources.Instance exposing (Instance, InstanceId)
 import Models.Resources.TaskState exposing (TaskState(..))
 import Models.Resources.LogKind exposing (LogKind(..))
 import Models.Resources.ClientStatus exposing (ClientStatus(ClientComplete))
@@ -340,18 +342,18 @@ instanceDetailView instance instanceTasks maybeInstanceParameterForm visibleSecr
                        else
                         [ h5 [] [ text "Periodic Runs" ]
                         , ul []
-                            (List.map (periodicRunView instance.id) periodicRuns)
+                            (List.map (periodicRunView instance.id instanceTasks) periodicRuns)
                         ]
                       )
-                    , jobTasksView instance.id instanceTasks
+                    , jobTasksView instance.id (Maybe.map .allocatedTasks instanceTasks)
                     ]
                 )
             ]
 
 
 jobTasksView : String -> Maybe (List AllocatedTask) -> List (Html msg)
-jobTasksView jobId instanceTasks =
-    case Maybe.map (List.filter (.clientStatus >> (/=) ClientComplete)) instanceTasks of
+jobTasksView jobId allocatedTasks =
+    case Maybe.map (List.filter (.clientStatus >> (/=) ClientComplete)) allocatedTasks of
         Nothing ->
             [ div
                 [ style instanceViewElementStyle ]
@@ -538,46 +540,55 @@ resourceUsageBar tooltip current required =
             ]
 
 
-periodicRunView instanceId periodicRun =
-    li [ style [ ( "margin", "0 0 3px 0" ) ] ]
-        [ code [ style [ ( "margin-right", "12px" ) ] ] [ text periodicRun.jobName ]
-        , text " "
-        , span
-            [ class "hidden-xs"
-            , style [ ( "margin-right", "12px" ) ]
-            ]
-            [ icon "fa fa-clock-o" []
+periodicRunView : InstanceId -> Maybe InstanceTasks -> PeriodicRun -> Html UpdateBodyViewMsg
+periodicRunView instanceId instanceTasks periodicRun =
+    let
+        periodicTasks =
+            instanceTasks
+                |> Maybe.map .allocatedPeriodicTasks
+                |> Maybe.map (\tasks -> Maybe.withDefault [] (Dict.get periodicRun.jobName tasks))
+    in
+        li [ style [ ( "margin", "0 0 3px 0" ) ] ]
+            [ code [ style [ ( "margin-right", "12px" ) ] ] [ text periodicRun.jobName ]
             , text " "
-            , (periodicRun.utcSeconds * 1000)
-                |> toFloat
-                |> Date.fromTime
-                |> DateFormat.format Config_en_us.config "%Y-%m-%d %H:%M:%S UTC%z"
-                |> text
-            ]
-        , text " "
-        , jobStatusView periodicRun.status
-        , text " "
-        , iconButton
-            "btn btn-default btn-xs"
-            "glyphicon glyphicon-stop"
-            "Stop Instance"
-            (List.append
-                [ onClick (StopPeriodicJobs instanceId [ periodicRun.jobName ])
-                , id <| String.concat [ "stop-instance-", instanceId ]
+            , span
+                [ class "hidden-xs"
+                , style [ ( "margin-right", "12px" ) ]
                 ]
-                (if
-                    (periodicRun.status
-                        == JobStatus.JobStopped
-                        || periodicRun.status
-                        == JobStatus.JobUnknown
+                [ icon "fa fa-clock-o" []
+                , text " "
+                , (periodicRun.utcSeconds * 1000)
+                    |> toFloat
+                    |> Date.fromTime
+                    |> DateFormat.format Config_en_us.config "%Y-%m-%d %H:%M:%S UTC%z"
+                    |> text
+                ]
+            , text " "
+            , jobStatusView periodicRun.status
+            , text " "
+            , iconButton
+                "btn btn-default btn-xs"
+                "glyphicon glyphicon-stop"
+                "Stop Instance"
+                (List.append
+                    [ onClick (StopPeriodicJobs instanceId [ periodicRun.jobName ])
+                    , id <| String.concat [ "stop-instance-", instanceId ]
+                    ]
+                    (if
+                        (periodicRun.status
+                            == JobStatus.JobStopped
+                            || periodicRun.status
+                            == JobStatus.JobUnknown
+                        )
+                     then
+                        [ attribute "disabled" "disabled" ]
+                     else
+                        []
                     )
-                 then
-                    [ attribute "disabled" "disabled" ]
-                 else
-                    []
                 )
-            )
-        ]
+            , div []
+                (jobTasksView periodicRun.jobName periodicTasks)
+            ]
 
 
 periodicRunDateView date =

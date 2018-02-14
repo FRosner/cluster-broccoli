@@ -10,7 +10,9 @@ import play.api.mvc.Results
   * @param instanceId The ID of the instance
   * @param allocatedTasks Allocated tasks of the instance
   */
-final case class InstanceTasks(instanceId: String, allocatedTasks: Seq[AllocatedTask])
+final case class InstanceTasks(instanceId: String,
+                               allocatedTasks: Seq[AllocatedTask],
+                               allocatedPeriodicTasks: Map[String, Seq[AllocatedTask]])
 
 object InstanceTasks {
   implicit val instanceTasksWrites: Writes[InstanceTasks] = Json.writes[InstanceTasks]
