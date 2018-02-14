@@ -24,15 +24,19 @@ class BroccoliMessageHandlerSpec
 
   "The Broccoli Message Handler" should {
     "send back instance tasks" in { implicit ee: ExecutionEnv =>
-      prop { (account: Account, id: String, tasks: List[AllocatedTask]) =>
-        val instances = mock[NomadInstances]
-        val instanceTasks = InstanceTasks(id, tasks)
-        instances.getInstanceTasks(account)(id) returns EitherT.pure[Future, InstanceError](instanceTasks)
+      prop {
+        (account: Account,
+         id: String,
+         tasks: List[AllocatedTask],
+         periodicRunTasks: Map[String, List[AllocatedTask]]) =>
+          val instances = mock[NomadInstances]
+          val instanceTasks = InstanceTasks(id, tasks, periodicRunTasks)
+          instances.getInstanceTasks(account)(id) returns EitherT.pure[Future, InstanceError](instanceTasks)
 
-        val outgoingMessage = new BroccoliMessageHandler(instances, mock[InstanceService])
-          .processMessage(account)(IncomingMessage.GetInstanceTasks(id))
+          val outgoingMessage = new BroccoliMessageHandler(instances, mock[InstanceService])
+            .processMessage(account)(IncomingMessage.GetInstanceTasks(id))
 
-        outgoingMessage must beEqualTo(OutgoingMessage.GetInstanceTasksSuccess(instanceTasks)).await
+          outgoingMessage must beEqualTo(OutgoingMessage.GetInstanceTasksSuccess(instanceTasks)).await
       }.setGen2(Gen.identifier)
     }
 

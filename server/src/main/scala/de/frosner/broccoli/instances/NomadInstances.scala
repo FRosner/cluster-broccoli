@@ -3,7 +3,8 @@ package de.frosner.broccoli.instances
 import javax.inject.Inject
 
 import cats.Apply
-import cats.data.{EitherT, OptionT}
+import cats.data.EitherT
+//import cats.implicits._
 import cats.instances.future._
 import cats.instances.list._
 import cats.syntax.traverse._
@@ -24,6 +25,7 @@ import shapeless.tag
 import shapeless.tag.@@
 import squants.information.Information
 
+import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -59,50 +61,22 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
       // doesn't have.
       instance <- EitherT
         .fromOption[Future](instanceService.getInstance(instanceId), InstanceError.NotFound(instanceId, None))
-      jobId = tag[Job.Id](instance.instance.id)
-      jobAndAllocations <- Apply[NomadT]
-        .tuple2(nomadClient.getJob(jobId), nomadClient.getAllocationsForJob(jobId))
-        .leftMap(toInstanceError(jobId))
-      job = jobAndAllocations._1
-      allocations = jobAndAllocations._2
-      resources <- allocations.payload.toList
-        .map { allocation =>
-          for {
-            node <- nomadClient.allocationNodeClient(allocation)
-            stats <- node.getAllocationStats(allocation.id)
-          } yield allocation.id -> stats
+      instanceJobId = tag[Job.Id](instance.instance.id)
+      instanceJobTasks <- getJobTasks(instanceJobId)
+      periodicRunJobTasks <- instance.periodicRuns
+        .map { run =>
+          val jobName = tag[Job.Id](run.jobName)
+          getJobTasks(jobName).map(tasks => jobName -> tasks)
         }
-        .sequence[NomadT, (String @@ Allocation.Id, AllocationStats)]
+        .toList
+        .sequence
+        .asInstanceOf[EitherT[Future, InstanceError, List[(String, immutable.Seq[AllocatedTask])]]]
         .map(_.toMap)
-        .leftMap(toInstanceError(jobId))
     } yield {
-      val taskResources = (for {
-        group <- job.taskGroups
-        task <- group.tasks
-      } yield task.name -> task.resources).toMap
-
       InstanceTasks(
-        jobId,
-        // Flatten tasks into allocated tasks
-        allocations.payload
-          .flatMap(allocation =>
-            allocation.taskStates.map {
-              case (taskName, events) =>
-                val taskResourceUsage = for {
-                  allocationResources <- resources.get(allocation.id)
-                  taskResources <- allocationResources.tasks.get(taskName)
-                } yield taskResources
-
-                val allocatedTaskResources = AllocatedTask.Resources(
-                  tag[AllocatedTask.CPURequired](taskResources.get(taskName).map(_.cpu)),
-                  tag[AllocatedTask.CPUUsed](taskResourceUsage.map(_.resourceUsage.cpuStats.totalTicks)),
-                  tag[AllocatedTask.MemoryRequired](taskResources.get(taskName).map(_.memory)),
-                  tag[AllocatedTask.MemoryUsed](taskResourceUsage.map(_.resourceUsage.memoryStats.rss))
-                )
-
-                AllocatedTask(taskName, events.state, allocation.id, allocation.clientStatus, allocatedTaskResources)
-          })
-          .sortBy(_.taskName)
+        instanceJobId,
+        instanceJobTasks,
+        periodicRunJobTasks
       )
     }
 
@@ -135,4 +109,49 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
     case NomadError.NotFound    => InstanceError.NotFound(jobId)
     case NomadError.Unreachable => InstanceError.NomadUnreachable
   }
+
+  private def getJobTasks(jobId: String @@ Job.Id): EitherT[Future, InstanceError, immutable.Seq[AllocatedTask]] =
+    for {
+      jobAndAllocations <- Apply[NomadT]
+        .tuple2(nomadClient.getJob(jobId), nomadClient.getAllocationsForJob(jobId))
+        .leftMap(toInstanceError(jobId))
+      job = jobAndAllocations._1
+      allocations = jobAndAllocations._2
+      resources <- allocations.payload.toList
+        .map { allocation =>
+          for {
+            node <- nomadClient.allocationNodeClient(allocation)
+            stats <- node.getAllocationStats(allocation.id)
+          } yield allocation.id -> stats
+        }
+        .sequence[NomadT, (String @@ Allocation.Id, AllocationStats)]
+        .map(_.toMap)
+        .leftMap(toInstanceError(jobId))
+    } yield {
+      val taskResources = (for {
+        group <- job.taskGroups
+        task <- group.tasks
+      } yield task.name -> task.resources).toMap
+
+      // Flatten tasks into allocated tasks
+      allocations.payload
+        .flatMap(allocation =>
+          allocation.taskStates.map {
+            case (taskName, events) =>
+              val taskResourceUsage = for {
+                allocationResources <- resources.get(allocation.id)
+                taskResources <- allocationResources.tasks.get(taskName)
+              } yield taskResources
+
+              val allocatedTaskResources = AllocatedTask.Resources(
+                tag[AllocatedTask.CPURequired](taskResources.get(taskName).map(_.cpu)),
+                tag[AllocatedTask.CPUUsed](taskResourceUsage.map(_.resourceUsage.cpuStats.totalTicks)),
+                tag[AllocatedTask.MemoryRequired](taskResources.get(taskName).map(_.memory)),
+                tag[AllocatedTask.MemoryUsed](taskResourceUsage.map(_.resourceUsage.memoryStats.rss))
+              )
+
+              AllocatedTask(taskName, events.state, allocation.id, allocation.clientStatus, allocatedTaskResources)
+        })
+        .sortBy(_.taskName)
+    }
 }

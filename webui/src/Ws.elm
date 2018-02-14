@@ -189,12 +189,12 @@ updateFromMessage model message =
             )
 
         GetInstanceTasksSuccessMessage result ->
-            ( { model | tasks = Dict.insert result.instanceId result.allocatedTasks model.tasks }, Cmd.none )
+            ( { model | tasks = Dict.insert result.instanceId result model.tasks }, Cmd.none )
 
         GetInstanceTasksErrorMessage instanceId error ->
             -- When we failed to get tasks of an instance clear the tasks of the instance, and swallow the error since
             -- we'll retry soon anyway.
-            ( { model | tasks = Dict.insert instanceId [] model.tasks }, Cmd.none )
+            ( { model | tasks = Dict.insert instanceId (InstanceTasks.empty instanceId) model.tasks }, Cmd.none )
 
         ErrorMessage error ->
             ( model
