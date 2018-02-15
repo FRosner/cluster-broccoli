@@ -7,6 +7,7 @@ import Models.Resources.ClientStatus exposing (ClientStatus(ClientComplete))
 import Models.Resources.Allocation exposing (shortAllocationId)
 import Views.Styles as Styles
 import Views.ResourceUsageBar as ResourceUsageBar
+import Views.LogUrl as LogUrl
 import Html exposing (..)
 import Html.Attributes exposing (..)
 
@@ -96,41 +97,17 @@ jobAllocationRow jobId index task =
                 -- Do not wrap buttons in this cell
                 [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
                 [ a
-                    [ href (logUrl jobId task StdOut)
+                    [ href (LogUrl.view jobId task StdOut)
                     , target "_blank"
                     , class "btn btn-default btn-xs"
                     ]
                     [ text "stdout" ]
                 , text " "
                 , a
-                    [ href (logUrl jobId task StdErr)
+                    [ href (LogUrl.view jobId task StdErr)
                     , target "_blank"
                     , class "btn btn-default btn-xs"
                     ]
                     [ text "stderr" ]
                 ]
             ]
-
-
-{-| Get the URL to a task log of an instance
--}
-logUrl : String -> AllocatedTask -> LogKind -> String
-logUrl jobId task kind =
-    String.concat
-        [ "/downloads/instances/"
-        , jobId
-        , "/allocations/"
-        , task.allocationId
-        , "/tasks/"
-        , task.taskName
-        , "/logs/"
-        , case kind of
-            StdOut ->
-                "stdout"
-
-            StdErr ->
-                "stderr"
-
-        -- Only fetch the last 500 KiB of the log, to avoid large requests and download times
-        , "?offset=500KiB"
-        ]
