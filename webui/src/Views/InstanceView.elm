@@ -6,11 +6,14 @@ import Models.Resources.Role exposing (Role(..))
 import Models.Resources.AllocatedTask exposing (AllocatedTask)
 import Models.Resources.PeriodicRun exposing (PeriodicRun)
 import Models.Resources.InstanceTasks exposing (InstanceTasks)
+import Models.Resources.Template exposing (Template)
+import Models.Resources.Service exposing (Service)
 import Models.Resources.Instance exposing (Instance, InstanceId)
 import Models.Resources.TaskState exposing (TaskState(..))
 import Models.Resources.LogKind exposing (LogKind(..))
 import Models.Resources.ClientStatus exposing (ClientStatus(ClientComplete))
 import Models.Resources.Allocation exposing (shortAllocationId)
+import Models.Ui.InstanceParameterForm exposing (InstanceParameterForm)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
 import Views.ParameterFormView as ParameterFormView
@@ -27,30 +30,32 @@ import Date.Extra.Format as DateFormat
 import Date.Extra.Config.Config_en_us as Config_en_us
 
 
+checkboxColumnWidth : number
 checkboxColumnWidth =
     1
 
 
+chevronColumnWidth : number
 chevronColumnWidth =
     30
 
 
-
--- nameColumnWidth = 200
-
-
+serviceColumnWidth : number
 serviceColumnWidth =
     500
 
 
+templateVersionColumnWidth : number
 templateVersionColumnWidth =
     1
 
 
+jobControlsColumnWidth : number
 jobControlsColumnWidth =
     200
 
 
+view : Dict String Instance -> Set InstanceId -> Set InstanceId -> Dict String InstanceParameterForm -> Set ( InstanceId, String ) -> Dict String InstanceTasks -> Dict String Template -> Maybe Role -> Maybe (Set String) -> Html UpdateBodyViewMsg
 view instances selectedInstances expandedInstances instanceParameterForms visibleSecrets tasks templates maybeRole attemptedDeleteInstances =
     let
         instancesIds =
@@ -146,6 +151,7 @@ view instances selectedInstances expandedInstances instanceParameterForms visibl
                 ]
 
 
+instanceRow : Set InstanceId -> Set InstanceId -> Dict String InstanceParameterForm -> Set ( InstanceId, String ) -> Dict String Template -> Dict String InstanceTasks -> Maybe Role -> Maybe (Set String) -> Instance -> List (Html UpdateBodyViewMsg)
 instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates tasks maybeRole attemptedDeleteInstances instance =
     let
         instanceExpanded =
@@ -304,6 +310,7 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
             )
 
 
+expandedTdStyle : List ( String, String )
 expandedTdStyle =
     [ ( "border-top", "0px" )
     , ( "padding-top", "0px" )
@@ -314,6 +321,7 @@ expandedTdStyle =
 -- TODO as "id" is special we should treat it also special
 
 
+instanceDetailView : Instance -> Maybe InstanceTasks -> Maybe InstanceParameterForm -> Set ( InstanceId, String ) -> Dict String Template -> Maybe Role -> Html UpdateBodyViewMsg
 instanceDetailView instance instanceTasks maybeInstanceParameterForm visibleSecrets templates maybeRole =
     let
         periodicRuns =
@@ -590,6 +598,7 @@ periodicRunView instanceId instanceTasks periodicRun =
             ]
 
 
+periodicRunDateView : Date.Date -> String
 periodicRunDateView date =
     String.concat
         [ toString (Date.hour date)
@@ -608,6 +617,7 @@ periodicRunDateView date =
         ]
 
 
+jobStatusView : JobStatus -> Html msg
 jobStatusView jobStatus =
     let
         ( statusLabel, statusText ) =
@@ -639,6 +649,7 @@ jobStatusView jobStatus =
             [ text statusText ]
 
 
+servicesView : List Service -> List (Html msg)
 servicesView services =
     if (List.isEmpty services) then
         [ text "-" ]
@@ -646,6 +657,7 @@ servicesView services =
         List.concatMap serviceView services
 
 
+serviceView : Service -> List (Html msg)
 serviceView service =
     let
         ( iconClass, textColor ) =
