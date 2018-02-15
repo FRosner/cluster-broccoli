@@ -1,37 +1,30 @@
-module Views.PeriodicRunView exposing (view)
+module Views.PeriodicRunsView exposing (view)
 
 import Models.Resources.JobStatus as JobStatus exposing (..)
-import Models.Resources.Role exposing (Role(..))
-import Models.Resources.AllocatedTask exposing (AllocatedTask)
 import Models.Resources.PeriodicRun exposing (PeriodicRun)
 import Models.Resources.InstanceTasks exposing (InstanceTasks)
-import Models.Resources.Template exposing (Template)
 import Models.Resources.Instance exposing (Instance, InstanceId)
-import Models.Resources.TaskState exposing (TaskState(..))
-import Models.Resources.LogKind exposing (LogKind(..))
-import Models.Resources.ClientStatus exposing (ClientStatus(ClientComplete))
-import Models.Resources.Allocation exposing (shortAllocationId)
-import Models.Ui.InstanceParameterForm exposing (InstanceParameterForm)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
-import Views.ParameterFormView as ParameterFormView
 import Views.JobStatusView as JobStatusView
 import Views.JobTasksView as JobTasksView
-import Views.Styles as Styles
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onCheck, onInput, onSubmit)
 import Dict exposing (..)
-import Set exposing (Set)
 import Date
-import Filesize
-import Round
 import Date.Extra.Format as DateFormat
 import Date.Extra.Config.Config_en_us as Config_en_us
 
 
-view : InstanceId -> Maybe InstanceTasks -> PeriodicRun -> Html UpdateBodyViewMsg
-view instanceId instanceTasks periodicRun =
+view : InstanceId -> Maybe InstanceTasks -> List PeriodicRun -> Html UpdateBodyViewMsg
+view instanceId instanceTasks periodicRuns =
+    ul []
+        (List.map (row instanceId instanceTasks) periodicRuns)
+
+
+row : InstanceId -> Maybe InstanceTasks -> PeriodicRun -> Html UpdateBodyViewMsg
+row instanceId instanceTasks periodicRun =
     let
         periodicTasks =
             instanceTasks
