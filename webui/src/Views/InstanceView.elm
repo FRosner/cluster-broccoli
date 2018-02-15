@@ -345,15 +345,26 @@ instanceDetailView instance instanceTasks maybeInstanceParameterForm visibleSecr
                             (List.map (periodicRunView instance.id instanceTasks) periodicRuns)
                         ]
                       )
-                    , jobTasksView instance.id (Maybe.map .allocatedTasks instanceTasks)
+                    , jobTasksView instance.id (Maybe.map .allocatedTasks instanceTasks) True
                     ]
                 )
             ]
 
 
-jobTasksView : String -> Maybe (List AllocatedTask) -> List (Html msg)
-jobTasksView jobId allocatedTasks =
-    case Maybe.map (List.filter (.clientStatus >> (/=) ClientComplete)) allocatedTasks of
+jobTasksView : String -> Maybe (List AllocatedTask) -> Bool -> List (Html msg)
+jobTasksView jobId allocatedTasks showDead =
+    -- Possibility to filter all complete allocations and attach the task name to every
+    -- allocation.
+    --
+    -- We remove complete allocations because Nomad 0.5.x (possibly
+    -- other versions as well) returns all complete and thus dead
+    -- allocations for stopped jobs, whereas it only returns
+    -- non-complete allocations for running jobs.
+    --
+    -- If we did not filter complete allocations the user would see dead
+    -- allocations suddenly popping up in the UI when they stopped the
+    -- task—which would be somewhat confusing.
+    case Maybe.map (List.filter (.clientStatus >> (/=) ClientComplete >> (||) showDead)) allocatedTasks of
         Nothing ->
             [ div
                 [ style instanceViewElementStyle ]
@@ -365,17 +376,6 @@ jobTasksView jobId allocatedTasks =
         Just [] ->
             []
 
-        -- Filter all complete allocations and attach the task name to every
-        -- allocation.
-        --
-        -- We remove complete allocations because Nomad 0.5.x (possibly
-        -- other versions as well) returns all complete and thus dead
-        -- allocations for stopped jobs, whereas it only returns
-        -- non-complete allocations for running jobs.
-        --
-        -- If we did not filter complete allocations the user would see dead
-        -- allocations suddenly popping up in the UI when they stopped the
-        -- task—which would be somewhat confusing.
         Just allocations ->
             [ div
                 [ style instanceViewElementStyle ]
@@ -587,7 +587,7 @@ periodicRunView instanceId instanceTasks periodicRun =
                     )
                 )
             , div []
-                (jobTasksView periodicRun.jobName periodicTasks)
+                (jobTasksView periodicRun.jobName periodicTasks True)
             ]
 
 
