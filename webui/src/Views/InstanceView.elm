@@ -1,158 +1,26 @@
 module Views.InstanceView exposing (view)
 
-import Models.Resources.ServiceStatus exposing (..)
 import Models.Resources.JobStatus as JobStatus exposing (..)
 import Models.Resources.Role exposing (Role(..))
-import Models.Resources.AllocatedTask exposing (AllocatedTask)
-import Models.Resources.PeriodicRun exposing (PeriodicRun)
 import Models.Resources.InstanceTasks exposing (InstanceTasks)
 import Models.Resources.Template exposing (Template)
-import Models.Resources.Service exposing (Service)
 import Models.Resources.Instance exposing (Instance, InstanceId)
-import Models.Resources.TaskState exposing (TaskState(..))
-import Models.Resources.LogKind exposing (LogKind(..))
-import Models.Resources.ClientStatus exposing (ClientStatus(ClientComplete))
-import Models.Resources.Allocation exposing (shortAllocationId)
 import Models.Ui.InstanceParameterForm exposing (InstanceParameterForm)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
-import Views.ParameterFormView as ParameterFormView
-import Views.Styles exposing (instanceViewElementStyle)
+import Views.JobStatusView as JobStatusView
+import Views.ServicesView as ServicesView
+import Views.InstanceDetailView as InstanceDetailView
+import Views.Styles as Styles
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onCheck, onInput, onSubmit)
 import Dict exposing (..)
 import Set exposing (Set)
-import Date
-import Filesize
-import Round
-import Date.Extra.Format as DateFormat
-import Date.Extra.Config.Config_en_us as Config_en_us
 
 
-checkboxColumnWidth : number
-checkboxColumnWidth =
-    1
-
-
-chevronColumnWidth : number
-chevronColumnWidth =
-    30
-
-
-serviceColumnWidth : number
-serviceColumnWidth =
-    500
-
-
-templateVersionColumnWidth : number
-templateVersionColumnWidth =
-    1
-
-
-jobControlsColumnWidth : number
-jobControlsColumnWidth =
-    200
-
-
-view : Dict String Instance -> Set InstanceId -> Set InstanceId -> Dict String InstanceParameterForm -> Set ( InstanceId, String ) -> Dict String InstanceTasks -> Dict String Template -> Maybe Role -> Maybe (Set String) -> Html UpdateBodyViewMsg
-view instances selectedInstances expandedInstances instanceParameterForms visibleSecrets tasks templates maybeRole attemptedDeleteInstances =
-    let
-        instancesIds =
-            instances
-                |> Dict.keys
-                |> Set.fromList
-    in
-        let
-            ( allInstancesSelected, allInstancesExpanded ) =
-                ( (instancesIds
-                    |> Set.intersect selectedInstances
-                    |> (==) instancesIds
-                    |> (&&) (not (Set.isEmpty instancesIds))
-                  )
-                , (instancesIds
-                    |> Set.intersect expandedInstances
-                    |> (==) instancesIds
-                    |> (&&) (not (Set.isEmpty instancesIds))
-                  )
-                )
-        in
-            table
-                [ class "table"
-                , style [ ( "margin-bottom", "0px" ) ]
-                ]
-                [ thead []
-                    [ tr []
-                        [ th
-                            [ width checkboxColumnWidth ]
-                            [ input
-                                [ type_ "checkbox"
-                                , title "Select All"
-                                , onCheck (AllInstancesSelected instancesIds)
-                                , checked allInstancesSelected
-                                ]
-                                []
-                            ]
-                        , th
-                            [ width chevronColumnWidth ]
-                            [ icon
-                                (String.concat
-                                    [ "fa fa-chevron-"
-                                    , if (allInstancesExpanded) then
-                                        "down"
-                                      else
-                                        "right"
-                                    ]
-                                )
-                                [ attribute "role" "button"
-                                , onClick
-                                    (AllInstancesExpanded
-                                        instancesIds
-                                        (not allInstancesExpanded)
-                                    )
-                                ]
-                            ]
-                        , th
-                            -- [ width nameColumnWidth ]
-                            []
-                            [ icon "fa fa-hashtag" [ title "Instance ID" ] ]
-                        , th
-                            [ class "text-left hidden-xs"
-                            , width serviceColumnWidth
-                            ]
-                            [ icon "fa fa-cubes" [ title "Services" ] ]
-                        , th
-                            [ class "text-center hidden-sm hidden-xs"
-                            , width templateVersionColumnWidth
-                            ]
-                            [ icon "fa fa-code-fork" [ title "Template Version" ] ]
-                        , th
-                            [ class "text-center"
-                            , width jobControlsColumnWidth
-                            ]
-                            [ icon "fa fa-cogs" [ title "Job Controls" ] ]
-                        ]
-                    ]
-                , tbody []
-                    (instances
-                        |> Dict.values
-                        |> List.concatMap
-                            (instanceRow
-                                selectedInstances
-                                expandedInstances
-                                instanceParameterForms
-                                visibleSecrets
-                                templates
-                                tasks
-                                maybeRole
-                                attemptedDeleteInstances
-                            )
-                    )
-                ]
-
-
-instanceRow : Set InstanceId -> Set InstanceId -> Dict String InstanceParameterForm -> Set ( InstanceId, String ) -> Dict String Template -> Dict String InstanceTasks -> Maybe Role -> Maybe (Set String) -> Instance -> List (Html UpdateBodyViewMsg)
-instanceRow selectedInstances expandedInstances instanceParameterForms visibleSecrets templates tasks maybeRole attemptedDeleteInstances instance =
+view : Set InstanceId -> Set InstanceId -> Dict String InstanceParameterForm -> Set ( InstanceId, String ) -> Dict String Template -> Dict String InstanceTasks -> Maybe Role -> Maybe (Set String) -> Instance -> List (Html UpdateBodyViewMsg)
+view selectedInstances expandedInstances instanceParameterForms visibleSecrets templates tasks maybeRole attemptedDeleteInstances instance =
     let
         instanceExpanded =
             Set.member instance.id expandedInstances
@@ -182,7 +50,7 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
                     ]
                 )
                 [ td
-                    [ width checkboxColumnWidth ]
+                    [ width Styles.checkboxColumnWidth ]
                     [ input
                         [ type_ "checkbox"
                         , onCheck (InstanceSelected instance.id)
@@ -192,7 +60,7 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
                         []
                     ]
                 , td
-                    [ width chevronColumnWidth ]
+                    [ width Styles.chevronColumnWidth ]
                     [ icon
                         (String.concat
                             [ "fa fa-chevron-"
@@ -219,12 +87,12 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
                     ]
                 , td
                     [ class "text-left hidden-xs"
-                    , width serviceColumnWidth
+                    , width Styles.serviceColumnWidth
                     ]
-                    (servicesView instance.services)
+                    (ServicesView.view instance.services)
                 , td
                     [ class "text-center hidden-sm hidden-xs"
-                    , width templateVersionColumnWidth
+                    , width Styles.templateVersionColumnWidth
                     ]
                     [ span
                         [ style [ ( "font-family", "monospace" ) ] ]
@@ -232,10 +100,10 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
                     ]
                 , td
                     [ class "text-center"
-                    , width jobControlsColumnWidth
+                    , width Styles.jobControlsColumnWidth
                     ]
                     (List.concat
-                        [ [ jobStatusView instance.jobStatus
+                        [ [ JobStatusView.view instance.jobStatus
                           , text " "
                           ]
                         , if (maybeRole /= Just Operator && maybeRole /= Just Administrator) then
@@ -297,7 +165,7 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
                 ]
             ]
             (if (instanceExpanded) then
-                [ instanceDetailView
+                [ InstanceDetailView.view
                     instance
                     instanceTasks
                     instanceParameterForm
@@ -308,394 +176,3 @@ instanceRow selectedInstances expandedInstances instanceParameterForms visibleSe
              else
                 []
             )
-
-
-expandedTdStyle : List ( String, String )
-expandedTdStyle =
-    [ ( "border-top", "0px" )
-    , ( "padding-top", "0px" )
-    ]
-
-
-
--- TODO as "id" is special we should treat it also special
-
-
-instanceDetailView : Instance -> Maybe InstanceTasks -> Maybe InstanceParameterForm -> Set ( InstanceId, String ) -> Dict String Template -> Maybe Role -> Html UpdateBodyViewMsg
-instanceDetailView instance instanceTasks maybeInstanceParameterForm visibleSecrets templates maybeRole =
-    let
-        periodicRuns =
-            List.reverse (List.sortBy .utcSeconds instance.periodicRuns)
-    in
-        tr []
-            [ td
-                [ style expandedTdStyle
-                , width checkboxColumnWidth
-                ]
-                []
-            , td
-                [ colspan 5
-                , style
-                    (List.append
-                        expandedTdStyle
-                        [ ( "padding-right", "40px" ) ]
-                    )
-                ]
-                (List.concat
-                    [ [ ParameterFormView.editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole
-                      ]
-                    , (if (List.isEmpty periodicRuns) then
-                        []
-                       else
-                        [ h5 [] [ text "Periodic Runs" ]
-                        , ul []
-                            (List.map (periodicRunView instance.id instanceTasks) periodicRuns)
-                        ]
-                      )
-                    , jobTasksView instance.id (Maybe.map .allocatedTasks instanceTasks) True
-                    ]
-                )
-            ]
-
-
-jobTasksView : String -> Maybe (List AllocatedTask) -> Bool -> List (Html msg)
-jobTasksView jobId allocatedTasks showDead =
-    -- Possibility to filter all complete allocations and attach the task name to every
-    -- allocation.
-    --
-    -- We remove complete allocations because Nomad 0.5.x (possibly
-    -- other versions as well) returns all complete and thus dead
-    -- allocations for stopped jobs, whereas it only returns
-    -- non-complete allocations for running jobs.
-    --
-    -- If we did not filter complete allocations the user would see dead
-    -- allocations suddenly popping up in the UI when they stopped the
-    -- task—which would be somewhat confusing.
-    case Maybe.map (List.filter (.clientStatus >> (/=) ClientComplete >> (||) showDead)) allocatedTasks of
-        Nothing ->
-            [ div
-                [ style instanceViewElementStyle ]
-                [ h5 [] [ text "Allocated Tasks" ]
-                , i [ class "fa fa-spinner fa-spin" ] []
-                ]
-            ]
-
-        Just [] ->
-            []
-
-        Just allocations ->
-            [ div
-                [ style instanceViewElementStyle ]
-                (List.concat
-                    [ [ h5 [] [ text "Allocated Tasks" ] ]
-                    , [ table
-                            [ class "table table-condensed table-hover"
-                            ]
-                            [ thead
-                                -- Do not wrap table headers
-                                [ style [ ( "white-space", "nowrap" ) ] ]
-                                [ tr []
-                                    [ th [] [ text "Allocation ID" ]
-                                    , th [ class "text-center" ] [ text "State" ]
-                                    , th [ style [ ( "width", "100%" ) ] ] [ text "Task" ]
-                                    , th [ class "text-center" ] [ text "CPU" ]
-                                    , th [ class "text-center" ] [ text "Memory" ]
-                                    , th [ class "text-center" ] [ text "Task logs" ]
-                                    ]
-                                ]
-                            , tbody [] <| List.indexedMap (jobAllocationRow jobId) allocations
-                            ]
-                      ]
-                    ]
-                )
-            ]
-
-
-{-| Get the URL to a task log of an instance
--}
-logUrl : String -> AllocatedTask -> LogKind -> String
-logUrl jobId task kind =
-    String.concat
-        [ "/downloads/instances/"
-        , jobId
-        , "/allocations/"
-        , task.allocationId
-        , "/tasks/"
-        , task.taskName
-        , "/logs/"
-        , case kind of
-            StdOut ->
-                "stdout"
-
-            StdErr ->
-                "stderr"
-
-        -- Only fetch the last 500 KiB of the log, to avoid large requests and download times
-        , "?offset=500KiB"
-        ]
-
-
-jobAllocationRow : String -> Int -> AllocatedTask -> Html msg
-jobAllocationRow jobId index task =
-    let
-        ( description, labelKind ) =
-            case task.taskState of
-                TaskDead ->
-                    ( "dead", "label-danger" )
-
-                TaskPending ->
-                    ( "pending", "label-warning" )
-
-                TaskRunning ->
-                    ( "running", "label-success" )
-    in
-        tr []
-            [ td [] [ code [] [ text (shortAllocationId task.allocationId) ] ]
-            , td [ class "text-center" ]
-                [ span [ class ("label " ++ labelKind) ] [ text description ]
-                ]
-            , td [] [ text task.taskName ]
-            , td []
-                [ Maybe.withDefault (text "Unknown")
-                    (Maybe.map2 cpuUsageBar task.resources.cpuUsedMhz task.resources.cpuRequiredMhz)
-                ]
-            , td []
-                [ Maybe.withDefault (text "Unknown")
-                    (Maybe.map2 memoryUsageBar task.resources.memoryUsedBytes task.resources.memoryRequiredBytes)
-                ]
-            , td
-                -- Do not wrap buttons in this cell
-                [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
-                [ a
-                    [ href (logUrl jobId task StdOut)
-                    , target "_blank"
-                    , class "btn btn-default btn-xs"
-                    ]
-                    [ text "stdout" ]
-                , text " "
-                , a
-                    [ href (logUrl jobId task StdErr)
-                    , target "_blank"
-                    , class "btn btn-default btn-xs"
-                    ]
-                    [ text "stderr" ]
-                ]
-            ]
-
-
-cpuUsageBar : Float -> Float -> Html msg
-cpuUsageBar current required =
-    resourceUsageBar
-        ((Round.round 0 current) ++ " MHz / " ++ (Round.round 0 required) ++ " MHz CPU used")
-        current
-        required
-
-
-memoryUsageBar : Int -> Int -> Html msg
-memoryUsageBar current required =
-    resourceUsageBar
-        ((Filesize.format current) ++ " of " ++ (Filesize.format required) ++ " memory used")
-        (toFloat current)
-        (toFloat required)
-
-
-resourceUsageBar : String -> Float -> Float -> Html msg
-resourceUsageBar tooltip current required =
-    let
-        ratio =
-            current / required
-
-        context =
-            if ratio > 1.0 then
-                "progress-bar-danger"
-            else if ratio >= 0.8 then
-                "progress-bar-warning"
-            else
-                "progress-bar-success"
-    in
-        div
-            [ class "progress"
-            , style
-                [ ( "width", "100px" )
-                , ( "position", "relative" )
-                ]
-            , title tooltip
-            ]
-            [ div
-                [ class "progress-bar"
-                , class context
-                , attribute "role" "progressbar"
-                , attribute "aria-valuemin" "0"
-                , attribute "aria-valuenow" (Round.round 2 current)
-                , attribute "aria-valuemax" (Round.round 2 current)
-                , style
-                    [ ( "text-align", "center" )
-                    , ( "width", (Round.round 0 (100 * (Basics.min 1.0 ratio))) ++ "%" )
-                    ]
-                ]
-                []
-            , span
-                [ style
-                    [ ( "position", "absolute" )
-                    , ( "left", "0" )
-                    , ( "width", "100%" )
-                    , ( "text-align", "center" )
-                    , ( "z-index", "2" )
-                    ]
-                ]
-                [ text (Round.round 0 (ratio * 100)), text "%" ]
-            ]
-
-
-periodicRunView : InstanceId -> Maybe InstanceTasks -> PeriodicRun -> Html UpdateBodyViewMsg
-periodicRunView instanceId instanceTasks periodicRun =
-    let
-        periodicTasks =
-            instanceTasks
-                |> Maybe.map .allocatedPeriodicTasks
-                |> Maybe.map (\tasks -> Maybe.withDefault [] (Dict.get periodicRun.jobName tasks))
-    in
-        li [ style [ ( "margin", "0 0 3px 0" ) ] ]
-            [ code [ style [ ( "margin-right", "12px" ) ] ] [ text periodicRun.jobName ]
-            , text " "
-            , span
-                [ class "hidden-xs"
-                , style [ ( "margin-right", "12px" ) ]
-                ]
-                [ icon "fa fa-clock-o" []
-                , text " "
-                , (periodicRun.utcSeconds * 1000)
-                    |> toFloat
-                    |> Date.fromTime
-                    |> DateFormat.format Config_en_us.config "%Y-%m-%d %H:%M:%S UTC%z"
-                    |> text
-                ]
-            , text " "
-            , jobStatusView periodicRun.status
-            , text " "
-            , iconButton
-                "btn btn-default btn-xs"
-                "glyphicon glyphicon-stop"
-                "Stop Instance"
-                (List.append
-                    [ onClick (StopPeriodicJobs instanceId [ periodicRun.jobName ])
-                    , id <| String.concat [ "stop-instance-", instanceId ]
-                    ]
-                    (if
-                        (periodicRun.status
-                            == JobStatus.JobStopped
-                            || periodicRun.status
-                            == JobStatus.JobUnknown
-                        )
-                     then
-                        [ attribute "disabled" "disabled" ]
-                     else
-                        []
-                    )
-                )
-            , div []
-                (jobTasksView periodicRun.jobName periodicTasks True)
-            ]
-
-
-periodicRunDateView : Date.Date -> String
-periodicRunDateView date =
-    String.concat
-        [ toString (Date.hour date)
-        , ":"
-        , toString (Date.minute date)
-        , ":"
-        , toString (Date.second date)
-        , ":"
-        , toString (Date.millisecond date)
-        , ", "
-        , toString (Date.day date)
-        , ". "
-        , toString (Date.month date)
-        , " "
-        , toString (Date.year date)
-        ]
-
-
-jobStatusView : JobStatus -> Html msg
-jobStatusView jobStatus =
-    let
-        ( statusLabel, statusText ) =
-            case jobStatus of
-                JobRunning ->
-                    ( "success", "running" )
-
-                JobPending ->
-                    ( "warning", "pending" )
-
-                JobStopped ->
-                    ( "default", "stopped" )
-
-                JobDead ->
-                    ( "primary", "completed" )
-
-                JobUnknown ->
-                    ( "warning", "unknown" )
-    in
-        span
-            [ class (String.concat [ "hidden-xs label label-", statusLabel ])
-            , style
-                [ ( "font-size", "90%" )
-                , ( "width", "80px" )
-                , ( "display", "inline-block" )
-                , ( "margin-right", "8px" )
-                ]
-            ]
-            [ text statusText ]
-
-
-servicesView : List Service -> List (Html msg)
-servicesView services =
-    if (List.isEmpty services) then
-        [ text "-" ]
-    else
-        List.concatMap serviceView services
-
-
-serviceView : Service -> List (Html msg)
-serviceView service =
-    let
-        ( iconClass, textColor ) =
-            case service.status of
-                ServicePassing ->
-                    ( "fa fa-check-circle", "#070" )
-
-                ServiceFailing ->
-                    ( "fa fa-times-circle", "#900" )
-
-                ServiceUnknown ->
-                    ( "fa fa-question-circle", "grey" )
-    in
-        [ a
-            (List.append
-                (if (service.status /= ServiceUnknown) then
-                    [ href
-                        (String.concat
-                            [ service.protocol
-                            , "://"
-                            , service.address
-                            , ":"
-                            , (toString service.port_)
-                            ]
-                        )
-                    ]
-                 else
-                    []
-                )
-                [ style
-                    [ ( "margin-right", "8px" )
-                    , ( "color", textColor )
-                    ]
-                , target "_blank"
-                ]
-            )
-            [ icon iconClass [ style [ ( "margin-right", "4px" ) ] ]
-            , text service.name
-            ]
-        , text " "
-        ]

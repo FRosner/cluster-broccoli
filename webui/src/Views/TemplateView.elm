@@ -1,7 +1,7 @@
 module Views.TemplateView exposing (view)
 
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
-import Views.InstanceView
+import Views.InstancesView as InstancesView
 import Views.ParameterFormView as ParameterFormView
 import Updates.Messages exposing (..)
 import Models.Resources.Instance exposing (Instance, InstanceId)
@@ -180,7 +180,7 @@ view instances tasks templates bodyUiModel maybeRole template =
                             bodyUiModel.visibleNewInstanceSecrets
                           )
                         ]
-                    , (Views.InstanceView.view
+                    , (InstancesView.view
                         templateInstances
                         selectedTemplateInstances
                         bodyUiModel.expandedInstances
