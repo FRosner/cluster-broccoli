@@ -7,7 +7,7 @@ import Models.Resources.Instance exposing (Instance, InstanceId)
 import Models.Ui.InstanceParameterForm exposing (InstanceParameterForm)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Views.ParameterFormView as ParameterFormView
-import Views.PeriodicRunView as PeriodicRunView
+import Views.PeriodicRunsView as PeriodicRunsView
 import Views.JobTasksView as JobTasksView
 import Views.Styles as Styles
 import Html exposing (..)
@@ -43,8 +43,7 @@ view instance instanceTasks maybeInstanceParameterForm visibleSecrets templates 
                         []
                        else
                         [ h5 [] [ text "Periodic Runs" ]
-                        , ul []
-                            (List.map (PeriodicRunView.view instance.id instanceTasks) periodicRuns)
+                        , PeriodicRunsView.view instance.id instanceTasks periodicRuns
                         ]
                       )
                     , JobTasksView.view instance.id (Maybe.map .allocatedTasks instanceTasks) True
