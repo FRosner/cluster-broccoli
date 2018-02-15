@@ -23,7 +23,6 @@ import Set exposing (Set)
 import Date
 import Filesize
 import Round
-import Maybe.Extra exposing (unwrap)
 import Date.Extra.Format as DateFormat
 import Date.Extra.Config.Config_en_us as Config_en_us
 
