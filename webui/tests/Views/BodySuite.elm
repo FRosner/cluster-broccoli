@@ -6,6 +6,7 @@ import Models.Resources.Template as Template exposing (Template, TemplateId)
 import Models.Resources.Instance as Instance exposing (Instance, InstanceId)
 import Models.Resources.JobStatus exposing (JobStatus(..))
 import Models.Resources.AllocatedTask exposing (AllocatedTask)
+import Models.Resources.InstanceTasks as InstanceTasks exposing (InstanceTasks)
 import Models.Resources.TaskState exposing (TaskState(..))
 import Models.Resources.ClientStatus exposing (ClientStatus(..))
 import Models.Ui.BodyUiModel as BodyUiModel exposing (BodyUiModel)
@@ -532,25 +533,34 @@ defaultInstances =
         |> Dict.fromList
 
 
-defaultTasks : Dict InstanceId (List AllocatedTask)
+defaultTasks : Dict InstanceId InstanceTasks
 defaultTasks =
-    [ ( "i1", [] )
+    [ ( "i1", InstanceTasks.empty "i1" )
     , ( "i2"
-      , [ { taskName = "t1"
-          , taskState = TaskRunning
-          , allocationId = "a1"
-          , clientStatus = ClientRunning
-          , resources =
-                { cpuRequiredMhz = Nothing
-                , cpuUsedMhz = Nothing
-                , memoryRequiredBytes = Nothing
-                , memoryUsedBytes = Nothing
-                }
-          }
-        ]
+      , { instanceId = "i2"
+        , allocatedTasks = [ defaultTask ]
+        , allocatedPeriodicTasks =
+            [ ( "i2/periodic-1234", [ defaultTask ] ) ]
+                |> Dict.fromList
+        }
       )
     ]
         |> Dict.fromList
+
+
+defaultTask : AllocatedTask
+defaultTask =
+    { taskName = "t1"
+    , taskState = TaskRunning
+    , allocationId = "a1"
+    , clientStatus = ClientRunning
+    , resources =
+        { cpuRequiredMhz = Nothing
+        , cpuUsedMhz = Nothing
+        , memoryRequiredBytes = Nothing
+        , memoryUsedBytes = Nothing
+        }
+    }
 
 
 defaultTemplate : TemplateId -> Template
