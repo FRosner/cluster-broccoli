@@ -25,7 +25,7 @@ import Date.Extra.Config.Config_en_us as Config_en_us
 view : InstanceId -> Maybe InstanceTasks -> List PeriodicRun -> Html UpdateBodyViewMsg
 view instanceId instanceTasks periodicRuns =
     table
-        [ class "table table-condensed table-hover"
+        [ class "table table-condensed"
         ]
         [ thead
             -- Do not wrap table headers
