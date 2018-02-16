@@ -49,12 +49,12 @@ view jobId allocatedTasks showDead =
                                 -- Do not wrap table headers
                                 [ style [ ( "white-space", "nowrap" ) ] ]
                                 [ tr []
-                                    [ th [] [ text "Allocation ID" ]
+                                    [ th [] [ text "Allocation" ]
                                     , th [ class "text-center" ] [ text "State" ]
                                     , th [ style [ ( "width", "100%" ) ] ] [ text "Task" ]
                                     , th [ class "text-center" ] [ text "CPU" ]
                                     , th [ class "text-center" ] [ text "Memory" ]
-                                    , th [ class "text-center" ] [ text "Task logs" ]
+                                    , th [ class "text-center" ] [ text "Task Logs" ]
                                     ]
                                 ]
                             , tbody [] <| List.indexedMap (jobAllocationRow jobId) allocations
