@@ -1,9 +1,34 @@
-module Views.ResourceUsageBar exposing (cpuUsageBar, memoryUsageBar)
+module Views.ResourceUsageBar exposing (unknown, cpuUsageBar, memoryUsageBar)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Filesize
 import Round
+
+
+unknown : Html msg
+unknown =
+    div
+        [ class "progress"
+        , style
+            [ ( "width", "100px" )
+            , ( "position", "relative" )
+            ]
+        , title "Unknown"
+        ]
+        [ div
+            [ class "progress-bar"
+            , attribute "role" "progressbar"
+            , attribute "aria-valuemin" "0"
+            , attribute "aria-valuenow" "0"
+            , attribute "aria-valuemax" "100"
+            , style
+                [ ( "text-align", "center" )
+                , ( "width", "0%" )
+                ]
+            ]
+            []
+        ]
 
 
 cpuUsageBar : Float -> Float -> Html msg

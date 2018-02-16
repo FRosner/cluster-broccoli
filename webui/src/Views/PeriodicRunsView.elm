@@ -132,11 +132,11 @@ allocationView jobId maybePeriodicTask =
                     ]
                 , td [] [ text task.taskName ]
                 , td []
-                    [ Maybe.withDefault (text "Unknown")
+                    [ Maybe.withDefault (ResourceUsageBar.unknown)
                         (Maybe.map2 ResourceUsageBar.cpuUsageBar task.resources.cpuUsedMhz task.resources.cpuRequiredMhz)
                     ]
                 , td []
-                    [ Maybe.withDefault (text "Unknown")
+                    [ Maybe.withDefault (ResourceUsageBar.unknown)
                         (Maybe.map2 ResourceUsageBar.memoryUsageBar task.resources.memoryUsedBytes task.resources.memoryRequiredBytes)
                     ]
                 , td
