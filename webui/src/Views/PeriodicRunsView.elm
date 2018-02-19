@@ -89,7 +89,10 @@ row instanceId instanceTasks periodicRun =
         (List.concat
             [ [ tr []
                     (List.concat
-                        [ [ td [ rowspan rowSpan ]
+                        [ [ td
+                                [ class "periodic-run-time"
+                                , rowspan rowSpan
+                                ]
                                 [ formatUtcSeconds "%Y-%m-%d %H:%M:%S" "UTC%z" periodicRun.utcSeconds ]
                           , td
                                 [ rowspan rowSpan
@@ -154,7 +157,8 @@ allocationView instanceId periodicJobId maybePeriodicTask =
                         TaskRunning ->
                             ( "running", "label-success" )
             in
-                [ td [] [ code [] [ text (shortAllocationId task.allocationId) ] ]
+                [ td [ class "periodic-run-allocation-id" ]
+                    [ code [] [ text (shortAllocationId task.allocationId) ] ]
                 , td [ class "text-center" ]
                     [ span [ class ("label " ++ labelKind) ] [ text description ]
                     ]
