@@ -118,7 +118,7 @@ allocationView jobId maybePeriodicTask =
                 ( description, labelKind ) =
                     case task.taskState of
                         TaskDead ->
-                            ( "dead", "label-danger" )
+                            ( "completed", "label-primary" )
 
                         TaskPending ->
                             ( "pending", "label-warning" )
