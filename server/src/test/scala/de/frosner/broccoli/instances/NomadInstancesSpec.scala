@@ -146,7 +146,7 @@ class NomadInstancesSpec
               result shouldEqual Left(InstanceError.NotFound(id))
             }
           }.await
-      }
+      }.setGen2(Gen.identifier)
 
       "fail to get instance logs when instance does not belong to Broccoli" in prop {
         (user: Account, id: String, error: NomadError) =>
