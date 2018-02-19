@@ -32,10 +32,14 @@ view instanceId instanceTasks periodicRuns =
             [ style [ ( "white-space", "nowrap" ) ] ]
             [ tr []
                 [ th
-                    [ style [ ( "width", "150px" ) ] ]
+                    [ style [ ( "width", "150px" ) ]
+                    , class "text-center"
+                    ]
                     [ icon "fa fa-clock-o" [ title "Run Time" ] ]
                 , th
-                    [ style [ ( "width", "130px" ) ] ]
+                    [ style [ ( "width", "130px" ) ]
+                    , class "text-center"
+                    ]
                     [ icon "fa fa-cogs" [ title "Job Controls" ] ]
                 , th
                     [ style [ ( "width", "80px" ) ]
