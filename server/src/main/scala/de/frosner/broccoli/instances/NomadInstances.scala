@@ -89,17 +89,20 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
   ): InstanceT[String] =
     for {
       // Check whether the user is allowed to see the instance
-      jobId <- EitherT
+      instanceId <- EitherT
         .pure[Future, InstanceError](tag[Job.Id](instanceId))
         .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
+      // Check if the instance requested really exists within Broccoli
+      instance <- EitherT
+        .fromOption[Future](instanceService.getInstance(instanceId), InstanceError.NotFound(instanceId, None))
       // Check whether the allocation really belongs to the instance.  If it doesn't, ie, if the user tries to access
       // an allocation from another instance hide that the allocation even exists by returning 404
       allocation <- nomadClient
         .getAllocation(allocationId)
-        .leftMap(toInstanceError(jobId))
-        .ensure(InstanceError.NotFound(instanceId))(_.jobId == jobId)
-      node <- nomadClient.allocationNodeClient(allocation).leftMap(toInstanceError(jobId))
-      log <- node.getTaskLog(allocationId, taskName, logKind, offset).leftMap(toInstanceError(jobId))
+        .leftMap(toInstanceError(instanceId))
+        .ensure(InstanceError.NotFound(instanceId))(_.jobId == instanceId)
+      node <- nomadClient.allocationNodeClient(allocation).leftMap(toInstanceError(instanceId))
+      log <- node.getTaskLog(allocationId, taskName, logKind, offset).leftMap(toInstanceError(instanceId))
     } yield log.contents
 
   private def toInstanceError(jobId: String @@ Job.Id)(nomadError: NomadError): InstanceError = nomadError match {
