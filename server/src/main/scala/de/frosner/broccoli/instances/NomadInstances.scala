@@ -4,7 +4,6 @@ import javax.inject.Inject
 
 import cats.Apply
 import cats.data.EitherT
-//import cats.implicits._
 import cats.instances.future._
 import cats.instances.list._
 import cats.syntax.traverse._
