@@ -2,7 +2,8 @@ module Models.Resources.InstanceTasks exposing (..)
 
 import Models.Resources.Instance exposing (InstanceId)
 import Models.Resources.AllocatedTask as AllocatedTask exposing (AllocatedTask)
-import Json.Decode exposing (Decoder, string, field, map2, list)
+import Json.Decode as Decode exposing (Decoder)
+import Dict exposing (Dict)
 
 
 {-| The tasks of an instance
@@ -10,6 +11,15 @@ import Json.Decode exposing (Decoder, string, field, map2, list)
 type alias InstanceTasks =
     { instanceId : InstanceId
     , allocatedTasks : List AllocatedTask
+    , allocatedPeriodicTasks : Dict String (List AllocatedTask)
+    }
+
+
+empty : InstanceId -> InstanceTasks
+empty instanceId =
+    { instanceId = instanceId
+    , allocatedTasks = []
+    , allocatedPeriodicTasks = Dict.empty
     }
 
 
@@ -17,6 +27,7 @@ type alias InstanceTasks =
 -}
 decoder : Decoder InstanceTasks
 decoder =
-    map2 InstanceTasks
-        (field "instanceId" string)
-        (field "allocatedTasks" (list AllocatedTask.decoder))
+    Decode.map3 InstanceTasks
+        (Decode.field "instanceId" Decode.string)
+        (Decode.field "allocatedTasks" (Decode.list AllocatedTask.decoder))
+        (Decode.field "allocatedPeriodicTasks" (Decode.dict (Decode.list AllocatedTask.decoder)))

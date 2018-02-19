@@ -1,11 +1,11 @@
 module Views.TemplateView exposing (view)
 
 import Utils.HtmlUtils exposing (icon, iconButtonText, iconButton)
-import Views.InstanceView
+import Views.InstancesView as InstancesView
 import Views.ParameterFormView as ParameterFormView
 import Updates.Messages exposing (..)
 import Models.Resources.Instance exposing (Instance, InstanceId)
-import Models.Resources.AllocatedTask exposing (AllocatedTask)
+import Models.Resources.InstanceTasks exposing (InstanceTasks)
 import Models.Resources.Role as Role exposing (Role(..))
 import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
 import Models.Ui.BodyUiModel exposing (BodyUiModel)
@@ -16,7 +16,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 
 
-view : Dict InstanceId Instance -> Dict InstanceId (List AllocatedTask) -> Dict TemplateId Template -> BodyUiModel -> Maybe Role -> Template -> Html UpdateBodyViewMsg
+view : Dict InstanceId Instance -> Dict InstanceId InstanceTasks -> Dict TemplateId Template -> BodyUiModel -> Maybe Role -> Template -> Html UpdateBodyViewMsg
 view instances tasks templates bodyUiModel maybeRole template =
     let
         templateInstances =
@@ -180,7 +180,7 @@ view instances tasks templates bodyUiModel maybeRole template =
                             bodyUiModel.visibleNewInstanceSecrets
                           )
                         ]
-                    , (Views.InstanceView.view
+                    , (InstancesView.view
                         templateInstances
                         selectedTemplateInstances
                         bodyUiModel.expandedInstances
