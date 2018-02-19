@@ -103,7 +103,7 @@ view selectedInstances expandedInstances instanceParameterForms visibleSecrets t
                     , width Styles.jobControlsColumnWidth
                     ]
                     (List.concat
-                        [ [ JobStatusView.view instance.jobStatus
+                        [ [ JobStatusView.view "hidden-xs" instance.jobStatus
                           , text " "
                           ]
                         , if (maybeRole /= Just Operator && maybeRole /= Just Administrator) then

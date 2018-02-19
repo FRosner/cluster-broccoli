@@ -5,8 +5,8 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 
 
-view : JobStatus -> Html msg
-view jobStatus =
+view : String -> JobStatus -> Html msg
+view classes jobStatus =
     let
         ( statusLabel, statusText ) =
             case jobStatus of
@@ -26,7 +26,7 @@ view jobStatus =
                     ( "warning", "unknown" )
     in
         span
-            [ class (String.concat [ "hidden-xs label label-", statusLabel ])
+            [ class (String.concat [ classes, " label label-", statusLabel ])
             , style
                 [ ( "font-size", "90%" )
                 , ( "width", "80px" )

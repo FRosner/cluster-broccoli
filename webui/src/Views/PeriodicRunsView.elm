@@ -31,14 +31,39 @@ view instanceId instanceTasks periodicRuns =
             -- Do not wrap table headers
             [ style [ ( "white-space", "nowrap" ) ] ]
             [ tr []
-                [ th [ style [ ( "width", "20%" ) ] ] [ icon "fa fa-clock-o" [ title "Run Time" ] ]
-                , th [ style [ ( "width", "20%" ) ] ] [ icon "fa fa-cogs" [ title "Job Controls" ] ]
-                , th [] [ text "Allocation" ]
-                , th [ class "text-center" ] [ text "State" ]
-                , th [ style [ ( "width", "60%" ) ] ] [ text "Task" ]
-                , th [ class "text-center" ] [ text "CPU" ]
-                , th [ class "text-center" ] [ text "Memory" ]
-                , th [ class "text-center" ] [ text "Task Logs" ]
+                [ th
+                    [ style [ ( "width", "150px" ) ] ]
+                    [ icon "fa fa-clock-o" [ title "Run Time" ] ]
+                , th
+                    [ style [ ( "width", "130px" ) ] ]
+                    [ icon "fa fa-cogs" [ title "Job Controls" ] ]
+                , th
+                    [ style [ ( "width", "80px" ) ]
+                    ]
+                    [ text "Allocation" ]
+                , th
+                    [ style [ ( "width", "80px" ) ]
+                    , class "text-center"
+                    ]
+                    [ text "State" ]
+                , th
+                    [ style [ ( "width", "300px" ) ]
+                    , class "hidden-xs"
+                    ]
+                    [ text "Task" ]
+                , th
+                    [ style [ ( "width", "110px" ) ]
+                    , class "text-center hidden-xs hidden-sm"
+                    ]
+                    [ text "CPU" ]
+                , th
+                    [ style [ ( "width", "110px" ) ]
+                    , class "text-center hidden-xs hidden-sm"
+                    ]
+                    [ text "Memory" ]
+                , th
+                    [ class "text-center hidden-xs" ]
+                    [ text "Task Logs" ]
                 ]
             ]
         , tbody [] <| List.concatMap (row instanceId instanceTasks) periodicRuns
@@ -66,8 +91,11 @@ row instanceId instanceTasks periodicRun =
                     (List.concat
                         [ [ td [ rowspan rowSpan ]
                                 [ formatUtcSeconds "%Y-%m-%d %H:%M:%S" "UTC%z" periodicRun.utcSeconds ]
-                          , td [ rowspan rowSpan ]
-                                [ JobStatusView.view periodicRun.status
+                          , td
+                                [ rowspan rowSpan
+                                , style [ ( "white-space", "nowrap" ) ]
+                                ]
+                                [ JobStatusView.view "" periodicRun.status
                                 , text " "
                                 , iconButton
                                     "btn btn-default btn-xs"
@@ -130,18 +158,18 @@ allocationView jobId maybePeriodicTask =
                 , td [ class "text-center" ]
                     [ span [ class ("label " ++ labelKind) ] [ text description ]
                     ]
-                , td [] [ text task.taskName ]
-                , td []
+                , td [ class "hidden-xs" ] [ text task.taskName ]
+                , td [ class "hidden-xs hidden-sm" ]
                     [ Maybe.withDefault (ResourceUsageBar.unknown)
                         (Maybe.map2 ResourceUsageBar.cpuUsageBar task.resources.cpuUsedMhz task.resources.cpuRequiredMhz)
                     ]
-                , td []
+                , td [ class "hidden-xs hidden-sm" ]
                     [ Maybe.withDefault (ResourceUsageBar.unknown)
                         (Maybe.map2 ResourceUsageBar.memoryUsageBar task.resources.memoryUsedBytes task.resources.memoryRequiredBytes)
                     ]
                 , td
                     -- Do not wrap buttons in this cell
-                    [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
+                    [ class "text-center hidden-xs", style [ ( "white-space", "nowrap" ) ] ]
                     [ a
                         [ href (LogUrl.view jobId task StdOut)
                         , target "_blank"
