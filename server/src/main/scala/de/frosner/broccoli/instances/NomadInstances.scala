@@ -4,6 +4,7 @@ import javax.inject.Inject
 
 import cats.Apply
 import cats.data.EitherT
+import de.frosner.broccoli.models.Instance
 import cats.instances.future._
 import cats.instances.list._
 import cats.syntax.traverse._
@@ -79,13 +80,12 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
       )
     }
 
-  def getInstanceLog(user: Account)(
-      instanceId: String,
-      allocationId: String @@ Allocation.Id,
-      taskName: String @@ NomadTask.Name,
-      logKind: LogStreamKind,
-      offset: Option[Information @@ TaskLog.Offset]
-  ): InstanceT[String] =
+  private def getAllocationLogForJobId(user: Account)(instanceId: String,
+                                                      allocationId: String @@ Allocation.Id,
+                                                      taskName: String @@ NomadTask.Name,
+                                                      logKind: LogStreamKind,
+                                                      offset: Option[Information @@ TaskLog.Offset])(
+      computeJobIdFromInstance: InstanceWithStatus => EitherT[Future, InstanceError, String]): InstanceT[String] =
     for {
       // Check whether the user is allowed to see the instance
       instanceId <- EitherT
@@ -94,15 +94,40 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
       // Check if the instance requested really exists within Broccoli
       instance <- EitherT
         .fromOption[Future](instanceService.getInstance(instanceId), InstanceError.NotFound(instanceId, None))
+      jobId <- computeJobIdFromInstance(instance).map(id => tag[Job.Id](id))
       // Check whether the allocation really belongs to the instance.  If it doesn't, ie, if the user tries to access
       // an allocation from another instance hide that the allocation even exists by returning 404
       allocation <- nomadClient
         .getAllocation(allocationId)
-        .leftMap(toInstanceError(instanceId))
-        .ensure(InstanceError.NotFound(instanceId))(_.jobId == instanceId)
-      node <- nomadClient.allocationNodeClient(allocation).leftMap(toInstanceError(instanceId))
-      log <- node.getTaskLog(allocationId, taskName, logKind, offset).leftMap(toInstanceError(instanceId))
+        .leftMap(toInstanceError(jobId))
+        .ensure(InstanceError.NotFound(jobId))(_.jobId == jobId)
+      node <- nomadClient.allocationNodeClient(allocation).leftMap(toInstanceError(jobId))
+      log <- node.getTaskLog(allocationId, taskName, logKind, offset).leftMap(toInstanceError(jobId))
     } yield log.contents
+
+  def getAllocationLog(user: Account)(
+      instanceId: String,
+      allocationId: String @@ Allocation.Id,
+      taskName: String @@ NomadTask.Name,
+      logKind: LogStreamKind,
+      offset: Option[Information @@ TaskLog.Offset]
+  ): InstanceT[String] =
+    getAllocationLogForJobId(user)(instanceId, allocationId, taskName, logKind, offset) { instance =>
+      EitherT.pure[Future, InstanceError](instance.instance.id)
+    }
+
+  def getPeriodicJobAllocationLog(user: Account)(
+      instanceId: String,
+      periodicJobId: String,
+      allocationId: String @@ Allocation.Id,
+      taskName: String @@ NomadTask.Name,
+      logKind: LogStreamKind,
+      offset: Option[Information @@ TaskLog.Offset]
+  ): InstanceT[String] =
+    getAllocationLogForJobId(user)(instanceId, allocationId, taskName, logKind, offset) { instance =>
+      EitherT.fromOption(instance.periodicRuns.find(_.jobName == periodicJobId).map(_.jobName),
+                         InstanceError.NotFound(periodicJobId))
+    }
 
   private def toInstanceError(jobId: String @@ Job.Id)(nomadError: NomadError): InstanceError = nomadError match {
     case NomadError.NotFound    => InstanceError.NotFound(jobId)

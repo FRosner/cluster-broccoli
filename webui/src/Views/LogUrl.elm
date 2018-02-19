@@ -1,4 +1,4 @@
-module Views.LogUrl exposing (view)
+module Views.LogUrl exposing (taskLog, periodicTaskLog)
 
 import Models.Resources.AllocatedTask exposing (AllocatedTask)
 import Models.Resources.LogKind exposing (LogKind(..))
@@ -6,11 +6,26 @@ import Models.Resources.LogKind exposing (LogKind(..))
 
 {-| Get the URL to a task log of an instance
 -}
-view : String -> AllocatedTask -> LogKind -> String
-view jobId task kind =
+taskLog : String -> AllocatedTask -> LogKind -> String
+taskLog instanceId task kind =
+    taskLogHelper instanceId Nothing task kind
+
+
+{-| Get the URL to a periodic task log of an instance
+-}
+periodicTaskLog : String -> String -> AllocatedTask -> LogKind -> String
+periodicTaskLog instanceId periodicJobId task kind =
+    taskLogHelper instanceId (Just periodicJobId) task kind
+
+
+taskLogHelper : String -> Maybe String -> AllocatedTask -> LogKind -> String
+taskLogHelper instanceId maybePeriodicJobId task kind =
     String.concat
         [ "/downloads/instances/"
-        , jobId
+        , instanceId
+        , maybePeriodicJobId
+            |> Maybe.map (\i -> String.concat [ "/periodic/", i ])
+            |> Maybe.withDefault ""
         , "/allocations/"
         , task.allocationId
         , "/tasks/"

@@ -97,14 +97,14 @@ jobAllocationRow jobId index task =
                 -- Do not wrap buttons in this cell
                 [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
                 [ a
-                    [ href (LogUrl.view jobId task StdOut)
+                    [ href (LogUrl.taskLog jobId task StdOut)
                     , target "_blank"
                     , class "btn btn-default btn-xs"
                     ]
                     [ text "stdout" ]
                 , text " "
                 , a
-                    [ href (LogUrl.view jobId task StdErr)
+                    [ href (LogUrl.taskLog jobId task StdErr)
                     , target "_blank"
                     , class "btn btn-default btn-xs"
                     ]

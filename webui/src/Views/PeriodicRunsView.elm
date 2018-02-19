@@ -119,22 +119,22 @@ row instanceId instanceTasks periodicRun =
                                     )
                                 ]
                           ]
-                        , allocationView periodicRun.jobName firstPeriodicTask
+                        , allocationView instanceId periodicRun.jobName firstPeriodicTask
                         ]
                     )
               ]
-            , List.map (remainingAllocationView periodicRun.jobName) remainingPeriodicTasks
+            , List.map (remainingAllocationView instanceId periodicRun.jobName) remainingPeriodicTasks
             ]
         )
 
 
-remainingAllocationView : String -> AllocatedTask -> Html msg
-remainingAllocationView jobId periodicTask =
-    tr [] <| allocationView jobId (Just periodicTask)
+remainingAllocationView : String -> String -> AllocatedTask -> Html msg
+remainingAllocationView instanceId periodicJobId periodicTask =
+    tr [] <| allocationView instanceId periodicJobId (Just periodicTask)
 
 
-allocationView : String -> Maybe AllocatedTask -> List (Html msg)
-allocationView jobId maybePeriodicTask =
+allocationView : String -> String -> Maybe AllocatedTask -> List (Html msg)
+allocationView instanceId periodicJobId maybePeriodicTask =
     case maybePeriodicTask of
         Nothing ->
             [ td [ colspan 6 ]
@@ -171,14 +171,14 @@ allocationView jobId maybePeriodicTask =
                     -- Do not wrap buttons in this cell
                     [ class "text-center hidden-xs", style [ ( "white-space", "nowrap" ) ] ]
                     [ a
-                        [ href (LogUrl.view jobId task StdOut)
+                        [ href (LogUrl.periodicTaskLog instanceId periodicJobId task StdOut)
                         , target "_blank"
                         , class "btn btn-default btn-xs"
                         ]
                         [ text "stdout" ]
                     , text " "
                     , a
-                        [ href (LogUrl.view jobId task StdErr)
+                        [ href (LogUrl.periodicTaskLog instanceId periodicJobId task StdErr)
                         , target "_blank"
                         , class "btn btn-default btn-xs"
                         ]

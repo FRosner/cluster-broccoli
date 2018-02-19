@@ -68,8 +68,39 @@ case class InstanceController @Inject()(
   ): Action[Unit] =
     AsyncStack(parse.empty) { implicit request =>
       instances
-        .getInstanceLog(loggedIn)(
+        .getAllocationLog(loggedIn)(
           instanceId,
+          tag[Allocation.Id](allocationId),
+          tag[NomadTask.Name](taskName),
+          kind,
+          offset.map(tag[TaskLog.Offset](_))
+        )
+        .fold(_.toHTTPResult, Results.Ok(_))
+    }
+
+  /**
+    * Serve a log file to the frontend.
+    *
+    * @param instanceId The ID of the instance
+    * @param allocationId The ID of the allocation
+    * @param taskName The name of the tasks whose logs to view
+    * @param kind The kind of log
+    * @param offset The offset from the end of the log to fetch
+    * @return The log as plain text or an HTTP error
+    */
+  def logFile(
+      instanceId: String,
+      periodicJobId: String,
+      allocationId: String,
+      taskName: String,
+      kind: LogStreamKind,
+      offset: Option[Information]
+  ): Action[Unit] =
+    AsyncStack(parse.empty) { implicit request =>
+      instances
+        .getPeriodicJobAllocationLog(loggedIn)(
+          instanceId,
+          periodicJobId,
           tag[Allocation.Id](allocationId),
           tag[NomadTask.Name](taskName),
           kind,
