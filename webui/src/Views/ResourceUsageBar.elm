@@ -13,6 +13,7 @@ unknown =
         , style
             [ ( "width", "100px" )
             , ( "position", "relative" )
+            , ( "margin-bottom", "0px" )
             ]
         , title "Unknown"
         ]
@@ -66,6 +67,7 @@ resourceUsageBar tooltip current required =
             , style
                 [ ( "width", "100px" )
                 , ( "position", "relative" )
+                , ( "margin-bottom", "0px" )
                 ]
             , title tooltip
             ]
