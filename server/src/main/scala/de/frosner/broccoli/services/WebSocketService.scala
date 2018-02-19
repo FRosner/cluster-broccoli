@@ -24,6 +24,9 @@ class WebSocketService @Inject()(templateService: TemplateService,
 
   log.info(s"Starting $this")
 
+  @volatile
+  private var connections: Map[String, (Account, Set[Concurrent.Channel[Msg]])] = Map.empty
+
   private val scheduler = new ScheduledThreadPoolExecutor(1)
   private val task = new Runnable {
     def run() = {
@@ -44,9 +47,6 @@ class WebSocketService @Inject()(templateService: TemplateService,
     }
   }
   private val scheduledTask = scheduler.scheduleWithFixedDelay(task, 0, 1, TimeUnit.SECONDS)
-
-  @volatile
-  private var connections: Map[String, (Account, Set[Concurrent.Channel[Msg]])] = Map.empty
 
   def newConnection(user: Account): (String, Enumerator[Msg]) = {
     val id = UUID.randomUUID().toString
