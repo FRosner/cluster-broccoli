@@ -5,6 +5,7 @@ import Views.HeaderSuite as HeaderSuite
 import Views.NotificationsSuite as NotificationsSuite
 import Views.BodySuite as BodySuite
 import Views.FooterSuite as FooterSuite
+import Views.LogUrlSuite as LogUrlSuite
 import Test exposing (describe)
 import Test.Runner.Node exposing (run, TestProgram)
 import Json.Encode exposing (Value)
@@ -21,6 +22,7 @@ main =
             , NotificationsSuite.tests
             , BodySuite.tests
             , FooterSuite.tests
+            , LogUrlSuite.tests
             ]
         )
 
