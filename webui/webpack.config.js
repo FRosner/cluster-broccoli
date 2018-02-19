@@ -26,6 +26,11 @@ module.exports = {
     hot: true
   },
   plugins: [
+    // Don't minimize in dev
+    new webpack.LoaderOptionsPlugin({
+      minimize: false,
+      debug: false
+    }),
     // Provide jquery to bootstrap
     new webpack.ProvidePlugin({
       $: 'jquery',
