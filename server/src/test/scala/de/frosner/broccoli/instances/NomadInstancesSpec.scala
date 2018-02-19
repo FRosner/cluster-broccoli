@@ -168,6 +168,6 @@ class NomadInstancesSpec
               result shouldEqual Left(InstanceError.NotFound(id))
             }
           }.await
-      }
+      }.setGen2(Gen.identifier)
     }
 }
