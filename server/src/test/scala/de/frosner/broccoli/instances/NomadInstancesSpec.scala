@@ -45,17 +45,18 @@ class NomadInstancesSpec
     periodicRuns = Seq.empty
   )
 
+  def instanceServiceWith(id: String, instance: Option[InstanceWithStatus]): InstanceService =
+    mock[InstanceService]
+      .getInstance(Matchers.any[String @@ Job.Id])
+      .returns(instance.map(i => i.copy(instance = i.instance.copy(id = id))))
+
   override def is(implicit executionEnv: ExecutionEnv): Any =
     "NomadInstances" should {
       "get instance tasks from nomad" in prop {
         (user: Account, id: String, allocations: List[Allocation], resourceUsage: ResourceUsage) =>
-          val instanceService = mock[InstanceService]
+          val instanceService = instanceServiceWith(id, Some(dummyInstance))
           val client = mock[NomadClient]
           val nodeClient = mock[NomadNodeClient]
-
-          instanceService
-            .getInstance(Matchers.any[String @@ Job.Id])
-            .returns(Some(dummyInstance.copy(instance = dummyInstance.instance.copy(id = id))))
 
           nodeClient
             .getAllocationStats(Matchers.any[String @@ Allocation.Id]())
@@ -89,12 +90,8 @@ class NomadInstancesSpec
       "include resources in instance tasks" in todo
 
       "fail to get instance tasks if the job wasn't found" in prop { (user: Account, id: String) =>
-        val instanceService = mock[InstanceService]
+        val instanceService = instanceServiceWith(id, Some(dummyInstance))
         val client = mock[NomadClient]
-
-        instanceService
-          .getInstance(Matchers.any[String @@ Job.Id])
-          .returns(Some(dummyInstance.copy(instance = dummyInstance.instance.copy(id = id))))
 
         client.getJob(shapeless.tag[Job.Id](id)).returns(EitherT.leftT(NomadError.NotFound))
         client.getAllocationsForJob(shapeless.tag[Job.Id](id)).returns(EitherT.pure(WithId(id, List.empty)))
@@ -120,11 +117,7 @@ class NomadInstancesSpec
 
       "fail to get instance tasks when Nomad fails" in prop { (user: Account, id: String, error: NomadError) =>
         val client = mock[NomadClient]
-        val instanceService = mock[InstanceService]
-
-        instanceService
-          .getInstance(Matchers.any[String @@ Job.Id])
-          .returns(Some(dummyInstance.copy(instance = dummyInstance.instance.copy(id = id))))
+        val instanceService = instanceServiceWith(id, Some(dummyInstance))
 
         client
           .getAllocationsForJob(shapeless.tag[Job.Id](id))
@@ -142,11 +135,7 @@ class NomadInstancesSpec
       "fail to get instance tasks when instance does not belong to Broccoli" in prop {
         (user: Account, id: String, error: NomadError) =>
           val client = mock[NomadClient]
-          val instanceService = mock[InstanceService]
-
-          instanceService
-            .getInstance(Matchers.any[String @@ Job.Id])
-            .returns(None)
+          val instanceService = instanceServiceWith(id, None)
 
           {
             for {
