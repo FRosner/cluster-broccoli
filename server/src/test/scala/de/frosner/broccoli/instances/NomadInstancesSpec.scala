@@ -139,9 +139,10 @@ class NomadInstancesSpec
 
           {
             for {
-              result <- new NomadInstances(client, instanceService).getInstanceTasks(user)(id).value
+              result <- new NomadInstances(client, instanceService)
+                .getInstanceTasks(user.copy(instanceRegex = id))(id)
             } yield {
-              result must beLeft[InstanceError]
+              result shouldEqual Left(InstanceError.NotFound(id))
             }
           }.await
       }
