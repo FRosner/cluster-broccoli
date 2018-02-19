@@ -139,11 +139,35 @@ class NomadInstancesSpec
 
           {
             for {
-              result <- new NomadInstances(client, instanceService).getInstanceTasks(user)(id).value
+              result <- new NomadInstances(client, instanceService)
+                .getInstanceTasks(user.copy(instanceRegex = id))(id)
+                .value
             } yield {
-              result must beLeft[InstanceError]
+              result shouldEqual Left(InstanceError.NotFound(id))
             }
           }.await
-      }
+      }.setGen2(Gen.identifier)
+
+      "fail to get instance logs when instance does not belong to Broccoli" in prop {
+        (user: Account, id: String, error: NomadError) =>
+          val client = mock[NomadClient]
+          val instanceService = instanceServiceWith(id, None)
+
+          {
+            for {
+              result <- new NomadInstances(client, instanceService)
+                .getInstanceLog(user.copy(instanceRegex = id))(
+                  instanceId = id,
+                  allocationId = shapeless.tag[Allocation.Id]("allocId"),
+                  taskName = shapeless.tag[Task.Name]("task"),
+                  logKind = LogStreamKind.StdOut,
+                  offset = None
+                )
+                .value
+            } yield {
+              result shouldEqual Left(InstanceError.NotFound(id))
+            }
+          }.await
+      }.setGen2(Gen.identifier)
     }
 }
