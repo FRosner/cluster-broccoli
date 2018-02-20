@@ -58,7 +58,10 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
       instance <- EitherT
         .fromOption[Future](instanceService.getInstance(instanceId), InstanceError.NotFound(instanceId, None))
       instanceJobId = tag[Job.Id](instance.instance.id)
-      instanceJobTasks <- getJobTasks(instanceJobId)
+      instanceJobTasks <- getJobTasks(instanceJobId).recover {
+        // In case we don't have any job we might still have periodic jobs. So we don't want to fail here already.
+        case InstanceError.NotFound(_, _) => List.empty
+      }
       periodicRunJobTasks <- instance.periodicRuns
         .map { run =>
           val jobName = tag[Job.Id](run.jobName)
