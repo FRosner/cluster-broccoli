@@ -55,10 +55,6 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
       instanceId <- EitherT
         .pure[Future, InstanceError](tag[Job.Id](id))
         .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
-      // Request job information and allocations in parallel, to get the required resources for tasks and the actual
-      // allocated tasks and their resources.  We can't extract the pair with a pattern unfortunately because as of
-      // Scala 2.11 the compiler still tries to insert .withFilter calls even for irrefutable patterns, which EitherT
-      // doesn't have.
       instance <- EitherT
         .fromOption[Future](instanceService.getInstance(instanceId), InstanceError.NotFound(instanceId, None))
       instanceJobId = tag[Job.Id](instance.instance.id)
@@ -136,6 +132,10 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
 
   private def getJobTasks(jobId: String @@ Job.Id): EitherT[Future, InstanceError, immutable.Seq[AllocatedTask]] =
     for {
+      // Request job information and allocations in parallel, to get the required resources for tasks and the actual
+      // allocated tasks and their resources.  We can't extract the pair with a pattern unfortunately because as of
+      // Scala 2.11 the compiler still tries to insert .withFilter calls even for irrefutable patterns, which EitherT
+      // doesn't have.
       jobAndAllocations <- Apply[NomadT]
         .tuple2(nomadClient.getJob(jobId), nomadClient.getAllocationsForJob(jobId))
         .leftMap(toInstanceError(jobId))
