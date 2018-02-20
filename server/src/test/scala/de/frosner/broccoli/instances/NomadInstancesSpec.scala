@@ -89,7 +89,7 @@ class NomadInstancesSpec
 
       "include resources in instance tasks" in todo
 
-      "fail to get instance tasks if the job wasn't found" in prop { (user: Account, id: String) =>
+      "return empty instance tasks if the job can't be found" in prop { (user: Account, id: String) =>
         val instanceService = instanceServiceWith(id, Some(dummyInstance))
         val client = mock[NomadClient]
 
@@ -101,7 +101,7 @@ class NomadInstancesSpec
             result <- new NomadInstances(client, instanceService)
               .getInstanceTasks(user.copy(instanceRegex = id))(id)
               .value
-          } yield result must beLeft[InstanceError](InstanceError.NotFound(id))
+          } yield result shouldEqual Right(InstanceTasks(id, List.empty, Map.empty))
         }.await
       }.setGen2(Gen.identifier)
 
