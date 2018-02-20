@@ -305,11 +305,8 @@ class InstanceService @Inject()(nomadClient: NomadClient,
               nomadService.startJob(templateRenderer.renderJson(instance)).map(_ => instance)
             case JobStatus.Stopped =>
               val deletedJob = nomadService.deleteJob(instance.id)
+              // FIXME we don't delete the service and periodic job / status info here (#352) => potential mem leak
               deletedJob
-                .map { job =>
-                  serviceStatuses -= job
-                  jobStatuses -= job
-                }
                 .map(_ => instance)
             case other =>
               Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
