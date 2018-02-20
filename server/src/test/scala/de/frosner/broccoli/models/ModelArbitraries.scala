@@ -167,7 +167,12 @@ trait ModelArbitraries {
       for {
         id <- Gen.identifier.label("id")
         tasks <- Gen.listOf(arbTask.arbitrary)
-      } yield InstanceTasks(id, tasks)
+        periodicRunGen = for {
+          runId <- Gen.alphaStr
+          runTasks <- Gen.listOf(arbTask.arbitrary)
+        } yield (runId, runTasks)
+        periodicTasks <- Gen.mapOf(periodicRunGen)
+      } yield InstanceTasks(id, tasks, periodicTasks)
     }
 }
 

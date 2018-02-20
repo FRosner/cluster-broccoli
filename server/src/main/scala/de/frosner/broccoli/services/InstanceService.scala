@@ -37,6 +37,12 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                                 config: Configuration) {
   private val log = play.api.Logger(getClass)
 
+  @volatile
+  var jobStatuses: Map[String, (JobStatus, Seq[PeriodicRun], Seq[String])] = Map.empty
+
+  @volatile
+  var serviceStatuses: Map[String, Seq[Service]] = Map.empty
+
   log.info(s"Starting $this")
 
   // FIXME: refactor out together with the polling scheduler
@@ -151,12 +157,6 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     }
     instancesMap
   }
-
-  @volatile
-  var jobStatuses: Map[String, (JobStatus, Seq[PeriodicRun], Seq[String])] = Map.empty
-
-  @volatile
-  var serviceStatuses: Map[String, Seq[Service]] = Map.empty
 
   /*
     I have to make this initialization "lazy" (but there are not lazy vars in Scala),
@@ -305,11 +305,8 @@ class InstanceService @Inject()(nomadClient: NomadClient,
               nomadService.startJob(templateRenderer.renderJson(instance)).map(_ => instance)
             case JobStatus.Stopped =>
               val deletedJob = nomadService.deleteJob(instance.id)
+              // FIXME we don't delete the service and periodic job / status info here (#352) => potential mem leak
               deletedJob
-                .map { job =>
-                  serviceStatuses -= job
-                  jobStatuses -= job
-                }
                 .map(_ => instance)
             case other =>
               Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))

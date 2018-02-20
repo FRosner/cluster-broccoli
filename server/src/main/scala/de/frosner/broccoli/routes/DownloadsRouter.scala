@@ -16,6 +16,11 @@ class DownloadsRouter @Inject()(instances: Provider[InstanceController]) extends
     case GET(
         p"/instances/$instanceId/allocations/$allocationId/tasks/$taskName/logs/${logKind(kind)}" ? q_o"offset=${information(offset)}") =>
       instances.get.logFile(instanceId, allocationId, taskName, kind, offset)
+    case GET(
+        p"/instances/$instanceId/periodic/$periodicJobPrefix/$periodicJobSuffix/allocations/$allocationId/tasks/$taskName/logs/${logKind(
+          kind)}" ? q_o"offset=${information(offset)}") =>
+      val periodicJobId = s"$periodicJobPrefix/$periodicJobSuffix"
+      instances.get.logFile(instanceId, periodicJobId, allocationId, taskName, kind, offset)
     case _ => Action(Results.NotFound(<h1>Download not found</h1>).as(HTML))
   }
 }
