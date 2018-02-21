@@ -28,18 +28,19 @@ class DirectoryTemplateSourceSpec extends Specification with TemporaryTemplatesC
           Source.fromFile(templatesDirectory.resolve("curl/template.json").toFile).mkString,
           "A periodic job that sends an HTTP GET request to a specified address every minute.",
           Map(
+            "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, Some(0)),
             "URL" -> ParameterInfo("URL",
-                                   None,
-                                   Some(RawParameterValue("localhost:8000")),
-                                   None,
-                                   ParameterType.Raw,
-                                   Some(1)),
+              None,
+              Some(RawParameterValue("localhost:8000")),
+              None,
+              ParameterType.Raw,
+              Some(1)),
             "enabled" -> ParameterInfo("enabled",
-                                       None,
-                                       Some(RawParameterValue("true")),
-                                       None,
-                                       ParameterType.Raw,
-                                       Some(2))
+              None,
+              Some(RawParameterValue("true")),
+              None,
+              ParameterType.Raw,
+              Some(2))
           )
         ))).exactly(1)
     }
@@ -48,12 +49,6 @@ class DirectoryTemplateSourceSpec extends Specification with TemporaryTemplatesC
       val templates =
         new DirectoryTemplateSource(templatesDirectory.toString, false).loadTemplates()
       templates.map(_.description) must contain(beEqualTo("curl-without-decription template")).exactly(1)
-    }
-
-    "use default parameters if meta file is not provided" in { templatesDirectory: Path =>
-      val templates =
-        new DirectoryTemplateSource(templatesDirectory.toString, false).loadTemplates()
-      templates.map(_.parameterInfos) must contain(empty).exactly(1)
     }
 
     "not contain templates that failed to parse" in { templatesDirectory: Path =>

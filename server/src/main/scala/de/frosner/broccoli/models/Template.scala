@@ -1,6 +1,5 @@
 package de.frosner.broccoli.models
 
-import com.hubspot.jinjava.Jinjava
 import de.frosner.broccoli.models.ParameterInfo.parameterInfoWrites
 import org.apache.commons.codec.digest.DigestUtils
 import play.api.libs.functional.syntax._
@@ -13,13 +12,7 @@ case class Template(id: String, template: String, description: String, parameter
     extends Serializable {
 
   @transient
-  lazy val parameters: Set[String] = {
-    val jinjava = new Jinjava()
-    val renderResult = jinjava.renderForResult(template, Map.empty[String, String])
-    // TODO: get rid of this after the integration tests are in Scala https://travis-ci.org/FRosner/cluster-broccoli/jobs/297629476#L1771
-    val uniqueVariables = TreeSet.empty[String] ++ renderResult.getContext.getResolvedValues.toSet
-    uniqueVariables
-  }
+  lazy val parameters: Set[String] = parameterInfos.keySet
 
   // We sort the parameterInfos by the key to make the String deterministic
   @transient

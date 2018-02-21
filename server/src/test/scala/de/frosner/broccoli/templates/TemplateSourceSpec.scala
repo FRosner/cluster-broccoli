@@ -13,12 +13,13 @@ class TemplateSourceSpec extends Specification {
     "work" in {
       val id = "templateId"
       val templateString = "Hello {{ id }}"
-      val templateInfo = TemplateInfo(None, Some(Map("id" -> Parameter(Some("id"), None, None, None, None))))
+      val templateInfo = TemplateInfo(None, Map("id" -> Parameter(Some("id"), None, None, None, None)))
       val convertDashesToUnderscores = false
       val template =
         templateSource.loadTemplate(id, templateString, templateInfo, convertDashesToUnderscores).get
+
       template.id === id and template.template === templateString and template.parameterInfos("id") === ParameterInfo
-        .fromTemplateInfoParameter("id", templateInfo.parameters.get("id"))
+        .fromTemplateInfoParameter("id", templateInfo.parameters.get("id").get)
     }
 
     "fail if the 'legacy' variables contain dashes and convertDashesToUnderscores is false" in {
@@ -35,8 +36,9 @@ class TemplateSourceSpec extends Specification {
 
     "require an 'id' parameter (no parameter)" in {
       val tryTemplate =
-        templateSource.loadTemplate("test", "Hallo", TemplateInfo(None, None), false)
-      tryTemplate.isFailure
+        templateSource.loadTemplate("test", "Hallo", TemplateInfo(None, Map.empty), false)
+      (tryTemplate.isFailure must beTrue) and (tryTemplate.failed.get.getMessage must beEqualTo(
+        "requirement failed: There needs to be an 'id' field in the template for Broccoli to work. Parameters defined: Set()"))
     }
 
     "require an 'id' parameter (wrong parameter)" in {

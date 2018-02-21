@@ -51,14 +51,9 @@ trait TemplateSource {
         templateString
       }
 
-      // validate with jinjava that "id" parameter is defined
-      val jinjava = new Jinjava()
-      val renderResult = jinjava.renderForResult(validatedTemplateString, Map.empty[String, String])
-      val uniqueVariables = renderResult.getContext.getResolvedValues.toSet
-
       require(
-        uniqueVariables.contains("id"),
-        s"There needs to be an 'id' field in the template for Broccoli to work. Parameters defined: ${uniqueVariables}"
+        templateInfo.parameters.contains("id"),
+        s"There needs to be an 'id' field in the template for Broccoli to work. Parameters defined: ${templateInfo.parameters.keySet}"
       )
 
       Template(
@@ -66,8 +61,7 @@ trait TemplateSource {
         template = validatedTemplateString,
         description = templateInfo.description.getOrElse(s"$templateId template"),
         parameterInfos = templateInfo.parameters
-          .map(_.map { case (id, parameter) => id -> ParameterInfo.fromTemplateInfoParameter(id, parameter) })
-          .getOrElse(Map.empty)
+          .map { case (id, parameter) => id -> ParameterInfo.fromTemplateInfoParameter(id, parameter) }
       )
     }
 }

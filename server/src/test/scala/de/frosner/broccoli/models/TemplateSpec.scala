@@ -11,24 +11,15 @@ class TemplateSpec extends Specification {
 
   "A template" should {
 
-    "extract a single parameter from a template correctly" in {
-      Template("test", "Hallo {{id}}", "desc", Map.empty).parameters === Set("id")
+    "extract only parameters specified in the parameters" in {
+      Template("test",
+               "Hallo {{id}}. I like {{person_name}}.",
+               "desc",
+               Map("id" -> ParameterInfo("id", None, None, None, None, None))).parameters === Set("id")
     }
 
-    "extract multiple parameters from a template correclty" in {
-      Template("test", "Hallo {{id}}, how is {{object}}", "desc", Map.empty).parameters === Set("id", "object")
-    }
-
-    "extract a single parameter with multiple occurances from a template correctly" in {
-      Template("test", "Hallo {{id}}. I like {{id}}.", "desc", Map.empty).parameters === Set("id")
-    }
-
-    "does not support dashes in the parameter names" in {
-      Template("test", "Hallo {{id}} {{person-name}}", "desc", Map.empty).parameters === Set("id", "person", "name")
-    }
-
-    "support underscores in the parameter names" in {
-      Template("test", "Hallo {{id}} {{person_name}}", "desc", Map.empty).parameters === Set("id", "person_name")
+    "not automatically extract parameters from a template" in {
+      Template("test", "Hallo {{id}}, how is {{object}}", "desc", Map.empty).parameters === Set.empty
     }
 
     "create the template version correctly in" in {

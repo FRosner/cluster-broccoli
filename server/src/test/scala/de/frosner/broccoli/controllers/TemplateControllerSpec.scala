@@ -71,7 +71,14 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
         id = "id",
         template = "template {{id}}",
         description = "description",
-        parameterInfos = Map.empty
+        parameterInfos = Map(
+          "id" -> ParameterInfo(id = "id",
+                                name = Some("myname"),
+                                default = Some("myid"),
+                                secret = Some(false),
+                                `type` = None,
+                                orderIndex = None)
+        )
       )
 
       testWithAllAuths { securityService =>
@@ -89,7 +96,16 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
             Map(
               "id" -> JsString(template.id),
               "parameters" -> JsArray(Seq(JsString("id"))),
-              "parameterInfos" -> JsObject(Map.empty[String, JsValue]),
+              "parameterInfos" -> JsObject(
+                Map(
+                  "id" -> JsObject(
+                    Map(
+                      "id" -> JsString("id"),
+                      "name" -> JsString("myname"),
+                      "default" -> JsString("myid"),
+                      "secret" -> JsBoolean(false)
+                    ))
+                )),
               "description" -> JsString(template.description),
               "version" -> JsString(template.version)
             ))
