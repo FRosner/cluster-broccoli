@@ -47,7 +47,11 @@ trait TemplateSource {
           }
         }
       } else {
-        require(variablesWithDashes.isEmpty)
+        require(
+          variablesWithDashes.isEmpty,
+          s"Found variables with dashes: $variablesWithDashes. " +
+            s"Please remove the dashes from variable names or set broccoli.templates.convert-dashes-to-underscores to true"
+        )
         templateString
       }
 
