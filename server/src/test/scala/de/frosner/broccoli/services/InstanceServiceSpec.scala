@@ -17,9 +17,9 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
 
   val service = new InstanceService(
     nomadClient = mock[NomadClient],
-    nomadService = withNomadReachable(mock[NomadService]),
+    nomadService = mock[NomadService],
     templateService = withTemplates(mock[TemplateService], List.empty),
-    consulService = withConsulReachable(mock[ConsulService]),
+    consulService = mock[ConsulService],
     applicationLifecycle = mock[ApplicationLifecycle],
     templateRenderer = templateRenderer,
     instanceStorage = mock[InstanceStorage],
