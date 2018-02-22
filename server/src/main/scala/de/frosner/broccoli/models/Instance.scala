@@ -20,7 +20,6 @@ case class Instance(id: String, template: Template, parameterValues: Map[String,
   }
 
   requireParameterValueConsistency(parameterValues, template)
-
 }
 
 object Instance {
@@ -115,5 +114,4 @@ object Instance {
         (parameter, possiblyCensoredValue)
     })
   }
-
 }

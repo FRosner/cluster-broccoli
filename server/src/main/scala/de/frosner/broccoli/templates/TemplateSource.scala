@@ -29,16 +29,16 @@ trait TemplateSource {
                    templateInfo: TemplateConfig.TemplateInfo,
                    convertDashesToUnderscores: Boolean): Try[Template] =
     Try {
-      // find variables with dashes
-      val matcher = variablePattern.matcher(templateString)
-      var variables = ArrayBuffer[String]()
-
-      while (matcher.find()) {
-        variables += matcher.group(1)
-      }
-      val variablesWithDashes = variables.toSet.filter(variable => variable.contains("-"))
-
       val validatedTemplateString = if (convertDashesToUnderscores) {
+        // find variables with dashes
+        val matcher = variablePattern.matcher(templateString)
+        var variables = ArrayBuffer[String]()
+
+        while (matcher.find()) {
+          variables += matcher.group(1)
+        }
+        val variablesWithDashes = variables.toSet.filter(variable => variable.contains("-"))
+
         variablesWithDashes.foldLeft(templateString) {
           case (template, variable) => {
             val validVariable = variable.replaceAll("-", "_")
@@ -47,11 +47,6 @@ trait TemplateSource {
           }
         }
       } else {
-        require(
-          variablesWithDashes.isEmpty,
-          s"Found variables with dashes: $variablesWithDashes. " +
-            s"Please remove the dashes from variable names or set broccoli.templates.convert-dashes-to-underscores to true"
-        )
         templateString
       }
 

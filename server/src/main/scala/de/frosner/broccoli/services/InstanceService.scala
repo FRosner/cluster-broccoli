@@ -199,20 +199,8 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     )
   }
 
-  def requireParameterValueConsistency(parameterValues: Map[String, ParameterValue], template: Template) = {
-    val realParametersWithValues = parameterValues.keySet ++ template.parameterInfos.flatMap {
-      case (key, info) => info.default.map(Function.const(key))
-    }
-    require(
-      template.parameters == realParametersWithValues,
-      s"The given parameters values (${parameterValues.keySet}) " +
-        s"need to match the ones in the template (${template.parameters})."
-    )
-  }
-
   def updateParameterValues(instance: Instance, newParameterValues: Map[String, ParameterValue]): Try[Instance] =
     Try {
-      requireParameterValueConsistency(newParameterValues, instance.template)
       require(newParameterValues("id") == instance.parameterValues("id"),
               s"The parameter value 'id' must not be changed.")
 
@@ -229,7 +217,6 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                      newTemplate: Template,
                      newParameterValues: Map[String, ParameterValue]): Try[Instance] =
     Try {
-      requireParameterValueConsistency(newParameterValues, newTemplate)
       require(newParameterValues("id") == instance.parameterValues("id"),
               s"The parameter value 'id' must not be changed.")
 
