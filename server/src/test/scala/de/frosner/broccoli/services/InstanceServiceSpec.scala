@@ -52,7 +52,8 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos = Map.empty
+          parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, None, None),
+                               "age" -> ParameterInfo("age", None, None, None, None, None))
         ),
         parameterValues = Map("id" -> "1", "age" -> "50")
       )
@@ -68,7 +69,8 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos = Map.empty
+          parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, None, None),
+                               "age" -> ParameterInfo("age", None, None, None, None, None))
         ),
         parameterValues = Map("id" -> "1", "age" -> "50")
       )
@@ -120,7 +122,7 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
         parameterInfos = Map(
           "id" -> ParameterInfo("id", None, None, None, None, None),
           "age" -> ParameterInfo("age", None, None, None, None, None),
-          "height" -> ParameterInfo("age", None, None, None, None, None)
+          "height" -> ParameterInfo("height", None, None, None, None, None)
         )
       )
       val originalParameterValues = Map("id" -> "1", "age" -> "50")
@@ -139,13 +141,18 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
         id = "1",
         template = "\"{{id}} {{age}}\"",
         description = "desc",
-        parameterInfos = Map.empty
+        parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, None, None),
+                             "age" -> ParameterInfo("age", None, None, None, None, None))
       )
       val newTemplate = Template(
         id = "5",
         template = "\"{{id}} {{age}} {{height}}\"",
         description = "desc",
-        parameterInfos = Map.empty
+        parameterInfos = Map(
+          "id" -> ParameterInfo("id", None, None, None, None, None),
+          "age" -> ParameterInfo("age", None, None, None, None, None),
+          "height" -> ParameterInfo("height", None, None, None, None, None)
+        )
       )
       val originalParameterValues = Map("id" -> "1", "age" -> "50")
       val newParameterValues = originalParameterValues
@@ -163,13 +170,18 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
         id = "1",
         template = "\"{{id}} {{age}}\"",
         description = "desc",
-        parameterInfos = Map.empty
+        parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, None, None),
+                             "age" -> ParameterInfo("age", None, None, None, None, None))
       )
       val newTemplate = Template(
         id = "5",
         template = "\"{{id}} {{age}} {{height}}\"",
         description = "desc",
-        parameterInfos = Map.empty
+        parameterInfos = Map(
+          "id" -> ParameterInfo("id", None, None, None, None, None),
+          "age" -> ParameterInfo("age", None, None, None, None, None),
+          "height" -> ParameterInfo("height", None, None, None, None, None)
+        )
       )
       val originalParameterValues = Map("id" -> "2", "age" -> "50")
       val newParameterValues = originalParameterValues

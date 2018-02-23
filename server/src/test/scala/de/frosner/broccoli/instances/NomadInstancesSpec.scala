@@ -36,7 +36,7 @@ class NomadInstancesSpec
         id = "id",
         template = "{{id}}",
         description = "description",
-        parameterInfos = Map.empty
+        parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, None, None))
       ),
       parameterValues = Map("id" -> StringParameterValue("id"))
     ),

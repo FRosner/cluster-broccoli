@@ -16,7 +16,9 @@ class TemplateRendererSpec extends Specification with Mockito {
   "TemplateRenderer" should {
     "render the template correctly when an instance contains a single parameter" in {
       val instance =
-        Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> StringParameterValue("Frank")))
+        Instance("1",
+                 Template("1", "\"{{id}}\"", "desc", Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))),
+                 Map("id" -> StringParameterValue("Frank")))
       templateRenderer.renderJson(instance) === JsString("Frank")
     }
 
@@ -24,8 +26,12 @@ class TemplateRendererSpec extends Specification with Mockito {
       val instance =
         Instance(
           "1",
-          Template("1", "\"{{id}} {{age}}\"", "desc", Map.empty),
-          Map("id" -> RawParameterValue("Frank"), "age" -> IntParameterValue(5))
+          Template("1",
+                   "\"{{id}} {{age}}\"",
+                   "desc",
+                   Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
+                       "age" -> ParameterInfo("age", None, None, None, ParameterType.Integer, None))),
+        Map("id" -> RawParameterValue("Frank"), "age" -> IntParameterValue(5))
         )
       templateRenderer.renderJson(instance) === JsString("Frank 5")
     }
@@ -38,6 +44,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           template = "\"{{id}} {{age}}\"",
           description = "desc",
           parameterInfos = Map(
+            "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
             "age" -> ParameterInfo("age",
                                    None,
                                    Some(IntParameterValue(50)),
@@ -77,7 +84,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = "\"{{id}}\"",
           description = "desc",
-          parameterInfos = Map.empty
+          parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))
         ),
         parameterValues = Map("id" -> RawParameterValue("^.*$"))
       )
@@ -92,7 +99,9 @@ class TemplateRendererSpec extends Specification with Mockito {
           template = "\"{{id}} {{age}}\"",
           description = "desc",
           parameterInfos = Map(
-            "age" -> ParameterInfo("age",
+            "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
+            "age" ->
+              ParameterInfo("age",
                                    None,
                                    None,
                                    secret = Some(false),
@@ -147,16 +156,20 @@ class TemplateRendererSpec extends Specification with Mockito {
     }
 
     "throws an exception if the template contains no default and no value" in {
-      val instance = Instance(
+      // we mock instance because it contains its own validation of the parameters.
+      // We keep the test to make sure that even without validation in the instance TemplateRenderer does not allow unbound variables.
+      val template = Template(
         id = "1",
-        template = Template(
-          id = "1",
-          template = "\"{{id}} {{age}}\"",
-          description = "desc",
-          parameterInfos = Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = ParameterType.Raw, None))
-        ),
-        parameterValues = Map("id" -> RawParameterValue("Frank"))
+        template = "\"{{id}} {{age}}\"",
+        description = "desc",
+        parameterInfos =
+          Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
+              "age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = ParameterType.Raw, orderIndex = None))
       )
+      val instance = mock[Instance]
+      instance.template returns template
+      instance.parameterValues returns Map("id" -> RawParameterValue("Frank"))
+
       templateRenderer.renderJson(instance) must throwA[FatalTemplateErrorsException]
     }
 
