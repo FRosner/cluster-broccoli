@@ -115,6 +115,28 @@ class TemplateRendererSpec extends Specification with Mockito {
       templateRenderer.renderJson(instance) === JsString("Frank 50")
     }
 
+    "parse the template correctly when it has Decimal parameters" in {
+      val value = 1234.56
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = """{{id}}""",
+          description = "desc",
+          parameterInfos = Map(
+            "id" -> ParameterInfo("id",
+              None,
+              None,
+              secret = Some(false),
+              `type` = ParameterType.Decimal,
+              orderIndex = None)
+          )
+        ),
+        parameterValues = Map("id" -> DecimalParameterValue(value))
+      )
+      templateRenderer.renderJson(instance) === JsNumber(value)
+    }
+
     "parse correctly jinja2 local variables" in {
       val instance = Instance(
         id = "1",
@@ -157,42 +179,36 @@ class TemplateRendererSpec extends Specification with Mockito {
       templateRenderer.renderJson(instance2) === JsString("less than or equal to zero")
     }
 
-    "throws an exception if the template contains no default and no value" in {
-      val template = Template(
-        id = "1",
-        template = "\"{{id}} {{age}}\"",
-        description = "desc",
-        parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))
-      ),
-      val instance = Instance(
-        id = "1",
-        template = template,
-        parameterValues = Map("id" -> RawParameterValue("Frank"))
-      )
-      
-      templateRenderer.renderJson(instance) must throwA[FatalTemplateErrorsException]
-    }
-
-    "parse the template correctly when it has Decimal parameters" in {
-      val value = 1234.56
+    "throws an exception if the template does not contain a value and default (withFailOnUnknownTokens = true)" in {
       val instance = Instance(
         id = "1",
         template = Template(
           id = "1",
-          template = """{{id}}""",
+          template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos = Map(
-            "id" -> ParameterInfo("id",
-                                  None,
-                                  None,
-                                  secret = Some(false),
-                                  `type` = ParameterType.Decimal,
-                                  orderIndex = None)
-          )
+          parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))
         ),
-        parameterValues = Map("id" -> DecimalParameterValue(value))
+        parameterValues = Map("id" -> RawParameterValue("Frank"))
       )
-      templateRenderer.renderJson(instance) === JsNumber(value)
+
+      templateRenderer.renderJson(instance) must throwA[FatalTemplateErrorsException]
+    }
+
+    "ignore undefined variables (withFailOnUnknownTokens = false)" in {
+      val templateRenderer =
+        new TemplateRenderer(JinjavaConfig.newBuilder().withFailOnUnknownTokens(false).build())
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = "\"{{id}} {{age}}\"",
+          description = "desc",
+          parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))
+        ),
+        parameterValues = Map("id" -> RawParameterValue("Frank"))
+      )
+
+      templateRenderer.renderJson(instance) === JsString("Frank ")
     }
 
     "parse the template correctly when it has Integer parameters" in {
