@@ -15,7 +15,6 @@ import scala.collection.JavaConversions._
 class TemplateRenderer(jinjavaConfig: JinjavaConfig) {
   val jinjava = new Jinjava(jinjavaConfig)
 
-
   def renderForResult(instance: Instance): RenderResult = {
     val template = instance.template
     val parameterInfos = template.parameterInfos
