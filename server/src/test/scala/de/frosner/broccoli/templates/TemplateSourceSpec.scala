@@ -29,7 +29,7 @@ class TemplateSourceSpec extends Specification {
           "Hello {{id}} {{custom-var}}",
           TemplateInfo(None,
                        Map("id" -> Parameter(Some("id"), None, None, None, None),
-                           "custom_var" -> Parameter(Some("custom_var"), None, None, None, None))),
+                           "custom-var" -> Parameter(Some("custom-var"), None, None, None, None))),
           true
         )
       (tryTemplate.isSuccess must beTrue) and (tryTemplate.get.parameters must contain("custom_var"))

@@ -29,7 +29,7 @@ trait TemplateSource {
                    templateInfo: TemplateConfig.TemplateInfo,
                    convertDashesToUnderscores: Boolean): Try[Template] =
     Try {
-      val validatedTemplateString = if (convertDashesToUnderscores) {
+      val (validatedTemplateString, validatedParameters) = if (convertDashesToUnderscores) {
         // find variables with dashes
         val matcher = variablePattern.matcher(templateString)
         var variables = ArrayBuffer[String]()
@@ -37,17 +37,23 @@ trait TemplateSource {
         while (matcher.find()) {
           variables += matcher.group(1)
         }
+
         val variablesWithDashes = variables.toSet.filter(variable => variable.contains("-"))
 
-        variablesWithDashes.foldLeft(templateString) {
+        val validatedTemplateString = variablesWithDashes.foldLeft(templateString) {
           case (template, variable) => {
-            val validVariable = variable.replaceAll("-", "_")
+            val validVariable = variable.replaceAllLiterally("-", "_")
             log.warn(s"Converting variable $variable to $validVariable in $templateId")
             template.replaceAll(variable, validVariable)
           }
         }
+        val validatedParameters = templateInfo.parameters.map {
+          case (k, v) => k.replaceAllLiterally("-", "_") -> v
+        }
+
+        (validatedTemplateString, validatedParameters)
       } else {
-        templateString
+        (templateString, templateInfo.parameters)
       }
 
       require(
@@ -59,7 +65,7 @@ trait TemplateSource {
         id = templateId,
         template = validatedTemplateString,
         description = templateInfo.description.getOrElse(s"$templateId template"),
-        parameterInfos = templateInfo.parameters
+        parameterInfos = validatedParameters
           .map { case (id, parameter) => id -> ParameterInfo.fromTemplateInfoParameter(id, parameter) }
       )
     }
