@@ -22,17 +22,6 @@ class TemplateSourceSpec extends Specification {
         .fromTemplateInfoParameter("id", templateInfo.parameters.get("id").get)
     }
 
-    "fail if the 'legacy' variables contain dashes and convertDashesToUnderscores is false" in {
-      val tryTemplate =
-        templateSource.loadTemplate("templateId",
-                                    "Hello {{ id}} {{custom-var}}",
-                                    TemplateInfo(None, Map("id" -> Parameter(Some("id"), None, None, None, None))),
-                                    false)
-      (tryTemplate.isFailure must beTrue) and
-        (tryTemplate.failed.get.getMessage must be equalTo "requirement failed: Found variables with dashes: Set(custom-var). " +
-          "Please remove the dashes from variable names or set broccoli.templates.convert-dashes-to-underscores to true")
-    }
-
     "convert dashes in 'legacy' variables to underscores if convertDashesToUnderscores is true" in {
       val tryTemplate =
         templateSource.loadTemplate(
