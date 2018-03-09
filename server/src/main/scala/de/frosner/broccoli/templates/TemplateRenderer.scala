@@ -7,12 +7,25 @@ import de.frosner.broccoli.models.{Instance, ParameterInfo, ParameterType}
 import org.apache.commons.lang3.StringEscapeUtils
 import play.api.libs.json.{JsString, JsValue, Json}
 
+import scala.util.Try
+
 /**
   * Renders json representation of the passed instance
   *
   * @param defaultType The default type of template parameters
   */
 class TemplateRenderer(defaultType: ParameterType) {
+
+  /** Checks if the value is a number or a is a number **/
+  def isNumber(value: String): Boolean = {
+    val expr = "^-?[0-9]+(\\.[0-9]+)?$".r
+    value match {
+      case expr(_) =>
+        true
+      case _ => false
+    }
+  }
+
   def sanitize(parameter: String, value: String, parameterInfos: Map[String, ParameterInfo]): String = {
     val parameterType = parameterInfos
       .get(parameter)
@@ -22,6 +35,9 @@ class TemplateRenderer(defaultType: ParameterType) {
       case ParameterType.Raw => value
       case ParameterType.String =>
         StringEscapeUtils.escapeJson(value)
+      case ParameterType.Numeric =>
+        if (isNumber(value)) value
+        else throw new IllegalArgumentException(s"expected a number for {$parameter}. Found {$value}")
     }
     sanitized
   }

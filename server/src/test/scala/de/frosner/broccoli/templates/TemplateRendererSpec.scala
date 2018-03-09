@@ -3,7 +3,9 @@ package de.frosner.broccoli.templates
 import de.frosner.broccoli.models.{Instance, ParameterInfo, ParameterType, Template}
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
-import play.api.libs.json.JsString
+import play.api.libs.json.{JsNumber, JsString}
+
+import scala.util.{Failure, Try}
 
 class TemplateRendererSpec extends Specification with Mockito {
   val templateRenderer = new TemplateRenderer(ParameterType.Raw)
@@ -83,6 +85,27 @@ class TemplateRendererSpec extends Specification with Mockito {
       )
       templateRenderer.renderJson(instance) === JsString("Frank 50")
     }
+
+    "parse the template correctly when it has Numeric parameters" in {
+      val value = 1234.56
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = """{{id}}""",
+          description = "desc",
+          parameterInfos = Map(
+            "id" -> ParameterInfo("id",
+              None,
+              None,
+              secret = Some(false),
+              `type` = Some(ParameterType.Numeric),
+              orderIndex = None))
+        ),
+        parameterValues = Map("id" -> s"$value")
+      )
+      templateRenderer.renderJson(instance) === JsNumber(value)
+    }
   }
 
   "sanitize" should {
@@ -109,5 +132,30 @@ class TemplateRendererSpec extends Specification with Mockito {
 
     }
 
+    "return the value if the ParameterType is Numeric and the value is Numeric" in {
+      val value = 1234.56
+      templateRenderer
+          .sanitize(
+            "parameter",
+            s"""$value""",
+            Map("parameter" ->
+                ParameterInfo("parameter", None, None, None, Some(ParameterType.Numeric), None)
+            )) === s"$value"
+    }
+
+    "throw an IllegalArgumentException if the ParameterType is Numeric but the value is not Numeric"in {
+      val value = "1234.56b"
+      Try(templateRenderer
+            .sanitize(
+              "parameter",
+              s"""$value""",
+              Map("parameter" ->
+                  ParameterInfo("parameter", None, None, None, Some(ParameterType.Numeric), None)
+              ))) match {
+        case Failure(_: IllegalArgumentException) =>
+              true
+        case _ => true
+      }
+    }
   }
 }
