@@ -104,16 +104,22 @@ row instanceId instanceTasks periodicRun =
                                 ]
                                 [ JobStatusView.view "" periodicRun.status
                                 , text " "
-                                , (if (periodicRun.status == JobStatus.JobRunning) then
-                                    iconButton
-                                        "btn btn-default btn-xs"
-                                        "glyphicon glyphicon-stop"
-                                        "Stop and Delete Instance"
-                                   else
+                                , (if
+                                    (periodicRun.status
+                                        == JobStatus.JobStopped
+                                        || periodicRun.status
+                                        == JobStatus.JobDead
+                                    )
+                                   then
                                     iconButton
                                         "btn btn-default btn-xs"
                                         "glyphicon glyphicon-trash"
                                         "Delete Instance"
+                                   else
+                                    iconButton
+                                        "btn btn-default btn-xs"
+                                        "glyphicon glyphicon-stop"
+                                        "Stop and Delete Instance"
                                   )
                                     (List.append
                                         [ onClick (StopPeriodicJobs instanceId [ periodicRun.jobName ])
