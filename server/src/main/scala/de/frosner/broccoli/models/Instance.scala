@@ -15,7 +15,7 @@ case class Instance(id: String, template: Template, parameterValues: Map[String,
     require(
       template.parameters == realParametersWithValues,
       s"The given parameters values (${parameterValues.keySet}) " +
-        s"need to match the ones in the template (${template.parameters})."
+        s"need to match the ones in the template (${template.parameters}) (instance id $id)."
     )
   }
 
