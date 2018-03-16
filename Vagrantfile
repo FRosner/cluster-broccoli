@@ -1,7 +1,14 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+$BASE_IMAGE="bento/ubuntu-14.04" 
+
 $script = <<SCRIPT
+
+# Set versions
+NOMAD_VERSION=0.5.4
+CONSUL_VERSION=0.7.5
+
 # Update apt and get dependencies
 sudo apt-get update
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y unzip curl vim \
@@ -9,17 +16,16 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y unzip curl vim \
     ca-certificates \
     software-properties-common 
 
-# Download Nomad
-NOMAD_VERSION=0.5.4
+echo "Fetching Consul..."
+curl -sSL https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip -o consul.zip
+
+echo "Installing Consul..."
+unzip consul.zip
+sudo cp consul /usr/bin/consul
 
 echo "Fetching Nomad..."
 cd /tmp/
 curl -sSL https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip -o nomad.zip
-
-CONSUL_VERSION=0.7.5
-
-echo "Fetching Consul..."
-curl -sSL https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip > consul.zip
 
 echo "Installing Nomad..."
 unzip nomad.zip
@@ -46,10 +52,6 @@ sudo service docker restart
 
 # Make sure we can actually use docker as the vagrant user
 sudo usermod -aG docker vagrant
-
-echo "Installing Consul..."
-unzip /tmp/consul.zip
-sudo cp consul /usr/bin/consul
 
 echo "Configuring Nomad..."
 (
@@ -86,7 +88,7 @@ done
 SCRIPT
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "bento/ubuntu-16.04" # 16.04 LTS
+  config.vm.box = $BASE_IMAGE
   config.vm.hostname = "nomad"
   config.vm.provision "shell", inline: $script, privileged: false
   config.vm.provision "docker" # Just install it
