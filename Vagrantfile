@@ -1,9 +1,13 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-$BASE_IMAGE="bento/ubuntu-14.04" 
+BASE_IMAGE="bento/ubuntu-14.04" 
+VM_HOSTONLY_STATIC_IP="192.168.58.11"
 
 $script = <<SCRIPT
+
+# Set env var for assigned static IP
+export VM_HOSTONLY_STATIC_IP=#{VM_HOSTONLY_STATIC_IP}
 
 # Set versions
 NOMAD_VERSION=0.5.4
@@ -64,14 +68,14 @@ cat <<-EOF
         "enabled": true
     },
     "data_dir": "/tmp",
-    "bind_addr": "192.168.58.11",
+    "bind_addr": "#{VM_HOSTONLY_STATIC_IP}",
     "advertise": {
-        "http": "192.168.58.11:4646",
-        "rpc": "192.168.58.11:4647",
-        "serf": "192.168.58.11:4648"
+        "http": "#{VM_HOSTONLY_STATIC_IP}:4646",
+        "rpc": "#{VM_HOSTONLY_STATIC_IP}:4647",
+        "serf": "#{VM_HOSTONLY_STATIC_IP}:4648"
     },
     "consul": { 
-        "address": "192.168.58.11:8500" 
+        "address": "#{VM_HOSTONLY_STATIC_IP}" 
     },
     "enable_debug": true 
 }
@@ -88,19 +92,19 @@ done
 SCRIPT
 
 Vagrant.configure(2) do |config|
-  config.vm.box = $BASE_IMAGE
+  config.vm.box = BASE_IMAGE
   config.vm.hostname = "nomad"
   config.vm.provision "shell", inline: $script, privileged: false
   config.vm.provision "docker" # Just install it
   
   # Expose the consul DNS api 
-  config.vm.network "forwarded_port", guest_ip: "192.168.58.11", guest: 8600, host_ip: "127.0.0.1", host: 8600, auto_correct: false
+  config.vm.network "forwarded_port", guest_ip: VM_HOSTONLY_STATIC_IP, guest: 8600, host_ip: "127.0.0.1", host: 8600, auto_correct: false
   
   # Expose the consul api and ui to the host
-  config.vm.network "forwarded_port", guest_ip: "192.168.58.11", guest: 8500, host_ip: "127.0.0.1", host: 8500, auto_correct: false
+  config.vm.network "forwarded_port", guest_ip: VM_HOSTONLY_STATIC_IP, guest: 8500, host_ip: "127.0.0.1", host: 8500, auto_correct: false
 
   # Set up network for nomad
-  config.vm.network "private_network", ip: "192.168.58.11"
+  config.vm.network "private_network", ip: VM_HOSTONLY_STATIC_IP
 
 
   # Increase memory for Parallels Desktop
@@ -122,7 +126,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.provision "Infrastructure services",
     type:"shell", 
-    inline: " (/usr/bin/consul agent -dev -ui -data-dir=/tmp -advertise=192.168.58.11 -bind=192.168.58.11 -client=192.168.58.11 | sed -u 's/^/[CONSUL]/' ) & /usr/bin/nomad agent -dev -config=/etc/nomad.d/local.json | sed -u 's/^/[NOMAD] /' ", 
+    inline: " (/usr/bin/consul agent -dev -ui -data-dir=/tmp -advertise=#{VM_HOSTONLY_STATIC_IP} -bind=#{VM_HOSTONLY_STATIC_IP} -client=#{VM_HOSTONLY_STATIC_IP} | sed -u 's/^/[CONSUL]/' ) & /usr/bin/nomad agent -dev -config=/etc/nomad.d/local.json | sed -u 's/^/[NOMAD] /' ", 
     privileged: true, 
     run:"always"
 
