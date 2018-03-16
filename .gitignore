@@ -1,4 +1,5 @@
 target/
+.idea/
 
 # Artifacts from building docker distributions
 /docker/test/cluster-broccoli-dist/

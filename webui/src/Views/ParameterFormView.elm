@@ -16,6 +16,7 @@ import Set exposing (Set)
 import Maybe
 import Maybe.Extra exposing (isJust, join)
 import Json.Decode
+import Regex exposing (contains, regex)
 
 
 editingParamColor =
@@ -223,6 +224,24 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                     ( Nothing, Just (Just original) ) ->
                         original
 
+            dataType =
+                maybeParameterInfo
+                    |> Maybe.andThen (\i -> i.dataType)
+                    |> Maybe.withDefault RawParam
+
+            maybeErrMsg =
+                case maybeEditedValue of
+                    Just value ->
+                        if String.isEmpty value then
+                            Nothing -- In this case the default value gets picked up
+                        else getErrorMsg value dataType
+                    Nothing -> Nothing
+
+            hasError =
+                case maybeErrMsg of
+                    Nothing -> False
+                    Just _ -> True
+
             isSecret =
                 maybeParameterInfo
                     |> Maybe.andThen (\i -> i.secret)
@@ -238,69 +257,83 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
         in
             p
                 []
-                [ div
-                    [ class "input-group" ]
-                    (List.append
-                        [ span
-                            [ class "input-group-addon"
-                            , style
-                                [ ( "background-color", Maybe.withDefault normalParamColor (Maybe.map (\v -> editingParamColor) maybeEditedValue) )
-                                ]
-                            ]
-                            [ text parameterName ]
-                        , input
-                            [ type_
-                                (if (isSecret && (not secretVisible)) then
-                                    "password"
-                                 else
-                                    "text"
-                                )
-                            , class "form-control"
-                            , attribute "aria-label" parameter
-                            , placeholder placeholderValue
-                            , value parameterValue
-                            , disabled (not enabled)
-                            , onInput (EnterEditInstanceParameterValue instance parameter)
-                            ]
-                            []
+                (List.append
+                    [ div
+                        [ classList [
+                              ("input-group", True),
+                              ("has-error", hasError)
+                          ]
                         ]
-                        (if (isSecret && enabled) then
-                            [ a
+                        (List.append
+                            [ span
                                 [ class "input-group-addon"
-                                , attribute "role" "button"
-                                , onClick (ToggleEditInstanceSecretVisibility instance.id parameter)
+                                , style
+                                    [ ( "background-color", Maybe.withDefault normalParamColor (Maybe.map (\v -> editingParamColor) maybeEditedValue) )
+                                    ]
                                 ]
-                                [ icon
-                                    (String.concat
-                                        [ "glyphicon glyphicon-eye-"
-                                        , (if secretVisible then
-                                            "close"
-                                           else
-                                            "open"
-                                          )
-                                        ]
+                                [ text parameterName ]
+                            , input
+                                [ type_
+                                    (if (isSecret && (not secretVisible)) then
+                                        "password"
+                                     else
+                                        "text"
                                     )
-                                    []
+                                , class "form-control"
+                                , attribute "aria-label" parameter
+                                , placeholder placeholderValue
+                                , value parameterValue
+                                , disabled (not enabled)
+                                , onInput (EnterEditInstanceParameterValue instance parameter)
                                 ]
-                            , a
-                                [ class "input-group-addon"
-                                , attribute "role" "button"
-                                , attribute
-                                    "onclick"
-                                    (String.concat
-                                        [ "copy('"
-                                        , parameterValue
-                                        , "')"
-                                        ]
-                                    )
-                                ]
-                                [ icon "glyphicon glyphicon-copy" [] ]
+                                []
                             ]
-                         else
-                            []
+                            (if (isSecret && enabled) then
+                                [ a
+                                    [ class "input-group-addon"
+                                    , attribute "role" "button"
+                                    , onClick (ToggleEditInstanceSecretVisibility instance.id parameter)
+                                    ]
+                                    [ icon
+                                        (String.concat
+                                            [ "glyphicon glyphicon-eye-"
+                                            , (if secretVisible then
+                                                "close"
+                                               else
+                                                "open"
+                                              )
+                                            ]
+                                        )
+                                        []
+                                    ]
+                                , a
+                                    [ class "input-group-addon"
+                                    , attribute "role" "button"
+                                    , attribute
+                                        "onclick"
+                                        (String.concat
+                                            [ "copy('"
+                                            , parameterValue
+                                            , "')"
+                                            ]
+                                        )
+                                    ]
+                                    [ icon "glyphicon glyphicon-copy" [] ]
+                                ]
+                             else
+                                []
+                            )
                         )
-                    )
-                ]
+                    ]
+                    (case maybeErrMsg of
+                        Nothing -> []
+                        Just msg ->
+                            [span
+                                [class "help-block"]
+                                [text msg]
+                            ]
+                     )
+                 )
 
 
 newView template maybeInstanceParameterForm visibleSecrets =
@@ -404,6 +437,11 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                 maybeEditedValue
                     |> Maybe.withDefault ""
 
+            dataType =
+                maybeParameterInfo
+                    |> Maybe.andThen (\i -> i.dataType)
+                    |> Maybe.withDefault RawParam
+
             isSecret =
                 maybeParameterInfo
                     |> Maybe.andThen (\i -> i.secret)
@@ -416,73 +454,112 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                 maybeParameterInfo
                     |> Maybe.andThen (\i -> i.name)
                     |> Maybe.withDefault parameter
+
+            maybeErrMsg =
+                case maybeEditedValue of
+                    Just value ->
+                        if String.isEmpty value then
+                            Nothing -- In this case the default value gets picked up
+                        else getErrorMsg value dataType
+                    Nothing -> Nothing
+
+            hasError =
+                case maybeErrMsg of
+                    Nothing -> False
+                    Just _ -> True
         in
             p
                 []
-                [ div
-                    [ class "input-group"
-                    , id <| String.concat [ "new-instance-form-input-group-", template.id, "-", parameter ]
-                    ]
-                    (List.append
-                        [ span
-                            [ class "input-group-addon"
-                            , style
-                                [ ( "background-color", Maybe.withDefault normalParamColor (Maybe.map (\v -> editingParamColor) maybeEditedValue) )
-                                ]
+                (List.append
+                    [ div
+                        [ classList [
+                                ("input-group", True),
+                                ("has-error", hasError)
                             ]
-                            [ text parameterName ]
-                        , input
-                            [ type_
-                                (if (isSecret && (not secretVisible)) then
-                                    "password"
-                                 else
-                                    "text"
-                                )
-                            , class "form-control"
-                            , attribute "aria-label" parameter
-                            , placeholder placeholderValue
-                            , value parameterValue
-                            , disabled (not enabled)
-                            , id <| String.concat [ "new-instance-form-parameter-input-", template.id, "-", parameter ]
-                            , onInput (EnterNewInstanceParameterValue template.id parameter)
-                            ]
-                            []
+                        , id <| String.concat [ "new-instance-form-input-group-", template.id, "-", parameter ]
                         ]
-                        (if (isSecret) then
-                            [ a
+                        (List.append
+                            [ span
                                 [ class "input-group-addon"
-                                , attribute "role" "button"
-                                , onClick (ToggleNewInstanceSecretVisibility template.id parameter)
-                                , id <| String.concat [ "new-instance-form-parameter-secret-visibility-", template.id, "-", parameter ]
+                                , style
+                                    [ ( "background-color", Maybe.withDefault normalParamColor (Maybe.map (\v -> editingParamColor) maybeEditedValue) )
+                                    ]
                                 ]
-                                [ icon
-                                    (String.concat
-                                        [ "glyphicon glyphicon-eye-"
-                                        , (if secretVisible then
-                                            "close"
-                                           else
-                                            "open"
-                                          )
-                                        ]
+                                [ text parameterName ]
+                            , input
+                                [ type_
+                                    (if (isSecret && (not secretVisible)) then
+                                        "password"
+                                     else
+                                        "text"
                                     )
-                                    []
+                                , class "form-control"
+                                , attribute "aria-label" parameter
+                                , placeholder placeholderValue
+                                , value parameterValue
+                                , disabled (not enabled)
+                                , id <| String.concat [ "new-instance-form-parameter-input-", template.id, "-", parameter ]
+                                , onInput (EnterNewInstanceParameterValue template.id parameter)
                                 ]
-                            , a
-                                [ class "input-group-addon"
-                                , attribute "role" "button"
-                                , attribute
-                                    "onclick"
-                                    (String.concat
-                                        [ "copy('"
-                                        , parameterValue
-                                        , "')"
-                                        ]
-                                    )
-                                ]
-                                [ icon "glyphicon glyphicon-copy" [] ]
+                                []
                             ]
-                         else
-                            []
+                            (if (isSecret) then
+                                [ a
+                                    [ class "input-group-addon"
+                                    , attribute "role" "button"
+                                    , onClick (ToggleNewInstanceSecretVisibility template.id parameter)
+                                    , id <| String.concat [ "new-instance-form-parameter-secret-visibility-", template.id, "-", parameter ]
+                                    ]
+                                    [ icon
+                                        (String.concat
+                                            [ "glyphicon glyphicon-eye-"
+                                            , (if secretVisible then
+                                                "close"
+                                               else
+                                                "open"
+                                              )
+                                            ]
+                                        )
+                                        []
+                                    ]
+                                , a
+                                    [ class "input-group-addon"
+                                    , attribute "role" "button"
+                                    , attribute
+                                        "onclick"
+                                        (String.concat
+                                            [ "copy('"
+                                            , parameterValue
+                                            , "')"
+                                            ]
+                                        )
+                                    ]
+                                    [ icon "glyphicon glyphicon-copy" [] ]
+                                ]
+                             else
+                                []
+                            )
                         )
-                    )
-                ]
+                    ]
+                    (case maybeErrMsg of
+                        Nothing -> []
+                        Just msg ->
+                            [span
+                                [class "help-block"]
+                                [text msg]
+                            ]
+                     )
+                 )
+
+getErrorMsg: String -> DataType -> Maybe String
+getErrorMsg value dataType =
+    case dataType of
+        -- we do not validate string and raw fields
+        StringParam -> Nothing
+        RawParam -> Nothing
+        NumericParam ->
+            let
+                expr = regex "^-?[0-9]+(\\.[0-9]+)?$"
+            in
+                if (contains expr value) then Nothing
+                else Just "Not a valid number"

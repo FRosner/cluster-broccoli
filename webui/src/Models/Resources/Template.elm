@@ -16,6 +16,9 @@ type alias Template =
     , parameterInfos : Dict String ParameterInfo
     }
 
+-- We add Param at the end to avoid conflict with traditional data types
+type DataType = StringParam | NumericParam | RawParam
+
 
 type alias ParameterInfo =
     { id : String
@@ -23,6 +26,7 @@ type alias ParameterInfo =
     , default : Maybe String
     , secret : Maybe Bool
     , orderIndex : Maybe Float
+    , dataType: Maybe DataType
     }
 
 
@@ -40,9 +44,22 @@ decoder =
 
 
 parameterInfoDecoder =
-    Decode.map5 ParameterInfo
+    Decode.map6 ParameterInfo
         (field "id" Decode.string)
         (Decode.maybe (field "name" Decode.string))
         (Decode.maybe (field "default" Decode.string))
         (Decode.maybe (field "secret" Decode.bool))
         (Decode.maybe (field "orderIndex" Decode.float))
+        (Decode.maybe (field "type" decodeDataType))
+
+
+decodeDataType: Decode.Decoder DataType
+decodeDataType =
+    Decode.string
+        |> Decode.andThen (\dataType ->
+            case dataType of
+                "numeric" -> Decode.succeed NumericParam
+                "string" -> Decode.succeed StringParam
+                "raw" -> Decode.succeed RawParam
+                _ -> Decode.fail <| "Unknown dataType: " ++ dataType
+        )
