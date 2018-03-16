@@ -17,7 +17,7 @@ type alias Template =
     }
 
 -- We add Param at the end to avoid conflict with traditional data types
-type DataType = StringParam | NumericParam | RawParam
+type ParameterType = StringParam | IntParam | RawParam | FloatParam
 
 
 type alias ParameterInfo =
@@ -26,7 +26,7 @@ type alias ParameterInfo =
     , default : Maybe String
     , secret : Maybe Bool
     , orderIndex : Maybe Float
-    , dataType: Maybe DataType
+    , dataType: Maybe ParameterType
     }
 
 
@@ -53,12 +53,13 @@ parameterInfoDecoder =
         (Decode.maybe (field "type" decodeDataType))
 
 
-decodeDataType: Decode.Decoder DataType
+decodeDataType: Decode.Decoder ParameterType
 decodeDataType =
     Decode.string
         |> Decode.andThen (\dataType ->
             case dataType of
-                "numeric" -> Decode.succeed NumericParam
+                "integer" -> Decode.succeed IntParam
+                "float" -> Decode.succeed FloatParam
                 "string" -> Decode.succeed StringParam
                 "raw" -> Decode.succeed RawParam
                 _ -> Decode.fail <| "Unknown dataType: " ++ dataType

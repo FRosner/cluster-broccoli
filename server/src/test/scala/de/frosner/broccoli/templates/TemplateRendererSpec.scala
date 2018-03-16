@@ -86,7 +86,7 @@ class TemplateRendererSpec extends Specification with Mockito {
       templateRenderer.renderJson(instance) === JsString("Frank 50")
     }
 
-    "parse the template correctly when it has Numeric parameters" in {
+    "parse the template correctly when it has Float parameters" in {
       val value = 1234.56
       val instance = Instance(
         id = "1",
@@ -99,8 +99,31 @@ class TemplateRendererSpec extends Specification with Mockito {
               None,
               None,
               secret = Some(false),
-              `type` = Some(ParameterType.Numeric),
-              orderIndex = None))
+              `type` = Some(ParameterType.Float),
+              orderIndex = None)
+          )
+        ),
+        parameterValues = Map("id" -> s"$value")
+      )
+      templateRenderer.renderJson(instance) === JsNumber(value)
+    }
+
+    "parse the template correctly when it has Integer parameters" in {
+      val value = 1234
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = """{{id}}""",
+          description = "desc",
+          parameterInfos = Map(
+            "id" -> ParameterInfo("id",
+              None,
+              None,
+              secret = Some(false),
+              `type` = Some(ParameterType.Integer),
+              orderIndex = None)
+          )
         ),
         parameterValues = Map("id" -> s"$value")
       )
@@ -132,29 +155,61 @@ class TemplateRendererSpec extends Specification with Mockito {
 
     }
 
-    "return the value if the ParameterType is Numeric and the value is Numeric" in {
+    "return the value if the ParameterType is Integer and the value is Integer" in {
+      val value = 1234
+      templateRenderer
+          .sanitize(
+            "parameter",
+            s"$value",
+            Map("parameter" ->
+                ParameterInfo("parameter", None, None, None, Some(ParameterType.Integer), None)
+            )) === s"$value"
+    }
+
+    "return the value if the ParameterType is Float and the value is Float" in {
       val value = 1234.56
       templateRenderer
           .sanitize(
             "parameter",
             s"""$value""",
             Map("parameter" ->
-                ParameterInfo("parameter", None, None, None, Some(ParameterType.Numeric), None)
+                ParameterInfo("parameter", None, None, None, Some(ParameterType.Float), None)
             )) === s"$value"
     }
 
-    "throw an IllegalArgumentException if the ParameterType is Numeric but the value is not Numeric"in {
-      val value = "1234.56b"
+    "throw an IllegalArgumentException if the ParameterType is Integer but the value is not Integer" in {
+      val value = 1234.56
       Try(templateRenderer
             .sanitize(
               "parameter",
               s"""$value""",
               Map("parameter" ->
-                  ParameterInfo("parameter", None, None, None, Some(ParameterType.Numeric), None)
-              ))) match {
+                  ParameterInfo("parameter", None, None, None, Some(ParameterType.Integer), None)
+              )
+            )
+      ) match {
         case Failure(_: IllegalArgumentException) =>
               true
-        case _ => true
+        case _ =>
+              false
+      }
+    }
+
+    "throw an IllegalArgumentException if the ParameterType is Float but the value is not Float" in {
+      val value = "1234.45A"
+      Try(templateRenderer
+          .sanitize(
+            "parameter",
+            s"""$value""",
+            Map("parameter" ->
+                ParameterInfo("parameter", None, None, None, Some(ParameterType.Integer), None)
+            )
+          )
+      ) match {
+        case Failure(_: IllegalArgumentException) =>
+          true
+        case _ =>
+          false
       }
     }
   }

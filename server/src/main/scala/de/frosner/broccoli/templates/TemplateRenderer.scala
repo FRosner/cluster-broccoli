@@ -7,7 +7,7 @@ import de.frosner.broccoli.models.{Instance, ParameterInfo, ParameterType}
 import org.apache.commons.lang3.StringEscapeUtils
 import play.api.libs.json.{JsString, JsValue, Json}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /**
   * Renders json representation of the passed instance
@@ -16,13 +16,14 @@ import scala.util.Try
   */
 class TemplateRenderer(defaultType: ParameterType) {
 
-  /** Checks if the value is a number or a is a number **/
-  def isNumber(value: String): Boolean = {
+  // Checks if the value is a number
+  private def isNumber(value: String): Boolean = {
     val expr = "^-?[0-9]+(\\.[0-9]+)?$".r
     value match {
       case expr(_) =>
         true
-      case _ => false
+      case _ =>
+        false
     }
   }
 
@@ -35,9 +36,20 @@ class TemplateRenderer(defaultType: ParameterType) {
       case ParameterType.Raw => value
       case ParameterType.String =>
         StringEscapeUtils.escapeJson(value)
-      case ParameterType.Numeric =>
-        if (isNumber(value)) value
-        else throw new IllegalArgumentException(s"expected a number for {$parameter}. Found {$value}")
+      case ParameterType.Integer =>
+        Try(value.toInt) match {
+          case Success(num) =>
+            num.toString
+          case Failure(_) =>
+            throw new IllegalArgumentException(s"expected an integer for {$parameter}. Found {$value}")
+        }
+      case ParameterType.Float =>
+        Try(value.toFloat) match {
+          case Success(num) =>
+            num.toString
+          case Failure(_) =>
+            throw new IllegalArgumentException(s"expected an integer for {$parameter}. Found {$value}")
+        }
     }
     sanitized
   }
