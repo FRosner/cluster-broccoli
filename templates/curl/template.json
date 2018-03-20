@@ -32,6 +32,7 @@
                         "Resources": {
                             "CPU": 50,
                             "MemoryMB": 128,
+                            "DiskMB": 500,
                             "IOPS": 0,
                             "Networks": [
                                 {
