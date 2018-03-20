@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 BASE_IMAGE="bento/ubuntu-14.04" 
-VM_HOSTONLY_STATIC_IP="192.168.58.11"
+VM_HOSTONLY_STATIC_IP="192.168.56.11" # HostOnly network
 
 $script = <<SCRIPT
 
@@ -75,7 +75,7 @@ cat <<-EOF
         "serf": "#{VM_HOSTONLY_STATIC_IP}:4648"
     },
     "consul": { 
-        "address": "#{VM_HOSTONLY_STATIC_IP}" 
+        "address": "#{VM_HOSTONLY_STATIC_IP}:8500" 
     },
     "enable_debug": true 
 }
@@ -103,7 +103,16 @@ Vagrant.configure(2) do |config|
   # Expose the consul api and ui to the host
   config.vm.network "forwarded_port", guest_ip: VM_HOSTONLY_STATIC_IP, guest: 8500, host_ip: "127.0.0.1", host: 8500, auto_correct: false
 
-  # Set up network for nomad
+  # Expose the nomad agent http api to the host
+  config.vm.network "forwarded_port", guest_ip: VM_HOSTONLY_STATIC_IP, guest: 4646, host_ip: "127.0.0.1", host: 4646, auto_correct: false
+ 
+  # Expose the nomad agent rpc api to the host
+  config.vm.network "forwarded_port", guest_ip: VM_HOSTONLY_STATIC_IP, guest: 4647, host_ip: "127.0.0.1", host: 4647, auto_correct: false
+ 
+  # Expose the nomad agent http api to the host
+  config.vm.network "forwarded_port", guest_ip: VM_HOSTONLY_STATIC_IP, guest: 4648, host_ip: "127.0.0.1", host: 4648, auto_correct: false
+ 
+  # Set up network for nomad node
   config.vm.network "private_network", ip: VM_HOSTONLY_STATIC_IP
 
 
