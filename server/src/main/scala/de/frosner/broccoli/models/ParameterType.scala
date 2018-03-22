@@ -11,5 +11,5 @@ object ParameterType extends Enum[ParameterType] with PlayJsonEnum[ParameterType
   case object Raw extends ParameterType
   case object String extends ParameterType
   case object Integer extends ParameterType
-  case object Float extends ParameterType
+  case object Decimal extends ParameterType
 }

@@ -19,6 +19,7 @@ import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.NomadClient
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
+import play.api.libs.json.JsValue
 
 import scala.concurrent
 import scala.concurrent.{Await, Future}
@@ -205,11 +206,9 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     instances.get(id).map(addStatuses)
 
   def addInstance(instanceCreation: InstanceCreation): Try[InstanceWithStatus] = synchronized {
-    val parameters = instanceCreation.parameters.filter {
-      case (parameter, value) => !value.isEmpty
-    }
-    val maybeId = parameters.get("id") // FIXME requires ID to be defined inside the parameter values
+    // FIXME requires ID to be defined inside the parameter values
     val templateId = instanceCreation.templateId
+    val maybeId = Try(instanceCreation.parameters("id").as[String])
     val maybeCreatedInstance = maybeId
       .map { id =>
         if (instances.contains(id)) {
@@ -218,13 +217,27 @@ class InstanceService @Inject()(nomadClient: NomadClient,
           val potentialTemplate = templateService.template(templateId)
           potentialTemplate
             .map { template =>
-              val maybeNewInstance = Try(Instance(id, template, parameters))
-              maybeNewInstance.flatMap { newInstance =>
-                val result = instanceStorage.writeInstance(newInstance)
-                result.foreach { writtenInstance =>
-                  instancesMap = instancesMap.updated(id, writtenInstance)
+              Try{
+                instanceCreation.parameters.map { param =>
+                  ParameterValue.constructParameterValueFromJson(param._1, template, param._2) match {
+                    case Success(s) => (param._1, s)
+                    case Failure(ex) => throw ex
+                  }
                 }
-                result
+              } match {
+                case Success(params) =>
+                  // Remove params with default values
+                  val parameters = params.filter{param => !param._2.isEmpty}
+                  val maybeNewInstance = Try(Instance(id, template, parameters))
+                  maybeNewInstance.flatMap { newInstance =>
+                    val result = instanceStorage.writeInstance(newInstance)
+                    result.foreach { writtenInstance =>
+                      instancesMap = instancesMap.updated(id, writtenInstance)
+                    }
+                    result
+                  }
+                case Failure(ex) =>
+                  Failure(ex)
               }
             }
             .getOrElse(Failure(new IllegalArgumentException(s"Template $templateId does not exist.")))
@@ -236,99 +249,115 @@ class InstanceService @Inject()(nomadClient: NomadClient,
 
   def updateInstance(id: String,
                      statusUpdater: Option[JobStatus],
-                     parameterValuesUpdater: Option[Map[String, String]],
+                     parameterValuesUpdater: Option[Map[String, JsValue]],
                      templateSelector: Option[String],
                      periodicJobsToStop: Option[Seq[String]]): Try[InstanceWithStatus] = synchronized {
     val updateInstanceId = id
-    val parameterValuesUpdatesWithPossibleDefaults = parameterValuesUpdater.map { p =>
-      p.filter {
-        case (parameter, value) => !value.isEmpty
-      }
-    }
     val maybeInstance = instances.get(id)
     val maybeUpdatedInstance = maybeInstance.map { instance =>
-      val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (templateSelector.isDefined) {
-        val newTemplateId = templateSelector.get
-        val newTemplate = templateService.template(newTemplateId)
-        newTemplate
-          .map { template =>
-            // Requested template exists, update the template
-            if (parameterValuesUpdatesWithPossibleDefaults.isDefined) {
-              // New parameter values are specified
-              val newParameterValues = parameterValuesUpdatesWithPossibleDefaults.get
-              instance.updateTemplate(template, newParameterValues)
-            } else {
-              // Just use the old parameter values
-              instance.updateTemplate(template, instance.parameterValues)
+      Try {
+        parameterValuesUpdater.map { p =>
+          p.map { e =>
+            val parameterName = e._1
+            val jsValue = e._2
+            ParameterValue.constructParameterValueFromJson(parameterName, instance.template, jsValue) match {
+              case Success(pValue) => (parameterName, pValue)
+              case Failure(ex) => throw ex
             }
           }
-          .getOrElse {
-            // New template does not exist
-            Failure(TemplateNotFoundException(newTemplateId))
-          }
-      } else {
-        // No template update required
-        if (parameterValuesUpdatesWithPossibleDefaults.isDefined) {
-          // Just update the parameter values
-          val newParameterValues = parameterValuesUpdatesWithPossibleDefaults.get
-          instance.updateParameterValues(newParameterValues)
-        } else {
-          // Neither template update nor parameter value update required
-          Success(instance)
         }
-      }
+      } match {
+        case Success(parsedParamValuesUpdated) =>
+          val parameterValuesUpdatesWithPossibleDefaults = parsedParamValuesUpdated.map { p =>
+            p.filter {
+              case (_, value) => !value.isEmpty
+            }
+          }
 
-      val instanceWithPotentiallyStoppedPeriodicRuns =
-        instanceWithPotentiallyUpdatedTemplateAndParameterValues.flatMap { instance =>
-          val instancePeriodicRunNames = addStatuses(instance).periodicRuns.map(_.jobName)
-          periodicJobsToStop match {
-            case Some(toStop) =>
-              val nonExistingPeriodicJobs = toStop.toSet -- instancePeriodicRunNames.toSet
-              nonExistingPeriodicJobs.headOption match {
-                case None =>
-                  // Periodic jobs are all valid and belong to this instance
-                  val tryToDelete = Traverse[List].sequence(toStop.map(nomadService.deleteJob).toList)
-                  tryToDelete.map(_ => instance)
-                case Some(job) =>
-                  // There is at least one periodic job that doesn't belong to this instance
-                  Failure(PeriodicJobNotFoundException(instance.id, job))
+          val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (templateSelector.isDefined) {
+            val newTemplateId = templateSelector.get
+            val newTemplate = templateService.template(newTemplateId)
+            newTemplate
+                .map { template =>
+                  // Requested template exists, update the template
+                  if (parameterValuesUpdatesWithPossibleDefaults.isDefined) {
+                    // New parameter values are specified
+                    val newParameterValues = parameterValuesUpdatesWithPossibleDefaults.get
+                    instance.updateTemplate(template, newParameterValues)
+                  } else {
+                    // Just use the old parameter values
+                    instance.updateTemplate(template, instance.parameterValues)
+                  }
+                }
+                .getOrElse {
+                  // New template does not exist
+                  Failure(TemplateNotFoundException(newTemplateId))
+                }
+          } else {
+            // No template update required
+            if (parameterValuesUpdatesWithPossibleDefaults.isDefined) {
+              // Just update the parameter values
+              val newParameterValues = parameterValuesUpdatesWithPossibleDefaults.get
+              instance.updateParameterValues(newParameterValues)
+            } else {
+              // Neither template update nor parameter value update required
+              Success(instance)
+            }
+          }
+
+          val instanceWithPotentiallyStoppedPeriodicRuns =
+            instanceWithPotentiallyUpdatedTemplateAndParameterValues.flatMap { instance =>
+              val instancePeriodicRunNames = addStatuses(instance).periodicRuns.map(_.jobName)
+              periodicJobsToStop match {
+                case Some(toStop) =>
+                  val nonExistingPeriodicJobs = toStop.toSet -- instancePeriodicRunNames.toSet
+                  nonExistingPeriodicJobs.headOption match {
+                    case None =>
+                      // Periodic jobs are all valid and belong to this instance
+                      val tryToDelete = Traverse[List].sequence(toStop.map(nomadService.deleteJob).toList)
+                      tryToDelete.map(_ => instance)
+                    case Some(job) =>
+                      // There is at least one periodic job that doesn't belong to this instance
+                      Failure(PeriodicJobNotFoundException(instance.id, job))
+                  }
+                case None => Success(instance)
               }
-            case None => Success(instance)
-          }
-        }
+            }
 
-      val updatedInstance = instanceWithPotentiallyStoppedPeriodicRuns.flatMap { instance =>
-        statusUpdater
-          .map {
-            // Update the instance status
-            case JobStatus.Running =>
-              nomadService.startJob(templateRenderer.renderJson(instance)).map(_ => instance)
-            case JobStatus.Stopped =>
-              val deletedJob = nomadService.deleteJob(instance.id)
-              // FIXME we don't delete the service and periodic job / status info here (#352) => potential mem leak
-              deletedJob
-                .map(_ => instance)
-            case other =>
-              Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
+          val updatedInstance = instanceWithPotentiallyStoppedPeriodicRuns.flatMap { instance =>
+            statusUpdater
+                .map {
+                  // Update the instance status
+                  case JobStatus.Running =>
+                    nomadService.startJob(templateRenderer.renderJson(instance)).map(_ => instance)
+                  case JobStatus.Stopped =>
+                    val deletedJob = nomadService.deleteJob(instance.id)
+                    // FIXME we don't delete the service and periodic job / status info here (#352) => potential mem leak
+                    deletedJob
+                        .map(_ => instance)
+                  case other =>
+                    Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
+                }
+                .getOrElse {
+                  // Don't update the instance status
+                  Success(instance)
+                }
           }
-          .getOrElse {
-            // Don't update the instance status
-            Success(instance)
+
+          updatedInstance match {
+            case Failure(throwable)       => log.error(s"Error updating instance: $throwable")
+            case Success(changedInstance) => log.debug(s"Successfully applied an update to $changedInstance")
           }
+
+          updatedInstance
+              .flatMap { instance =>
+                val maybeWrittenInstance = instanceStorage.writeInstance(instance)
+                maybeWrittenInstance.foreach(written => instancesMap = instancesMap.updated(id, written))
+                maybeWrittenInstance
+              }
+              .map(addStatuses)
+        case Failure(parameterValidationError) => Failure(parameterValidationError)
       }
-
-      updatedInstance match {
-        case Failure(throwable)       => log.error(s"Error updating instance: $throwable")
-        case Success(changedInstance) => log.debug(s"Successfully applied an update to $changedInstance")
-      }
-
-      updatedInstance
-        .flatMap { instance =>
-          val maybeWrittenInstance = instanceStorage.writeInstance(instance)
-          maybeWrittenInstance.foreach(written => instancesMap = instancesMap.updated(id, written))
-          maybeWrittenInstance
-        }
-        .map(addStatuses)
     }
     maybeUpdatedInstance match {
       case Some(tryUpdatedInstance) => tryUpdatedInstance

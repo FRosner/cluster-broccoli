@@ -23,6 +23,8 @@ import play.api.mvc.{Action, Controller, Results}
 import shapeless.tag
 import squants.information.Information
 
+import scala.util.{Failure, Success, Try}
+
 case class InstanceController @Inject()(
     instances: NomadInstances,
     instanceService: InstanceService,
@@ -132,7 +134,7 @@ object InstanceController {
         .right[InstanceError, Account](loggedIn)
         .ensure(InstanceError.RolesRequired(Role.Administrator): InstanceError)(_.role == Role.Administrator)
       _ <- Either
-        .fromOption(instanceCreation.parameters.get("id"), InstanceError.IdMissing: InstanceError)
+        .fromOption(Try(instanceCreation.parameters("id").as[String]).toOption, InstanceError.IdMissing: InstanceError)
         .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex): InstanceError)(_.matches(user.instanceRegex))
       newInstance <- Either
         .fromTry(instanceService.addInstance(instanceCreation))

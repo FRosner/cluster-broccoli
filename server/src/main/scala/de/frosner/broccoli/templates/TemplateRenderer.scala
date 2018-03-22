@@ -43,12 +43,12 @@ class TemplateRenderer(defaultType: ParameterType) {
           case Failure(_) =>
             throw new IllegalArgumentException(s"expected an integer for {$parameter}. Found {$value}")
         }
-      case ParameterType.Float =>
+      case ParameterType.Decimal =>
         Try(value.toFloat) match {
           case Success(num) =>
             num.toString
           case Failure(_) =>
-            throw new IllegalArgumentException(s"expected an integer for {$parameter}. Found {$value}")
+            throw new IllegalArgumentException(s"expected an float for {$parameter}. Found {$value}")
         }
     }
     sanitized
@@ -61,7 +61,7 @@ class TemplateRenderer(defaultType: ParameterType) {
 
     val templateWithValues = parameterValues.foldLeft(template.template) {
       case (intermediateTemplate, (parameter, value)) =>
-        intermediateTemplate.replaceAllLiterally(s"{{$parameter}}", sanitize(parameter, value, parameterInfos))
+        intermediateTemplate.replaceAllLiterally(s"{{$parameter}}", value.asJsonString)
     }
     val parameterDefaults = parameterInfos.flatMap {
       case (parameterId, parameterInfo) => parameterInfo.default.map(default => (parameterId, default))
