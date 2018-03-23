@@ -18,15 +18,15 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
         case (id, _) =>
           instance.template.parameterInfos(id).secret.getOrElse(false)
       }
-      (secret.values must contain(beNull[String]).foreach) and (public.values must contain(not(beNull[String])).foreach)
+      (secret.values must contain(beNull[ParameterValue]).foreach) and (public.values must contain(not(beNull[ParameterValue])).foreach)
     }
   }
 
   "An instance" should {
 
     "be possible to construct if the parameters to be filled match the ones in the template" in {
-      val instance1 = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Heinz"))
-      val instance2 = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Heinz"))
+      val instance1 = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> StringParameterValue("Heinz")))
+      val instance2 = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> StringParameterValue("Heinz")))
       instance1 === instance2
     }
 
@@ -44,7 +44,7 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
           parameterInfos =
             Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = None, orderIndex = None))
         ),
-        parameterValues = Map("id" -> "Frank")
+        parameterValues = Map("id" -> StringParameterValue("Frank"))
       ) must throwA[IllegalArgumentException]
     }
 
@@ -61,9 +61,9 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
           description = "desc",
           parameterInfos = Map.empty
         ),
-        parameterValues = Map("id" -> "1", "age" -> "50")
+        parameterValues = Map("id" -> StringParameterValue("1"), "age" -> IntParameterValue(50))
       )
-      val newParameterValues = Map("id" -> "1", "age" -> "30")
+      val newParameterValues = Map("id" -> StringParameterValue("1"), "age" -> IntParameterValue(30))
       val newInstance = instance.updateParameterValues(newParameterValues)
       newInstance.get.parameterValues === newParameterValues
     }

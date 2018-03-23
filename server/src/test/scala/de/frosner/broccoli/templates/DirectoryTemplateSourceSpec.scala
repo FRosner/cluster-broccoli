@@ -2,7 +2,7 @@ package de.frosner.broccoli.templates
 
 import java.nio.file.{FileSystems, Files, Path}
 
-import de.frosner.broccoli.models.{ParameterInfo, Template}
+import de.frosner.broccoli.models.{ParameterInfo, StringParameterValue, Template}
 import org.specs2.mutable.Specification
 
 import scala.io.Source
@@ -27,8 +27,8 @@ class DirectoryTemplateSourceSpec extends Specification with TemporaryTemplatesC
           "curl",
           Source.fromFile(templatesDirectory.resolve("curl/template.json").toFile).mkString,
           "A periodic job that sends an HTTP GET request to a specified address every minute.",
-          Map("URL" -> ParameterInfo("URL", None, Some("localhost:8000"), None, None, Some(1)),
-              "enabled" -> ParameterInfo("enabled", None, Some("true"), None, None, Some(2)))
+          Map("URL" -> ParameterInfo("URL", None, Some(StringParameterValue("localhost:8000")), None, None, Some(1)),
+              "enabled" -> ParameterInfo("enabled", None, Some(StringParameterValue("true")), None, None, Some(2)))
         ))).exactly(1)
     }
 

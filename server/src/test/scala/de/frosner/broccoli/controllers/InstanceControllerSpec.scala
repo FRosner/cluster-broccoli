@@ -69,7 +69,7 @@ class InstanceControllerSpec
           "secret" -> ParameterInfo(
             id = "secret",
             name = Some("secret"),
-            default = Some("value"),
+            default = Some(StringParameterValue("value")),
             secret = Some(true),
             `type` = None,
             orderIndex = None
@@ -77,8 +77,8 @@ class InstanceControllerSpec
         )
       ),
       parameterValues = Map(
-        "id" -> "i",
-        "secret" -> "thisshouldnotappearanywhere"
+        "id" -> StringParameterValue("i"),
+        "secret" -> StringParameterValue("thisshouldnotappearanywhere")
       )
     ),
     status = JobStatus.Unknown,
@@ -385,7 +385,7 @@ class InstanceControllerSpec
       val instanceCreation = InstanceCreation(
         templateId = "template",
         parameters = Map(
-          "id" -> "id"
+          "id" -> JsString("id")
         )
       )
       when(instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
@@ -413,7 +413,7 @@ class InstanceControllerSpec
       val instanceCreation = InstanceCreation(
         templateId = "template",
         parameters = Map(
-          "id" -> "id"
+          "id" -> JsString("id")
         )
       )
       when(instanceService.addInstance(instanceCreation)).thenReturn(Failure(new IllegalArgumentException("")))
@@ -440,7 +440,7 @@ class InstanceControllerSpec
       val instanceCreation = InstanceCreation(
         templateId = "template",
         parameters = Map(
-          "id" -> "id"
+          "id" -> JsString("id")
         )
       )
       when(instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
@@ -469,7 +469,7 @@ class InstanceControllerSpec
       val instanceCreation = InstanceCreation(
         templateId = "template",
         parameters = Map(
-          "id" -> "id"
+          "id" -> JsString("id")
         )
       )
 
@@ -498,7 +498,7 @@ class InstanceControllerSpec
       val instanceCreation = InstanceCreation(
         templateId = "template",
         parameters = Map(
-          "id" -> "id"
+          "id" -> JsString("id")
         )
       )
 
@@ -569,7 +569,7 @@ class InstanceControllerSpec
           statusUpdater = None,
           parameterValuesUpdater = Some(
             Map(
-              "id" -> "new"
+              "id" -> JsString("new")
             )),
           templateSelector = None,
           periodicJobsToStop = None
@@ -590,7 +590,7 @@ class InstanceControllerSpec
           InstanceUpdate(
             instanceId = None,
             status = None,
-            parameterValues = Some(Map("id" -> "new")),
+            parameterValues = Some(Map("id" -> JsString("new"))),
             periodicJobsToStop = None,
             selectedTemplate = None
           ))
@@ -881,7 +881,7 @@ class InstanceControllerSpec
           InstanceUpdate(
             instanceId = None,
             status = None,
-            parameterValues = Some(Map("id" -> "new")),
+            parameterValues = Some(Map("id" -> JsString("new"))),
             periodicJobsToStop = None,
             selectedTemplate = None
           ))
@@ -904,7 +904,7 @@ class InstanceControllerSpec
           InstanceUpdate(
             instanceId = None,
             status = None,
-            parameterValues = Some(Map("id" -> "new")),
+            parameterValues = Some(Map("id" -> JsString("new"))),
             periodicJobsToStop = None,
             selectedTemplate = None
           ))

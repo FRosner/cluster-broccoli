@@ -1,6 +1,6 @@
 package de.frosner.broccoli.templates
 
-import de.frosner.broccoli.models.{Instance, ParameterInfo, ParameterType, Template}
+import de.frosner.broccoli.models._
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import play.api.libs.json.{JsNumber, JsString}
@@ -12,13 +12,17 @@ class TemplateRendererSpec extends Specification with Mockito {
 
   "TemplateRenderer" should {
     "render the template correctly when an instance contains a single parameter" in {
-      val instance = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Frank"))
+      val instance = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> StringParameterValue("Frank")))
       templateRenderer.renderJson(instance) === JsString("Frank")
     }
 
     "parse the template correctly when it contains multiple parameters" in {
       val instance =
-        Instance("1", Template("1", "\"{{id}} {{age}}\"", "desc", Map.empty), Map("id" -> "Frank", "age" -> "5"))
+        Instance(
+          "1",
+          Template("1", "\"{{id}} {{age}}\"", "desc", Map.empty),
+          Map("id" -> RawParameterValue("Frank"), "age" -> IntParameterValue(5))
+        )
       templateRenderer.renderJson(instance) === JsString("Frank 5")
     }
 
@@ -32,7 +36,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           parameterInfos =
             Map("age" -> ParameterInfo("age", None, Some("50"), secret = Some(false), `type` = None, orderIndex = None))
         ),
-        parameterValues = Map("id" -> "Frank")
+        parameterValues = Map("id" -> RawParameterValue("Frank"))
       )
       templateRenderer.renderJson(instance) === JsString("Frank 50")
     }
@@ -52,12 +56,12 @@ class TemplateRendererSpec extends Specification with Mockito {
                                   `type` = Some(ParameterType.String),
                                   orderIndex = None))
         ),
-        parameterValues = Map("id" -> "\"Frank")
+        parameterValues = Map("id" -> StringParameterValue("\"Frank"))
       )
       templateRenderer.renderJson(instance) === JsString("\"Frank")
     }
 
-    "parse the template correctly when it contains regex stuff that breacks with replaceAll" in {
+    "parse the template correctly when it contains regex stuff that breaks with replaceAll" in {
       val instance = Instance(
         id = "1",
         template = Template(
@@ -66,7 +70,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           description = "desc",
           parameterInfos = Map.empty
         ),
-        parameterValues = Map("id" -> "^.*$")
+        parameterValues = Map("id" -> RawParameterValue("^.*$"))
       )
       templateRenderer.renderJson(instance) === JsString("^.*$")
     }
@@ -81,12 +85,12 @@ class TemplateRendererSpec extends Specification with Mockito {
           parameterInfos =
             Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = None, orderIndex = None))
         ),
-        parameterValues = Map("id" -> "Frank", "age" -> "50")
+        parameterValues = Map("id" -> StringParameterValue("Frank"), "age" -> IntParameterValue(50))
       )
       templateRenderer.renderJson(instance) === JsString("Frank 50")
     }
 
-    "parse the template correctly when it has Float parameters" in {
+    "parse the template correctly when it has Decimal parameters" in {
       val value = 1234.56
       val instance = Instance(
         id = "1",
@@ -99,11 +103,11 @@ class TemplateRendererSpec extends Specification with Mockito {
               None,
               None,
               secret = Some(false),
-              `type` = Some(ParameterType.Float),
+              `type` = Some(ParameterType.Decimal),
               orderIndex = None)
           )
         ),
-        parameterValues = Map("id" -> s"$value")
+        parameterValues = Map("id" -> DecimalParameterValue(value))
       )
       templateRenderer.renderJson(instance) === JsNumber(value)
     }
@@ -125,92 +129,9 @@ class TemplateRendererSpec extends Specification with Mockito {
               orderIndex = None)
           )
         ),
-        parameterValues = Map("id" -> s"$value")
+        parameterValues = Map("id" -> IntParameterValue(value))
       )
       templateRenderer.renderJson(instance) === JsNumber(value)
-    }
-  }
-
-  "sanitize" should {
-    val parameterValue = "value"
-    "just return the specified parameter value if it is raw" in {
-      templateRenderer
-        .sanitize(
-          "parameter",
-          parameterValue,
-          Map("parameter" -> ParameterInfo("parameter", None, None, None, Some(ParameterType.Raw), None))) === parameterValue
-    }
-
-    "escape the value if it is a string" in {
-      templateRenderer
-        .sanitize(
-          "parameter",
-          """ "value  """,
-          Map("parameter" -> ParameterInfo("parameter", None, None, None, Some(ParameterType.String), None))) === """ \"value  """
-    }
-
-    "pick the default parameter type if the type for the parameter is not specified in ParameterInfos" in {
-      templateRenderer
-        .sanitize("parameter", parameterValue, Map.empty) === parameterValue
-
-    }
-
-    "return the value if the ParameterType is Integer and the value is Integer" in {
-      val value = 1234
-      templateRenderer
-          .sanitize(
-            "parameter",
-            s"$value",
-            Map("parameter" ->
-                ParameterInfo("parameter", None, None, None, Some(ParameterType.Integer), None)
-            )) === s"$value"
-    }
-
-    "return the value if the ParameterType is Float and the value is Float" in {
-      val value = 1234.56
-      templateRenderer
-          .sanitize(
-            "parameter",
-            s"""$value""",
-            Map("parameter" ->
-                ParameterInfo("parameter", None, None, None, Some(ParameterType.Float), None)
-            )) === s"$value"
-    }
-
-    "throw an IllegalArgumentException if the ParameterType is Integer but the value is not Integer" in {
-      val value = 1234.56
-      Try(templateRenderer
-            .sanitize(
-              "parameter",
-              s"""$value""",
-              Map("parameter" ->
-                  ParameterInfo("parameter", None, None, None, Some(ParameterType.Integer), None)
-              )
-            )
-      ) match {
-        case Failure(_: IllegalArgumentException) =>
-              true
-        case _ =>
-              false
-      }
-    }
-
-    "throw an IllegalArgumentException if the ParameterType is Float but the value is not Float" in {
-      val value = "1234.45A"
-      Try(templateRenderer
-          .sanitize(
-            "parameter",
-            s"""$value""",
-            Map("parameter" ->
-                ParameterInfo("parameter", None, None, None, Some(ParameterType.Integer), None)
-            )
-          )
-      ) match {
-        case Failure(_: IllegalArgumentException) =>
-          true
-        case _ =>
-          false
-      }
     }
   }
 }

@@ -1,6 +1,6 @@
 package de.frosner.broccoli.instances.storage
 
-import de.frosner.broccoli.models.{Instance, ParameterInfo, Template}
+import de.frosner.broccoli.models._
 import org.specs2.mutable.Specification
 import play.api.Logger
 
@@ -58,9 +58,9 @@ class InstanceStorageSpec extends Specification {
           template = "\"{{id}} {{age}}\"",
           description = "desc",
           parameterInfos =
-            Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = None, orderIndex = None))
+            Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = Some(ParameterType.Integer), orderIndex = None))
         ),
-        parameterValues = Map("id" -> "Frank", "age" -> "50")
+        parameterValues = Map("id" -> StringParameterValue("Frank"), "age" -> IntParameterValue(50))
       )
       storage.deleteInstance(instance) should throwA[IllegalStateException]
     }
@@ -77,7 +77,7 @@ class InstanceStorageSpec extends Specification {
           parameterInfos =
             Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = None, orderIndex = None))
         ),
-        parameterValues = Map("id" -> "Frank", "age" -> "50")
+        parameterValues = Map("id" -> StringParameterValue("Frank"), "age" -> IntParameterValue(50))
       )
       storage.writeInstance(instance) should throwA[IllegalStateException]
     }

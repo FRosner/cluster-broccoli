@@ -1,5 +1,7 @@
 package de.frosner.broccoli.models
 
+import com.typesafe.config.{Config, ConfigValue, ConfigValueType}
+import com.typesafe.config.impl.ConfigInt
 import de.frosner.broccoli.services.{ParameterValueParsingException, TemplateParameterNotFoundException}
 import org.apache.commons.lang3.StringEscapeUtils
 import play.api.libs.json._
@@ -9,14 +11,29 @@ import scala.util.{Failure, Success, Try}
 
 object ParameterValue {
 
-    implicit val parameterValueReads: Reads[ParameterValue] = new Reads[ParameterValue] {
-        override def reads(
-            json: JsValue): JsResult[ParameterValue] = ???
+    implicit val parameterValueWrites: Writes[ParameterValue] = new Writes[ParameterValue] {
+        override def writes(paramValue: ParameterValue) = paramValue.asJsValue
+    }
+
+    def constructParameterValueFromTypesafeConfig(parameterType: ParameterType,
+                                                  configValue: ConfigValue): Try[ParameterValue] = {
+        Try {
+            parameterType match {
+                case ParameterType.Raw =>
+                    RawParameterValue(configValue.unwrapped().asInstanceOf[String])
+                case ParameterType.String =>
+                    StringParameterValue(configValue.unwrapped.asInstanceOf[String])
+                case ParameterType.Integer =>
+                    IntParameterValue(configValue.unwrapped().asInstanceOf[Int])
+                case ParameterType.Decimal =>
+                    DecimalParameterValue(configValue.unwrapped().asInstanceOf[BigDecimal])
+            }
+        }
     }
 
     def constructParameterValueFromJson(parameterName: String,
-                              template: Template,
-                              jsValue: JsValue): Try[ParameterValue] = {
+                                        template: Template,
+                                        jsValue: JsValue): Try[ParameterValue] = {
         Try{
             template.parameterInfos.get(parameterName) match {
                 case Some(parameterInfo) =>
@@ -49,7 +66,7 @@ object ParameterValue {
         }
     }
 }
-trait ParameterValue {
+sealed trait ParameterValue {
     def isEmpty: Boolean
 
     /**

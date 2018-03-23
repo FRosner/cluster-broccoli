@@ -53,10 +53,10 @@ object Instance {
     new Writes[Instance] {
       override def writes(instance: Instance) = {
         val jsValueMap =
-          instance.parameterValues.map(
-            param =>
-              (param._1, param._2.asJsValue)
-          )
+          instance.parameterValues.map {
+            case (paramName, paramValue) =>
+              (paramName, paramValue.asJsValue)
+          }
         Json.obj(
           "id"-> instance.id,
           "template" -> instance.template,
@@ -71,10 +71,10 @@ object Instance {
     new Writes[Instance] {
       override def writes(instance: Instance) = {
         val jsValueMap =
-          instance.parameterValues.map(
-            param =>
-              (param._1, param._2.asJsValue)
-          )
+          instance.parameterValues.map {
+            case (paramName, paramValue) =>
+              (paramName, paramValue.asJsValue)
+          }
         Json.obj(
           "id"-> instance.id,
           "template" -> instance.template,
@@ -92,12 +92,13 @@ object Instance {
           val id: String = (json \ "id").as[String]
           val template: Template = (json \ "template").as[Template]
           val parameterValues: Map[String, ParameterValue] =
-            (json \ "parameterValues").as[JsObject].value.map( param =>
-              ParameterValue.constructParameterValueFromJson(param._1, template, param._2) match {
-                case Success(m) => (param._1, m)
-                case Failure(ex) => throw ex
-              }
-            ).toMap
+            (json \ "parameterValues").as[JsObject].value.map {
+              case (paramName, paramJsValue) =>
+                ParameterValue.constructParameterValueFromJson(paramName, template, paramJsValue) match {
+                  case Success(paramValue) => (paramName, paramValue)
+                  case Failure(ex) => throw ex
+                }
+            }.toMap // We need to cast an unmodifiable Map to an immutable one. What is the cost for this?
           Instance(id, template, parameterValues)
         } match {
           case Success(s) => JsSuccess(s)

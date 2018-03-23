@@ -39,7 +39,7 @@ class WebSocketControllerSpec
           "secret" -> ParameterInfo(
             id = "secret",
             name = None,
-            default = Some("value"),
+            default = Some(StringParameterValue("value")),
             secret = Some(true),
             `type` = None,
             orderIndex = None
@@ -47,8 +47,8 @@ class WebSocketControllerSpec
         )
       ),
       parameterValues = Map(
-        "id" -> "i",
-        "secret" -> "thisshouldnotappearanywhere"
+        "id" -> StringParameterValue("i"),
+        "secret" -> StringParameterValue("thisshouldnotappearanywhere")
       )
     ),
     status = JobStatus.Unknown,
@@ -217,7 +217,7 @@ class WebSocketControllerSpec
       val instanceCreation = InstanceCreation(
         "template",
         Map(
-          "id" -> "blib"
+          "id" -> JsString("blib")
         )
       )
       when(controller.instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
@@ -241,7 +241,7 @@ class WebSocketControllerSpec
       val instanceCreation = InstanceCreation(
         "template",
         Map(
-          "id" -> "blib"
+          "id" -> JsString("blib")
         )
       )
 
@@ -327,7 +327,7 @@ class WebSocketControllerSpec
         status = None,
         parameterValues = Some(
           Map(
-            "id" -> "blib"
+            "id" -> JsString("blib")
           )
         ),
         periodicJobsToStop = None,
