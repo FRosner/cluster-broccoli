@@ -9,11 +9,11 @@ import pureconfig.loadConfigOrThrow
 
 class TemplateConfigSpec extends Specification {
 
-    "TemplateConfigReader " should {
+  "TemplateConfigReader " should {
 
-        "be able to parse config correctly" in {
-            val configString =
-                """
+    "be able to parse config correctly" in {
+      val configString =
+        """
                   |description = "A periodic job that sends an HTTP GET request to a specified address every minute."
                   |
                   |parameters = {
@@ -33,45 +33,45 @@ class TemplateConfigSpec extends Specification {
                   |  }
                   |}
                 """.stripMargin
-            val expectedTemplateInfo = TemplateConfig.TemplateInfo(
-                description = Some("A periodic job that sends an HTTP GET request to a specified address every minute."),
-                parameters = Some(
-                    Map(
-                        "URL" -> Parameter(
-                            name = Some("connection url"),
-                            default = Some(StringParameterValue("localhost:8000")),
-                            secret = None,
-                            `type` = Some(ParameterType.String),
-                            orderIndex = Some(1)
-                        ),
-                        "enabled" -> Parameter(
-                            name = None,
-                            default = Some(RawParameterValue("true")),
-                            secret = None,
-                            `type` = Some(ParameterType.Raw),
-                            orderIndex = Some(2)
-                        ),
-                        "id" -> Parameter(
-                            name = None,
-                            default = None,
-                            secret = None,
-                            `type` = Some(ParameterType.String),
-                            orderIndex = None
-                        )
-                    )
-                )
+      val expectedTemplateInfo = TemplateConfig.TemplateInfo(
+        description = Some("A periodic job that sends an HTTP GET request to a specified address every minute."),
+        parameters = Some(
+          Map(
+            "URL" -> Parameter(
+              name = Some("connection url"),
+              default = Some(StringParameterValue("localhost:8000")),
+              secret = None,
+              `type` = Some(ParameterType.String),
+              orderIndex = Some(1)
+            ),
+            "enabled" -> Parameter(
+              name = None,
+              default = Some(RawParameterValue("true")),
+              secret = None,
+              `type` = Some(ParameterType.Raw),
+              orderIndex = Some(2)
+            ),
+            "id" -> Parameter(
+              name = None,
+              default = None,
+              secret = None,
+              `type` = Some(ParameterType.String),
+              orderIndex = None
             )
-            import TemplateConfig.configReader
-            val parsedTemplateInfo = loadConfigOrThrow[TemplateConfig.TemplateInfo](
-                ConfigFactory.parseString(configString)
-            )
-            parsedTemplateInfo mustEqual expectedTemplateInfo
-        }
+          )
+        )
+      )
+      import TemplateConfig.configReader
+      val parsedTemplateInfo = loadConfigOrThrow[TemplateConfig.TemplateInfo](
+        ConfigFactory.parseString(configString)
+      )
+      parsedTemplateInfo mustEqual expectedTemplateInfo
+    }
 
-        "fail if the template has an integer and tries to parse it as a string" in {
+    "fail if the template has an integer and tries to parse it as a string" in {
 
-            val configString =
-                """
+      val configString =
+        """
                   |description = "A periodic job that sends an HTTP GET request to a specified address every minute."
                   |
                   |parameters = {
@@ -91,9 +91,9 @@ class TemplateConfigSpec extends Specification {
                   |  }
                   |}
                 """.stripMargin
-            loadConfigOrThrow[TemplateConfig.TemplateInfo](
-                ConfigFactory.parseString(configString)
-            ) must throwA[ConfigReaderException[TemplateConfig.TemplateInfo]]
-        }
+      loadConfigOrThrow[TemplateConfig.TemplateInfo](
+        ConfigFactory.parseString(configString)
+      ) must throwA[ConfigReaderException[TemplateConfig.TemplateInfo]]
     }
+  }
 }

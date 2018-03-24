@@ -52,6 +52,7 @@ tests =
                                     , secret = Nothing
                                     , name = Nothing
                                     , orderIndex = Just 2
+                                    , dataType = Nothing
                                     }
                                   )
                                 , ( "b"
@@ -60,6 +61,7 @@ tests =
                                     , secret = Nothing
                                     , name = Nothing
                                     , orderIndex = Just 1
+                                    , dataType = Nothing
                                     }
                                   )
                                 ]

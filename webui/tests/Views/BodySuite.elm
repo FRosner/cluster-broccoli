@@ -580,6 +580,7 @@ defaultTemplate templateId =
             , secret = Nothing
             , name = Nothing
             , orderIndex = Nothing
+            , dataType = Nothing
             }
           )
         , ( (String.concat [ templateId, "-p2" ])
@@ -588,6 +589,7 @@ defaultTemplate templateId =
             , secret = Just True
             , name = Nothing
             , orderIndex = Nothing
+            , dataType = Nothing
             }
           )
         ]

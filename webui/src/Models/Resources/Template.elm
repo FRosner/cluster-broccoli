@@ -16,8 +16,23 @@ type alias Template =
     , parameterInfos : Dict String ParameterInfo
     }
 
+
+
 -- We add Param at the end to avoid conflict with traditional data types
-type ParameterType = StringParam | IntParam | RawParam | FloatParam
+
+
+type ParameterType
+    = RawParam
+    | StringParam
+    | IntParam
+    | DecimalParam
+
+
+type ParameterValue
+    = IntParamVal Int
+    | StringParamVal String
+    | RawParamVal String
+    | DecimalParamVal Float -- Looks like Elm does not support bigger decimals like Java's BigDecimal
 
 
 type alias ParameterInfo =
@@ -26,7 +41,7 @@ type alias ParameterInfo =
     , default : Maybe String
     , secret : Maybe Bool
     , orderIndex : Maybe Float
-    , dataType: Maybe ParameterType
+    , dataType : Maybe ParameterType
     }
 
 
@@ -53,14 +68,24 @@ parameterInfoDecoder =
         (Decode.maybe (field "type" decodeDataType))
 
 
-decodeDataType: Decode.Decoder ParameterType
+decodeDataType : Decode.Decoder ParameterType
 decodeDataType =
     Decode.string
-        |> Decode.andThen (\dataType ->
-            case dataType of
-                "integer" -> Decode.succeed IntParam
-                "float" -> Decode.succeed FloatParam
-                "string" -> Decode.succeed StringParam
-                "raw" -> Decode.succeed RawParam
-                _ -> Decode.fail <| "Unknown dataType: " ++ dataType
-        )
+        |> Decode.andThen
+            (\dataType ->
+                case dataType of
+                    "integer" ->
+                        Decode.succeed IntParam
+
+                    "decimal" ->
+                        Decode.succeed DecimalParam
+
+                    "string" ->
+                        Decode.succeed StringParam
+
+                    "raw" ->
+                        Decode.succeed RawParam
+
+                    _ ->
+                        Decode.fail <| "Unknown dataType: " ++ dataType
+            )

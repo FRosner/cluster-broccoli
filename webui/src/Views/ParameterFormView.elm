@@ -36,23 +36,31 @@ editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole 
         formIsBeingEdited =
             isJust maybeInstanceParameterForm
 
-        (params, paramsHasError) = parametersView
-                                        "Parameters"
-                                        instance
-                                        instance.template
-                                        maybeInstanceParameterForm
-                                        visibleSecrets
-                                        (not (isJust selectedTemplate) && (maybeRole == Just Administrator))
-        (newParams, newParamsHasError) = selectedTemplate
-                                              |> Maybe.map (\t -> parametersView
-                                                                    "New Parameters"
-                                                                    instance
-                                                                    t
-                                                                    maybeInstanceParameterForm
-                                                                    visibleSecrets
-                                                                    True)
-                                              |> Maybe.withDefault ([], False)
-        hasError = newParamsHasError || paramsHasError
+        ( params, paramsHasError ) =
+            parametersView
+                "Parameters"
+                instance
+                instance.template
+                maybeInstanceParameterForm
+                visibleSecrets
+                (not (isJust selectedTemplate) && (maybeRole == Just Administrator))
+
+        ( newParams, newParamsHasError ) =
+            selectedTemplate
+                |> Maybe.map
+                    (\t ->
+                        parametersView
+                            "New Parameters"
+                            instance
+                            t
+                            maybeInstanceParameterForm
+                            visibleSecrets
+                            True
+                    )
+                |> Maybe.withDefault ( [], False )
+
+        hasError =
+            newParamsHasError || paramsHasError
     in
         Html.form
             [ onSubmit <|
@@ -119,7 +127,6 @@ parametersView parametersH instance template maybeInstanceParameterForm visibleS
 
         otherParameterInfos =
             Dict.remove "id" template.parameterInfos
-
     in
         let
             ( otherParametersLeft, otherParametersRight ) =
@@ -134,36 +141,43 @@ parametersView parametersH instance template maybeInstanceParameterForm visibleS
                     ( List.take firstHalf otherParameters
                     , List.drop firstHalf otherParameters
                     )
-            (paramsLeft, leftHasError) = editParameterValuesView
-                                            instance
-                                            otherParametersLeft
-                                            otherParameterValues
-                                            otherParameterInfos
-                                            maybeInstanceParameterForm
-                                            enabled
-                                            visibleSecrets
-            (paramsRight, rightHasError) = editParameterValuesView
-                                            instance
-                                            otherParametersRight
-                                            otherParameterValues
-                                            otherParameterInfos
-                                            maybeInstanceParameterForm
-                                            enabled
-                                            visibleSecrets
-            hasError = leftHasError || rightHasError
 
+            ( paramsLeft, leftHasError ) =
+                editParameterValuesView
+                    instance
+                    otherParametersLeft
+                    otherParameterValues
+                    otherParameterInfos
+                    maybeInstanceParameterForm
+                    enabled
+                    visibleSecrets
+
+            ( paramsRight, rightHasError ) =
+                editParameterValuesView
+                    instance
+                    otherParametersRight
+                    otherParameterValues
+                    otherParameterInfos
+                    maybeInstanceParameterForm
+                    enabled
+                    visibleSecrets
+
+            hasError =
+                leftHasError || rightHasError
         in
-            ([ h5 [] [ text parametersH ]
-            , div
-                [ class "row" ]
-                [ div
-                    [ class "col-md-6" ]
-                    (paramsLeft)
-                , div
-                    [ class "col-md-6" ]
-                    (paramsRight)
-                ]
-            ], hasError)
+            ( [ h5 [] [ text parametersH ]
+              , div
+                    [ class "row" ]
+                    [ div
+                        [ class "col-md-6" ]
+                        (paramsLeft)
+                    , div
+                        [ class "col-md-6" ]
+                        (paramsRight)
+                    ]
+              ]
+            , hasError
+            )
 
 
 templateSelectionView currentTemplate selectedTemplate templates instance maybeRole =
@@ -221,32 +235,40 @@ templateOption currentTemplate selectedTemplate template =
 
 editParameterValuesView instance parameters parameterValues parameterInfos maybeInstanceParameterForm enabled visibleSecrets =
     let
-        list = List.map
-            (editParameterValueView
-                instance
-                parameterValues
-                parameterInfos
-                maybeInstanceParameterForm
-                enabled
-                visibleSecrets
-            )
-            parameters
-        retList = List.map
-                    (\x -> first x)
-                    list
-        hasError = List.any
-                    (\x -> second x)
-                    list
+        list =
+            List.map
+                (editParameterValueView
+                    instance
+                    parameterValues
+                    parameterInfos
+                    maybeInstanceParameterForm
+                    enabled
+                    visibleSecrets
+                )
+                parameters
+
+        retList =
+            List.map
+                (\x -> first x)
+                list
+
+        hasError =
+            List.any
+                (\x -> second x)
+                list
     in
-        (retList, hasError)
+        ( retList, hasError )
+
 
 editParameterValueView :
-    Instance ->
-    Dict String (Maybe String) ->
-    Dict String ParameterInfo ->
-    Maybe InstanceParameterForm ->
-    Bool -> Set ( InstanceId, String ) ->
-    String -> ((Html UpdateBodyViewMsg), Bool)
+    Instance
+    -> Dict String (Maybe String)
+    -> Dict String ParameterInfo
+    -> Maybe InstanceParameterForm
+    -> Bool
+    -> Set ( InstanceId, String )
+    -> String
+    -> ( Html UpdateBodyViewMsg, Bool )
 editParameterValueView instance parameterValues parameterInfos maybeInstanceParameterForm enabled visibleSecrets parameter =
     let
         ( maybeParameterValue, maybeParameterInfo, maybeEditedValue ) =
@@ -284,14 +306,21 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                 case maybeEditedValue of
                     Just value ->
                         if String.isEmpty value then
-                            Nothing -- In this case the default value gets picked up
-                        else getErrorMsg value dataType
-                    Nothing -> Nothing
+                            Nothing
+                            -- In this case the default value gets picked up
+                        else
+                            getErrorMsg value dataType
+
+                    Nothing ->
+                        Nothing
 
             hasError =
                 case maybeErrMsg of
-                    Nothing -> False
-                    Just _ -> True
+                    Nothing ->
+                        False
+
+                    Just _ ->
+                        True
 
             isSecret =
                 maybeParameterInfo
@@ -306,14 +335,14 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                     |> Maybe.andThen (\i -> i.name)
                     |> Maybe.withDefault parameter
         in
-            (p
+            ( p
                 []
                 (List.append
                     [ div
-                        [ classList [
-                              ("input-group", True),
-                              ("has-error", hasError)
-                          ]
+                        [ classList
+                            [ ( "input-group", True )
+                            , ( "has-error", hasError )
+                            ]
                         ]
                         (List.append
                             [ span
@@ -377,15 +406,18 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                         )
                     ]
                     (case maybeErrMsg of
-                        Nothing -> []
+                        Nothing ->
+                            []
+
                         Just msg ->
-                            [span
-                                [class "help-block"]
-                                [text msg]
+                            [ span
+                                [ class "help-block" ]
+                                [ text msg ]
                             ]
-                     )
-                 ), hasError
-             )
+                    )
+                )
+            , hasError
+            )
 
 
 newView template maybeInstanceParameterForm visibleSecrets =
@@ -400,7 +432,6 @@ newView template maybeInstanceParameterForm visibleSecrets =
 
         instanceParameterForms =
             Maybe.withDefault InstanceParameterForm.empty maybeInstanceParameterForm
-
     in
         let
             ( otherParametersLeft, otherParametersRight, formBeingEdited ) =
@@ -416,26 +447,34 @@ newView template maybeInstanceParameterForm visibleSecrets =
                     , List.drop firstHalf otherParameters
                     , (not (Dict.isEmpty instanceParameterForms.changedParameterValues))
                     )
-            (paramsLeft, leftHaveError) = newParameterValuesView
-                                            template
-                                            otherParametersLeft
-                                            otherParameterInfos
-                                            maybeInstanceParameterForm
-                                            visibleSecrets
-            (paramsRight, rightHaveError) = newParameterValuesView
-                                                        template
-                                                        otherParametersRight
-                                                        otherParameterInfos
-                                                        maybeInstanceParameterForm
-                                                        visibleSecrets
-            (idParam, idHasError) = newParameterValueView
-                                        template
-                                        template.parameterInfos
-                                        maybeInstanceParameterForm
-                                        True
-                                        visibleSecrets
-                                        "id"
-            hasError = leftHaveError || rightHaveError || idHasError
+
+            ( paramsLeft, leftHaveError ) =
+                newParameterValuesView
+                    template
+                    otherParametersLeft
+                    otherParameterInfos
+                    maybeInstanceParameterForm
+                    visibleSecrets
+
+            ( paramsRight, rightHaveError ) =
+                newParameterValuesView
+                    template
+                    otherParametersRight
+                    otherParameterInfos
+                    maybeInstanceParameterForm
+                    visibleSecrets
+
+            ( idParam, idHasError ) =
+                newParameterValueView
+                    template
+                    template.parameterInfos
+                    maybeInstanceParameterForm
+                    True
+                    visibleSecrets
+                    "id"
+
+            hasError =
+                leftHaveError || rightHaveError || idHasError
         in
             Html.form
                 [ onSubmit (SubmitNewInstanceCreation template.id instanceParameterForms.changedParameterValues)
@@ -470,7 +509,7 @@ newView template maybeInstanceParameterForm visibleSecrets =
                         [ iconButtonText
                             (if (not hasError) then
                                 "btn btn-success"
-                            else
+                             else
                                 "btn btn-default"
                             )
                             "fa fa-check"
@@ -494,23 +533,32 @@ newView template maybeInstanceParameterForm visibleSecrets =
 
 newParameterValuesView template parameters parameterInfos maybeInstanceParameterForm visibleSecrets =
     let
-        list = List.map
+        list =
+            List.map
                 (newParameterValueView template parameterInfos maybeInstanceParameterForm True visibleSecrets)
                 parameters
-        retList = List.map
-                    (\x -> first x)
-                    list
-        hasError = List.any
-                    (\x -> second x)
-                    list
+
+        retList =
+            List.map
+                (\x -> first x)
+                list
+
+        hasError =
+            List.any
+                (\x -> second x)
+                list
     in
-        (retList, hasError)
+        ( retList, hasError )
 
 
-
-
-newParameterValueView : Template -> Dict String ParameterInfo -> Maybe InstanceParameterForm -> Bool ->
-    Set ( InstanceId, String ) -> String -> ((Html UpdateBodyViewMsg), Bool)
+newParameterValueView :
+    Template
+    -> Dict String ParameterInfo
+    -> Maybe InstanceParameterForm
+    -> Bool
+    -> Set ( InstanceId, String )
+    -> String
+    -> ( Html UpdateBodyViewMsg, Bool )
 newParameterValueView template parameterInfos maybeInstanceParameterForm enabled visibleSecrets parameter =
     let
         ( maybeParameterInfo, maybeEditedValue ) =
@@ -550,22 +598,29 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                 case maybeEditedValue of
                     Just value ->
                         if String.isEmpty value then
-                            Nothing -- In this case the default value gets picked up
-                        else getErrorMsg value dataType
-                    Nothing -> Nothing
+                            Nothing
+                            -- In this case the default value gets picked up
+                        else
+                            getErrorMsg value dataType
+
+                    Nothing ->
+                        Nothing
 
             hasError =
                 case maybeErrMsg of
-                    Nothing -> False
-                    Just _ -> True
+                    Nothing ->
+                        False
+
+                    Just _ ->
+                        True
         in
-            (p
+            ( p
                 []
                 (List.append
                     [ div
-                        [ classList [
-                                ("input-group", True),
-                                ("has-error", hasError)
+                        [ classList
+                            [ ( "input-group", True )
+                            , ( "has-error", hasError )
                             ]
                         , id <| String.concat [ "new-instance-form-input-group-", template.id, "-", parameter ]
                         ]
@@ -633,26 +688,42 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                         )
                     ]
                     (case maybeErrMsg of
-                        Nothing -> []
-                        Just msg ->
-                            [span
-                                [class "help-block"]
-                                [text msg]
-                            ]
-                     )
-                 ), hasError)
+                        Nothing ->
+                            []
 
-getErrorMsg: String -> ParameterType -> Maybe String
+                        Just msg ->
+                            [ span
+                                [ class "help-block" ]
+                                [ text msg ]
+                            ]
+                    )
+                )
+            , hasError
+            )
+
+
+getErrorMsg : String -> ParameterType -> Maybe String
 getErrorMsg value dataType =
     case dataType of
         -- we do not validate string and raw fields
-        StringParam -> Nothing
-        RawParam -> Nothing
+        StringParam ->
+            Nothing
+
+        RawParam ->
+            Nothing
+
         IntParam ->
             case String.toInt value of
-                Err msg -> Just "Not a valid integer"
-                Ok _ -> Nothing
-        FloatParam ->
+                Err msg ->
+                    Just "Not a valid integer"
+
+                Ok _ ->
+                    Nothing
+
+        DecimalParam ->
             case String.toFloat value of
-                Err msg -> Just "Not a valid floating point number"
-                Ok _ -> Nothing
+                Err msg ->
+                    Just "Not a valid floating point number"
+
+                Ok _ ->
+                    Nothing
