@@ -53,8 +53,8 @@ class DirectoryTemplateSource(directory: String) extends TemplateSource {
           template = templateFileContent,
           description = templateInfo.description.getOrElse(s"$templateId template"),
           parameterInfos = templateInfo.parameters
-              .map(_.map { case (id, parameter) => id -> ParameterInfo.fromTemplateInfoParameter(id, parameter) })
-              .getOrElse(Map.empty)
+            .map(_.map { case (id, parameter) => id -> ParameterInfo.fromTemplateInfoParameter(id, parameter) })
+            .getOrElse(Map.empty)
         )
       }
       tryTemplate.failed.map(throwable => log.error(s"Parsing template '$templateDirectory' failed: $throwable"))

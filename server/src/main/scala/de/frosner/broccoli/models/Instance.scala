@@ -2,6 +2,7 @@ package de.frosner.broccoli.models
 
 import de.frosner.broccoli.RemoveSecrets
 import play.api.libs.json._
+import play.api.libs.json.JsNull
 
 import scala.util.{Failure, Success, Try}
 
@@ -55,10 +56,11 @@ object Instance {
         val jsValueMap =
           instance.parameterValues.map {
             case (paramName, paramValue) =>
-              (paramName, paramValue.asJsValue)
+              // TODO: Shouldn't use nulls, Fix this after fixing instanceRemoveSecrets
+              (paramName, Option(paramValue).map(_.asJsValue).getOrElse(JsNull))
           }
         Json.obj(
-          "id"-> instance.id,
+          "id" -> instance.id,
           "template" -> instance.template,
           "parameterValues" -> jsValueMap
         )
@@ -73,10 +75,11 @@ object Instance {
         val jsValueMap =
           instance.parameterValues.map {
             case (paramName, paramValue) =>
-              (paramName, paramValue.asJsValue)
+              // TODO: Shouldn't use nulls, Fix this after fixing instanceRemoveSecrets
+              (paramName, Option(paramValue).map(_.asJsValue).getOrElse(JsNull))
           }
         Json.obj(
-          "id"-> instance.id,
+          "id" -> instance.id,
           "template" -> instance.template,
           "parameterValues" -> jsValueMap
         )
@@ -87,24 +90,34 @@ object Instance {
   implicit val instancePersistenceReads: Reads[Instance] = {
     import Template.templatePersistenceReads
     new Reads[Instance] {
-      override def reads(json: JsValue): JsResult[Instance] = {
+      override def reads(json: JsValue): JsResult[Instance] =
         Try {
           val id: String = (json \ "id").as[String]
           val template: Template = (json \ "template").as[Template]
           val parameterValues: Map[String, ParameterValue] =
-            (json \ "parameterValues").as[JsObject].value.map {
-              case (paramName, paramJsValue) =>
-                ParameterValue.constructParameterValueFromJson(paramName, template, paramJsValue) match {
-                  case Success(paramValue) => (paramName, paramValue)
-                  case Failure(ex) => throw ex
-                }
-            }.toMap // We need to cast an unmodifiable Map to an immutable one. What is the cost for this?
+            (json \ "parameterValues")
+              .as[JsObject]
+              .value
+              .map {
+
+                case (paramName, paramJsValue) =>
+                  paramJsValue match {
+                    // TODO: Shouldn't use nulls, Fix this after fixing instanceRemoveSecrets
+                    case JsNull =>
+                      (paramName, null)
+                    case _ =>
+                      ParameterValue.constructParameterValueFromJson(paramName, template, paramJsValue) match {
+                        case Success(paramValue) => (paramName, paramValue)
+                        case Failure(ex)         => throw ex
+                      }
+                  }
+              }
+              .toMap // We need to cast an unmodifiable Map to an immutable one. What is the cost for this?
           Instance(id, template, parameterValues)
         } match {
-          case Success(s) => JsSuccess(s)
+          case Success(s)  => JsSuccess(s)
           case Failure(ex) => JsError(ex.getMessage)
         }
-      }
     }
   }
 

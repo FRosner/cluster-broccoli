@@ -1,57 +1,50 @@
 package de.frosner.broccoli.templates
 
-import com.typesafe.config.{ConfigObject, ConfigValue, ConfigValueType}
-import de.frosner.broccoli.models.{ParameterInfo, ParameterType, ParameterValue}
-import de.frosner.broccoli.services.ParameterValueParsingException
+import com.typesafe.config.{ConfigObject, ConfigValue}
+import de.frosner.broccoli.models.{ParameterType, ParameterValue}
 import pureconfig.ConfigReader
-import pureconfig.error.{ConfigReaderFailure, ConfigReaderFailures, ConfigValueLocation, ThrowableFailure}
+import pureconfig.error.{ConfigReaderFailures, ThrowableFailure}
 
-import scala.collection.JavaConverters._
+import scala.collection.JavaConversions._
 import scala.util.{Failure, Success, Try}
 
 object TemplateConfig {
 
-  implicit val configreader = new ConfigReader[TemplateInfo] {
-    override def from(configOrig: ConfigValue): Either[ConfigReaderFailures, TemplateInfo] = {
+  implicit val configReader: ConfigReader[TemplateInfo] = new ConfigReader[TemplateInfo] {
+    override def from(configOrig: ConfigValue): Either[ConfigReaderFailures, TemplateInfo] =
       Try {
         val confObj = configOrig.asInstanceOf[ConfigObject]
         val config = confObj.toConfig
         val description = Try(config.getString("description")).toOption
-        val parameters = Try(config.getConfig("parameters")).map {
-          paramsConfig =>
-            val ret: Map[String, Parameter] = {
-              for {
-                entry <- paramsConfig.entrySet().asScala
-                paramName = entry.getKey
-                paramValueObj <- Try(entry.getValue.asInstanceOf[ConfigObject].toConfig).toOption
-                maybeName = Try(paramValueObj.getString("name")).toOption
-                maybeSecret = Try(paramValueObj.getBoolean("secret")).toOption
-                // Don't wrap the last call to withName as we want it to fail in case the wrong type is supplied
-                maybeParamType = Try(paramValueObj.getString("type")).toOption.map(ParameterType.withName)
-                maybeOrderIndex = Try(paramValueObj.getInt("orderIndex")).toOption
-                maybeDefault = Try(paramValueObj.getValue("default")).toOption.map { paramValueConf =>
-                  ParameterValue.constructParameterValueFromTypesafeConfig(
-                    maybeParamType.getOrElse(ParameterType.Raw), paramValueConf
-                  ) match {
-                    case Success(paramDefault) => paramDefault
-                    case Failure(ex) => throw ex
-                  }
+        val parameters = Try(config.getObject("parameters")).toOption.map { paramsConfig =>
+          paramsConfig.map {
+            case (paramName, paramConfig) =>
+              val paramValueObj = paramConfig.asInstanceOf[ConfigObject].toConfig
+              val maybeName = Try(paramValueObj.getString("name")).toOption
+              val maybeSecret = Try(paramValueObj.getBoolean("secret")).toOption
+              // Don't wrap the last call to withName as we want it to fail in case the wrong type is supplied
+              val maybeParamType = Try(paramValueObj.getString("type")).toOption.map(ParameterType.withName)
+              val maybeOrderIndex = Try(paramValueObj.getInt("order-index")).toOption
+              val maybeDefault = Try(paramValueObj.getValue("default")).toOption.map { paramValueConf =>
+                ParameterValue.constructParameterValueFromTypesafeConfig(
+                  maybeParamType.getOrElse(ParameterType.Raw),
+                  paramValueConf
+                ) match {
+                  case Success(paramDefault) => paramDefault
+                  case Failure(ex)           => throw ex
                 }
-              } yield (paramName, Parameter(maybeName, maybeDefault, maybeSecret, maybeParamType, maybeOrderIndex))
-            }.toMap
-            ret
-        }.toOption
+              }
+              (paramName, Parameter(maybeName, maybeDefault, maybeSecret, maybeParamType, maybeOrderIndex))
+          }.toMap
+        }
         TemplateInfo(description, parameters)
       } match {
-        case Success(e) => Right(e)
+        case Success(e)  => Right(e)
         case Failure(ex) =>
           // TODO: Improve this error throwing.
           Left(ConfigReaderFailures(ThrowableFailure(ex, None, "")))
       }
-    }
   }
-
-
 
   final case class TemplateInfo(description: Option[String], parameters: Option[Map[String, Parameter]])
 

@@ -16,6 +16,24 @@ trait ModelArbitraries {
 
   implicit val arbitraryRole: Arbitrary[Role] = Arbitrary(Gen.oneOf(Role.values))
 
+  val stringParamValueGen: Gen[StringParameterValue] = for {
+    value <- Gen.identifier
+  } yield StringParameterValue(value)
+
+  val intParamValueGen: Gen[IntParameterValue] = for {
+    value <- Gen.choose(0, 1000)
+  } yield IntParameterValue(value)
+
+  val decimalParamValueGen: Gen[DecimalParameterValue] = for {
+    value <- Gen.choose[Double](0.0, 100.0)
+  } yield DecimalParameterValue(BigDecimal.valueOf(value))
+
+  def genForParamValue(paramType: ParameterType): Gen[ParameterValue] = paramType match {
+    case ParameterType.String | ParameterType.Raw => stringParamValueGen
+    case ParameterType.Integer                    => intParamValueGen
+    case ParameterType.Decimal                    => decimalParamValueGen
+  }
+
   implicit def arbitraryAccount(implicit arbRole: Arbitrary[Role]): Arbitrary[Account] = Arbitrary {
     for {
       id <- Gen.identifier.label("id")
@@ -28,9 +46,9 @@ trait ModelArbitraries {
     for {
       id <- Gen.identifier.label("id")
       name <- Gen.option(Gen.identifier.label("name"))
-      default <- Gen.option(Gen.identifier).label("default")
       secret <- Gen.option(Gen.oneOf(true, false)).label("secret")
-      type_ <- Gen.option(Gen.oneOf(ParameterType.String, ParameterType.Raw)).label("type")
+      type_ <- Gen.option(Gen.oneOf(ParameterType.values)).label("type")
+      default <- Gen.option(genForParamValue(type_.getOrElse(ParameterType.Raw))).label("default")
     } yield
       ParameterInfo(
         id = id,
@@ -66,11 +84,18 @@ trait ModelArbitraries {
     for {
       id <- Gen.identifier.label("id")
       template <- arbTemplate.arbitrary.label("template")
-      values <- Gen.sequence[Map[String, String], (String, String)](template.parameterInfos.keys.map(id =>
-        Gen.identifier.label("value").map(id -> _)))
+      values <- Gen.sequence[Map[String, ParameterValue], (String, ParameterValue)](
+        template.parameterInfos.map {
+          case (paramName, info) =>
+            genForParamValue(info.`type`.getOrElse(ParameterType.Raw))
+              .label("value")
+              .map(paramName -> _)
+        }
+      )
     } yield Instance(id, template, values)
   }
 
+  //genForParamValue(info.`type`.getOrElse(ParameterType.Raw))
   implicit val arbitraryJobStatus: Arbitrary[JobStatus] = Arbitrary(Gen.oneOf(JobStatus.values.toSeq))
 
   implicit val arbitraryServiceStatus: Arbitrary[ServiceStatus] = Arbitrary(Gen.oneOf(ServiceStatus.values.toSeq))

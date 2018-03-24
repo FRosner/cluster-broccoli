@@ -12,7 +12,8 @@ class TemplateRendererSpec extends Specification with Mockito {
 
   "TemplateRenderer" should {
     "render the template correctly when an instance contains a single parameter" in {
-      val instance = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> StringParameterValue("Frank")))
+      val instance =
+        Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> StringParameterValue("Frank")))
       templateRenderer.renderJson(instance) === JsString("Frank")
     }
 
@@ -33,8 +34,13 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos =
-            Map("age" -> ParameterInfo("age", None, Some("50"), secret = Some(false), `type` = None, orderIndex = None))
+          parameterInfos = Map(
+            "age" -> ParameterInfo("age",
+                                   None,
+                                   Some(IntParameterValue(50)),
+                                   secret = Some(false),
+                                   `type` = Some(ParameterType.Integer),
+                                   orderIndex = None))
         ),
         parameterValues = Map("id" -> RawParameterValue("Frank"))
       )
@@ -100,11 +106,11 @@ class TemplateRendererSpec extends Specification with Mockito {
           description = "desc",
           parameterInfos = Map(
             "id" -> ParameterInfo("id",
-              None,
-              None,
-              secret = Some(false),
-              `type` = Some(ParameterType.Decimal),
-              orderIndex = None)
+                                  None,
+                                  None,
+                                  secret = Some(false),
+                                  `type` = Some(ParameterType.Decimal),
+                                  orderIndex = None)
           )
         ),
         parameterValues = Map("id" -> DecimalParameterValue(value))
@@ -122,11 +128,11 @@ class TemplateRendererSpec extends Specification with Mockito {
           description = "desc",
           parameterInfos = Map(
             "id" -> ParameterInfo("id",
-              None,
-              None,
-              secret = Some(false),
-              `type` = Some(ParameterType.Integer),
-              orderIndex = None)
+                                  None,
+                                  None,
+                                  secret = Some(false),
+                                  `type` = Some(ParameterType.Integer),
+                                  orderIndex = None)
           )
         ),
         parameterValues = Map("id" -> IntParameterValue(value))

@@ -217,17 +217,19 @@ class InstanceService @Inject()(nomadClient: NomadClient,
           val potentialTemplate = templateService.template(templateId)
           potentialTemplate
             .map { template =>
-              Try{
+              Try {
                 instanceCreation.parameters.map { param =>
                   ParameterValue.constructParameterValueFromJson(param._1, template, param._2) match {
-                    case Success(s) => (param._1, s)
+                    case Success(s)  => (param._1, s)
                     case Failure(ex) => throw ex
                   }
                 }
               } match {
                 case Success(params) =>
                   // Remove params with default values
-                  val parameters = params.filter{param => !param._2.isEmpty}
+                  val parameters = params.filter { param =>
+                    !param._2.isEmpty
+                  }
                   val maybeNewInstance = Try(Instance(id, template, parameters))
                   maybeNewInstance.flatMap { newInstance =>
                     val result = instanceStorage.writeInstance(newInstance)
@@ -262,7 +264,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
             val jsValue = e._2
             ParameterValue.constructParameterValueFromJson(parameterName, instance.template, jsValue) match {
               case Success(pValue) => (parameterName, pValue)
-              case Failure(ex) => throw ex
+              case Failure(ex)     => throw ex
             }
           }
         }
@@ -274,10 +276,11 @@ class InstanceService @Inject()(nomadClient: NomadClient,
             }
           }
 
-          val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] = if (templateSelector.isDefined) {
-            val newTemplateId = templateSelector.get
-            val newTemplate = templateService.template(newTemplateId)
-            newTemplate
+          val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] =
+            if (templateSelector.isDefined) {
+              val newTemplateId = templateSelector.get
+              val newTemplate = templateService.template(newTemplateId)
+              newTemplate
                 .map { template =>
                   // Requested template exists, update the template
                   if (parameterValuesUpdatesWithPossibleDefaults.isDefined) {
@@ -293,17 +296,17 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                   // New template does not exist
                   Failure(TemplateNotFoundException(newTemplateId))
                 }
-          } else {
-            // No template update required
-            if (parameterValuesUpdatesWithPossibleDefaults.isDefined) {
-              // Just update the parameter values
-              val newParameterValues = parameterValuesUpdatesWithPossibleDefaults.get
-              instance.updateParameterValues(newParameterValues)
             } else {
-              // Neither template update nor parameter value update required
-              Success(instance)
+              // No template update required
+              if (parameterValuesUpdatesWithPossibleDefaults.isDefined) {
+                // Just update the parameter values
+                val newParameterValues = parameterValuesUpdatesWithPossibleDefaults.get
+                instance.updateParameterValues(newParameterValues)
+              } else {
+                // Neither template update nor parameter value update required
+                Success(instance)
+              }
             }
-          }
 
           val instanceWithPotentiallyStoppedPeriodicRuns =
             instanceWithPotentiallyUpdatedTemplateAndParameterValues.flatMap { instance =>
@@ -326,22 +329,22 @@ class InstanceService @Inject()(nomadClient: NomadClient,
 
           val updatedInstance = instanceWithPotentiallyStoppedPeriodicRuns.flatMap { instance =>
             statusUpdater
-                .map {
-                  // Update the instance status
-                  case JobStatus.Running =>
-                    nomadService.startJob(templateRenderer.renderJson(instance)).map(_ => instance)
-                  case JobStatus.Stopped =>
-                    val deletedJob = nomadService.deleteJob(instance.id)
-                    // FIXME we don't delete the service and periodic job / status info here (#352) => potential mem leak
-                    deletedJob
-                        .map(_ => instance)
-                  case other =>
-                    Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
-                }
-                .getOrElse {
-                  // Don't update the instance status
-                  Success(instance)
-                }
+              .map {
+                // Update the instance status
+                case JobStatus.Running =>
+                  nomadService.startJob(templateRenderer.renderJson(instance)).map(_ => instance)
+                case JobStatus.Stopped =>
+                  val deletedJob = nomadService.deleteJob(instance.id)
+                  // FIXME we don't delete the service and periodic job / status info here (#352) => potential mem leak
+                  deletedJob
+                    .map(_ => instance)
+                case other =>
+                  Failure(new IllegalArgumentException(s"Unsupported status change received: $other"))
+              }
+              .getOrElse {
+                // Don't update the instance status
+                Success(instance)
+              }
           }
 
           updatedInstance match {
@@ -350,12 +353,12 @@ class InstanceService @Inject()(nomadClient: NomadClient,
           }
 
           updatedInstance
-              .flatMap { instance =>
-                val maybeWrittenInstance = instanceStorage.writeInstance(instance)
-                maybeWrittenInstance.foreach(written => instancesMap = instancesMap.updated(id, written))
-                maybeWrittenInstance
-              }
-              .map(addStatuses)
+            .flatMap { instance =>
+              val maybeWrittenInstance = instanceStorage.writeInstance(instance)
+              maybeWrittenInstance.foreach(written => instancesMap = instancesMap.updated(id, written))
+              maybeWrittenInstance
+            }
+            .map(addStatuses)
         case Failure(parameterValidationError) => Failure(parameterValidationError)
       }
     }

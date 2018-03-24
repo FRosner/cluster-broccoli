@@ -18,12 +18,12 @@ object ParameterInfo {
   implicit val parameterInfoWrites = Json.writes[ParameterInfo]
 
   implicit val parameterInfoReads = new Reads[ParameterInfo] {
-    override def reads(json: JsValue): JsResult[ParameterInfo] = {
+    override def reads(json: JsValue): JsResult[ParameterInfo] =
       Try {
         val id = (json \ "id").as[String]
-        val name = (json \ "id").asOpt[String]
-        val secret = (json \ "id").asOpt[Boolean]
-        val `type` =  (json \ "type").asOpt[String].map(ParameterType.withName)
+        val name = (json \ "name").asOpt[String]
+        val secret = (json \ "secret").asOpt[Boolean]
+        val `type` = (json \ "type").asOpt[String].map(ParameterType.withName)
         val orderIndex = (json \ "orderIndex").asOpt[Int]
         val default = (`type`, (json \ "default").toOption) match {
           case (Some(paramType), Some(jsValue)) =>
@@ -33,10 +33,9 @@ object ParameterInfo {
         ParameterInfo(id, name, default, secret, `type`, orderIndex)
       } match {
         case Success(parameterInfo) => JsSuccess(parameterInfo)
-        case Failure(ex) => JsError(ex.getMessage)
+        case Failure(ex)            => JsError(ex.getMessage)
       }
 
-    }
   }
 
   def fromTemplateInfoParameter(id: String, parameter: TemplateConfig.Parameter): ParameterInfo =
