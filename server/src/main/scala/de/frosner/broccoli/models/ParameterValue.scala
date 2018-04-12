@@ -14,8 +14,7 @@ object ParameterValue {
     override def writes(paramValue: ParameterValue) = paramValue.asJsValue
   }
 
-  def constructParameterValueFromTypesafeConfig(parameterType: ParameterType,
-                                                configValue: ConfigValue): Try[ParameterValue] =
+  def fromConfigValue(parameterType: ParameterType, configValue: ConfigValue): Try[ParameterValue] =
     Try {
       parameterType match {
         case ParameterType.Raw =>
@@ -29,20 +28,20 @@ object ParameterValue {
       }
     }
 
-  def constructParameterValueFromJson(parameterName: String,
-                                      template: Template,
-                                      jsValue: JsValue): Try[ParameterValue] =
+  def fromJsValue(parameterName: String,
+                  parameterInfos: Map[String, ParameterInfo],
+                  jsValue: JsValue): Try[ParameterValue] =
     Try {
       val parameterInfo =
-        template.parameterInfos.getOrElse(parameterName, ParameterInfo(parameterName, None, None, None, None, None))
-      constructParameterValueFromJson(parameterInfo.`type`.getOrElse(ParameterType.Raw), jsValue) match {
+        parameterInfos.getOrElse(parameterName, ParameterInfo(parameterName, None, None, None, None, None))
+      fromJsValue(parameterInfo.`type`.getOrElse(ParameterType.Raw), jsValue) match {
         case Some(param) => param
         case None =>
-          throw ParameterValueParsingException(template.id, parameterName)
+          throw ParameterValueParsingException(parameterName)
       }
     }
 
-  def constructParameterValueFromJson(parameterType: ParameterType, jsValue: JsValue): Option[ParameterValue] =
+  def fromJsValue(parameterType: ParameterType, jsValue: JsValue): Option[ParameterValue] =
     Try {
       parameterType match {
         case ParameterType.Raw =>

@@ -4,18 +4,19 @@ import Json.Encode as Encode
 import Json.Decode as Decode
 import Dict exposing (Dict)
 import Models.Resources.ServiceStatus as ServiceStatus exposing (ServiceStatus)
+import Models.Resources.Template as Template exposing (ParameterValue, decodeValueFromInfo, encodeParamValue)
 
 
 type alias InstanceCreation =
     { templateId : String
-    , parameters : Dict String String
+    , parameters : Dict String ParameterValue
     }
 
 
-decoder =
+decoder parameterInfos =
     Decode.map2 InstanceCreation
         (Decode.field "templateId" Decode.string)
-        (Decode.field "parameters" (Decode.dict Decode.string))
+        (Decode.field "parameters" (decodeValueFromInfo parameterInfos))
 
 
 encoder instanceCreation =
@@ -29,5 +30,5 @@ parametersToObject parameters =
     Encode.object
         (parameters
             |> Dict.toList
-            |> List.map (\( k, v ) -> ( k, Encode.string v ))
+            |> List.map (\( k, v ) -> ( k, encodeParamValue v ))
         )

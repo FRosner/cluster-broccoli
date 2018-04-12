@@ -106,7 +106,7 @@ object Instance {
                     case JsNull =>
                       (paramName, null)
                     case _ =>
-                      ParameterValue.constructParameterValueFromJson(paramName, template, paramJsValue) match {
+                      ParameterValue.fromJsValue(paramName, template.parameterInfos, paramJsValue) match {
                         case Success(paramValue) => (paramName, paramValue)
                         case Failure(ex)         => throw ex
                       }

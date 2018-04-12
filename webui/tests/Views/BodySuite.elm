@@ -325,12 +325,17 @@ tests =
                                               )
                                             ]
                                 }
+
+                            paramInfos =
+                                Dict.get "t2" defaultTemplates
+                                    |> Maybe.andThen (\t -> Just t.parameterInfos)
+                                    |> Maybe.withDefault Dict.empty
                         in
                             Body.view defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
                                 |> Query.fromHtml
                                 |> Query.find [ Selector.id "new-instance-form-t2" ]
                                 |> Events.simulate (Events.Submit)
-                                |> Events.expectEvent (SubmitNewInstanceCreation "t2" changedParameterValues)
+                                |> Events.expectEvent (SubmitNewInstanceCreation "t2" paramInfos changedParameterValues)
             , test "Should render input groups for all parameters" <|
                 \() ->
                     let
@@ -576,7 +581,7 @@ defaultTemplate templateId =
     , parameterInfos =
         [ ( (String.concat [ templateId, "-p1" ])
           , { id = (String.concat [ templateId, "-p1" ])
-            , default = Just "default"
+            , default = Just (Template.RawParamVal "default")
             , secret = Nothing
             , name = Nothing
             , orderIndex = Nothing

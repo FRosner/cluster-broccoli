@@ -262,7 +262,7 @@ editParameterValuesView instance parameters parameterValues parameterInfos maybe
 
 editParameterValueView :
     Instance
-    -> Dict String (Maybe String)
+    -> Dict String (Maybe ParameterValue)
     -> Dict String ParameterInfo
     -> Maybe InstanceParameterForm
     -> Bool
@@ -280,7 +280,7 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
         let
             placeholderValue =
                 maybeParameterInfo
-                    |> Maybe.andThen (\i -> i.default)
+                    |> Maybe.andThen (\i -> (maybeValueToString i.default))
                     |> Maybe.withDefault ""
 
             parameterValue =
@@ -294,33 +294,31 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                     ( Nothing, Just Nothing ) ->
                         "concealed"
 
+                    -- See Instance.elm for why this is concealed
                     ( Nothing, Just (Just original) ) ->
-                        original
+                        valueToString original
 
+            -- Since original is a ParameterValue need to convert it to string for display
             dataType =
                 maybeParameterInfo
                     |> Maybe.andThen (\i -> i.dataType)
                     |> Maybe.withDefault RawParam
 
             maybeErrMsg =
-                case maybeEditedValue of
-                    Just value ->
-                        if String.isEmpty value then
-                            Nothing
-                            -- In this case the default value gets picked up
-                        else
-                            getErrorMsg value dataType
+                maybeEditedValue
+                    |> Maybe.andThen
+                        (\value ->
+                            case (valueFromString dataType value) of
+                                Ok _ ->
+                                    Nothing
 
-                    Nothing ->
-                        Nothing
+                                -- we don't care about the value if it was ok. Just display the string.
+                                Err msg ->
+                                    Just msg
+                        )
 
             hasError =
-                case maybeErrMsg of
-                    Nothing ->
-                        False
-
-                    Just _ ->
-                        True
+                isJust maybeErrMsg
 
             isSecret =
                 maybeParameterInfo
@@ -477,7 +475,7 @@ newView template maybeInstanceParameterForm visibleSecrets =
                 leftHaveError || rightHaveError || idHasError
         in
             Html.form
-                [ onSubmit (SubmitNewInstanceCreation template.id instanceParameterForms.changedParameterValues)
+                [ onSubmit (SubmitNewInstanceCreation template.id template.parameterInfos instanceParameterForms.changedParameterValues)
                 , style
                     [ ( "padding-left", "40px" )
                     , ( "padding-right", "40px" )
@@ -569,7 +567,7 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
         let
             placeholderValue =
                 maybeParameterInfo
-                    |> Maybe.andThen (\i -> i.default)
+                    |> Maybe.andThen (\i -> (maybeValueToString i.default))
                     |> Maybe.withDefault ""
 
             parameterValue =
@@ -595,24 +593,20 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                     |> Maybe.withDefault parameter
 
             maybeErrMsg =
-                case maybeEditedValue of
-                    Just value ->
-                        if String.isEmpty value then
-                            Nothing
-                            -- In this case the default value gets picked up
-                        else
-                            getErrorMsg value dataType
+                maybeEditedValue
+                    |> Maybe.andThen
+                        (\value ->
+                            case (valueFromString dataType value) of
+                                Ok _ ->
+                                    Nothing
 
-                    Nothing ->
-                        Nothing
+                                -- we don't care about the value if it was ok. Just display the string.
+                                Err msg ->
+                                    Just msg
+                        )
 
             hasError =
-                case maybeErrMsg of
-                    Nothing ->
-                        False
-
-                    Just _ ->
-                        True
+                isJust maybeErrMsg
         in
             ( p
                 []
@@ -687,43 +681,17 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                             )
                         )
                     ]
-                    (case maybeErrMsg of
-                        Nothing ->
-                            []
-
-                        Just msg ->
-                            [ span
-                                [ class "help-block" ]
-                                [ text msg ]
-                            ]
+                    (maybeErrMsg
+                        |> Maybe.andThen
+                            (\errMsg ->
+                                Just
+                                    [ span
+                                        [ class "help-block" ]
+                                        [ text errMsg ]
+                                    ]
+                            )
+                        |> Maybe.withDefault []
                     )
                 )
             , hasError
             )
-
-
-getErrorMsg : String -> ParameterType -> Maybe String
-getErrorMsg value dataType =
-    case dataType of
-        -- we do not validate string and raw fields
-        StringParam ->
-            Nothing
-
-        RawParam ->
-            Nothing
-
-        IntParam ->
-            case String.toInt value of
-                Err msg ->
-                    Just "Not a valid integer"
-
-                Ok _ ->
-                    Nothing
-
-        DecimalParam ->
-            case String.toFloat value of
-                Err msg ->
-                    Just "Not a valid floating point number"
-
-                Ok _ ->
-                    Nothing

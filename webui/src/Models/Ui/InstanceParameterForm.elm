@@ -1,8 +1,13 @@
 module Models.Ui.InstanceParameterForm exposing (..)
 
-import Models.Resources.Template exposing (Template)
+import Models.Resources.Template exposing (Template, ParameterValue)
 import Dict exposing (Dict)
 import Maybe exposing (Maybe)
+
+
+-- ParameterValues are kept in String here as they must be displayed in the input
+-- If the ParameterValue was invalid (eg: String when expectation was IntParamVal)
+-- we cannot make the user input go away. So we store the raw format in a String.
 
 
 type alias InstanceParameterForm =

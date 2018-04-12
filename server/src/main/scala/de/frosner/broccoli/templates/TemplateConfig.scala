@@ -26,7 +26,7 @@ object TemplateConfig {
               val maybeParamType = Try(paramValueObj.getString("type")).toOption.map(ParameterType.withName)
               val maybeOrderIndex = Try(paramValueObj.getInt("order-index")).toOption
               val maybeDefault = Try(paramValueObj.getValue("default")).toOption.map { paramValueConf =>
-                ParameterValue.constructParameterValueFromTypesafeConfig(
+                ParameterValue.fromConfigValue(
                   maybeParamType.getOrElse(ParameterType.Raw),
                   paramValueConf
                 ) match {

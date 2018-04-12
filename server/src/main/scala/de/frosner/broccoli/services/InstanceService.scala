@@ -218,17 +218,18 @@ class InstanceService @Inject()(nomadClient: NomadClient,
           potentialTemplate
             .map { template =>
               Try {
-                instanceCreation.parameters.map { param =>
-                  ParameterValue.constructParameterValueFromJson(param._1, template, param._2) match {
-                    case Success(s)  => (param._1, s)
-                    case Failure(ex) => throw ex
-                  }
+                instanceCreation.parameters.map {
+                  case (paramName, jsValue) =>
+                    ParameterValue.fromJsValue(paramName, template.parameterInfos, jsValue) match {
+                      case Success(s)  => (paramName, s)
+                      case Failure(ex) => throw ex
+                    }
                 }
               } match {
                 case Success(params) =>
                   // Remove params with default values
-                  val parameters = params.filter { param =>
-                    !param._2.isEmpty
+                  val parameters = params.filter {
+                    case (paramName, paramValue) => !paramValue.isEmpty
                   }
                   val maybeNewInstance = Try(Instance(id, template, parameters))
                   maybeNewInstance.flatMap { newInstance =>
@@ -259,13 +260,12 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     val maybeUpdatedInstance = maybeInstance.map { instance =>
       Try {
         parameterValuesUpdater.map { p =>
-          p.map { e =>
-            val parameterName = e._1
-            val jsValue = e._2
-            ParameterValue.constructParameterValueFromJson(parameterName, instance.template, jsValue) match {
-              case Success(pValue) => (parameterName, pValue)
-              case Failure(ex)     => throw ex
-            }
+          p.map {
+            case (parameterName, jsValue) =>
+              ParameterValue.fromJsValue(parameterName, instance.template.parameterInfos, jsValue) match {
+                case Success(pValue) => (parameterName, pValue)
+                case Failure(ex)     => throw ex
+              }
           }
         }
       } match {

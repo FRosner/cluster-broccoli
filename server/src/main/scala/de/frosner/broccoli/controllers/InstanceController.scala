@@ -134,7 +134,9 @@ object InstanceController {
         .right[InstanceError, Account](loggedIn)
         .ensure(InstanceError.RolesRequired(Role.Administrator): InstanceError)(_.role == Role.Administrator)
       _ <- Either
-        .fromOption(Try(instanceCreation.parameters("id").as[String]).toOption, InstanceError.IdMissing: InstanceError)
+        .fromOption(instanceCreation.parameters.get("id"), InstanceError.IdMissing: InstanceError)
+        .map(idJson => Either.fromOption(idJson.validate[String].asOpt, InstanceError.IdMalformed: InstanceError))
+        .joinRight
         .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex): InstanceError)(_.matches(user.instanceRegex))
       newInstance <- Either
         .fromTry(instanceService.addInstance(instanceCreation))
