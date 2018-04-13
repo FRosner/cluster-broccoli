@@ -25,7 +25,7 @@
         "orderIndex": 1
       }
     },
-    "version": "51d1c2a8322e612f42b304b533249d17"
+    "version": "355061b8541f4951fbfa77c0a4aa46c8"
   },
   {
     "id": "http-server",
@@ -54,7 +54,7 @@
         "type": "string"
       }
     },
-    "version": "1721c964c355a8590c1c994d443ca1cf"
+    "version": "bfa3a62e273dd89fc3ab850e55736b20"
   },
   {
     "id": "jupyter",
@@ -68,6 +68,6 @@
         "type": "string"
       }
     },
-    "version": "dcba087274c4f613c3026006f9fa3016"
+    "version": "78f3c9fda601b837cb64fa2a4cb2a111"
   }
 ]

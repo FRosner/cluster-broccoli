@@ -40,7 +40,7 @@ class TemplateSpec extends Specification {
     }
 
     "create the template version correctly in" in {
-      Template("test", "template JSON", "desc", Map.empty).version === "5b2b0c11319b0bf48c8bd17a4b298f8f"
+      Template("test", "template JSON", "desc", Map.empty).version === "889df4c8118c30a28ed4f51674a0f19d"
     }
 
     "result in different template versions if the template JSON differs" in {

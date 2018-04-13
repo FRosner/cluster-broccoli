@@ -27,7 +27,7 @@
         "type": "string"
       }
     },
-    "version": "1721c964c355a8590c1c994d443ca1cf"
+    "version": "bfa3a62e273dd89fc3ab850e55736b20"
   },
   "parameterValues": {
     "id": "test-http",
