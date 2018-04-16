@@ -24,7 +24,7 @@ object ParameterValue {
         case ParameterType.Integer =>
           IntParameterValue(configValue.unwrapped().asInstanceOf[Int])
         case ParameterType.Decimal =>
-          DecimalParameterValue(configValue.unwrapped().asInstanceOf[BigDecimal])
+          DecimalParameterValue(BigDecimal.valueOf(configValue.unwrapped().asInstanceOf[Double]))
       }
     }
 
