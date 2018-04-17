@@ -38,7 +38,7 @@ class NomadInstancesSpec
         description = "description",
         parameterInfos = Map.empty
       ),
-      parameterValues = Map("id" -> "id")
+      parameterValues = Map("id" -> StringParameterValue("id"))
     ),
     status = JobStatus.Running,
     services = Seq.empty,

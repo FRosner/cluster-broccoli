@@ -27,8 +27,9 @@ case class Template(id: String, template: String, description: String, parameter
     uniqueVariables
   }
 
+  // We sort the parameterInfos by the key to make the String deterministic
   @transient
-  lazy val version: String = DigestUtils.md5Hex(template.trim() + "_" + parameterInfos.toString)
+  lazy val version: String = DigestUtils.md5Hex(template.trim() + "_" + parameterInfos.toSeq.sortBy(_._1).toString)
 
 }
 

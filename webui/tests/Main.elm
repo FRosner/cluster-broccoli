@@ -1,6 +1,7 @@
 port module Main exposing (..)
 
 import Utils.ParameterUtilsSuite as ParameterUtilsSuite
+import Utils.DictUtilsSuite as DictUtilsSuite
 import Views.HeaderSuite as HeaderSuite
 import Views.NotificationsSuite as NotificationsSuite
 import Views.BodySuite as BodySuite
@@ -19,6 +20,7 @@ main =
         (describe
             "Cluster Broccoli UI Tests"
             [ ParameterUtilsSuite.tests
+            , DictUtilsSuite.tests
             , HeaderSuite.tests
             , NotificationsSuite.tests
             , BodySuite.tests

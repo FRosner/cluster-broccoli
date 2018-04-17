@@ -2,12 +2,13 @@ package de.frosner.broccoli.models
 
 import de.frosner.broccoli.RemoveSecrets
 import play.api.libs.json._
+import play.api.libs.json.JsNull
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
-case class Instance(id: String, template: Template, parameterValues: Map[String, String]) extends Serializable {
+case class Instance(id: String, template: Template, parameterValues: Map[String, ParameterValue]) extends Serializable {
 
-  def requireParameterValueConsistency(parameterValues: Map[String, String], template: Template) = {
+  def requireParameterValueConsistency(parameterValues: Map[String, ParameterValue], template: Template) = {
     val realParametersWithValues = parameterValues.keySet ++ template.parameterInfos.flatMap {
       case (key, info) => info.default.map(Function.const(key))
     }
@@ -20,7 +21,7 @@ case class Instance(id: String, template: Template, parameterValues: Map[String,
 
   requireParameterValueConsistency(parameterValues, template)
 
-  def updateParameterValues(newParameterValues: Map[String, String]): Try[Instance] =
+  def updateParameterValues(newParameterValues: Map[String, ParameterValue]): Try[Instance] =
     Try {
       requireParameterValueConsistency(newParameterValues, template)
       require(newParameterValues("id") == parameterValues("id"), s"The parameter value 'id' must not be changed.")
@@ -32,7 +33,7 @@ case class Instance(id: String, template: Template, parameterValues: Map[String,
       )
     }
 
-  def updateTemplate(newTemplate: Template, newParameterValues: Map[String, String]): Try[Instance] =
+  def updateTemplate(newTemplate: Template, newParameterValues: Map[String, ParameterValue]): Try[Instance] =
     Try {
       requireParameterValueConsistency(newParameterValues, newTemplate)
       require(newParameterValues("id") == parameterValues("id"), s"The parameter value 'id' must not be changed.")
@@ -47,19 +48,77 @@ case class Instance(id: String, template: Template, parameterValues: Map[String,
 }
 
 object Instance {
+
   implicit val instanceApiWrites: Writes[Instance] = {
     import Template.templateApiWrites
-    Json.writes[Instance]
+    new Writes[Instance] {
+      override def writes(instance: Instance) = {
+        val jsValueMap =
+          instance.parameterValues.map {
+            case (paramName, paramValue) =>
+              // TODO: Shouldn't use nulls, Fix this after fixing instanceRemoveSecrets
+              (paramName, Option(paramValue).map(_.asJsValue).getOrElse(JsNull))
+          }
+        Json.obj(
+          "id" -> instance.id,
+          "template" -> instance.template,
+          "parameterValues" -> jsValueMap
+        )
+      }
+    }
   }
 
   implicit val instancePersistenceWrites: Writes[Instance] = {
     import Template.templatePersistenceWrites
-    Json.writes[Instance]
+    new Writes[Instance] {
+      override def writes(instance: Instance) = {
+        val jsValueMap =
+          instance.parameterValues.map {
+            case (paramName, paramValue) =>
+              // TODO: Shouldn't use nulls, Fix this after fixing instanceRemoveSecrets
+              (paramName, Option(paramValue).map(_.asJsValue).getOrElse(JsNull))
+          }
+        Json.obj(
+          "id" -> instance.id,
+          "template" -> instance.template,
+          "parameterValues" -> jsValueMap
+        )
+      }
+    }
   }
 
   implicit val instancePersistenceReads: Reads[Instance] = {
     import Template.templatePersistenceReads
-    Json.reads[Instance]
+    new Reads[Instance] {
+      override def reads(json: JsValue): JsResult[Instance] =
+        Try {
+          val id: String = (json \ "id").as[String]
+          val template: Template = (json \ "template").as[Template]
+          val parameterValues: Map[String, ParameterValue] =
+            (json \ "parameterValues")
+              .as[JsObject]
+              .value
+              .map {
+
+                case (paramName, paramJsValue) =>
+                  paramJsValue match {
+                    // TODO: Shouldn't use nulls, Fix this after fixing instanceRemoveSecrets
+                    case JsNull =>
+                      (paramName, null)
+                    case _ =>
+                      ParameterValue.fromJsValue(paramName, template.parameterInfos, paramJsValue) match {
+                        case Success(paramValue) => (paramName, paramValue)
+                        case Failure(ex)         => throw ex
+                      }
+                  }
+              }
+              .toMap // We need to cast an unmodifiable Map to an immutable one. What is the cost for this?
+          Instance(id, template, parameterValues)
+        } match {
+          case Success(s)  => JsSuccess(s)
+          case Failure(ex) => JsError(ex.getMessage)
+        }
+    }
   }
 
   /**

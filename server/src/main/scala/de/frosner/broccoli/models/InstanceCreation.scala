@@ -1,8 +1,8 @@
 package de.frosner.broccoli.models
 
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 
-case class InstanceCreation(templateId: String, parameters: Map[String, String])
+case class InstanceCreation(templateId: String, parameters: Map[String, JsValue])
 
 object InstanceCreation {
 

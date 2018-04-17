@@ -11,13 +11,12 @@ class ParameterInfoSpec extends Specification {
     "work" in {
       val info = ParameterInfo(id = "i",
                                name = None,
-                               default = Some("d"),
+                               default = Some(StringParameterValue("d")),
                                secret = Some(false),
-                               `type` = Some(ParameterType.String),
+                               `type` = ParameterType.String,
                                orderIndex = None)
       Json.fromJson(Json.toJson(info)).get === info
     }
-
   }
 
 }

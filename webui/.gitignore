@@ -4,4 +4,6 @@
 # Webpack build artifacts
 /dist/
 
+*.log
+
 /node_modules/

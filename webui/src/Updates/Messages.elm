@@ -4,7 +4,7 @@ import Http
 import Dict exposing (Dict)
 import Set exposing (Set)
 import Models.Resources.UserInfo exposing (UserInfo)
-import Models.Resources.Template exposing (TemplateId, Template)
+import Models.Resources.Template exposing (TemplateId, Template, ParameterInfo)
 import Models.Resources.Instance exposing (InstanceId, Instance)
 import Models.Ui.InstanceParameterForm exposing (InstanceParameterForm)
 
@@ -43,7 +43,7 @@ type UpdateBodyViewMsg
     | ToggleEditInstanceSecretVisibility InstanceId String
     | ToggleNewInstanceSecretVisibility TemplateId String
     | ExpandNewInstanceForm Bool TemplateId
-    | SubmitNewInstanceCreation TemplateId (Dict String (Maybe String))
+    | SubmitNewInstanceCreation TemplateId (Dict String ParameterInfo) (Dict String (Maybe String))
     | DiscardNewInstanceCreation TemplateId
     | DeleteSelectedInstances TemplateId (Set String)
     | AttemptDeleteSelectedInstances TemplateId (Set String)

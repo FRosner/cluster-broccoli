@@ -73,8 +73,10 @@ class FileSystemInstanceStorage(storageDirectory: File) extends InstanceStorage 
     instanceIds.map(_.map { id =>
       val tryInstance = readInstanceImpl(id)
       tryInstance match {
-        case Success(instance)  => instance
-        case Failure(throwable) => throw throwable
+        case Success(instance) => instance
+        case Failure(throwable) =>
+          log.error(s"Error while reading instance: $id")
+          throw throwable
       }
     }.toSet)
   }

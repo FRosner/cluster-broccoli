@@ -7,7 +7,7 @@ import de.frosner.broccoli.RemoveSecrets.ToRemoveSecretsOps
 import org.scalacheck.Gen
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
-import play.api.libs.json.JsString
+import play.api.libs.json.{JsString, JsSuccess, Json}
 
 class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries with ToRemoveSecretsOps {
 
@@ -18,15 +18,18 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
         case (id, _) =>
           instance.template.parameterInfos(id).secret.getOrElse(false)
       }
-      (secret.values must contain(beNull[String]).foreach) and (public.values must contain(not(beNull[String])).foreach)
+      (secret.values must contain(beNull[ParameterValue]).foreach) and (public.values must contain(
+        not(beNull[ParameterValue])).foreach)
     }
   }
 
   "An instance" should {
 
     "be possible to construct if the parameters to be filled match the ones in the template" in {
-      val instance1 = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Heinz"))
-      val instance2 = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Heinz"))
+      val instance1 =
+        Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> StringParameterValue("Heinz")))
+      val instance2 =
+        Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> StringParameterValue("Heinz")))
       instance1 === instance2
     }
 
@@ -41,11 +44,33 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos =
-            Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = None, orderIndex = None))
+          parameterInfos = Map(
+            "age" -> ParameterInfo("age",
+                                   None,
+                                   None,
+                                   secret = Some(false),
+                                   `type` = ParameterType.Integer,
+                                   orderIndex = None))
         ),
-        parameterValues = Map("id" -> "Frank")
+        parameterValues = Map("id" -> StringParameterValue("Frank"))
       ) must throwA[IllegalArgumentException]
+    }
+
+    "should serialize and deserialize properly from its JSON" in {
+      import Instance.instancePersistenceWrites
+      import Instance.instancePersistenceReads
+      val instance = Instance(
+        id = "prefix-id",
+        template =
+          Template(id = "t",
+                   template = "{{id}}",
+                   description = "d",
+                   parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))),
+        parameterValues = Map(
+          "id" -> RawParameterValue("prefix-id")
+        )
+      )
+      Json.parse(Json.toJson(instance).toString()).validate[Instance] mustEqual JsSuccess(instance)
     }
 
   }
@@ -61,9 +86,9 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
           description = "desc",
           parameterInfos = Map.empty
         ),
-        parameterValues = Map("id" -> "1", "age" -> "50")
+        parameterValues = Map("id" -> StringParameterValue("1"), "age" -> IntParameterValue(50))
       )
-      val newParameterValues = Map("id" -> "1", "age" -> "30")
+      val newParameterValues = Map("id" -> StringParameterValue("1"), "age" -> IntParameterValue(30))
       val newInstance = instance.updateParameterValues(newParameterValues)
       newInstance.get.parameterValues === newParameterValues
     }
@@ -77,9 +102,9 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
           description = "desc",
           parameterInfos = Map.empty
         ),
-        parameterValues = Map("id" -> "1", "age" -> "50")
+        parameterValues = Map("id" -> StringParameterValue("1"), "age" -> IntParameterValue(50))
       )
-      val newParameterValues = Map("id" -> "2", "age" -> "40")
+      val newParameterValues = Map("id" -> StringParameterValue("2"), "age" -> IntParameterValue(40))
       val newInstance = instance.updateParameterValues(newParameterValues)
       newInstance.isFailure === true
     }
@@ -93,9 +118,9 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
           description = "desc",
           parameterInfos = Map.empty
         ),
-        parameterValues = Map("id" -> "1", "age" -> "50")
+        parameterValues = Map("id" -> StringParameterValue("1"), "age" -> IntParameterValue(50))
       )
-      val newParameterValues = Map("id" -> "1")
+      val newParameterValues = Map("id" -> StringParameterValue("1"))
       val newInstance = instance.updateParameterValues(newParameterValues)
       newInstance.isFailure === true
     }
@@ -117,7 +142,7 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
         description = "desc",
         parameterInfos = Map.empty
       )
-      val originalParameterValues = Map("id" -> "1", "age" -> "50")
+      val originalParameterValues = Map("id" -> StringParameterValue("1"), "age" -> IntParameterValue(50))
       val newParameterValues = originalParameterValues
       val instance = Instance(
         id = "1",
@@ -141,8 +166,8 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
         description = "desc",
         parameterInfos = Map.empty
       )
-      val originalParameterValues = Map("id" -> "1", "age" -> "50")
-      val newParameterValues = originalParameterValues.updated("height", "170")
+      val originalParameterValues = Map("id" -> StringParameterValue("1"), "age" -> IntParameterValue(50))
+      val newParameterValues = originalParameterValues.updated("height", IntParameterValue(170))
       val instance = Instance(
         id = "1",
         template = originalTemplate,
@@ -165,7 +190,7 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
         description = "desc",
         parameterInfos = Map.empty
       )
-      val originalParameterValues = Map("id" -> "1", "age" -> "50")
+      val originalParameterValues = Map("id" -> StringParameterValue("1"), "age" -> IntParameterValue(50))
       val newParameterValues = originalParameterValues
       val instance = Instance(
         id = "1",
@@ -189,7 +214,7 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
         description = "desc",
         parameterInfos = Map.empty
       )
-      val originalParameterValues = Map("id" -> "2", "age" -> "50")
+      val originalParameterValues = Map("id" -> StringParameterValue("2"), "age" -> IntParameterValue(50))
       val newParameterValues = originalParameterValues
       val instance = Instance(
         id = "1",
