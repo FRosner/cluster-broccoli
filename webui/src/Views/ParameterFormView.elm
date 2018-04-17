@@ -603,12 +603,12 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                     |> Maybe.andThen
                         (\value ->
                             case (valueFromString dataType value) of
+                                -- If it was Ok then there is no error
                                 Ok _ ->
                                     Nothing
 
-                                -- we don't care about the value if it was ok. Just display the string.
                                 Err msg ->
-                                    Just msg
+                                    Just (String.concat <| [ parameterName, " must be ", dataTypeToString dataType ])
                         )
 
             hasError =
