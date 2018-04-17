@@ -28,8 +28,18 @@ class DirectoryTemplateSourceSpec extends Specification with TemporaryTemplatesC
           Source.fromFile(templatesDirectory.resolve("curl/template.json").toFile).mkString,
           "A periodic job that sends an HTTP GET request to a specified address every minute.",
           Map(
-            "URL" -> ParameterInfo("URL", None, Some(RawParameterValue("localhost:8000")), None, ParameterType.Raw, Some(1)),
-            "enabled" -> ParameterInfo("enabled", None, Some(RawParameterValue("true")), None, ParameterType.Raw, Some(2))
+            "URL" -> ParameterInfo("URL",
+                                   None,
+                                   Some(RawParameterValue("localhost:8000")),
+                                   None,
+                                   ParameterType.Raw,
+                                   Some(1)),
+            "enabled" -> ParameterInfo("enabled",
+                                       None,
+                                       Some(RawParameterValue("true")),
+                                       None,
+                                       ParameterType.Raw,
+                                       Some(2))
           )
         ))).exactly(1)
     }
