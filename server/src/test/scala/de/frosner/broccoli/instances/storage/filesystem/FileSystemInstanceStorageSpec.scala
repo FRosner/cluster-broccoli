@@ -5,7 +5,7 @@ import java.nio.file._
 import java.util.UUID
 
 import com.fasterxml.jackson.core.JsonParseException
-import de.frosner.broccoli.models.{Instance, RawParameterValue, Template}
+import de.frosner.broccoli.models._
 import de.frosner.broccoli.util.TemporaryDirectoryContext
 import org.specs2.mutable.Specification
 
@@ -16,7 +16,10 @@ class FileSystemInstanceStorageSpec extends Specification with TemporaryDirector
 
   val instance = Instance(
     id = "prefix-id",
-    template = Template(id = "t", template = "{{id}}", description = "d", parameterInfos = Map.empty),
+    template = Template(id = "t",
+                        template = "{{id}}",
+                        description = "d",
+                        parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))),
     parameterValues = Map(
       "id" -> RawParameterValue("prefix-id")
     )

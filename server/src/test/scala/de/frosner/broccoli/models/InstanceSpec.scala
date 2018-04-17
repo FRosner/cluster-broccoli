@@ -61,12 +61,15 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
       import Instance.instancePersistenceReads
       val instance = Instance(
         id = "prefix-id",
-        template = Template(id = "t", template = "{{id}}", description = "d", parameterInfos = Map.empty),
+        template =
+          Template(id = "t",
+                   template = "{{id}}",
+                   description = "d",
+                   parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))),
         parameterValues = Map(
           "id" -> RawParameterValue("prefix-id")
         )
       )
-      println(Json.toJson(instance).toString())
       Json.parse(Json.toJson(instance).toString()).validate[Instance] mustEqual JsSuccess(instance)
     }
 
