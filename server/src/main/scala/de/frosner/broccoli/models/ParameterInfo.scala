@@ -10,7 +10,7 @@ case class ParameterInfo(id: String,
                          name: Option[String],
                          default: Option[ParameterValue],
                          secret: Option[Boolean],
-                         `type`: Option[ParameterType],
+                         `type`: ParameterType,
                          orderIndex: Option[Int])
 
 object ParameterInfo {
@@ -23,10 +23,10 @@ object ParameterInfo {
         val id = (json \ "id").as[String]
         val name = (json \ "name").asOpt[String]
         val secret = (json \ "secret").asOpt[Boolean]
-        val `type` = (json \ "type").asOpt[String].map(ParameterType.withName)
+        val `type` = ParameterType.withName((json \ "type").as[String])
         val orderIndex = (json \ "orderIndex").asOpt[Int]
         val default = (`type`, (json \ "default").toOption) match {
-          case (Some(paramType), Some(jsValue)) =>
+          case (paramType, Some(jsValue)) =>
             ParameterValue.fromJsValue(paramType, jsValue)
           case _ => None
         }
@@ -38,6 +38,7 @@ object ParameterInfo {
 
   }
 
+  // TODO: Pick the default from the reference.conf and use it for parameter.`type`
   def fromTemplateInfoParameter(id: String, parameter: TemplateConfig.Parameter): ParameterInfo =
     ParameterInfo(id, parameter.name, parameter.default, parameter.secret, parameter.`type`, parameter.orderIndex)
 }

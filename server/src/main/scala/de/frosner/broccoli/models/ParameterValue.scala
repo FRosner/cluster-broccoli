@@ -2,7 +2,7 @@ package de.frosner.broccoli.models
 
 import com.typesafe.config.{Config, ConfigValue, ConfigValueType}
 import com.typesafe.config.impl.ConfigInt
-import de.frosner.broccoli.services.{ParameterValueParsingException, TemplateParameterNotFoundException}
+import de.frosner.broccoli.services.{ParameterNotFoundException, ParameterValueParsingException}
 import org.apache.commons.lang3.StringEscapeUtils
 import play.api.libs.json._
 
@@ -33,8 +33,8 @@ object ParameterValue {
                   jsValue: JsValue): Try[ParameterValue] =
     Try {
       val parameterInfo =
-        parameterInfos.getOrElse(parameterName, ParameterInfo(parameterName, None, None, None, None, None))
-      fromJsValue(parameterInfo.`type`.getOrElse(ParameterType.Raw), jsValue) match {
+        parameterInfos.getOrElse(parameterName, throw ParameterNotFoundException(parameterName, parameterInfos.keySet))
+      fromJsValue(parameterInfo.`type`, jsValue) match {
         case Some(param) => param
         case None =>
           throw ParameterValueParsingException(parameterName)
@@ -59,7 +59,6 @@ object ParameterValue {
     }
 }
 sealed trait ParameterValue {
-  def isEmpty: Boolean
 
   /**
     * Implemented by each parameter value depending on what it wants
@@ -70,22 +69,18 @@ sealed trait ParameterValue {
 }
 
 case class IntParameterValue(value: Int) extends ParameterValue {
-  override def isEmpty: Boolean = false // can never be empty
   override def asJsonString: String = value.toString
   override def asJsValue: JsValue = JsNumber(value)
 }
 case class DecimalParameterValue(value: BigDecimal) extends ParameterValue {
-  override def isEmpty: Boolean = false // can never be empty
   override def asJsonString: String = value.toString
   override def asJsValue: JsValue = JsNumber(value)
 }
 case class StringParameterValue(value: String) extends ParameterValue {
-  override def isEmpty: Boolean = value.isEmpty
   override def asJsonString: String = StringEscapeUtils.escapeJson(value)
   override def asJsValue: JsValue = JsString(value)
 }
 case class RawParameterValue(value: String) extends ParameterValue {
-  override def isEmpty: Boolean = value.isEmpty
   override def asJsonString: String = value
   override def asJsValue: JsValue = JsString(value)
 }

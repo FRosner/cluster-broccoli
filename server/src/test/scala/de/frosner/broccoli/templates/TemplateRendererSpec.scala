@@ -39,7 +39,7 @@ class TemplateRendererSpec extends Specification with Mockito {
                                    None,
                                    Some(IntParameterValue(50)),
                                    secret = Some(false),
-                                   `type` = Some(ParameterType.Integer),
+                                   `type` = ParameterType.Integer,
                                    orderIndex = None))
         ),
         parameterValues = Map("id" -> RawParameterValue("Frank"))
@@ -59,7 +59,7 @@ class TemplateRendererSpec extends Specification with Mockito {
                                   None,
                                   None,
                                   secret = Some(false),
-                                  `type` = Some(ParameterType.String),
+                                  `type` = ParameterType.String,
                                   orderIndex = None))
         ),
         parameterValues = Map("id" -> StringParameterValue("\"Frank"))
@@ -89,7 +89,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           template = "\"{{id}} {{age}}\"",
           description = "desc",
           parameterInfos =
-            Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = None, orderIndex = None))
+            Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = ParameterType.String, orderIndex = None))
         ),
         parameterValues = Map("id" -> StringParameterValue("Frank"), "age" -> IntParameterValue(50))
       )
@@ -109,7 +109,7 @@ class TemplateRendererSpec extends Specification with Mockito {
                                   None,
                                   None,
                                   secret = Some(false),
-                                  `type` = Some(ParameterType.Decimal),
+                                  `type` = ParameterType.Decimal,
                                   orderIndex = None)
           )
         ),
@@ -131,7 +131,7 @@ class TemplateRendererSpec extends Specification with Mockito {
                                   None,
                                   None,
                                   secret = Some(false),
-                                  `type` = Some(ParameterType.Integer),
+                                  `type` = ParameterType.Integer,
                                   orderIndex = None)
           )
         ),

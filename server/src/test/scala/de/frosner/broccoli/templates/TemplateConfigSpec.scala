@@ -1,7 +1,7 @@
 package de.frosner.broccoli.templates
 
 import com.typesafe.config.ConfigFactory
-import de.frosner.broccoli.models.{IntParameterValue, ParameterType, RawParameterValue, StringParameterValue}
+import de.frosner.broccoli.models._
 import de.frosner.broccoli.templates.TemplateConfig.Parameter
 import org.specs2.mutable.Specification
 import pureconfig.error.ConfigReaderException
@@ -31,6 +31,14 @@ class TemplateConfigSpec extends Specification {
                   |  "id" = {
                   |    type = string
                   |  }
+                  |  "cpu" = {
+                  |    default = 1234
+                  |    type = integer
+                  |  }
+                  |  "somedecimal" = {
+                  |    default = 1234.5678
+                  |    type = decimal
+                  |  }
                   |}
                 """.stripMargin
       val expectedTemplateInfo = TemplateConfig.TemplateInfo(
@@ -41,21 +49,35 @@ class TemplateConfigSpec extends Specification {
               name = Some("connection url"),
               default = Some(StringParameterValue("localhost:8000")),
               secret = None,
-              `type` = Some(ParameterType.String),
+              `type` = ParameterType.String,
               orderIndex = Some(1)
             ),
             "enabled" -> Parameter(
               name = None,
               default = Some(RawParameterValue("true")),
               secret = None,
-              `type` = Some(ParameterType.Raw),
+              `type` = ParameterType.Raw,
               orderIndex = Some(2)
             ),
             "id" -> Parameter(
               name = None,
               default = None,
               secret = None,
-              `type` = Some(ParameterType.String),
+              `type` = ParameterType.String,
+              orderIndex = None
+            ),
+            "cpu" -> Parameter(
+              name = None,
+              default = Some(IntParameterValue(1234)),
+              secret = None,
+              `type` = ParameterType.Integer,
+              orderIndex = None
+            ),
+            "somedecimal" -> Parameter(
+              name = None,
+              default = Some(DecimalParameterValue(1234.5678)),
+              secret = None,
+              `type` = ParameterType.Decimal,
               orderIndex = None
             )
           )

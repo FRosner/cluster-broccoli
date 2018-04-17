@@ -45,7 +45,7 @@ class InstanceSpec extends Specification with ScalaCheck with ModelArbitraries w
           template = "\"{{id}} {{age}}\"",
           description = "desc",
           parameterInfos =
-            Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = None, orderIndex = None))
+            Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = ParameterType.Integer, orderIndex = None))
         ),
         parameterValues = Map("id" -> StringParameterValue("Frank"))
       ) must throwA[IllegalArgumentException]

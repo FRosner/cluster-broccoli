@@ -3,8 +3,10 @@ module Models.Resources.Template exposing (..)
 import Json.Decode as Decode exposing (field)
 import Json.Encode as Encode
 import Dict exposing (Dict)
+import Utils.DictUtils exposing (flatten)
 import Maybe.Extra exposing (isJust)
 import Utils.StringUtils exposing (surround)
+import Maybe.Extra exposing (join)
 
 
 type alias TemplateId =
@@ -20,10 +22,6 @@ type alias Template =
     }
 
 
-
--- We add Param at the end to avoid conflict with traditional data types
-
-
 type ParameterType
     = RawParam
     | StringParam
@@ -32,10 +30,10 @@ type ParameterType
 
 
 type ParameterValue
-    = IntParamVal Int
-    | StringParamVal String
-    | RawParamVal String
-    | DecimalParamVal Float -- Looks like Elm does not support bigger decimals like Java's BigDecimal
+    = IntVal Int
+    | StringVal String
+    | RawVal String
+    | DecimalVal Float -- Looks like Elm does not support bigger decimals like Java's BigDecimal
 
 
 type alias ParameterInfo =
@@ -44,7 +42,7 @@ type alias ParameterInfo =
     , default : Maybe ParameterValue
     , secret : Maybe Bool
     , orderIndex : Maybe Float
-    , dataType : Maybe ParameterType
+    , dataType : ParameterType
     }
 
 
@@ -62,23 +60,16 @@ decoder =
 
 
 parameterInfoDecoder =
-    Decode.maybe (field "type" decodeDataType)
+    (field "type" decodeDataType)
         |> Decode.andThen
-            (\maybeParamType ->
-                let
-                    paramType =
-                        maybeParamType |> Maybe.withDefault RawParam
-                in
-                    Decode.map6 ParameterInfo
-                        (field "id" Decode.string)
-                        (Decode.maybe (field "name" Decode.string))
-                        (Decode.maybe (field "default" (decodeParamValue paramType)))
-                        (Decode.maybe (field "secret" Decode.bool))
-                        (Decode.maybe (field "orderIndex" Decode.float))
-                        {- We always succeed because even if the decode phase failed
-                           - we have wrapped it in a Maybe
-                        -}
-                        (Decode.succeed (maybeParamType))
+            (\paramType ->
+                Decode.map6 ParameterInfo
+                    (field "id" Decode.string)
+                    (Decode.maybe (field "name" Decode.string))
+                    (Decode.maybe (field "default" (decodeParamValue paramType)))
+                    (Decode.maybe (field "secret" Decode.bool))
+                    (Decode.maybe (field "orderIndex" Decode.float))
+                    (Decode.succeed (paramType))
             )
 
 
@@ -110,8 +101,7 @@ decodeValueFromInfo parameterInfos =
     decodeMaybeValueFromInfo parameterInfos
         |> Decode.andThen
             (\paramValues ->
-                -- Using foldl as a flatMap since Elm does not have flatMap
-                Decode.succeed (Dict.foldl (\k v acc -> Dict.update k (always v) acc) Dict.empty paramValues)
+                Decode.succeed (flatten paramValues)
             )
 
 
@@ -123,20 +113,15 @@ decodeMaybeValueFromInfo parameterInfos =
                 Decode.succeed
                     (Dict.map
                         (\paramName paramValueRaw ->
-                            let
-                                paramType =
-                                    Dict.get paramName parameterInfos
-                                        |> Maybe.andThen
-                                            (\paramInfo -> paramInfo.dataType)
-                                        |> Maybe.withDefault RawParam
-                            in
-                                case (Decode.decodeValue (Decode.nullable (decodeParamValue paramType)) paramValueRaw) of
-                                    Ok paramValue ->
-                                        paramValue
-
-                                    -- Note: This should never really happen since it is coming from the backend?
-                                    Err error ->
-                                        Nothing
+                            join
+                                (Dict.get paramName parameterInfos
+                                    |> Maybe.map
+                                        (\paramInfo -> paramInfo.dataType)
+                                    |> Maybe.andThen
+                                        (\paramType ->
+                                            Result.toMaybe (Decode.decodeValue (Decode.nullable (decodeParamValue paramType)) paramValueRaw)
+                                        )
+                                )
                         )
                         paramValuesRaw
                     )
@@ -150,55 +135,56 @@ decodeParamValue paramType =
             Decode.int
                 |> Decode.andThen
                     (\paramValue ->
-                        Decode.succeed (IntParamVal paramValue)
+                        Decode.succeed (IntVal paramValue)
                     )
 
         DecimalParam ->
             Decode.float
                 |> Decode.andThen
                     (\paramValue ->
-                        Decode.succeed (DecimalParamVal paramValue)
+                        Decode.succeed (DecimalVal paramValue)
                     )
 
         StringParam ->
             Decode.string
                 |> Decode.andThen
                     (\paramValue ->
-                        Decode.succeed (StringParamVal paramValue)
+                        Decode.succeed (StringVal paramValue)
                     )
 
         RawParam ->
             Decode.string
                 |> Decode.andThen
                     (\paramValue ->
-                        Decode.succeed (RawParamVal paramValue)
+                        Decode.succeed (RawVal paramValue)
                     )
 
 
 encodeParamValue paramValue =
     case paramValue of
-        IntParamVal x ->
+        IntVal x ->
             Encode.int x
 
-        DecimalParamVal x ->
+        DecimalVal x ->
             Encode.float x
 
-        StringParamVal x ->
+        StringVal x ->
             Encode.string x
 
-        RawParamVal x ->
+        RawVal x ->
             Encode.string x
 
 
 valueFromStringAndInfo : Dict String ParameterInfo -> String -> String -> Result String ParameterValue
 valueFromStringAndInfo parameterInfos paramName paramValue =
     let
-        paramType =
+        maybeParamType =
             Dict.get paramName parameterInfos
-                |> Maybe.andThen (\info -> info.dataType)
-                |> Maybe.withDefault RawParam
+                |> Maybe.map (\info -> info.dataType)
     in
-        valueFromString paramType paramValue
+        -- This should never happen
+        Result.fromMaybe "Internal Error. Contact Admin." maybeParamType
+            |> Result.andThen (\paramType -> valueFromString paramType paramValue)
 
 
 valueFromString : ParameterType -> String -> Result String ParameterValue
@@ -220,16 +206,16 @@ maybeValueToString maybeParamValue =
 valueToString : ParameterValue -> String
 valueToString paramValue =
     case paramValue of
-        StringParamVal val ->
+        StringVal val ->
             val
 
-        IntParamVal val ->
+        IntVal val ->
             toString val
 
-        DecimalParamVal val ->
+        DecimalVal val ->
             toString val
 
-        RawParamVal val ->
+        RawVal val ->
             val
 
 

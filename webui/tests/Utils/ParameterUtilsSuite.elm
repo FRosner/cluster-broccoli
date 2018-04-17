@@ -4,6 +4,7 @@ import Utils.ParameterUtils exposing (getOtherParametersSorted, zipWithOrderInde
 import Test exposing (test, describe, Test)
 import Expect
 import Dict exposing (Dict)
+import Models.Resources.Template as Template
 
 
 tests : Test
@@ -52,7 +53,7 @@ tests =
                                     , secret = Nothing
                                     , name = Nothing
                                     , orderIndex = Just 2
-                                    , dataType = Nothing
+                                    , dataType = Template.RawParam
                                     }
                                   )
                                 , ( "b"
@@ -61,7 +62,7 @@ tests =
                                     , secret = Nothing
                                     , name = Nothing
                                     , orderIndex = Just 1
-                                    , dataType = Nothing
+                                    , dataType = Template.RawParam
                                     }
                                   )
                                 ]

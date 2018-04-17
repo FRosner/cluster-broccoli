@@ -22,19 +22,19 @@ object TemplateConfig {
               val paramValueObj = paramConfig.asInstanceOf[ConfigObject].toConfig
               val maybeName = Try(paramValueObj.getString("name")).toOption
               val maybeSecret = Try(paramValueObj.getBoolean("secret")).toOption
-              // Don't wrap the last call to withName as we want it to fail in case the wrong type is supplied
-              val maybeParamType = Try(paramValueObj.getString("type")).toOption.map(ParameterType.withName)
+              // Don't wrap the call as we want it to fail in case the wrong type or no type is supplied
+              val paramType = ParameterType.withName(paramValueObj.getString("type"))
               val maybeOrderIndex = Try(paramValueObj.getInt("order-index")).toOption
               val maybeDefault = Try(paramValueObj.getValue("default")).toOption.map { paramValueConf =>
                 ParameterValue.fromConfigValue(
-                  maybeParamType.getOrElse(ParameterType.Raw),
+                  paramType,
                   paramValueConf
                 ) match {
                   case Success(paramDefault) => paramDefault
                   case Failure(ex)           => throw ex
                 }
               }
-              (paramName, Parameter(maybeName, maybeDefault, maybeSecret, maybeParamType, maybeOrderIndex))
+              (paramName, Parameter(maybeName, maybeDefault, maybeSecret, paramType, maybeOrderIndex))
           }.toMap
         }
         TemplateInfo(description, parameters)
@@ -51,7 +51,7 @@ object TemplateConfig {
   final case class Parameter(name: Option[String],
                              default: Option[ParameterValue],
                              secret: Option[Boolean],
-                             `type`: Option[ParameterType],
+                             `type`: ParameterType,
                              orderIndex: Option[Int])
 
 }

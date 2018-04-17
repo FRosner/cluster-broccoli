@@ -291,18 +291,20 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                     ( Just edited, _ ) ->
                         edited
 
+                    -- See Instance.elm for why this is concealed
                     ( Nothing, Just Nothing ) ->
                         "concealed"
 
-                    -- See Instance.elm for why this is concealed
                     ( Nothing, Just (Just original) ) ->
                         valueToString original
 
             -- Since original is a ParameterValue need to convert it to string for display
             dataType =
                 maybeParameterInfo
-                    |> Maybe.andThen (\i -> i.dataType)
-                    |> Maybe.withDefault RawParam
+                    |> Maybe.map (\i -> i.dataType)
+                    -- The default statement will never be called. We use this only because Map.get returns Maybe
+                    -- and we want to flatten it
+                    |> Maybe.withDefault StringParam
 
             maybeErrMsg =
                 maybeEditedValue
@@ -310,9 +312,9 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                         (\value ->
                             case (valueFromString dataType value) of
                                 Ok _ ->
+                                    -- we don't care about the value if it was ok. Just display the string.
                                     Nothing
 
-                                -- we don't care about the value if it was ok. Just display the string.
                                 Err msg ->
                                     Just msg
                         )
@@ -362,6 +364,7 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                                 , placeholder placeholderValue
                                 , value parameterValue
                                 , disabled (not enabled)
+                                , id <| String.concat [ "edit-instance-form-parameter-input-", instance.id, "-", instance.template.id, "-", parameter ]
                                 , onInput (EnterEditInstanceParameterValue instance parameter)
                                 ]
                                 []
@@ -409,7 +412,9 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
 
                         Just msg ->
                             [ span
-                                [ class "help-block" ]
+                                [ class "help-block"
+                                , id <| String.concat [ "edit-instance-form-parameter-input-error-", instance.id, "-", instance.template.id, "-", parameter ]
+                                ]
                                 [ text msg ]
                             ]
                     )
@@ -576,8 +581,9 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
 
             dataType =
                 maybeParameterInfo
-                    |> Maybe.andThen (\i -> i.dataType)
-                    |> Maybe.withDefault RawParam
+                    |> Maybe.map (\i -> i.dataType)
+                    -- The default statement will never be called. We use this only because Map.get returns Maybe
+                    |> Maybe.withDefault StringParam
 
             isSecret =
                 maybeParameterInfo
@@ -686,7 +692,9 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                             (\errMsg ->
                                 Just
                                     [ span
-                                        [ class "help-block" ]
+                                        [ class "help-block"
+                                        , id <| String.concat [ "new-instance-form-parameter-input-error-", template.id, "-", parameter ]
+                                        ]
                                         [ text errMsg ]
                                     ]
                             )

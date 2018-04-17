@@ -47,8 +47,8 @@ trait ModelArbitraries {
       id <- Gen.identifier.label("id")
       name <- Gen.option(Gen.identifier.label("name"))
       secret <- Gen.option(Gen.oneOf(true, false)).label("secret")
-      type_ <- Gen.option(Gen.oneOf(ParameterType.values)).label("type")
-      default <- Gen.option(genForParamValue(type_.getOrElse(ParameterType.Raw))).label("default")
+      type_ <- Gen.oneOf(ParameterType.values).label("type")
+      default <- Gen.option(genForParamValue(type_)).label("default")
     } yield
       ParameterInfo(
         id = id,
@@ -68,7 +68,7 @@ trait ModelArbitraries {
       templateDescription <- Gen.identifier.label("description")
       templateParameters <- Gen.listOf(arbParameterInfo.arbitrary).label("parameterInfos")
     } yield {
-      val idParameter = ParameterInfo(id = "id", None, None, None, None, None)
+      val idParameter = ParameterInfo(id = "id", None, None, None, ParameterType.String, None)
       val template = templateParameters.map(i => s"{{${i.id}}}").mkString(" ")
       Template(
         id = templateId,
@@ -87,7 +87,7 @@ trait ModelArbitraries {
       values <- Gen.sequence[Map[String, ParameterValue], (String, ParameterValue)](
         template.parameterInfos.map {
           case (paramName, info) =>
-            genForParamValue(info.`type`.getOrElse(ParameterType.Raw))
+            genForParamValue(info.`type`)
               .label("value")
               .map(paramName -> _)
         }

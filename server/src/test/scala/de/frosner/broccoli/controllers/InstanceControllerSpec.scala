@@ -71,7 +71,7 @@ class InstanceControllerSpec
             name = Some("secret"),
             default = Some(StringParameterValue("value")),
             secret = Some(true),
-            `type` = None,
+            `type` = ParameterType.String,
             orderIndex = None
           )
         )

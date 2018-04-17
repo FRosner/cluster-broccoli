@@ -10,6 +10,7 @@ import Models.Resources.InstanceUpdate as InstanceUpdate exposing (InstanceUpdat
 import Utils.CmdUtils as CmdUtils
 import Messages exposing (..)
 import Dict exposing (Dict)
+import Utils.DictUtils exposing (flatMap)
 import Set exposing (Set)
 
 
@@ -168,22 +169,7 @@ updateBodyView message oldBodyUiModel =
                                     f.originalParameterValues
                                         |> Dict.union f.changedParameterValues
                                         |> Dict.filter (\p v -> List.member p template.parameters)
-                                        |> Dict.foldl
-                                            -- Use this for flatMap.
-                                            (\k v acc ->
-                                                Dict.update
-                                                    k
-                                                    (v
-                                                        |> Maybe.andThen
-                                                            (\value ->
-                                                                valueFromStringAndInfo template.parameterInfos k value
-                                                                    |> Result.toMaybe
-                                                            )
-                                                        |> always
-                                                    )
-                                                    acc
-                                            )
-                                            Dict.empty
+                                        |> flatMap (mapStringToParamVal template.parameterInfos)
                                 )
                                 maybeInstanceParameterForm
                             )
@@ -252,22 +238,7 @@ updateBodyView message oldBodyUiModel =
                 let
                     message =
                         parameterValues
-                            |> Dict.foldl
-                                -- Use this for flatMap.
-                                (\k v acc ->
-                                    Dict.update
-                                        k
-                                        (v
-                                            |> Maybe.andThen
-                                                (\value ->
-                                                    valueFromStringAndInfo parameterInfos k value
-                                                        |> Result.toMaybe
-                                                )
-                                            |> always
-                                        )
-                                        acc
-                                )
-                                Dict.empty
+                            |> flatMap (mapStringToParamVal parameterInfos)
                             |> InstanceCreation templateId
                 in
                     ( { oldBodyUiModel
@@ -452,3 +423,13 @@ unionOrDiff bool set1 set2 =
         Set.union set1 set2
     else
         Set.diff set1 set2
+
+
+mapStringToParamVal parameterInfos paramName maybeValue =
+    (Maybe.andThen
+        (\value ->
+            valueFromStringAndInfo parameterInfos paramName value
+                |> Result.toMaybe
+        )
+    )
+        maybeValue

@@ -13,7 +13,7 @@ class ParameterInfoSpec extends Specification {
                                name = None,
                                default = Some(StringParameterValue("d")),
                                secret = Some(false),
-                               `type` = Some(ParameterType.String),
+                               `type` = ParameterType.String,
                                orderIndex = None)
       Json.fromJson(Json.toJson(info)).get === info
     }

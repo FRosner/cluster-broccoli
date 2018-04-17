@@ -2,7 +2,7 @@ module Views.BodySuite exposing (tests)
 
 import Views.Body as Body
 import Models.Resources.Role as Role exposing (Role(..))
-import Models.Resources.Template as Template exposing (Template, TemplateId)
+import Models.Resources.Template as Template exposing (..)
 import Models.Resources.Instance as Instance exposing (Instance, InstanceId)
 import Models.Resources.JobStatus exposing (JobStatus(..))
 import Models.Resources.AllocatedTask exposing (AllocatedTask)
@@ -10,6 +10,7 @@ import Models.Resources.InstanceTasks as InstanceTasks exposing (InstanceTasks)
 import Models.Resources.TaskState exposing (TaskState(..))
 import Models.Resources.ClientStatus exposing (ClientStatus(..))
 import Models.Ui.BodyUiModel as BodyUiModel exposing (BodyUiModel)
+import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (InstanceParameterForm)
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Test exposing (test, describe, Test)
 import Test.Html.Query as Query
@@ -18,6 +19,7 @@ import Test.Html.Events as Events
 import Expect as Expect
 import Dict exposing (Dict)
 import Set exposing (Set)
+import Maybe
 
 
 tests : Test
@@ -272,45 +274,27 @@ tests =
                             |> Query.hasNot [ Selector.id "stop-selected-instances-t2" ]
             ]
         , describe "New Instance Form"
-            [ test "Should be invisible if it is not expanded" <|
-                \() ->
-                    let
-                        bodyUiModel =
-                            { defaultBodyUiModel
-                                | expandedTemplates = Set.fromList <| [ "t2" ]
-                            }
-                    in
-                        Body.view defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
-                            |> Query.fromHtml
-                            |> Query.find [ Selector.id "new-instance-form-container-t2" ]
-                            |> Query.has [ Selector.class "hidden" ]
-            , test "Should be visible if it is expanded" <|
-                \() ->
-                    let
-                        bodyUiModel =
-                            { defaultBodyUiModel
-                                | expandedTemplates = Set.fromList <| [ "t2" ]
-                                , expandedNewInstanceForms =
-                                    Dict.fromList <|
-                                        [ ( "t2"
-                                          , { originalParameterValues = Dict.empty
-                                            , changedParameterValues = Dict.empty
-                                            , selectedTemplate = Nothing
-                                            }
-                                          )
-                                        ]
-                            }
-                    in
-                        Body.view defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
-                            |> Query.fromHtml
-                            |> Query.find [ Selector.id "new-instance-form-container-t2" ]
-                            |> Query.has [ Selector.class "show" ]
-            , test "Should submit the entered parameters correctly" <|
-                \() ->
-                    let
-                        changedParameterValues =
-                            Dict.fromList <| [ ( "i1-p1", Just "lol" ) ]
-                    in
+            (let
+                changeBodyUiModel parameterForm =
+                    { defaultBodyUiModel
+                        | expandedTemplates = Set.fromList <| [ "t1" ]
+                        , expandedNewInstanceForms = Dict.fromList <| [ ( "t1", parameterForm ) ]
+                    }
+             in
+                [ test "Should be invisible if it is not expanded" <|
+                    \() ->
+                        let
+                            bodyUiModel =
+                                { defaultBodyUiModel
+                                    | expandedTemplates = Set.fromList <| [ "t2" ]
+                                }
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "new-instance-form-container-t2" ]
+                                |> Query.has [ Selector.class "hidden" ]
+                , test "Should be visible if it is expanded" <|
+                    \() ->
                         let
                             bodyUiModel =
                                 { defaultBodyUiModel
@@ -319,86 +303,277 @@ tests =
                                         Dict.fromList <|
                                             [ ( "t2"
                                               , { originalParameterValues = Dict.empty
-                                                , changedParameterValues = changedParameterValues
+                                                , changedParameterValues = Dict.empty
                                                 , selectedTemplate = Nothing
                                                 }
                                               )
                                             ]
                                 }
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "new-instance-form-container-t2" ]
+                                |> Query.has [ Selector.class "show" ]
+                , test "Should submit the entered parameters correctly" <|
+                    \() ->
+                        let
+                            changedParameterValues =
+                                Dict.fromList <| [ ( "i1-p1", Just "lol" ) ]
+                        in
+                            let
+                                bodyUiModel =
+                                    { defaultBodyUiModel
+                                        | expandedTemplates = Set.fromList <| [ "t2" ]
+                                        , expandedNewInstanceForms =
+                                            Dict.fromList <|
+                                                [ ( "t2"
+                                                  , { originalParameterValues = Dict.empty
+                                                    , changedParameterValues = changedParameterValues
+                                                    , selectedTemplate = Nothing
+                                                    }
+                                                  )
+                                                ]
+                                    }
 
-                            paramInfos =
-                                Dict.get "t2" defaultTemplates
-                                    |> Maybe.andThen (\t -> Just t.parameterInfos)
-                                    |> Maybe.withDefault Dict.empty
+                                paramInfos =
+                                    Dict.get "t2" defaultTemplates
+                                        |> Maybe.andThen (\t -> Just t.parameterInfos)
+                                        |> Maybe.withDefault Dict.empty
+                            in
+                                Body.view defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
+                                    |> Query.fromHtml
+                                    |> Query.find [ Selector.id "new-instance-form-t2" ]
+                                    |> Events.simulate (Events.Submit)
+                                    |> Events.expectEvent (SubmitNewInstanceCreation "t2" paramInfos changedParameterValues)
+                , test "Should render input groups for all parameters" <|
+                    \() ->
+                        let
+                            bodyUiModel =
+                                { defaultBodyUiModel
+                                    | expandedTemplates = Set.fromList <| [ "t2" ]
+                                    , expandedNewInstanceForms =
+                                        Dict.fromList <|
+                                            [ ( "t2"
+                                              , { originalParameterValues = Dict.empty
+                                                , changedParameterValues = Dict.empty
+                                                , selectedTemplate = Nothing
+                                                }
+                                              )
+                                            ]
+                                }
                         in
                             Body.view defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
                                 |> Query.fromHtml
                                 |> Query.find [ Selector.id "new-instance-form-t2" ]
-                                |> Events.simulate (Events.Submit)
-                                |> Events.expectEvent (SubmitNewInstanceCreation "t2" paramInfos changedParameterValues)
-            , test "Should render input groups for all parameters" <|
-                \() ->
-                    let
-                        bodyUiModel =
-                            { defaultBodyUiModel
-                                | expandedTemplates = Set.fromList <| [ "t2" ]
-                                , expandedNewInstanceForms =
-                                    Dict.fromList <|
-                                        [ ( "t2"
-                                          , { originalParameterValues = Dict.empty
-                                            , changedParameterValues = Dict.empty
-                                            , selectedTemplate = Nothing
-                                            }
-                                          )
-                                        ]
-                            }
-                    in
-                        Body.view defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
-                            |> Query.fromHtml
-                            |> Query.find [ Selector.id "new-instance-form-t2" ]
-                            |> Query.findAll [ Selector.class "input-group" ]
-                            |> Query.count (Expect.equal 3)
-            , test "Should discard the entered parameters if clicked" <|
-                \() ->
-                    let
-                        changedParameterValues =
-                            Dict.fromList <| [ ( "i1-p1", Just "lol" ) ]
-                    in
+                                |> Query.findAll [ Selector.class "input-group" ]
+                                |> Query.count (Expect.equal 5)
+                , test "Should discard the entered parameters if clicked" <|
+                    \() ->
+                        let
+                            changedParameterValues =
+                                Dict.fromList <| [ ( "i1-p1", Just "lol" ) ]
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks defaultBodyUiModel (Just Administrator)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "new-instance-form-discard-button-t2" ]
+                                |> Events.simulate (Events.Click)
+                                |> Events.expectEvent (DiscardNewInstanceCreation "t2")
+                , test "Should enter parameter values correctly" <|
+                    \() ->
                         Body.view defaultTemplates defaultInstances defaultTasks defaultBodyUiModel (Just Administrator)
                             |> Query.fromHtml
-                            |> Query.find [ Selector.id "new-instance-form-discard-button-t2" ]
-                            |> Events.simulate (Events.Click)
-                            |> Events.expectEvent (DiscardNewInstanceCreation "t2")
-            , test "Should enter parameter values correctly" <|
-                \() ->
-                    Body.view defaultTemplates defaultInstances defaultTasks defaultBodyUiModel (Just Administrator)
-                        |> Query.fromHtml
-                        |> Query.find [ Selector.id "new-instance-form-parameter-input-t2-t2-p1" ]
-                        |> Events.simulate (Events.Input "value")
-                        |> Events.expectEvent (EnterNewInstanceParameterValue "t2" "t2-p1" "value")
-            , test "Should toggle secret parameter visibility" <|
-                \() ->
-                    let
-                        bodyUiModel =
-                            { defaultBodyUiModel
-                                | expandedTemplates = Set.fromList <| [ "t2" ]
-                                , expandedNewInstanceForms =
-                                    Dict.fromList <|
-                                        [ ( "t2"
-                                          , { originalParameterValues = Dict.empty
-                                            , changedParameterValues = Dict.empty
-                                            , selectedTemplate = Nothing
-                                            }
-                                          )
-                                        ]
-                            }
-                    in
-                        Body.view defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
-                            |> Query.fromHtml
-                            |> Query.find [ Selector.id "new-instance-form-parameter-secret-visibility-t2-t2-p2" ]
-                            |> Events.simulate (Events.Click)
-                            |> Events.expectEvent (ToggleNewInstanceSecretVisibility "t2" "t2-p2")
-            ]
+                            |> Query.find [ Selector.id "new-instance-form-parameter-input-t2-t2-p1" ]
+                            |> Events.simulate (Events.Input "value")
+                            |> Events.expectEvent (EnterNewInstanceParameterValue "t2" "t2-p1" "value")
+                , test "Should toggle secret parameter visibility" <|
+                    \() ->
+                        let
+                            bodyUiModel =
+                                { defaultBodyUiModel
+                                    | expandedTemplates = Set.fromList <| [ "t2" ]
+                                    , expandedNewInstanceForms =
+                                        Dict.fromList <|
+                                            [ ( "t2"
+                                              , { originalParameterValues = Dict.empty
+                                                , changedParameterValues = Dict.empty
+                                                , selectedTemplate = Nothing
+                                                }
+                                              )
+                                            ]
+                                }
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "new-instance-form-parameter-secret-visibility-t2-t2-p2" ]
+                                |> Events.simulate (Events.Click)
+                                |> Events.expectEvent (ToggleNewInstanceSecretVisibility "t2" "t2-p2")
+                , test "should render new view correctly for raw datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.RawVal "somerawvalue"
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p1" "somerawvalue"
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks (changeBodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                -- i1 is the instanceId, t1 the templateId and t1-p1 the parameterName
+                                |> Query.find [ Selector.id "new-instance-form-parameter-input-t1-t1-p1" ]
+                                |> Query.has [ Selector.attribute "value" (valueToString paramVal) ]
+                , test "should render new view correctly for string datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.StringVal "somestringvalue"
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p2" "somestringvalue"
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks (changeBodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "new-instance-form-parameter-input-t1-t1-p2" ]
+                                |> Query.has [ Selector.attribute "value" (valueToString paramVal) ]
+                , test "should render new view correctly for integer datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.IntVal 4567
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p3" "4567"
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks (changeBodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "new-instance-form-parameter-input-t1-t1-p3" ]
+                                |> Query.has [ Selector.attribute "value" (valueToString paramVal) ]
+                , test "should render new view correctly for decimal datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.DecimalVal 678.93
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p4" "678.93"
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks (changeBodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "new-instance-form-parameter-input-t1-t1-p4" ]
+                                |> Query.has [ Selector.attribute "value" (valueToString paramVal) ]
+                , test "should show an error for wrong input from user for a integer field in new view" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.IntVal 678
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p3" "678a"
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks (changeBodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.has [ Selector.id "new-instance-form-parameter-input-error-t1-t1-p3" ]
+                , test "should show an error for wrong input from user for a decimal field in new view" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.DecimalVal 678.93
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p4" "678.93a"
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks (changeBodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.has [ Selector.id "new-instance-form-parameter-input-error-t1-t1-p4" ]
+                ]
+            )
+        , describe "Edit Instance Form"
+            (let
+                bodyUiModel parameterForm =
+                    { defaultBodyUiModel
+                        | expandedTemplates = Set.fromList <| [ "t1" ]
+                        , expandedInstances = Set.fromList <| [ "i1" ]
+                        , instanceParameterForms = Dict.fromList <| [ ( "i1", parameterForm ) ]
+                    }
+             in
+                [ test "should render edit view correctly for raw datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.RawVal "somerawvalue"
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p1" "somerawvalue"
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks (bodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                -- i1 is the instanceId, t1 the templateId and t1-p1 the parameterName
+                                |> Query.find [ Selector.id "edit-instance-form-parameter-input-i1-t1-t1-p1" ]
+                                |> Query.has [ Selector.attribute "value" (valueToString paramVal) ]
+                , test "should render edit view correctly for string datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.StringVal "somestringvalue"
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p2" "somestringvalue"
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks (bodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "edit-instance-form-parameter-input-i1-t1-t1-p2" ]
+                                |> Query.has [ Selector.attribute "value" (valueToString paramVal) ]
+                , test "should render edit view correctly for integer datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.IntVal 4567
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p3" "4567"
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks (bodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "edit-instance-form-parameter-input-i1-t1-t1-p3" ]
+                                |> Query.has [ Selector.attribute "value" (valueToString paramVal) ]
+                , test "should render edit view correctly for decimal datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.DecimalVal 678.93
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p4" "678.93"
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks (bodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "edit-instance-form-parameter-input-i1-t1-t1-p4" ]
+                                |> Query.has [ Selector.attribute "value" (valueToString paramVal) ]
+                , test "should show an error for wrong input from user for a integer field in edit view" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.IntVal 678
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p3" "678a"
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks (bodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.has [ Selector.id "edit-instance-form-parameter-input-error-i1-t1-t1-p3" ]
+                , test "should show an error for wrong input from user for a decimal field in edit view" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.DecimalVal 678.93
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p4" "678.93a"
+                        in
+                            Body.view defaultTemplates defaultInstances defaultTasks (bodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.has [ Selector.id "edit-instance-form-parameter-input-error-i1-t1-t1-p4" ]
+                ]
+            )
         , describe "Instance View"
             [ test "Should expand on click (chevron)" <|
                 \() ->
@@ -518,6 +693,22 @@ defaultBodyUiModel =
     BodyUiModel.initialModel
 
 
+defaultParameterForm : InstanceParameterForm
+defaultParameterForm =
+    InstanceParameterForm.empty
+
+
+changedParameterForm : InstanceParameterForm -> String -> String -> InstanceParameterForm
+changedParameterForm originalParameterForm paramName maybeParamVal =
+    { originalParameterForm
+        | changedParameterValues =
+            Dict.update
+                paramName
+                (always (Just (Just maybeParamVal)))
+                originalParameterForm.changedParameterValues
+    }
+
+
 defaultInstance : InstanceId -> TemplateId -> Instance
 defaultInstance instanceId templateId =
     { id = instanceId
@@ -577,24 +768,44 @@ defaultTemplate templateId =
         [ "id"
         , (String.concat [ templateId, "-p1" ])
         , (String.concat [ templateId, "-p2" ])
+        , (String.concat [ templateId, "-p3" ])
+        , (String.concat [ templateId, "-p4" ])
         ]
     , parameterInfos =
         [ ( (String.concat [ templateId, "-p1" ])
           , { id = (String.concat [ templateId, "-p1" ])
-            , default = Just (Template.RawParamVal "default")
+            , default = Just (Template.RawVal "default")
             , secret = Nothing
             , name = Nothing
             , orderIndex = Nothing
-            , dataType = Nothing
+            , dataType = Template.RawParam
             }
           )
         , ( (String.concat [ templateId, "-p2" ])
           , { id = (String.concat [ templateId, "-p2" ])
-            , default = Nothing
+            , default = Just (Template.StringVal "somestring")
             , secret = Just True
             , name = Nothing
             , orderIndex = Nothing
-            , dataType = Nothing
+            , dataType = Template.StringParam
+            }
+          )
+        , ( (String.concat [ templateId, "-p3" ])
+          , { id = (String.concat [ templateId, "-p3" ])
+            , default = Just (Template.IntVal 1234)
+            , secret = Just True
+            , name = Nothing
+            , orderIndex = Nothing
+            , dataType = Template.IntParam
+            }
+          )
+        , ( (String.concat [ templateId, "-p4" ])
+          , { id = (String.concat [ templateId, "-p4" ])
+            , default = Just (Template.DecimalVal 123.456)
+            , secret = Just True
+            , name = Nothing
+            , orderIndex = Nothing
+            , dataType = Template.DecimalParam
             }
           )
         ]

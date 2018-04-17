@@ -226,11 +226,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                     }
                 }
               } match {
-                case Success(params) =>
-                  // Remove params with default values
-                  val parameters = params.filter {
-                    case (paramName, paramValue) => !paramValue.isEmpty
-                  }
+                case Success(parameters) =>
                   val maybeNewInstance = Try(Instance(id, template, parameters))
                   maybeNewInstance.flatMap { newInstance =>
                     val result = instanceStorage.writeInstance(newInstance)
@@ -270,12 +266,6 @@ class InstanceService @Inject()(nomadClient: NomadClient,
         }
       } match {
         case Success(parsedParamValuesUpdated) =>
-          val parameterValuesUpdatesWithPossibleDefaults = parsedParamValuesUpdated.map { p =>
-            p.filter {
-              case (_, value) => !value.isEmpty
-            }
-          }
-
           val instanceWithPotentiallyUpdatedTemplateAndParameterValues: Try[Instance] =
             if (templateSelector.isDefined) {
               val newTemplateId = templateSelector.get
@@ -283,9 +273,9 @@ class InstanceService @Inject()(nomadClient: NomadClient,
               newTemplate
                 .map { template =>
                   // Requested template exists, update the template
-                  if (parameterValuesUpdatesWithPossibleDefaults.isDefined) {
+                  if (parsedParamValuesUpdated.isDefined) {
                     // New parameter values are specified
-                    val newParameterValues = parameterValuesUpdatesWithPossibleDefaults.get
+                    val newParameterValues = parsedParamValuesUpdated.get
                     instance.updateTemplate(template, newParameterValues)
                   } else {
                     // Just use the old parameter values
@@ -298,9 +288,9 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                 }
             } else {
               // No template update required
-              if (parameterValuesUpdatesWithPossibleDefaults.isDefined) {
+              if (parsedParamValuesUpdated.isDefined) {
                 // Just update the parameter values
-                val newParameterValues = parameterValuesUpdatesWithPossibleDefaults.get
+                val newParameterValues = parsedParamValuesUpdated.get
                 instance.updateParameterValues(newParameterValues)
               } else {
                 // Neither template update nor parameter value update required
