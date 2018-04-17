@@ -39,7 +39,7 @@
               "Name": "test-http-web-ui-1",
               "Tags": [
                 "protocol-http",
-                "guessme"
+                "123.456"
               ],
               "PortLabel": "ui",
               "Checks": [

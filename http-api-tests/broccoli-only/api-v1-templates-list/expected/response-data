@@ -21,11 +21,11 @@
       "URL": {
         "id": "URL",
         "default": "localhost:8000",
-        "type": "string",
+        "type": "raw",
         "orderIndex": 1
       }
     },
-    "version": "355061b8541f4951fbfa77c0a4aa46c8"
+    "version": "149d17a53dba4820b3dff125b35094bf"
   },
   {
     "id": "http-server",
@@ -39,22 +39,22 @@
       "cpu": {
         "id": "cpu",
         "name": "CPU Shares",
-        "default": "100",
-        "type": "raw"
+        "default": 100,
+        "type": "integer"
       },
       "secret": {
         "id": "secret",
         "name": "A Secret Parameter",
-        "default": "guessme",
+        "default": 123.456,
         "secret": true,
-        "type": "string"
+        "type": "decimal"
       },
       "id": {
         "id": "id",
         "type": "string"
       }
     },
-    "version": "bfa3a62e273dd89fc3ab850e55736b20"
+    "version": "9215ebc3b508fcc0295bffdbfe5695b2"
   },
   {
     "id": "jupyter",
@@ -68,6 +68,6 @@
         "type": "string"
       }
     },
-    "version": "78f3c9fda601b837cb64fa2a4cb2a111"
+    "version": "beb88e5f9ca22d3b2d9fa0e91c2bb255"
   }
 ]
