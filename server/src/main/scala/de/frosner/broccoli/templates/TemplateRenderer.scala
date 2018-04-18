@@ -1,6 +1,5 @@
 package de.frosner.broccoli.templates
 
-
 import de.frosner.broccoli.models.Instance
 import play.api.libs.json.{JsValue, Json}
 
