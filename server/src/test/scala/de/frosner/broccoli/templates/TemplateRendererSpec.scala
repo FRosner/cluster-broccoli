@@ -8,13 +8,12 @@ import play.api.libs.json.{JsNumber, JsString}
 import scala.util.{Failure, Try}
 
 class TemplateRendererSpec extends Specification with Mockito {
-  val templateRenderer = new TemplateRenderer(ParameterType.Raw)
 
   "TemplateRenderer" should {
     "render the template correctly when an instance contains a single parameter" in {
       val instance =
         Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> StringParameterValue("Frank")))
-      templateRenderer.renderJson(instance) === JsString("Frank")
+      TemplateRenderer.renderJson(instance) === JsString("Frank")
     }
 
     "parse the template correctly when it contains multiple parameters" in {
@@ -24,7 +23,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           Template("1", "\"{{id}} {{age}}\"", "desc", Map.empty),
           Map("id" -> RawParameterValue("Frank"), "age" -> IntParameterValue(5))
         )
-      templateRenderer.renderJson(instance) === JsString("Frank 5")
+      TemplateRenderer.renderJson(instance) === JsString("Frank 5")
     }
 
     "parse the template correctly when it contains a defined default parameter" in {
@@ -44,7 +43,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> RawParameterValue("Frank"))
       )
-      templateRenderer.renderJson(instance) === JsString("Frank 50")
+      TemplateRenderer.renderJson(instance) === JsString("Frank 50")
     }
 
     "parse the template correctly when it has String parameters" in {
@@ -64,7 +63,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> StringParameterValue("\"Frank"))
       )
-      templateRenderer.renderJson(instance) === JsString("\"Frank")
+      TemplateRenderer.renderJson(instance) === JsString("\"Frank")
     }
 
     "parse the template correctly when it contains regex stuff that breaks with replaceAll" in {
@@ -78,7 +77,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> RawParameterValue("^.*$"))
       )
-      templateRenderer.renderJson(instance) === JsString("^.*$")
+      TemplateRenderer.renderJson(instance) === JsString("^.*$")
     }
 
     "parse the template correctly when it contains an undefined default parameter" in {
@@ -98,7 +97,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> StringParameterValue("Frank"), "age" -> IntParameterValue(50))
       )
-      templateRenderer.renderJson(instance) === JsString("Frank 50")
+      TemplateRenderer.renderJson(instance) === JsString("Frank 50")
     }
 
     "parse the template correctly when it has Decimal parameters" in {
@@ -120,7 +119,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> DecimalParameterValue(value))
       )
-      templateRenderer.renderJson(instance) === JsNumber(value)
+      TemplateRenderer.renderJson(instance) === JsNumber(value)
     }
 
     "parse the template correctly when it has Integer parameters" in {
@@ -142,7 +141,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> IntParameterValue(value))
       )
-      templateRenderer.renderJson(instance) === JsNumber(value)
+      TemplateRenderer.renderJson(instance) === JsNumber(value)
     }
   }
 }

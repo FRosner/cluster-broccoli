@@ -1,16 +1,13 @@
 package de.frosner.broccoli.templates
 
-import javax.inject.Inject
 
-import de.frosner.broccoli.models.{Instance, ParameterInfo, ParameterType}
-import play.api.libs.json.{JsString, JsValue, Json}
+import de.frosner.broccoli.models.Instance
+import play.api.libs.json.{JsValue, Json}
 
 /**
   * Renders json representation of the passed instance
-  *
-  * @param defaultType The default type of template parameters
   */
-class TemplateRenderer(defaultType: ParameterType) {
+object TemplateRenderer {
 
   def renderJson(instance: Instance): JsValue = {
     val template = instance.template
