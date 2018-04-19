@@ -341,6 +341,12 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                                             ]
                                         ]
                                         [ text parameterName ]
+                                  , span
+                                        [ class "input-group-addon" ]
+                                        [ icon
+                                            (dataTypeToIcon dataType)
+                                            [ title (dataTypeToTitle dataType) ]
+                                        ]
                                   , input
                                         [ type_
                                             (if (isSecret && (not secretVisible)) then
@@ -613,6 +619,12 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                                             ]
                                         ]
                                         [ text parameterName ]
+                                  , span
+                                        [ class "input-group-addon" ]
+                                        [ icon
+                                            (dataTypeToIcon dataType)
+                                            [ title (dataTypeToTitle dataType) ]
+                                        ]
                                   , input
                                         [ type_
                                             (if (isSecret && (not secretVisible)) then
@@ -704,3 +716,35 @@ getErrorMessage maybeValue paramName dataType =
                             Err _ ->
                                 Just (String.concat <| [ paramName, " must be ", dataTypeToString dataType ])
             )
+
+
+dataTypeToIcon : ParameterType -> String
+dataTypeToIcon dataType =
+    case dataType of
+        StringParam ->
+            "glyphicon glyphicon-text-size"
+
+        RawParam ->
+            "glyphicon glyphicon-asterisk"
+
+        IntParam ->
+            "fa fa-hashtag"
+
+        DecimalParam ->
+            "glyphicon glyphicon-sound-5-1"
+
+
+dataTypeToTitle : ParameterType -> String
+dataTypeToTitle dataType =
+    case dataType of
+        StringParam ->
+            "String"
+
+        RawParam ->
+            "Unsafe String"
+
+        IntParam ->
+            "Integer"
+
+        DecimalParam ->
+            "Decimal"
