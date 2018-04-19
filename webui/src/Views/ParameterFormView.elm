@@ -16,7 +16,6 @@ import Set exposing (Set)
 import Maybe
 import Maybe.Extra exposing (isJust, join)
 import Json.Decode
-import Regex exposing (contains, regex)
 import Tuple exposing (first, second)
 
 
