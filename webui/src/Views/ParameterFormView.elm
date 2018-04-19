@@ -307,17 +307,7 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                     |> Maybe.withDefault StringParam
 
             maybeErrMsg =
-                maybeEditedValue
-                    |> Maybe.andThen
-                        (\value ->
-                            case (valueFromString dataType value) of
-                                Ok _ ->
-                                    -- we don't care about the value if it was ok. Just display the string.
-                                    Nothing
-
-                                Err msg ->
-                                    Just msg
-                        )
+                getErrorMessage maybeEditedValue parameterName dataType
 
             hasError =
                 isJust maybeErrMsg
@@ -599,17 +589,7 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                     |> Maybe.withDefault parameter
 
             maybeErrMsg =
-                maybeEditedValue
-                    |> Maybe.andThen
-                        (\value ->
-                            case (valueFromString dataType value) of
-                                -- If it was Ok then there is no error
-                                Ok _ ->
-                                    Nothing
-
-                                Err msg ->
-                                    Just (String.concat <| [ parameterName, " must be ", dataTypeToString dataType ])
-                        )
+                getErrorMessage maybeEditedValue parameterName dataType
 
             hasError =
                 isJust maybeErrMsg
@@ -702,4 +682,24 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                     )
                 )
             , hasError
+            )
+
+
+getErrorMessage : Maybe String -> String -> ParameterType -> Maybe String
+getErrorMessage maybeValue paramName dataType =
+    maybeValue
+        |> Maybe.andThen
+            (\value ->
+                case value of
+                    "" ->
+                        Nothing
+
+                    _ ->
+                        case (valueFromString dataType value) of
+                            -- The error is not present if the value was okay
+                            Ok _ ->
+                                Nothing
+
+                            Err _ ->
+                                Just (String.concat <| [ paramName, " must be ", dataTypeToString dataType ])
             )

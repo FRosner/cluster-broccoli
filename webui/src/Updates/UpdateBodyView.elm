@@ -428,8 +428,12 @@ unionOrDiff bool set1 set2 =
 mapStringToParamVal parameterInfos paramName maybeValue =
     (Maybe.andThen
         (\value ->
-            valueFromStringAndInfo parameterInfos paramName value
-                |> Result.toMaybe
+            case value of
+                "" ->
+                    Nothing
+
+                _ ->
+                    valueFromStringAndInfo parameterInfos paramName value |> Result.toMaybe
         )
     )
         maybeValue
