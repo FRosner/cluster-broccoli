@@ -14,7 +14,7 @@ object ParameterValue {
     override def writes(paramValue: ParameterValue) = paramValue.asJsValue
   }
 
-  def fromConfigValue(parameterType: ParameterType, configValue: ConfigValue): Try[ParameterValue] =
+  def fromConfigValue(paramName: String, parameterType: ParameterType, configValue: ConfigValue): Try[ParameterValue] =
     Try {
       parameterType match {
         case ParameterType.Raw =>
@@ -22,9 +22,14 @@ object ParameterValue {
         case ParameterType.String =>
           StringParameterValue(configValue.unwrapped.asInstanceOf[String])
         case ParameterType.Integer =>
-          IntParameterValue(configValue.unwrapped().asInstanceOf[Int])
+          val number = configValue.unwrapped().asInstanceOf[Number]
+          //noinspection ComparingUnrelatedTypes
+          if (number == number.intValue())
+            IntParameterValue(number.intValue())
+          else
+            throw ParameterValueParsingException(paramName, s"${number.toString} is not a valid integer")
         case ParameterType.Decimal =>
-          DecimalParameterValue(BigDecimal.valueOf(configValue.unwrapped().asInstanceOf[Double]))
+          DecimalParameterValue(BigDecimal(configValue.unwrapped().asInstanceOf[Number].toString))
       }
     }
 
@@ -35,13 +40,13 @@ object ParameterValue {
       val parameterInfo =
         parameterInfos.getOrElse(parameterName, throw ParameterNotFoundException(parameterName, parameterInfos.keySet))
       fromJsValue(parameterInfo.`type`, jsValue) match {
-        case Some(param) => param
-        case None =>
-          throw ParameterValueParsingException(parameterName)
+        case Success(param) => param
+        case Failure(ex) =>
+          throw ParameterValueParsingException(parameterName, ex.getMessage)
       }
     }
 
-  def fromJsValue(parameterType: ParameterType, jsValue: JsValue): Option[ParameterValue] =
+  def fromJsValue(parameterType: ParameterType, jsValue: JsValue): Try[ParameterValue] =
     Try {
       parameterType match {
         case ParameterType.Raw =>
@@ -53,9 +58,6 @@ object ParameterValue {
         case ParameterType.Decimal =>
           DecimalParameterValue(jsValue.as[BigDecimal])
       }
-    } match {
-      case Success(s) => Some(s)
-      case Failure(_) => None
     }
 }
 sealed trait ParameterValue {

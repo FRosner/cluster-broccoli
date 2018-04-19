@@ -32,7 +32,7 @@ class TemplateConfigSpec extends Specification {
                   |    type = string
                   |  }
                   |  "cpu" = {
-                  |    default = 1234
+                  |    default = 1234.0
                   |    type = integer
                   |  }
                   |  "somedecimal" = {
@@ -113,6 +113,34 @@ class TemplateConfigSpec extends Specification {
                   |  }
                   |}
                 """.stripMargin
+      loadConfigOrThrow[TemplateConfig.TemplateInfo](
+        ConfigFactory.parseString(configString)
+      ) must throwA[ConfigReaderException[TemplateConfig.TemplateInfo]]
+    }
+
+    "fail if the template has a decimal and tries to parse it as an integer" in {
+
+      val configString =
+        """
+          |description = "A periodic job that sends an HTTP GET request to a specified address every minute."
+          |
+          |parameters = {
+          |  "URL" = {
+          |    name = "connection url"
+          |    default = "localhost:8000"
+          |    type = string
+          |    order-index = 1
+          |  }
+          |  "count" = {
+          |    default = 12.2
+          |    type = integer
+          |    order-index = 2
+          |  }
+          |  "id" = {
+          |    type = string
+          |  }
+          |}
+        """.stripMargin
       loadConfigOrThrow[TemplateConfig.TemplateInfo](
         ConfigFactory.parseString(configString)
       ) must throwA[ConfigReaderException[TemplateConfig.TemplateInfo]]

@@ -27,6 +27,7 @@ object TemplateConfig {
               val maybeOrderIndex = Try(paramValueObj.getInt("order-index")).toOption
               val maybeDefault = Try(paramValueObj.getValue("default")).toOption.map { paramValueConf =>
                 ParameterValue.fromConfigValue(
+                  paramName,
                   paramType,
                   paramValueConf
                 ) match {

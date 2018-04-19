@@ -27,7 +27,7 @@ object ParameterInfo {
         val orderIndex = (json \ "orderIndex").asOpt[Int]
         val default = (`type`, (json \ "default").toOption) match {
           case (paramType, Some(jsValue)) =>
-            ParameterValue.fromJsValue(paramType, jsValue)
+            ParameterValue.fromJsValue(paramType, jsValue).toOption
           case _ => None
         }
         ParameterInfo(id, name, default, secret, `type`, orderIndex)
