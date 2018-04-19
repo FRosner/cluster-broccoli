@@ -5,8 +5,9 @@ import play.api.libs.json.{JsValue, Json}
 
 /**
   * Renders json representation of the passed instance
+  *
   */
-object TemplateRenderer {
+class TemplateRenderer {
 
   def renderJson(instance: Instance): JsValue = {
     val template = instance.template

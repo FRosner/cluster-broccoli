@@ -33,6 +33,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                                 nomadService: NomadService,
                                 consulService: ConsulService,
                                 applicationLifecycle: ApplicationLifecycle,
+                                templateRenderer: TemplateRenderer,
                                 instanceStorage: InstanceStorage,
                                 config: Configuration) {
   private val log = play.api.Logger(getClass)
@@ -321,7 +322,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
               .map {
                 // Update the instance status
                 case JobStatus.Running =>
-                  nomadService.startJob(TemplateRenderer.renderJson(instance)).map(_ => instance)
+                  nomadService.startJob(templateRenderer.renderJson(instance)).map(_ => instance)
                 case JobStatus.Stopped =>
                   val deletedJob = nomadService.deleteJob(instance.id)
                   // FIXME we don't delete the service and periodic job / status info here (#352) => potential mem leak
