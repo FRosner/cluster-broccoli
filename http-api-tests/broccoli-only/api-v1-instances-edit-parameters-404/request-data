@@ -1,6 +1,6 @@
 {
   "parameterValues": {
     "id": "test-http",
-    "cpu": "50" 
+    "cpu": 50
   }
 }

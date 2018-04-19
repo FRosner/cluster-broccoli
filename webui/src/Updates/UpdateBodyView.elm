@@ -2,6 +2,7 @@ module Updates.UpdateBodyView exposing (updateBodyView)
 
 import Updates.Messages exposing (UpdateBodyViewMsg(..))
 import Models.Resources.JobStatus as JobStatus exposing (JobStatus)
+import Models.Resources.Template as Template exposing (..)
 import Models.Ui.InstanceParameterForm as InstanceParameterForm exposing (InstanceParameterForm)
 import Models.Ui.BodyUiModel exposing (BodyUiModel)
 import Models.Resources.InstanceCreation as InstanceCreation exposing (InstanceCreation)
@@ -9,6 +10,7 @@ import Models.Resources.InstanceUpdate as InstanceUpdate exposing (InstanceUpdat
 import Utils.CmdUtils as CmdUtils
 import Messages exposing (..)
 import Dict exposing (Dict)
+import Utils.DictUtils exposing (flatMap)
 import Set exposing (Set)
 
 
@@ -167,7 +169,7 @@ updateBodyView message oldBodyUiModel =
                                     f.originalParameterValues
                                         |> Dict.union f.changedParameterValues
                                         |> Dict.filter (\p v -> List.member p template.parameters)
-                                        |> Dict.map (\k v -> Maybe.withDefault "" v)
+                                        |> flatMap (mapStringToParamVal template.parameterInfos)
                                 )
                                 maybeInstanceParameterForm
                             )
@@ -232,11 +234,11 @@ updateBodyView message oldBodyUiModel =
                     , Cmd.none
                     )
 
-            SubmitNewInstanceCreation templateId parameterValues ->
+            SubmitNewInstanceCreation templateId parameterInfos parameterValues ->
                 let
                     message =
                         parameterValues
-                            |> Dict.map (\k v -> Maybe.withDefault "" v)
+                            |> flatMap (mapStringToParamVal parameterInfos)
                             |> InstanceCreation templateId
                 in
                     ( { oldBodyUiModel
@@ -357,7 +359,7 @@ addParameterValue instance parameter value maybeParameterForm =
         Nothing ->
             Just
                 ({ changedParameterValues = Dict.fromList [ ( parameter, Just value ) ]
-                 , originalParameterValues = instance.parameterValues
+                 , originalParameterValues = (parameterValuesToFormValues instance.parameterValues)
                  , selectedTemplate = Nothing
                  }
                 )
@@ -379,7 +381,7 @@ selectTemplate instance templates templateId maybeParameterForm =
             Nothing ->
                 Just
                     ({ changedParameterValues = Dict.empty
-                     , originalParameterValues = instance.parameterValues
+                     , originalParameterValues = (parameterValuesToFormValues instance.parameterValues)
                      , selectedTemplate = selectedTemplate
                      }
                     )
@@ -404,6 +406,11 @@ updateNewInstanceParameterForm parameter value maybeParameterForm =
                 )
 
 
+parameterValuesToFormValues : Dict String (Maybe ParameterValue) -> Dict String (Maybe String)
+parameterValuesToFormValues parameterValues =
+    Dict.map (\k maybeVal -> maybeValueToString maybeVal) parameterValues
+
+
 insertOrRemove bool insert set =
     if (bool) then
         Set.insert insert set
@@ -416,3 +423,17 @@ unionOrDiff bool set1 set2 =
         Set.union set1 set2
     else
         Set.diff set1 set2
+
+
+mapStringToParamVal parameterInfos paramName maybeValue =
+    (Maybe.andThen
+        (\value ->
+            case value of
+                "" ->
+                    Nothing
+
+                _ ->
+                    valueFromStringAndInfo parameterInfos paramName value |> Result.toMaybe
+        )
+    )
+        maybeValue

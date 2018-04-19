@@ -2,7 +2,7 @@ package de.frosner.broccoli.templates
 
 import java.nio.file.{FileSystems, Files}
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ConfigFactory, ConfigValue}
 import pureconfig._
 import pureconfig.module.enumeratum._
 import de.frosner.broccoli.models.{ParameterInfo, Template}
@@ -44,6 +44,7 @@ class DirectoryTemplateSource(directory: String) extends TemplateSource {
         val templateFileContent = Source.fromFile(templateDirectory.resolve("template.json").toString).mkString
         val templateId = templateDirectory.getFileName.toString
         val metaFile = templateDirectory.resolve("meta.json")
+
         val templateInfo =
           loadConfigOrThrow[TemplateConfig.TemplateInfo](
             ConfigFactory.parseFile(templateDirectory.resolve("template.conf").toFile))

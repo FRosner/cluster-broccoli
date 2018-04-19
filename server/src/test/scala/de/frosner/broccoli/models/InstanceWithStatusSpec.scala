@@ -25,14 +25,14 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
                 name = None,
                 default = None,
                 secret = Some(true),
-                `type` = Some(ParameterType.String),
+                `type` = ParameterType.String,
                 orderIndex = None
               )
             )
           ),
           parameterValues = Map(
-            "id" -> "i",
-            "password" -> "noone knows"
+            "id" -> StringParameterValue("i"),
+            "password" -> StringParameterValue("noone knows")
           )
         ),
         status = JobStatus.Unknown,
@@ -52,13 +52,13 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
                 name = None,
                 default = None,
                 secret = Some(true),
-                `type` = Some(ParameterType.String),
+                `type` = ParameterType.String,
                 orderIndex = None
               )
             )
           ),
           parameterValues = Map(
-            "id" -> "i",
+            "id" -> StringParameterValue("i"),
             "password" -> null
           )
         ),
@@ -83,7 +83,7 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
                 name = None,
                 default = None,
                 secret = Some(true),
-                `type` = Some(ParameterType.String),
+                `type` = ParameterType.String,
                 orderIndex = None
               ),
               "id" -> ParameterInfo(
@@ -91,14 +91,14 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
                 name = None,
                 default = None,
                 secret = Some(true),
-                `type` = Some(ParameterType.String),
+                `type` = ParameterType.String,
                 orderIndex = None
               )
             )
           ),
           parameterValues = Map(
-            "id" -> "i",
-            "password" -> "noone knows"
+            "id" -> StringParameterValue("i"),
+            "password" -> StringParameterValue("noone knows")
           )
         ),
         status = JobStatus.Unknown,
@@ -118,7 +118,7 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
                 name = None,
                 default = None,
                 secret = Some(true),
-                `type` = Some(ParameterType.String),
+                `type` = ParameterType.String,
                 orderIndex = None
               ),
               "id" -> ParameterInfo(
@@ -126,7 +126,7 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
                 name = None,
                 default = None,
                 secret = Some(true),
-                `type` = Some(ParameterType.String),
+                `type` = ParameterType.String,
                 orderIndex = None
               )
             )

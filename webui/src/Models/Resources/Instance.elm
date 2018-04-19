@@ -2,7 +2,7 @@ module Models.Resources.Instance exposing (..)
 
 import Json.Decode as Decode exposing (field)
 import Utils.DecodeUtils as DecodeUtils
-import Models.Resources.Template as Template exposing (Template)
+import Models.Resources.Template as Template exposing (Template, ParameterValue, decodeMaybeValueFromInfo)
 import Models.Resources.JobStatus as JobStatus exposing (JobStatus)
 import Models.Resources.PeriodicRun as PeriodicRun exposing (PeriodicRun)
 import Models.Resources.Service as Service exposing (Service)
@@ -16,7 +16,7 @@ type alias InstanceId =
 type alias Instance =
     { id : InstanceId
     , template : Template
-    , parameterValues : Dict String (Maybe String) -- Nothing as a value here means that you have no right to see the value
+    , parameterValues : Dict String (Maybe ParameterValue) -- Nothing as a value here means that you have no right to see the value
     , jobStatus : JobStatus
     , services : List Service
     , periodicRuns : List PeriodicRun
@@ -24,10 +24,18 @@ type alias Instance =
 
 
 decoder =
-    Decode.map6 Instance
-        (field "id" Decode.string)
-        (field "template" Template.decoder)
-        (field "parameterValues" (Decode.dict (Decode.nullable Decode.string)))
-        (field "status" JobStatus.decoder)
-        (field "services" (Decode.list Service.decoder))
-        (field "periodicRuns" (Decode.list PeriodicRun.decoder))
+    (field "template" Template.decoder)
+        |> Decode.andThen
+            (\template ->
+                field "parameterValues" (decodeMaybeValueFromInfo template.parameterInfos)
+                    |> Decode.andThen
+                        (\paramValues ->
+                            Decode.map6 Instance
+                                (field "id" Decode.string)
+                                (Decode.succeed template)
+                                (Decode.succeed paramValues)
+                                (field "status" JobStatus.decoder)
+                                (field "services" (Decode.list Service.decoder))
+                                (field "periodicRuns" (Decode.list PeriodicRun.decoder))
+                        )
+            )

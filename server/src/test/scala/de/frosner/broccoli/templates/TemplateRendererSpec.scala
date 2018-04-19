@@ -1,22 +1,29 @@
 package de.frosner.broccoli.templates
 
-import de.frosner.broccoli.models.{Instance, ParameterInfo, ParameterType, Template}
+import de.frosner.broccoli.models._
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
-import play.api.libs.json.JsString
+import play.api.libs.json.{JsNumber, JsString}
+
+import scala.util.{Failure, Try}
 
 class TemplateRendererSpec extends Specification with Mockito {
-  val templateRenderer = new TemplateRenderer(ParameterType.Raw)
+  val templateRenderer = new TemplateRenderer
 
   "TemplateRenderer" should {
     "render the template correctly when an instance contains a single parameter" in {
-      val instance = Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> "Frank"))
+      val instance =
+        Instance("1", Template("1", "\"{{id}}\"", "desc", Map.empty), Map("id" -> StringParameterValue("Frank")))
       templateRenderer.renderJson(instance) === JsString("Frank")
     }
 
     "parse the template correctly when it contains multiple parameters" in {
       val instance =
-        Instance("1", Template("1", "\"{{id}} {{age}}\"", "desc", Map.empty), Map("id" -> "Frank", "age" -> "5"))
+        Instance(
+          "1",
+          Template("1", "\"{{id}} {{age}}\"", "desc", Map.empty),
+          Map("id" -> RawParameterValue("Frank"), "age" -> IntParameterValue(5))
+        )
       templateRenderer.renderJson(instance) === JsString("Frank 5")
     }
 
@@ -27,10 +34,15 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos =
-            Map("age" -> ParameterInfo("age", None, Some("50"), secret = Some(false), `type` = None, orderIndex = None))
+          parameterInfos = Map(
+            "age" -> ParameterInfo("age",
+                                   None,
+                                   Some(IntParameterValue(50)),
+                                   secret = Some(false),
+                                   `type` = ParameterType.Integer,
+                                   orderIndex = None))
         ),
-        parameterValues = Map("id" -> "Frank")
+        parameterValues = Map("id" -> RawParameterValue("Frank"))
       )
       templateRenderer.renderJson(instance) === JsString("Frank 50")
     }
@@ -47,15 +59,15 @@ class TemplateRendererSpec extends Specification with Mockito {
                                   None,
                                   None,
                                   secret = Some(false),
-                                  `type` = Some(ParameterType.String),
+                                  `type` = ParameterType.String,
                                   orderIndex = None))
         ),
-        parameterValues = Map("id" -> "\"Frank")
+        parameterValues = Map("id" -> StringParameterValue("\"Frank"))
       )
       templateRenderer.renderJson(instance) === JsString("\"Frank")
     }
 
-    "parse the template correctly when it contains regex stuff that breacks with replaceAll" in {
+    "parse the template correctly when it contains regex stuff that breaks with replaceAll" in {
       val instance = Instance(
         id = "1",
         template = Template(
@@ -64,7 +76,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           description = "desc",
           parameterInfos = Map.empty
         ),
-        parameterValues = Map("id" -> "^.*$")
+        parameterValues = Map("id" -> RawParameterValue("^.*$"))
       )
       templateRenderer.renderJson(instance) === JsString("^.*$")
     }
@@ -76,38 +88,61 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos =
-            Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = None, orderIndex = None))
+          parameterInfos = Map(
+            "age" -> ParameterInfo("age",
+                                   None,
+                                   None,
+                                   secret = Some(false),
+                                   `type` = ParameterType.String,
+                                   orderIndex = None))
         ),
-        parameterValues = Map("id" -> "Frank", "age" -> "50")
+        parameterValues = Map("id" -> StringParameterValue("Frank"), "age" -> IntParameterValue(50))
       )
       templateRenderer.renderJson(instance) === JsString("Frank 50")
     }
-  }
 
-  "sanitize" should {
-    val parameterValue = "value"
-    "just return the specified parameter value if it is raw" in {
-      templateRenderer
-        .sanitize(
-          "parameter",
-          parameterValue,
-          Map("parameter" -> ParameterInfo("parameter", None, None, None, Some(ParameterType.Raw), None))) === parameterValue
+    "parse the template correctly when it has Decimal parameters" in {
+      val value = 1234.56
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = """{{id}}""",
+          description = "desc",
+          parameterInfos = Map(
+            "id" -> ParameterInfo("id",
+                                  None,
+                                  None,
+                                  secret = Some(false),
+                                  `type` = ParameterType.Decimal,
+                                  orderIndex = None)
+          )
+        ),
+        parameterValues = Map("id" -> DecimalParameterValue(value))
+      )
+      templateRenderer.renderJson(instance) === JsNumber(value)
     }
 
-    "escape the value if it is a string" in {
-      templateRenderer
-        .sanitize(
-          "parameter",
-          """ "value  """,
-          Map("parameter" -> ParameterInfo("parameter", None, None, None, Some(ParameterType.String), None))) === """ \"value  """
+    "parse the template correctly when it has Integer parameters" in {
+      val value = 1234
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = """{{id}}""",
+          description = "desc",
+          parameterInfos = Map(
+            "id" -> ParameterInfo("id",
+                                  None,
+                                  None,
+                                  secret = Some(false),
+                                  `type` = ParameterType.Integer,
+                                  orderIndex = None)
+          )
+        ),
+        parameterValues = Map("id" -> IntParameterValue(value))
+      )
+      templateRenderer.renderJson(instance) === JsNumber(value)
     }
-
-    "pick the default parameter type if the type for the parameter is not specified in ParameterInfos" in {
-      templateRenderer
-        .sanitize("parameter", parameterValue, Map.empty) === parameterValue
-
-    }
-
   }
 }

@@ -4,7 +4,7 @@ import java.net.ConnectException
 
 import de.frosner.broccoli.instances.InstanceNotFoundException
 import de.frosner.broccoli.models.Instance.{instancePersistenceReads, instancePersistenceWrites}
-import de.frosner.broccoli.models.{Instance, Template}
+import de.frosner.broccoli.models._
 import org.specs2.mutable.Specification
 import play.api.libs.json._
 import play.api.mvc._
@@ -18,9 +18,12 @@ class CouchDBInstanceStorageSpec extends Specification {
 
   val instance = Instance(
     id = "prefix-id",
-    template = Template(id = "t", template = "{{id}}", description = "d", parameterInfos = Map.empty),
+    template = Template(id = "t",
+                        template = "{{id}}",
+                        description = "d",
+                        parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))),
     parameterValues = Map(
-      "id" -> "prefix-id"
+      "id" -> RawParameterValue("prefix-id")
     )
   )
 

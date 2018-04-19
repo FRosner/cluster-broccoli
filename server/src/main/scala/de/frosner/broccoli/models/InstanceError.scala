@@ -37,6 +37,13 @@ object InstanceError {
   }
 
   /**
+    * The ID of an instance was malformed.
+    */
+  final case object IdMalformed extends InstanceError {
+    override val reason: String = "Instance ID not a simple String"
+  }
+
+  /**
     * The template of an instance was not found.
     *
     * @param templateId The template ID

@@ -1,6 +1,6 @@
 package de.frosner.broccoli.instances.storage
 
-import de.frosner.broccoli.models.{Instance, ParameterInfo, Template}
+import de.frosner.broccoli.models._
 import org.specs2.mutable.Specification
 import play.api.Logger
 
@@ -57,10 +57,15 @@ class InstanceStorageSpec extends Specification {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos =
-            Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = None, orderIndex = None))
+          parameterInfos = Map(
+            "age" -> ParameterInfo("age",
+                                   None,
+                                   None,
+                                   secret = Some(false),
+                                   `type` = ParameterType.Integer,
+                                   orderIndex = None))
         ),
-        parameterValues = Map("id" -> "Frank", "age" -> "50")
+        parameterValues = Map("id" -> StringParameterValue("Frank"), "age" -> IntParameterValue(50))
       )
       storage.deleteInstance(instance) should throwA[IllegalStateException]
     }
@@ -74,10 +79,15 @@ class InstanceStorageSpec extends Specification {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
-          parameterInfos =
-            Map("age" -> ParameterInfo("age", None, None, secret = Some(false), `type` = None, orderIndex = None))
+          parameterInfos = Map(
+            "age" -> ParameterInfo("age",
+                                   None,
+                                   None,
+                                   secret = Some(false),
+                                   `type` = ParameterType.Integer,
+                                   orderIndex = None))
         ),
-        parameterValues = Map("id" -> "Frank", "age" -> "50")
+        parameterValues = Map("id" -> StringParameterValue("Frank"), "age" -> IntParameterValue(50))
       )
       storage.writeInstance(instance) should throwA[IllegalStateException]
     }

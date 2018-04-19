@@ -20,5 +20,5 @@ class InstanceModule extends AbstractModule with ScalaModule {
   @Provides
   @Singleton
   def provideTemplateRenderer(config: BroccoliConfiguration): TemplateRenderer =
-    new TemplateRenderer(config.instances.parameters.defaultType)
+    new TemplateRenderer
 }
