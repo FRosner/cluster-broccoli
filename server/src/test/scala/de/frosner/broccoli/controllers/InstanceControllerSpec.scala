@@ -66,7 +66,7 @@ class InstanceControllerSpec
         template = "{{id}} {{secret}}",
         description = "d",
         parameterInfos = Map(
-          "id" -> ParameterInfo("id", None, None, None, None, None),
+          "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
           "secret" -> ParameterInfo(
             id = "secret",
             name = Some("secret"),

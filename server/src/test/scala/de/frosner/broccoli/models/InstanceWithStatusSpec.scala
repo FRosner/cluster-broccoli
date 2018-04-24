@@ -20,7 +20,7 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
             template = "{{id}} {{password}}",
             description = "d",
             parameterInfos = Map(
-              "id" -> ParameterInfo("id", None, None, None, None, None),
+              "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
               "password" -> ParameterInfo(
                 id = "secret password",
                 name = None,
@@ -48,7 +48,7 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
             template = "{{id}} {{password}}",
             description = "d",
             parameterInfos = Map(
-              "id" -> ParameterInfo("id", None, None, None, None, None),
+              "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
               "password" -> ParameterInfo(
                 id = "secret password",
                 name = None,
@@ -80,7 +80,7 @@ class InstanceWithStatusSpec extends Specification with ScalaCheck with ModelArb
             template = "{{id}} {{password}}",
             description = "d",
             parameterInfos = Map(
-              "id" -> ParameterInfo("id", None, None, None, None, None),
+              "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
               "password" -> ParameterInfo(
                 id = "secret password",
                 name = None,

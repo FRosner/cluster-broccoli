@@ -1,6 +1,6 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.models.{ParameterInfo, ParameterType, StringParameterValue, Template}
+import de.frosner.broccoli.models._
 import de.frosner.broccoli.services.{SecurityService, TemplateService}
 import play.api.test.{FakeRequest, PlaySpecification, WithApplication}
 import org.mockito.Mockito._
@@ -74,9 +74,9 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
         parameterInfos = Map(
           "id" -> ParameterInfo(id = "id",
                                 name = Some("myname"),
-                                default = Some("myid"),
+                                default = Some(StringParameterValue("myid")),
                                 secret = Some(false),
-                                `type` = None,
+                                `type` = ParameterType.String,
                                 orderIndex = None)
         )
       )
@@ -103,7 +103,8 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
                       "id" -> JsString("id"),
                       "name" -> JsString("myname"),
                       "default" -> JsString("myid"),
-                      "secret" -> JsBoolean(false)
+                      "secret" -> JsBoolean(false),
+                      "type" -> JsString("string")
                     ))
                 )),
               "description" -> JsString(template.description),

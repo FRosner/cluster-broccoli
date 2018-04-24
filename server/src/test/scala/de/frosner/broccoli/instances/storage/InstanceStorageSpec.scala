@@ -64,7 +64,8 @@ class InstanceStorageSpec extends Specification {
                                    None,
                                    secret = Some(false),
                                    `type` = ParameterType.Integer,
-                                   orderIndex = None))
+                                   orderIndex = None)
+          )
         ),
         parameterValues = Map("id" -> StringParameterValue("Frank"), "age" -> IntParameterValue(50))
       )
@@ -87,7 +88,8 @@ class InstanceStorageSpec extends Specification {
                                    None,
                                    secret = Some(false),
                                    `type` = ParameterType.Integer,
-                                   orderIndex = None))
+                                   orderIndex = None)
+          )
         ),
         parameterValues = Map("id" -> StringParameterValue("Frank"), "age" -> IntParameterValue(50))
       )

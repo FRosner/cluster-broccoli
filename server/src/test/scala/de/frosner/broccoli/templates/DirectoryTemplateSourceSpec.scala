@@ -21,7 +21,6 @@ class DirectoryTemplateSourceSpec extends Specification with TemporaryTemplatesC
     "parse fully specified templates correctly" in { templatesDirectory: Path =>
       val templates =
         new DirectoryTemplateSource(templatesDirectory.toString, false).loadTemplates()
-
       templates must contain(
         beEqualTo(Template(
           "curl",
@@ -30,17 +29,17 @@ class DirectoryTemplateSourceSpec extends Specification with TemporaryTemplatesC
           Map(
             "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, Some(0)),
             "URL" -> ParameterInfo("URL",
-              None,
-              Some(RawParameterValue("localhost:8000")),
-              None,
-              ParameterType.Raw,
-              Some(1)),
+                                   None,
+                                   Some(RawParameterValue("localhost:8000")),
+                                   None,
+                                   ParameterType.Raw,
+                                   Some(1)),
             "enabled" -> ParameterInfo("enabled",
-              None,
-              Some(RawParameterValue("true")),
-              None,
-              ParameterType.Raw,
-              Some(2))
+                                       None,
+                                       Some(RawParameterValue("true")),
+                                       None,
+                                       ParameterType.Raw,
+                                       Some(2))
           )
         ))).exactly(1)
     }

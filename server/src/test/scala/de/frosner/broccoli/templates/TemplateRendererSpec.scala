@@ -125,11 +125,11 @@ class TemplateRendererSpec extends Specification with Mockito {
           description = "desc",
           parameterInfos = Map(
             "id" -> ParameterInfo("id",
-              None,
-              None,
-              secret = Some(false),
-              `type` = ParameterType.Decimal,
-              orderIndex = None)
+                                  None,
+                                  None,
+                                  secret = Some(false),
+                                  `type` = ParameterType.Decimal,
+                                  orderIndex = None)
           )
         ),
         parameterValues = Map("id" -> DecimalParameterValue(value))

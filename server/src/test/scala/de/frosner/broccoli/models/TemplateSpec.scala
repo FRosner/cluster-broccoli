@@ -15,7 +15,7 @@ class TemplateSpec extends Specification {
       Template("test",
                "Hallo {{id}}. I like {{person_name}}.",
                "desc",
-               Map("id" -> ParameterInfo("id", None, None, None, None, None))).parameters === Set("id")
+               Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))).parameters === Set("id")
     }
 
     "not automatically extract parameters from a template" in {
