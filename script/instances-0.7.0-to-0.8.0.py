@@ -12,11 +12,20 @@ def get_template_variables(template):
       return variables
 
 
-def update_parameter_infos(parameter_infos, template_variables, instance_path):
+def update_parameter_infos(parameter_infos, template_variables, instance_path, param_type):
     updated_parameter_infos = deepcopy(parameter_infos)
-    for variable in (template_variables - set(parameter_infos.keys())):
-        print("Adding missing variable '%s' to the parameterInfos of instance %s" % (variable, instance_path))
-        updated_parameter_infos[variable] = {"id": variable}
+    info_variables = set(parameter_infos.keys())
+    for variable in info_variables.union(template_variables):
+        if variable not in info_variables:
+            print("Adding missing variable '%s' to the parameterInfos of instance %s" % (variable, instance_path))
+            updated_parameter_infos[variable] = {"id": variable, "type": param_type}
+        else:
+            if 'id' not in updated_parameter_infos[variable]:
+                print("Adding missing id for '%s' to the parameterInfos of instance %s" % (variable, instance_path))
+                updated_parameter_infos[variable]['id'] = variable
+            if "type" not in updated_parameter_infos[variable]:
+                print("Adding missing type for '%s' to the parameterInfos of instance %s" % (variable, instance_path))
+                updated_parameter_infos[variable]["type"] = param_type
     return updated_parameter_infos
 
 
@@ -60,6 +69,7 @@ def convert_dashes_to_underscores(instance):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("instance_directory")
+    parser.add_argument("parameter_type")
 
     opts = parser.parse_args()
 
@@ -74,7 +84,8 @@ if __name__ == "__main__":
         template_variables = get_template_variables(template["template"])
         parameter_infos = template["parameterInfos"]
 
-        complete_parameter_infos = update_parameter_infos(parameter_infos, template_variables, instance_path)
+        complete_parameter_infos = update_parameter_infos(parameter_infos, template_variables,
+                                                          instance_path, opts.parameter_type)
 
         parameter_infos_changed = False
         if parameter_infos != complete_parameter_infos:
