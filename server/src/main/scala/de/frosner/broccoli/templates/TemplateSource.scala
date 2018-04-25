@@ -13,7 +13,12 @@ import scala.collection.JavaConversions._
 /**
   * Provide a source of templates to create an instances from
   */
+object TemplateSource {
+  val forbiddenCharacters = Set('-')
+}
+
 trait TemplateSource {
+  import TemplateSource._
   private val log = play.api.Logger(getClass)
 
   /**
@@ -31,6 +36,11 @@ trait TemplateSource {
       require(
         templateInfo.parameters.contains("id"),
         s"There needs to be an 'id' field in the template for Broccoli to work. Parameters defined: ${templateInfo.parameters.keySet}"
+      )
+
+      require(
+        !templateInfo.parameters.keys.exists(_.exists(forbiddenCharacters.contains)),
+        s"Template parameters cannot contain the following characters $forbiddenCharacters"
       )
 
       Template(

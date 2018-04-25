@@ -39,6 +39,19 @@ class TemplateSourceSpec extends Specification {
         "requirement failed: There needs to be an 'id' field in the template for Broccoli to work. Parameters defined: Set(bla)"))
     }
 
+    "should fail when template info contains a forbidden character" in {
+      val tryTemplate =
+        templateSource.loadTemplate(
+          "test",
+          "Hallo {{bla-bla}}",
+          TemplateInfo(None,
+                       Map("id" -> Parameter(Some("id"), None, None, ParameterType.Raw, None),
+                           "bla-bla" -> Parameter(Some("bla"), None, None, ParameterType.Raw, None)))
+        )
+      (tryTemplate.isFailure must beTrue) and (tryTemplate.failed.get.getMessage must beEqualTo(
+        s"requirement failed: Template parameters cannot contain the following characters ${TemplateSource.forbiddenCharacters}"))
+    }
+
     "not expose variables that are not defined in the template config" in {
       val tryTemplate =
         templateSource.loadTemplate(

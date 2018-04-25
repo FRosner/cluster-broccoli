@@ -38,7 +38,6 @@ object ParameterInfo {
 
   }
 
-  // TODO: Pick the default from the reference.conf and use it for parameter.`type`
   def fromTemplateInfoParameter(id: String, parameter: TemplateConfig.Parameter): ParameterInfo =
     ParameterInfo(id, parameter.name, parameter.default, parameter.secret, parameter.`type`, parameter.orderIndex)
 }
