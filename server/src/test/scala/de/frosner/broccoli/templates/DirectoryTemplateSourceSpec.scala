@@ -14,13 +14,13 @@ class DirectoryTemplateSourceSpec extends Specification with TemporaryTemplatesC
       val directory = FileSystems.getDefault.getPath("not-a-directory")
       Files.exists(directory) must beFalse
 
-      new DirectoryTemplateSource(directory.toString, false).loadTemplates must throwA(
+      new DirectoryTemplateSource(directory.toString).loadTemplates must throwA(
         new IllegalStateException(s"Templates directory ${directory.toAbsolutePath} is not a directory"))
     }
 
     "parse fully specified templates correctly" in { templatesDirectory: Path =>
       val templates =
-        new DirectoryTemplateSource(templatesDirectory.toString, false).loadTemplates()
+        new DirectoryTemplateSource(templatesDirectory.toString).loadTemplates()
       templates must contain(
         beEqualTo(Template(
           "curl",
@@ -46,13 +46,13 @@ class DirectoryTemplateSourceSpec extends Specification with TemporaryTemplatesC
 
     "use a default template description if not provided" in { templatesDirectory: Path =>
       val templates =
-        new DirectoryTemplateSource(templatesDirectory.toString, false).loadTemplates()
+        new DirectoryTemplateSource(templatesDirectory.toString).loadTemplates()
       templates.map(_.description) must contain(beEqualTo("curl-without-decription template")).exactly(1)
     }
 
     "not contain templates that failed to parse" in { templatesDirectory: Path =>
       val templates =
-        new DirectoryTemplateSource(templatesDirectory.toString, false).loadTemplates()
+        new DirectoryTemplateSource(templatesDirectory.toString).loadTemplates()
 
       templates.map(_.id) must not contain beEqualTo("broken-template")
     }

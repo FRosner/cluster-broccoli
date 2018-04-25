@@ -14,30 +14,16 @@ class TemplateSourceSpec extends Specification {
       val id = "templateId"
       val templateString = "Hello {{ id }}"
       val templateInfo = TemplateInfo(None, Map("id" -> Parameter(Some("id"), None, None, ParameterType.Raw, None)))
-      val convertDashesToUnderscores = false
       val template =
-        templateSource.loadTemplate(id, templateString, templateInfo, convertDashesToUnderscores).get
+        templateSource.loadTemplate(id, templateString, templateInfo).get
 
       template.id === id and template.template === templateString and template.parameterInfos("id") === ParameterInfo
         .fromTemplateInfoParameter("id", templateInfo.parameters.get("id").get)
     }
 
-    "convert dashes in 'legacy' variables to underscores if convertDashesToUnderscores is true" in {
-      val tryTemplate =
-        templateSource.loadTemplate(
-          "templateId",
-          "Hello {{id}} {{custom-var}}",
-          TemplateInfo(None,
-                       Map("id" -> Parameter(Some("id"), None, None, ParameterType.Raw, None),
-                           "custom-var" -> Parameter(Some("custom-var"), None, None, ParameterType.Raw, None))),
-          true
-        )
-      (tryTemplate.isSuccess must beTrue) and (tryTemplate.get.parameters must contain("custom_var"))
-    }
-
     "require an 'id' parameter (no parameter)" in {
       val tryTemplate =
-        templateSource.loadTemplate("test", "Hallo", TemplateInfo(None, Map.empty), false)
+        templateSource.loadTemplate("test", "Hallo", TemplateInfo(None, Map.empty))
       (tryTemplate.isFailure must beTrue) and (tryTemplate.failed.get.getMessage must beEqualTo(
         "requirement failed: There needs to be an 'id' field in the template for Broccoli to work. Parameters defined: Set()"))
     }
@@ -47,8 +33,8 @@ class TemplateSourceSpec extends Specification {
         templateSource.loadTemplate(
           "test",
           "Hallo {{bla}}",
-          TemplateInfo(None, Map("bla" -> Parameter(Some("bla"), None, None, ParameterType.Raw, None))),
-          false)
+          TemplateInfo(None, Map("bla" -> Parameter(Some("bla"), None, None, ParameterType.Raw, None)))
+        )
       (tryTemplate.isFailure must beTrue) and (tryTemplate.failed.get.getMessage must beEqualTo(
         "requirement failed: There needs to be an 'id' field in the template for Broccoli to work. Parameters defined: Set(bla)"))
     }
@@ -60,8 +46,7 @@ class TemplateSourceSpec extends Specification {
           "{{id}} {{ global_var }} {% for x in [1 2 3] %}{{x}}{% endfor %}",
           TemplateInfo(None,
                        Map("id" -> Parameter(Some("id"), None, None, ParameterType.Raw, None),
-                           "global_var" -> Parameter(Some("global_var"), None, None, ParameterType.Raw, None))),
-          false
+                           "global_var" -> Parameter(Some("global_var"), None, None, ParameterType.Raw, None)))
         )
       (tryTemplate.isSuccess must beTrue) and (tryTemplate.get.parameters must not contain "x")
     }

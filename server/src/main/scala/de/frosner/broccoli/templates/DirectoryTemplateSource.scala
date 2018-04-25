@@ -17,7 +17,7 @@ import scala.util.Try
   *
   * @param directory The path to the directory with templates
   */
-class DirectoryTemplateSource(directory: String, convertDashesToUnderscores: Boolean) extends TemplateSource {
+class DirectoryTemplateSource(directory: String) extends TemplateSource {
 
   private val log = play.api.Logger(getClass)
 
@@ -46,7 +46,7 @@ class DirectoryTemplateSource(directory: String, convertDashesToUnderscores: Boo
         val templateInfo =
           loadConfigOrThrow[TemplateConfig.TemplateInfo](
             ConfigFactory.parseFile(templateDirectory.resolve("template.conf").toFile))
-        loadTemplate(templateId, templateFileContent, templateInfo, convertDashesToUnderscores).get
+        loadTemplate(templateId, templateFileContent, templateInfo).get
       }
       tryTemplate.failed.map(throwable => log.error(s"Parsing template '$templateDirectory' failed: $throwable"))
       tryTemplate.toOption

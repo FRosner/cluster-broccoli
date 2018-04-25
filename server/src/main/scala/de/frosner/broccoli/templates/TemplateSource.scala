@@ -15,7 +15,6 @@ import scala.collection.JavaConversions._
   */
 trait TemplateSource {
   private val log = play.api.Logger(getClass)
-  private val variablePattern = Pattern.compile("\\{\\{([A-Za-z][A-Za-z0-9\\-\\_\\_]*)\\}\\}")
 
   /**
     * Get templates from the source.
@@ -26,35 +25,8 @@ trait TemplateSource {
 
   def loadTemplate(templateId: String,
                    templateString: String,
-                   templateInfo: TemplateConfig.TemplateInfo,
-                   convertDashesToUnderscores: Boolean): Try[Template] =
+                   templateInfo: TemplateConfig.TemplateInfo): Try[Template] =
     Try {
-      val (validatedTemplateString, validatedParameters) = if (convertDashesToUnderscores) {
-        // find variables with dashes
-        val matcher = variablePattern.matcher(templateString)
-        var variables = ArrayBuffer[String]()
-
-        while (matcher.find()) {
-          variables += matcher.group(1)
-        }
-
-        val variablesWithDashes = variables.toSet.filter(variable => variable.contains("-"))
-
-        val validatedTemplateString = variablesWithDashes.foldLeft(templateString) {
-          case (template, variable) => {
-            val validVariable = variable.replaceAllLiterally("-", "_")
-            log.warn(s"Converting variable $variable to $validVariable in $templateId")
-            template.replaceAll(variable, validVariable)
-          }
-        }
-        val validatedParameters = templateInfo.parameters.map {
-          case (k, v) => k.replaceAllLiterally("-", "_") -> v
-        }
-
-        (validatedTemplateString, validatedParameters)
-      } else {
-        (templateString, templateInfo.parameters)
-      }
 
       require(
         templateInfo.parameters.contains("id"),
@@ -63,9 +35,9 @@ trait TemplateSource {
 
       Template(
         id = templateId,
-        template = validatedTemplateString,
+        template = templateString,
         description = templateInfo.description.getOrElse(s"$templateId template"),
-        parameterInfos = validatedParameters
+        parameterInfos = templateInfo.parameters
           .map { case (id, parameter) => id -> ParameterInfo.fromTemplateInfoParameter(id, parameter) }
       )
     }
