@@ -35,7 +35,7 @@ class TemplateRenderer(jinjavaConfig: JinjavaConfig) {
     val renderResult = renderForResult(instance)
     val fatalErrors = renderResult.getErrors.filter(error => error.getSeverity == ErrorType.FATAL)
 
-    if (!fatalErrors.isEmpty()) {
+    if (fatalErrors.nonEmpty) {
       throw new FatalTemplateErrorsException(instance.template.template, fatalErrors)
     }
 
