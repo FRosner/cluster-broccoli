@@ -11,6 +11,8 @@ import javax.inject.Singleton
 class CachedTemplateSource(source: TemplateSource) extends TemplateSource {
   @volatile private var templatesCache: Option[Seq[Template]] = None
 
+  override val templateRenderer: TemplateRenderer = source.templateRenderer
+
   override def loadTemplates(): Seq[Template] =
     templatesCache match {
       case Some(templates) => templates

@@ -21,9 +21,11 @@ class TemplateModule extends AbstractModule with ScalaModule {
     */
   @Provides
   @Singleton
-  def provideTemplateSource(config: BroccoliConfiguration, signalManager: UnixSignalManager): TemplateSource =
+  def provideTemplateSource(config: BroccoliConfiguration,
+                            signalManager: UnixSignalManager,
+                            templateRenderer: TemplateRenderer): TemplateSource =
     new SignalRefreshedTemplateSource(
-      new CachedTemplateSource(new DirectoryTemplateSource(config.templates.path)),
+      new CachedTemplateSource(new DirectoryTemplateSource(config.templates.path, templateRenderer)),
       signalManager
     )
 }

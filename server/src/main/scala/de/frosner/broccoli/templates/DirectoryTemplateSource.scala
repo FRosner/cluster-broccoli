@@ -17,7 +17,7 @@ import scala.util.Try
   *
   * @param directory The path to the directory with templates
   */
-class DirectoryTemplateSource(directory: String) extends TemplateSource {
+class DirectoryTemplateSource(directory: String, val templateRenderer: TemplateRenderer) extends TemplateSource {
 
   private val log = play.api.Logger(getClass)
 

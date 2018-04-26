@@ -10,6 +10,9 @@ import sun.misc.{Signal, SignalHandler}
   * @param source The CachedTemplateSource that will be wrapped
   */
 class SignalRefreshedTemplateSource(source: CachedTemplateSource, signalManager: SignalManager) extends TemplateSource {
+
+  override val templateRenderer: TemplateRenderer = source.templateRenderer
+
   signalManager.register(new Signal("USR2"), new SignalHandler() {
     def handle(sig: Signal) {
       source.refresh()

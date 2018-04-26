@@ -41,4 +41,14 @@ class TemplateRenderer(jinjavaConfig: JinjavaConfig) {
 
     Json.parse(renderResult.getOutput)
   }
+
+  /**
+    * Validates the parameterName supplied in a dummy jinjava template
+    * @param parameterName String
+    * @return true if the parameterName could be rendered successfully false otherwise
+    */
+  def validateParameterName(parameterName: String): Boolean = {
+    val template = s"""{"somekey": "{{$parameterName}}"}"""
+    !jinjava.renderForResult(template, Map(parameterName -> "testvalue")).hasErrors
+  }
 }

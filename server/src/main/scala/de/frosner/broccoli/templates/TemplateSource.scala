@@ -1,25 +1,15 @@
 package de.frosner.broccoli.templates
 
-import java.util.regex.Pattern
-
-import com.hubspot.jinjava.Jinjava
 import de.frosner.broccoli.models.{ParameterInfo, Template}
 
-import scala.collection.mutable.ArrayBuffer
 import scala.util.Try
 
 import scala.collection.JavaConversions._
 
-/**
-  * Provide a source of templates to create an instances from
-  */
-object TemplateSource {
-  val forbiddenCharacters = Set('-')
-}
-
 trait TemplateSource {
-  import TemplateSource._
   private val log = play.api.Logger(getClass)
+
+  val templateRenderer: TemplateRenderer
 
   /**
     * Get templates from the source.
@@ -38,9 +28,11 @@ trait TemplateSource {
         s"There needs to be an 'id' field in the template for Broccoli to work. Parameters defined: ${templateInfo.parameters.keySet}"
       )
 
+      val invalidParamNames = templateInfo.parameters.keys.filterNot(templateRenderer.validateParameterName)
+
       require(
-        !templateInfo.parameters.keys.exists(_.exists(forbiddenCharacters.contains)),
-        s"Template parameters cannot contain the following characters $forbiddenCharacters"
+        invalidParamNames.isEmpty,
+        s"""The following parameters are invalid: ${invalidParamNames.mkString(", ")}"""
       )
 
       Template(
