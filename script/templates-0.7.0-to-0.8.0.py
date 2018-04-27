@@ -17,11 +17,8 @@ def update_parameters(parameters, template_variables, instance_path, param_type)
     for variable in info_variables.union(template_variables):
         if variable not in info_variables:
             print("Adding missing variable '%s' to the parameterInfos of instance %s" % (variable, instance_path))
-            updated_parameters[variable] = ConfigFactory.from_dict({"id": variable, "type": param_type})
+            updated_parameters[variable] = ConfigFactory.from_dict({"type": param_type})
         else:
-            if 'id' not in updated_parameters[variable]:
-                print("Adding missing id for '%s' to the parameterInfos of instance %s" % (variable, instance_path))
-                updated_parameters[variable]["id"] = variable
             if "type" not in updated_parameters[variable]:
                 print("Adding missing type for '%s' to the parameterInfos of instance %s" % (variable, instance_path))
                 updated_parameters[variable]["type"] = param_type
