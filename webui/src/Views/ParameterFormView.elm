@@ -340,12 +340,9 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                                             [ ( "background-color", Maybe.withDefault normalParamColor (Maybe.map (\v -> editingParamColor) maybeEditedValue) )
                                             ]
                                         ]
-                                        [ text parameterName ]
-                                  , span
-                                        [ class "input-group-addon" ]
-                                        [ icon
-                                            (dataTypeToIcon dataType)
-                                            [ title (dataTypeToTitle dataType) ]
+                                        [ text parameterName
+                                        , text " "
+                                        , sup [] [ text (dataTypeToTitle dataType) ]
                                         ]
                                   , input
                                         [ type_
@@ -618,12 +615,9 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                                             [ ( "background-color", Maybe.withDefault normalParamColor (Maybe.map (\v -> editingParamColor) maybeEditedValue) )
                                             ]
                                         ]
-                                        [ text parameterName ]
-                                  , span
-                                        [ class "input-group-addon" ]
-                                        [ icon
-                                            (dataTypeToIcon dataType)
-                                            [ title (dataTypeToTitle dataType) ]
+                                        [ text parameterName
+                                        , text " "
+                                        , sup [] [ text (dataTypeToTitle dataType) ]
                                         ]
                                   , input
                                         [ type_
@@ -718,33 +712,21 @@ getErrorMessage maybeValue paramName dataType =
             )
 
 
-dataTypeToIcon : ParameterType -> String
-dataTypeToIcon dataType =
-    case dataType of
-        StringParam ->
-            "glyphicon glyphicon-text-size"
-
-        RawParam ->
-            "glyphicon glyphicon-asterisk"
-
-        IntParam ->
-            "fa fa-hashtag"
-
-        DecimalParam ->
-            "glyphicon glyphicon-sound-5-1"
-
-
 dataTypeToTitle : ParameterType -> String
 dataTypeToTitle dataType =
-    case dataType of
-        StringParam ->
-            "String"
+    String.concat
+        [ "("
+        , case dataType of
+            StringParam ->
+                "String"
 
-        RawParam ->
-            "Unsafe String"
+            RawParam ->
+                "Raw"
 
-        IntParam ->
-            "Integer"
+            IntParam ->
+                "Integer"
 
-        DecimalParam ->
-            "Decimal"
+            DecimalParam ->
+                "Decimal"
+        , ")"
+        ]
