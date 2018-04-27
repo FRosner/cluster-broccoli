@@ -17,7 +17,7 @@ import scala.util.Try
   *
   * @param directory The path to the directory with templates
   */
-class DirectoryTemplateSource(directory: String) extends TemplateSource {
+class DirectoryTemplateSource(directory: String, val templateRenderer: TemplateRenderer) extends TemplateSource {
 
   private val log = play.api.Logger(getClass)
 
@@ -43,19 +43,10 @@ class DirectoryTemplateSource(directory: String) extends TemplateSource {
       val tryTemplate = Try {
         val templateFileContent = Source.fromFile(templateDirectory.resolve("template.json").toString).mkString
         val templateId = templateDirectory.getFileName.toString
-        val metaFile = templateDirectory.resolve("meta.json")
-
         val templateInfo =
           loadConfigOrThrow[TemplateConfig.TemplateInfo](
             ConfigFactory.parseFile(templateDirectory.resolve("template.conf").toFile))
-        Template(
-          id = templateId,
-          template = templateFileContent,
-          description = templateInfo.description.getOrElse(s"$templateId template"),
-          parameterInfos = templateInfo.parameters
-            .map(_.map { case (id, parameter) => id -> ParameterInfo.fromTemplateInfoParameter(id, parameter) })
-            .getOrElse(Map.empty)
-        )
+        loadTemplate(templateId, templateFileContent, templateInfo).get
       }
       tryTemplate.failed.map(throwable => log.error(s"Parsing template '$templateDirectory' failed: $throwable"))
       tryTemplate.toOption

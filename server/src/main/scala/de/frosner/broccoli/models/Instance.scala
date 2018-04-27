@@ -15,36 +15,11 @@ case class Instance(id: String, template: Template, parameterValues: Map[String,
     require(
       template.parameters == realParametersWithValues,
       s"The given parameters values (${parameterValues.keySet}) " +
-        s"need to match the ones in the template (${template.parameters})."
+        s"need to match the ones in the template (${template.parameters}) (instance id $id)."
     )
   }
 
   requireParameterValueConsistency(parameterValues, template)
-
-  def updateParameterValues(newParameterValues: Map[String, ParameterValue]): Try[Instance] =
-    Try {
-      requireParameterValueConsistency(newParameterValues, template)
-      require(newParameterValues("id") == parameterValues("id"), s"The parameter value 'id' must not be changed.")
-
-      Instance(
-        id = this.id,
-        template = this.template,
-        parameterValues = newParameterValues
-      )
-    }
-
-  def updateTemplate(newTemplate: Template, newParameterValues: Map[String, ParameterValue]): Try[Instance] =
-    Try {
-      requireParameterValueConsistency(newParameterValues, newTemplate)
-      require(newParameterValues("id") == parameterValues("id"), s"The parameter value 'id' must not be changed.")
-
-      Instance(
-        id = this.id,
-        template = newTemplate,
-        parameterValues = newParameterValues
-      )
-    }
-
 }
 
 object Instance {
@@ -139,5 +114,4 @@ object Instance {
         (parameter, possiblyCensoredValue)
     })
   }
-
 }

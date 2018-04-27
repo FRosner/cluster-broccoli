@@ -23,6 +23,7 @@ lazy val server = project
       Dependencies.squants,
       Dependencies.scalaguice,
       Dependencies.commonsLang,
+      Dependencies.jinJava,
       ws,
       cache,
       specs2 % Test,

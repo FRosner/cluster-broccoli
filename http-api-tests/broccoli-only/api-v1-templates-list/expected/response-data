@@ -3,9 +3,9 @@
     "id": "curl",
     "description": "A periodic job that sends an HTTP GET request to a specified address every minute.",
     "parameters": [
-      "id",
       "URL",
-      "enabled"
+      "enabled",
+      "id"
     ],
     "parameterInfos": {
       "id": {
@@ -31,9 +31,9 @@
     "id": "http-server",
     "description": "A simple Python HTTP request handler. This class serves files from the current directory and below, directly mapping the directory structure to HTTP requests.",
     "parameters": [
+      "cpu",
       "id",
-      "secret",
-      "cpu"
+      "secret"
     ],
     "parameterInfos": {
       "cpu": {

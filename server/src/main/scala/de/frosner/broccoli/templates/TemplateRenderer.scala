@@ -1,30 +1,54 @@
 package de.frosner.broccoli.templates
 
+import com.hubspot.jinjava.interpret.{FatalTemplateErrorsException, RenderResult}
+import com.hubspot.jinjava.interpret.TemplateError.ErrorType
+import com.hubspot.jinjava.{Jinjava, JinjavaConfig}
 import de.frosner.broccoli.models.Instance
 import play.api.libs.json.{JsValue, Json}
 
+import scala.collection.JavaConversions._
+
 /**
   * Renders json representation of the passed instance
-  *
+  * @param jinjavaConfig Jinjava configuration
   */
-class TemplateRenderer {
+class TemplateRenderer(jinjavaConfig: JinjavaConfig) {
+  val jinjava = new Jinjava(jinjavaConfig)
 
-  def renderJson(instance: Instance): JsValue = {
+  def renderForResult(instance: Instance): RenderResult = {
     val template = instance.template
     val parameterInfos = template.parameterInfos
-    val parameterValues = instance.parameterValues
+    val parameterDefaults = parameterInfos
+      .map {
+        case (name, parameterInfo) => (name, parameterInfo.default)
+      }
+      .collect {
+        case (name, Some(value)) => (name, value)
+      }
+    val parameterValues = (parameterDefaults ++ instance.parameterValues).map {
+      case (name, value) => (name, value.asJsonString)
+    }
+    jinjava.renderForResult(template.template, parameterValues)
+  }
 
-    val templateWithValues = parameterValues.foldLeft(template.template) {
-      case (intermediateTemplate, (parameter, value)) =>
-        intermediateTemplate.replaceAllLiterally(s"{{$parameter}}", value.asJsonString)
+  def renderJson(instance: Instance): JsValue = {
+    val renderResult = renderForResult(instance)
+    val fatalErrors = renderResult.getErrors.filter(error => error.getSeverity == ErrorType.FATAL)
+
+    if (fatalErrors.nonEmpty) {
+      throw new FatalTemplateErrorsException(instance.template.template, fatalErrors)
     }
-    val parameterDefaults = parameterInfos.flatMap {
-      case (parameterId, parameterInfo) => parameterInfo.default.map(default => (parameterId, default))
-    }
-    val templateWithDefaults = parameterDefaults.foldLeft(templateWithValues) {
-      case (intermediateTemplate, (parameter, value)) =>
-        intermediateTemplate.replaceAllLiterally(s"{{$parameter}}", value.asJsonString)
-    }
-    Json.parse(templateWithDefaults)
+
+    Json.parse(renderResult.getOutput)
+  }
+
+  /**
+    * Validates the parameterName supplied in a dummy jinjava template
+    * @param parameterName String
+    * @return true if the parameterName could be rendered successfully false otherwise
+    */
+  def validateParameterName(parameterName: String): Boolean = {
+    val template = s"""{"somekey": "{{$parameterName}}"}"""
+    !jinjava.renderForResult(template, Map(parameterName -> "testvalue")).hasErrors
   }
 }

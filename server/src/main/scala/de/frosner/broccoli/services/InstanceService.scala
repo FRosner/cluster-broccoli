@@ -199,6 +199,36 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     )
   }
 
+  def updateParameterValues(instance: Instance, newParameterValues: Map[String, ParameterValue]): Try[Instance] =
+    Try {
+      require(newParameterValues("id") == instance.parameterValues("id"),
+              s"The parameter value 'id' must not be changed.")
+
+      val newInstance = Instance(
+        id = instance.id,
+        template = instance.template,
+        parameterValues = newParameterValues
+      )
+      require(!templateRenderer.renderForResult(newInstance).hasErrors)
+      newInstance
+    }
+
+  def updateTemplate(instance: Instance,
+                     newTemplate: Template,
+                     newParameterValues: Map[String, ParameterValue]): Try[Instance] =
+    Try {
+      require(newParameterValues("id") == instance.parameterValues("id"),
+              s"The parameter value 'id' must not be changed.")
+
+      val newInstance = Instance(
+        id = instance.id,
+        template = newTemplate,
+        parameterValues = newParameterValues
+      )
+      require(!templateRenderer.renderForResult(newInstance).hasErrors)
+      newInstance
+    }
+
   def getInstances: Seq[InstanceWithStatus] =
     instances.values.map(addStatuses).toSeq
 
@@ -276,10 +306,10 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                   if (parsedParamValuesUpdated.isDefined) {
                     // New parameter values are specified
                     val newParameterValues = parsedParamValuesUpdated.get
-                    instance.updateTemplate(template, newParameterValues)
+                    updateTemplate(instance, template, newParameterValues)
                   } else {
                     // Just use the old parameter values
-                    instance.updateTemplate(template, instance.parameterValues)
+                    updateTemplate(instance, template, instance.parameterValues)
                   }
                 }
                 .getOrElse {
@@ -291,7 +321,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
               if (parsedParamValuesUpdated.isDefined) {
                 // Just update the parameter values
                 val newParameterValues = parsedParamValuesUpdated.get
-                instance.updateParameterValues(newParameterValues)
+                updateParameterValues(instance, newParameterValues)
               } else {
                 // Neither template update nor parameter value update required
                 Success(instance)

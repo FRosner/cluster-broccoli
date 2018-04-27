@@ -43,43 +43,41 @@ class TemplateConfigSpec extends Specification {
                 """.stripMargin
       val expectedTemplateInfo = TemplateConfig.TemplateInfo(
         description = Some("A periodic job that sends an HTTP GET request to a specified address every minute."),
-        parameters = Some(
-          Map(
-            "URL" -> Parameter(
-              name = Some("connection url"),
-              default = Some(StringParameterValue("localhost:8000")),
-              secret = None,
-              `type` = ParameterType.String,
-              orderIndex = Some(1)
-            ),
-            "enabled" -> Parameter(
-              name = None,
-              default = Some(RawParameterValue("true")),
-              secret = None,
-              `type` = ParameterType.Raw,
-              orderIndex = Some(2)
-            ),
-            "id" -> Parameter(
-              name = None,
-              default = None,
-              secret = None,
-              `type` = ParameterType.String,
-              orderIndex = None
-            ),
-            "cpu" -> Parameter(
-              name = None,
-              default = Some(IntParameterValue(1234)),
-              secret = None,
-              `type` = ParameterType.Integer,
-              orderIndex = None
-            ),
-            "somedecimal" -> Parameter(
-              name = None,
-              default = Some(DecimalParameterValue(1234.5678)),
-              secret = None,
-              `type` = ParameterType.Decimal,
-              orderIndex = None
-            )
+        parameters = Map(
+          "URL" -> Parameter(
+            name = Some("connection url"),
+            default = Some(StringParameterValue("localhost:8000")),
+            secret = None,
+            `type` = ParameterType.String,
+            orderIndex = Some(1)
+          ),
+          "enabled" -> Parameter(
+            name = None,
+            default = Some(RawParameterValue("true")),
+            secret = None,
+            `type` = ParameterType.Raw,
+            orderIndex = Some(2)
+          ),
+          "id" -> Parameter(
+            name = None,
+            default = None,
+            secret = None,
+            `type` = ParameterType.String,
+            orderIndex = None
+          ),
+          "cpu" -> Parameter(
+            name = None,
+            default = Some(IntParameterValue(1234)),
+            secret = None,
+            `type` = ParameterType.Integer,
+            orderIndex = None
+          ),
+          "somedecimal" -> Parameter(
+            name = None,
+            default = Some(DecimalParameterValue(1234.5678)),
+            secret = None,
+            `type` = ParameterType.Decimal,
+            orderIndex = None
           )
         )
       )
