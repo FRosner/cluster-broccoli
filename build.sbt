@@ -112,7 +112,7 @@ lazy val root = project
   .settings(
     inThisBuild(
       List(
-        version := "0.8.0-SNAPSHOT",
+        version := "0.9.0-SNAPSHOT",
         scalaVersion := "2.11.11",
         // Enable jcenter for silhouette's dependencies
         resolvers += Resolver.jcenterRepo,
