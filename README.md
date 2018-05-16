@@ -1,10 +1,7 @@
 # Cluster Broccoli ![Icon](https://github.com/FRosner/cluster-broccoli/raw/52dd3447343705bc2d2a76de7e19a84873d89d0c/public/images/favicon-readme.png)
 
-[![Build Status](https://travis-ci.org/FRosner/cluster-broccoli.svg?branch=master)](https://travis-ci.org/FRosner/cluster-broccoli)
-[![codecov](https://codecov.io/gh/FRosner/cluster-broccoli/branch/master/graph/badge.svg)](https://codecov.io/gh/FRosner/cluster-broccoli)
-[![Known Vulnerabilities](https://snyk.io/test/github/frosner/cluster-broccoli/badge.svg)](https://snyk.io/test/github/frosner/cluster-broccoli)
-[![Docker Pulls](https://img.shields.io/docker/pulls/frosner/cluster-broccoli.svg?maxAge=2592000)](https://hub.docker.com/r/frosner/cluster-broccoli/)
-[![Gitter](https://badges.gitter.im/FRosner/cluster-broccoli.svg)](https://gitter.im/FRosner/cluster-broccoli?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Build Status](https://travis-ci.org/Data-Science-Platform/cluster-broccoli.svg?branch=master)](https://travis-ci.org/FRosner/cluster-broccoli)
+[![Docker Pulls](https://img.shields.io/docker/pulls/datascienceplatform/cluster-broccoli.svg?maxAge=2592000)](https://hub.docker.com/r/datascienceplatform/cluster-broccoli/)
 
 ## Description
 
