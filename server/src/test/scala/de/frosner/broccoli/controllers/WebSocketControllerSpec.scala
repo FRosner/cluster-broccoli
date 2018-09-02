@@ -123,7 +123,8 @@ class WebSocketControllerSpec
         securityService = withAuthConf(mock[SecurityService], List(account)),
         messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
         playEnv = playEnv,
-        cacheApi = cacheApi
+        cacheApi = cacheApi,
+        nomadService = mock[NomadService]
       )
       val result = controller.requestToSocket(FakeRequest().withLoggedIn(controller)(account.name))
       val maybeConnection = WsTestUtil.wrapConnection(result)
@@ -141,7 +142,8 @@ class WebSocketControllerSpec
         securityService = withAuthNone(mock[SecurityService]),
         messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
         playEnv = playEnv,
-        cacheApi = cacheApi
+        cacheApi = cacheApi,
+        nomadService = withNodesResources(mock[NomadService], Seq.empty)
       )
       when(controller.webSocketService.newConnection(any[Account])).thenReturn(("id", null))
       val result = controller.requestToSocket(FakeRequest())
@@ -160,7 +162,8 @@ class WebSocketControllerSpec
         securityService = withAuthConf(mock[SecurityService], List(account)),
         messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
         playEnv = playEnv,
-        cacheApi = cacheApi
+        cacheApi = cacheApi,
+        nomadService = withNodesResources(mock[NomadService], Seq.empty)
       )
       val result = controller.requestToSocket(FakeRequest())
       val maybeConnection = WsTestUtil.wrapConnection(result)
@@ -184,7 +187,8 @@ class WebSocketControllerSpec
         securityService = withAuthNone(mock[SecurityService]),
         messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
         playEnv = playEnv,
-        cacheApi = cacheApi
+        cacheApi = cacheApi,
+        nomadService = withNodesResources(mock[NomadService], Seq.empty)
       )
       when(controller.webSocketService.newConnection(any[Account])).thenReturn(("id", Enumerator.empty[Msg]))
       val result = controller.requestToSocket(FakeRequest())
@@ -212,7 +216,8 @@ class WebSocketControllerSpec
         securityService = withAuthNone(mock[SecurityService]),
         messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
         playEnv = playEnv,
-        cacheApi = cacheApi
+        cacheApi = cacheApi,
+        nomadService = withNodesResources(mock[NomadService], Seq.empty)
       )
       when(controller.webSocketService.newConnection(any[Account])).thenReturn((id, Enumerator.empty[Msg]))
       val instanceCreation = InstanceCreation(
@@ -267,7 +272,8 @@ class WebSocketControllerSpec
             securityService = securityService,
             messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
             playEnv = playEnv,
-            cacheApi = cacheApi
+            cacheApi = cacheApi,
+            nomadService = withNodesResources(mock[NomadService], Seq.empty)
           )
           when(controller.instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
           controller
@@ -306,7 +312,8 @@ class WebSocketControllerSpec
             securityService = securityService,
             messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
             playEnv = playEnv,
-            cacheApi = cacheApi
+            cacheApi = cacheApi,
+            nomadService = withNodesResources(mock[NomadService], Seq.empty)
           )
           when(controller.instanceService.deleteInstance(instanceDeletion)).thenReturn(Success(instanceWithStatus))
           controller
@@ -352,7 +359,8 @@ class WebSocketControllerSpec
             securityService = securityService,
             messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
             playEnv = playEnv,
-            cacheApi = cacheApi
+            cacheApi = cacheApi,
+            nomadService = withNodesResources(mock[NomadService], Seq.empty)
           )
           when(
             controller.instanceService.updateInstance(
@@ -412,7 +420,8 @@ class WebSocketControllerSpec
             securityService = securityService,
             messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
             playEnv = playEnv,
-            cacheApi = cacheApi
+            cacheApi = cacheApi,
+            nomadService = withNodesResources(mock[NomadService], Seq.empty)
           )
           when(
             controller.instanceService.updateInstance(
@@ -465,7 +474,8 @@ class WebSocketControllerSpec
             securityService = securityService,
             messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
             playEnv = playEnv,
-            cacheApi = cacheApi
+            cacheApi = cacheApi,
+            nomadService = withNodesResources(mock[NomadService], Seq.empty)
           )
           when(
             controller.instanceService.updateInstance(
@@ -526,7 +536,8 @@ class WebSocketControllerSpec
             securityService = securityService,
             messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
             playEnv = playEnv,
-            cacheApi = cacheApi
+            cacheApi = cacheApi,
+            nomadService = withNodesResources(mock[NomadService], Seq.empty)
           )
           when(
             controller.instanceService.updateInstance(

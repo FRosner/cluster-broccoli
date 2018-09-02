@@ -2,12 +2,13 @@ package de.frosner.broccoli.services
 
 import java.net.ConnectException
 import java.util.concurrent.TimeUnit
-import javax.inject.{Inject, Singleton}
 
+import de.frosner.broccoli.auth.Account
+import javax.inject.{Inject, Singleton}
 import de.frosner.broccoli.models.JobStatus._
 import de.frosner.broccoli.models.{JobStatus, PeriodicRun}
 import de.frosner.broccoli.nomad.NomadConfiguration
-import de.frosner.broccoli.nomad.models.Job
+import de.frosner.broccoli.nomad.models.{Job, NodeResources, ResourceInfo}
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 
@@ -141,6 +142,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
     val queryUrl = nomadBaseUrl + "/v1/jobs"
     val request = ws.url(queryUrl)
     log.info(s"Sending job definition to ${request.uri}")
+
     Try {
       val result = Await.result(request.post(job), Duration(5, TimeUnit.SECONDS))
       if (result.status == 200) {
@@ -165,6 +167,67 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
         Failure(NomadRequestFailed(request.uri.toString, result.status))
       }
     }.flatten
+  }
+
+  def getNodeResources(loggedIn: Account): Future[Seq[NodeResources]] = {
+    val queryUrl = nomadBaseUrl + s"/v1/nodes"
+    log.info("Contacting: " + nomadBaseUrl)
+    val scheme = Option(new java.net.URI(nomadBaseUrl).getScheme).getOrElse("http")
+    val request = ws.url(queryUrl)
+    log.info(s"Sending get nodes request to ${request.uri}")
+    val oePrefix = loggedIn.name.split("-")(0)
+    request
+      .get()
+      .flatMap(queryResponse => {
+        val filteredIds =
+          for {
+            jsValue <- queryResponse.json.as[List[JsValue]]
+            id = (jsValue \ "ID").as[String]
+            name = (jsValue \ "Name").as[String]
+            if name.split("-")(0).equals(oePrefix)
+          } yield (id, name)
+
+        Future
+          .sequence(
+            filteredIds.map {
+              case (id, name) => {
+                val ipUrl = nomadBaseUrl + s"/v1/node/$id"
+                ws.url(ipUrl)
+                  .get()
+                  .map(
+                    ipResponse => (ipResponse.json \ "HTTPAddr").as[String]
+                  )
+                  .map(
+                    httpAddr => {
+                      val resourceUrl = s"$scheme://$httpAddr/v1/client/stats"
+                      ws.url(resourceUrl)
+                        .get()
+                        .map(
+                          resourceResponse => {
+                            import NodeResources._ // get the implicits for parsing
+                            NodeResources(id, name, resourceResponse.json.as[ResourceInfo])
+                          }
+                        )
+                    }
+                  )
+                  .flatMap(identity)
+                  .map(Success(_))
+                  .recover({ case ex => Failure(ex) })
+              }
+            }
+          )
+          .map(
+            _.flatMap(
+              tryResult =>
+                tryResult match {
+                  case Success(resourceStats) => List(resourceStats)
+                  case Failure(ex) =>
+                    log.error("Error while getting node information: {}", ex)
+                    List()
+              }
+            )
+          )
+      })
   }
 
 }

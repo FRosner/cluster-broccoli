@@ -10,6 +10,7 @@ import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
 import Models.Ui.Notifications exposing (Errors)
 import Navigation exposing (Location)
 import Dict exposing (Dict)
+import Bootstrap.Tab as Tab
 
 
 type Route
@@ -22,7 +23,8 @@ This model holds the entire state of the whole application.
 
 -}
 type alias Model =
-    { aboutInfo : Maybe AboutInfo
+    { tabState : Tab.State
+    , aboutInfo : Maybe AboutInfo
     , errors : Errors
     , loginForm : LoginForm
     , authRequired : Maybe Bool
@@ -42,7 +44,8 @@ type alias Model =
 -}
 initial : Location -> Route -> Model
 initial location route =
-    { aboutInfo = Nothing
+    { tabState = Tab.initialState
+    , aboutInfo = Nothing
     , errors = []
     , loginForm = LoginForm.empty
     , authRequired = Nothing

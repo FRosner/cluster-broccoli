@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Bootstrap.Grid exposing (container)
 import Updates.UpdateErrors exposing (updateErrors)
 import Updates.UpdateLoginForm exposing (updateLoginForm)
 import Updates.UpdateLoginStatus exposing (updateLoginStatus)
@@ -15,8 +16,15 @@ import Routing
 import Model exposing (Model)
 import Ws
 import Html exposing (..)
+import Html.Attributes exposing (..)
 import Navigation exposing (Location)
 import Dict exposing (Dict)
+import Bootstrap.Utilities.Spacing as Spacing
+import Bootstrap.Tab as Tab
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Row as Row
+import Bootstrap.Grid.Col as Col
+import Bootstrap.CDN as CDN
 
 
 init : Location -> ( Model, Cmd AnyMsg )
@@ -139,6 +147,9 @@ update msg model =
                 , cmd
                 )
 
+        TabMsg state ->
+            ( { model | tabState = state }, Cmd.none )
+
         UpdateLoginFormMsg subMsg ->
             let
                 ( newLoginForm, cmd ) =
@@ -174,25 +185,76 @@ update msg model =
             ( model, Cmd.none )
 
 
+gridView : List (Html msg) -> Html msg
+gridView pageContent =
+    Grid.container []
+        [ Grid.row []
+            [ Grid.col []
+                pageContent
+            ]
+        ]
+
+
 view : Model -> Html AnyMsg
 view model =
-    div
-        []
-        [ Views.Header.view model.aboutInfo model.loginForm model.authRequired model.templateFilter model.instanceFilter
-        , Views.Notifications.view model.errors
-        , Html.map
-            UpdateBodyViewMsg
-            (Views.Body.view
-                (Dict.filter (\k v -> String.contains model.templateFilter k) model.templates)
-                (Dict.filter (\k v -> String.contains model.instanceFilter k) model.instances)
-                model.tasks
-                model.bodyUiModel
-                (Maybe.map (\i -> i.authInfo.userInfo.role) model.aboutInfo)
-            )
+    let
+        maybeAuthEnabled =
+            Maybe.map (\i -> i.authInfo.enabled) model.aboutInfo
 
-        -- , text (toString model) -- enable this for a debug view of the whole model
-        , Views.Footer.view model.aboutInfo model.wsConnected
-        ]
+        mainView =
+            if
+                (model.authRequired
+                    == Just True
+                    || model.authRequired
+                    == Nothing
+                    || (model.authRequired
+                            == Just False
+                            && maybeAuthEnabled
+                            == Nothing
+                       )
+                )
+            then
+                div [] []
+            else
+                Tab.config TabMsg
+                    |> Tab.center
+                    |> Tab.items
+                        [ Tab.item
+                            { id = "instances_view"
+                            , link = Tab.link [] [ h5 [] [ text "Instances View" ] ]
+                            , pane =
+                                Tab.pane [ Spacing.mt3 ]
+                                    [ Html.map
+                                        UpdateBodyViewMsg
+                                        (Views.Body.view
+                                            (Dict.filter (\k v -> String.contains model.templateFilter k) model.templates)
+                                            (Dict.filter (\k v -> String.contains model.instanceFilter k) model.instances)
+                                            model.tasks
+                                            model.bodyUiModel
+                                            (Maybe.map (\i -> i.authInfo.userInfo.role) model.aboutInfo)
+                                        )
+                                    ]
+                            }
+                        , Tab.item
+                            { id = "resources_view"
+                            , link = Tab.link [] [ h5 [] [ text "Resources View" ] ]
+                            , pane =
+                                Tab.pane [ Spacing.mt3 ]
+                                    [ h4 [] [ text "Tab 2 Heading" ]
+                                    , p [] [ text "This is something completely different." ]
+                                    ]
+                            }
+                        ]
+                    |> Tab.view model.tabState
+    in
+        gridView
+            [ Views.Header.view model.aboutInfo model.loginForm model.authRequired model.templateFilter model.instanceFilter
+            , Views.Notifications.view model.errors
+            , mainView
+
+            -- , text (toString model) -- enable this for a debug view of the whole model
+            , Views.Footer.view model.aboutInfo model.wsConnected
+            ]
 
 
 

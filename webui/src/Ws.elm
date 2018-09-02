@@ -4,6 +4,7 @@ import Json.Decode as Decode exposing (Decoder, field, andThen)
 import Models.Resources.AboutInfo as AboutInfo
 import Models.Resources.Template as Template
 import Models.Resources.Instance as Instance
+import Models.Resources.NodeResources as NodeResources
 import Models.Resources.InstanceError as InstanceError
 import Models.Resources.InstanceCreation as InstanceCreation
 import Models.Resources.InstanceUpdate as InstanceUpdate
@@ -54,6 +55,9 @@ payloadDecoder t =
 
         "listInstances" ->
             Decode.map ListInstancesMessage <| Decode.array Instance.decoder
+
+        "listNodeResources" ->
+            Decode.map ListResourcesMessage <| Decode.array NodeResources.decoder
 
         "error" ->
             Decode.map ErrorMessage Decode.string
@@ -137,6 +141,11 @@ updateFromMessage model message =
                 |> Set.toList
                 |> List.map (GetInstanceTasks >> SendWsMsg >> CmdUtils.sendMsg)
                 |> Cmd.batch
+            )
+
+        ListResourcesMessage nodeResource ->
+            ( model
+            , Cmd.none
             )
 
         AddInstanceSuccessMessage result ->
