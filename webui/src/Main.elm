@@ -26,6 +26,7 @@ import Bootstrap.Grid.Row as Row
 import Bootstrap.Grid.Col as Col
 import Bootstrap.CDN as CDN
 
+
 init : Location -> ( Model, Cmd AnyMsg )
 init location =
     ( Model.initial location (Routing.parseLocation location)
@@ -249,6 +250,7 @@ view model =
             [ Views.Header.view model.aboutInfo model.loginForm model.authRequired model.templateFilter model.instanceFilter
             , Views.Notifications.view model.errors
             , mainView
+
             -- , text (toString model) -- enable this for a debug view of the whole model
             , Views.Footer.view model.aboutInfo model.wsConnected
             ]

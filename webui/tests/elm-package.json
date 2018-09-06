@@ -24,7 +24,8 @@
         "evancz/url-parser": "2.0.1 <= v < 3.0.0",
         "myrho/elm-round": "1.0.2 <= v < 1.0.3",
         "panosoft/elm-websocket-client": "3.0.2 <= v <= 3.0.2",
-        "rluiten/elm-date-extra": "9.2.0 <= v < 10.0.0"
+        "rluiten/elm-date-extra": "9.2.0 <= v < 10.0.0",
+        "sohaibiftikhar/elm-bootstrap": "4.1.0 <= v < 5.0.0"
     },
     "elm-version": "0.18.0 <= v < 0.19.0"
 }

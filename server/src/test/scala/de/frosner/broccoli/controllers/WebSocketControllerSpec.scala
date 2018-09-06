@@ -7,6 +7,7 @@ import de.frosner.broccoli.RemoveSecrets.ToRemoveSecretsOps
 import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.nomad
+import de.frosner.broccoli.nomad.models.NodeResources
 import de.frosner.broccoli.websocket.{BroccoliMessageHandler, IncomingMessage, OutgoingMessage}
 import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Matchers
@@ -115,6 +116,7 @@ class WebSocketControllerSpec
     "establish a websocket connection correctly (with authentication)" in new WithApplication {
       val account = Account("user", ".*", Role.Administrator)
       val instanceService = withInstances(mock[InstanceService], Seq.empty)
+      val nomadService = withNodesResources(mock[NomadService], Seq.empty)
       val controller = WebSocketController(
         webSocketService = mock[WebSocketService],
         templateService = withTemplates(mock[TemplateService], Seq.empty),
@@ -124,7 +126,7 @@ class WebSocketControllerSpec
         messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
         playEnv = playEnv,
         cacheApi = cacheApi,
-        nomadService = mock[NomadService]
+        nomadService = nomadService
       )
       val result = controller.requestToSocket(FakeRequest().withLoggedIn(controller)(account.name))
       val maybeConnection = WsTestUtil.wrapConnection(result)
@@ -178,6 +180,7 @@ class WebSocketControllerSpec
         instanceWithStatus
       )
       val templates = Seq.empty[Template]
+      val nodeResources = Seq.empty[NodeResources]
       private val instanceService = withInstances(mock[InstanceService], instances)
       val controller = WebSocketController(
         webSocketService = mock[WebSocketService],
@@ -196,10 +199,11 @@ class WebSocketControllerSpec
       maybeConnection should beRight.like {
         case (incoming, outgoing) =>
           val messages = outgoing.get
-          (messages should haveSize(3)) and
+          (messages should haveSize(4)) and
             (messages should contain(
               Json.toJson(OutgoingMessage.ListTemplates(templates)),
               Json.toJson(OutgoingMessage.ListInstances(instances)),
+              Json.toJson(OutgoingMessage.ListResources(nodeResources)),
               Json.toJson(OutgoingMessage.AboutInfoMsg(controller.aboutService.aboutInfo(null)))
             ))
       }

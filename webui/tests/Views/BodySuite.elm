@@ -63,13 +63,13 @@ tests =
                         Body.view defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "expand-template-t2" ]
-                            |> Query.has [ Selector.class "glyphicon-chevron-down" ]
+                            |> Query.has [ Selector.class "fa-chevron-down" ]
             , test "Render the template expansion chevron for non-expanded templates" <|
                 \() ->
                     Body.view defaultTemplates defaultInstances defaultTasks defaultBodyUiModel (Just Administrator)
                         |> Query.fromHtml
                         |> Query.find [ Selector.id "expand-template-t2" ]
-                        |> Query.has [ Selector.class "glyphicon-chevron-right" ]
+                        |> Query.has [ Selector.class "fa-chevron-right" ]
             ]
         , describe "Instance Creation"
             [ test "Should open the instance creation form on click" <|
@@ -292,7 +292,7 @@ tests =
                             Body.view defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
                                 |> Query.fromHtml
                                 |> Query.find [ Selector.id "new-instance-form-container-t2" ]
-                                |> Query.has [ Selector.class "hidden" ]
+                                |> Query.has [ Selector.class "d-none" ]
                 , test "Should be visible if it is expanded" <|
                     \() ->
                         let

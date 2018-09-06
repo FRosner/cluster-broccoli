@@ -81,7 +81,7 @@ tests =
                         Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "header-login-form" ]
-                            |> Query.has [ Selector.classes [ "navbar-form", "navbar-right" ] ]
+                            |> Query.has [ Selector.classes [ "form-inline", "ml-auto" ] ]
             , test "Should shake if the login is correct" <|
                 \() ->
                     let
@@ -103,7 +103,7 @@ tests =
                         Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "header-login-form" ]
-                            |> Query.has [ Selector.classes [ "navbar-form", "navbar-right", "animated", "shake" ] ]
+                            |> Query.has [ Selector.classes [ "form-inline", "ml-auto", "animated", "shake" ] ]
             , test "Should render if auth is required" <|
                 \() ->
                     let

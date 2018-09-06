@@ -26,11 +26,10 @@ view maybeAboutInfo loginFormModel maybeAuthRequired templateFilterString instan
     in
         nav
             [ class "navbar navbar-expand-md navbar-fixed-top navbar-light bg-light border" ]
-            [ div [ class "dropdown ml-3" ] [ navbarBrand , navbarBrandDropdown maybeAboutInfo ]
+            [ div [ class "dropdown ml-3" ] [ navbarBrand, navbarBrandDropdown maybeAboutInfo ]
             , navbarToggleButton
             , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString
             ]
-
 
 
 navbarToggleButton =
@@ -83,18 +82,15 @@ navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired l
         , id "navbar-collapse"
         ]
         (List.concat
-            [
-            if (maybeAuthRequired == Just True || maybeAuthRequired == Nothing || (maybeAuthRequired == Just False && maybeAuthEnabled == Nothing)) then
+            [ if (maybeAuthRequired == Just True || maybeAuthRequired == Nothing || (maybeAuthRequired == Just False && maybeAuthEnabled == Nothing)) then
                 []
-            else
+              else
                 [ templateFilter templateFilterString
                 , instanceFilter instanceFilterString
                 ]
-            ,
-                [
-                    userInfoView maybeUserInfo
-                    , Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired)
-                ]
+            , [ userInfoView maybeUserInfo
+              , Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired)
+              ]
             ]
         )
 
@@ -107,8 +103,8 @@ templateFilter filterString =
                 [ div
                     [ class "input-group" ]
                     [ div
-                        [class "input-group-prepend"]
-                        [ div [class "input-group-text"]
+                        [ class "input-group-prepend" ]
+                        [ div [ class "input-group-text" ]
                             [ i [ class "fa fa-filter", title "Template Filter" ] [] ]
                         ]
                     , input
@@ -134,8 +130,8 @@ instanceFilter filterString =
                 [ div
                     [ class "input-group" ]
                     [ div
-                        [class "input-group-prepend"]
-                        [ div [class "input-group-text"]
+                        [ class "input-group-prepend" ]
+                        [ div [ class "input-group-text" ]
                             [ i [ class "fa fa-filter", title "Instance Filter" ] [] ]
                         ]
                     , input
@@ -175,15 +171,16 @@ userInfoView maybeUserInfo =
                         ]
                     , div
                         [ class "dropdown-menu dropdown-menu-right"
-                        , attribute "aria-labelledby" "userDropdown"]
+                        , attribute "aria-labelledby" "userDropdown"
+                        ]
                         [ a [ class "dropdown-item", href "#" ]
                             [ text "Role: "
                             , code [] [ text (toString userInfo.role) ]
                             ]
                         , a [ class "dropdown-item", href "#" ]
-                                [ text "Instances: "
-                                , code [] [ text userInfo.instanceRegex ]
-                                ]
+                            [ text "Instances: "
+                            , code [] [ text userInfo.instanceRegex ]
+                            ]
                         ]
                     ]
                 ]
@@ -231,7 +228,7 @@ loginFormView loginFormModel =
         [ id "header-login-form"
         , class
             (String.concat
-                [ "form-inline ml-auto mr-3"
+                [ "form-inline ml-auto mr-3 "
                 , (attentionIfLoginFailed loginFormModel.loginIncorrect)
                 ]
             )
@@ -264,7 +261,7 @@ loginFormView loginFormModel =
             , class "btn btn-outline-secondary"
             , title "Login"
             ]
-            [ i [class "fa fa-sign-in"] [] ]
+            [ i [ class "fa fa-sign-in" ] [] ]
         ]
 
 
@@ -279,5 +276,5 @@ logoutFormView =
             , class "btn btn-outline-secondary"
             , title "Logout"
             ]
-            [ i [class "fa fa-sign-out"] [] ]
+            [ i [ class "fa fa-sign-out" ] [] ]
         ]

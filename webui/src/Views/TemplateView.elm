@@ -210,12 +210,12 @@ templatePanelHeadingInfo clazz infoTitle info =
     span
         [ title infoTitle
         , class "badge badge-pill float-right hidden-xs mr-3 mt-3 ml-3"
-        , style [
-            ("margin-left", "10px"),
-            ("font-weight", "100"),
-            ("background-color", "rgb(85, 85, 85)"),
-            ("color", "rgb(255, 255, 255)"),
-            ("margin-top", "4px;")
+        , style
+            [ ( "margin-left", "10px" )
+            , ( "font-weight", "100" )
+            , ( "background-color", "rgb(85, 85, 85)" )
+            , ( "color", "rgb(255, 255, 255)" )
+            , ( "margin-top", "4px;" )
             ]
         ]
         [ icon clazz [ class "mr-3" ]

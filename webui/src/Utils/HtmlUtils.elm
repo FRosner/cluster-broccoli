@@ -38,7 +38,7 @@ iconButton btnClass iconClass buttonTitle attributes =
     button
         (List.append
             [ class btnClass
-            , style [("padding", "0.2rem")]
+            , style [ ( "padding", "0.2rem" ) ]
             , title buttonTitle
             ]
             attributes
