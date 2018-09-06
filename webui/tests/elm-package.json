@@ -11,7 +11,7 @@
     "dependencies": {
         "sohaibiftikhar/elm-human-readable-filesize": "1.1.0 <= v < 1.1.1",
         "elm-community/json-extra": "2.0.0 <= v < 3.0.0",
-        "elm-community/maybe-extra": "4.0.0 <= v <5.0.0",
+        "elm-community/maybe-extra": "4.0.0 <= v < 5.0.0",
         "mgold/elm-random-pcg": "4.0.2 <= v < 5.0.0",
         "eeue56/elm-html-test": "3.0.0 <= v <= 3.0.0",
         "eeue56/elm-html-in-elm": "5.0.0 <= v <= 5.0.0",
