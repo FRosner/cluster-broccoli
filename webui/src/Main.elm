@@ -26,7 +26,6 @@ import Bootstrap.Grid.Row as Row
 import Bootstrap.Grid.Col as Col
 import Bootstrap.CDN as CDN
 
-
 init : Location -> ( Model, Cmd AnyMsg )
 init location =
     ( Model.initial location (Routing.parseLocation location)
@@ -240,18 +239,16 @@ view model =
                             , link = Tab.link [] [ h5 [] [ text "Resources View" ] ]
                             , pane =
                                 Tab.pane [ Spacing.mt3 ]
-                                    [ h4 [] [ text "Tab 2 Heading" ]
-                                    , p [] [ text "This is something completely different." ]
-                                    ]
+                                    Views.Body.resourcesView
                             }
                         ]
                     |> Tab.view model.tabState
     in
-        gridView
+        div
+            []
             [ Views.Header.view model.aboutInfo model.loginForm model.authRequired model.templateFilter model.instanceFilter
             , Views.Notifications.view model.errors
             , mainView
-
             -- , text (toString model) -- enable this for a debug view of the whole model
             , Views.Footer.view model.aboutInfo model.wsConnected
             ]

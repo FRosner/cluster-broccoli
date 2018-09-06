@@ -16,6 +16,7 @@ import Models.Resources.InstanceUpdated exposing (InstanceUpdated)
 import Models.Resources.InstanceTasks exposing (InstanceTasks)
 import Models.Resources.NodeResources exposing (NodeResources)
 import Bootstrap.Tab as Tab
+import Bootstrap.Navbar as Navbar
 
 
 type AnyMsg

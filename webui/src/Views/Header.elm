@@ -10,6 +10,10 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onSubmit)
 import Regex exposing (Regex)
+import Bootstrap.Navbar as Navbar
+import Bootstrap.Form.Input as Input
+import Bootstrap.Button as Button
+import Bootstrap.Utilities.Spacing as Spacing
 
 
 view : Maybe AboutInfo -> LoginForm -> Maybe Bool -> String -> String -> Html AnyMsg
@@ -20,39 +24,31 @@ view maybeAboutInfo loginFormModel maybeAuthRequired templateFilterString instan
             , Maybe.map (\i -> i.authInfo.enabled) maybeAboutInfo
             )
     in
-        div
-            [ class "container" ]
-            [ nav
-                [ class "navbar navbar-default navbar-fixed-top" ]
-                [ div
-                    [ class "container-fluid"
-                    , style
-                        [ ( "padding-right", "35px" )
-                        ]
-                    ]
-                    [ navbarHeader maybeAboutInfo
-                    , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString
-                    ]
-                ]
+        nav
+            [ class "navbar navbar-expand-md navbar-fixed-top navbar-light bg-light border" ]
+            [ div [ class "dropdown ml-3" ] [ navbarBrand , navbarBrandDropdown maybeAboutInfo ]
+            , navbarToggleButton
+            , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString
             ]
 
 
-navbarHeader maybeAboutInfo =
-    div
-        [ class "navbar-header"
-        , style
-            [ ( "margin-left", "35px" )
-            ]
+
+navbarToggleButton =
+    button
+        [ type_ "button"
+        , class "navbar-toggler collapsed"
+        , attribute "data-toggle" "collapse"
+        , attribute "data-target" "#navbar-collapse"
+        , attribute "aria-expanded" "false"
         ]
-        [ navbarToggleButton
-        , navbarBrand
-        , navbarBrandDropdown maybeAboutInfo
+        [ span [ class "sr-only navbar-toggler-icon" ] [ text "Toggle menu" ]
         ]
 
 
 navbarBrand =
     a
-        [ class "navbar-brand dropdown-toggle"
+        [ class "navbar-brand nav-link dropdown-toggle"
+        , id "brandDropdown"
         , attribute "data-toggle" "dropdown"
         , attribute "role" "button"
         , attribute "aria-haspopup" "true"
@@ -65,11 +61,9 @@ navbarBrand =
 
 
 navbarBrandDropdown maybeAboutInfo =
-    ul
+    div
         [ class "dropdown-menu"
-        , style
-            [ ( "margin-left", "35px" )
-            ]
+        , attribute "aria-labelledby" "brandDropdown"
         ]
         [ lia "https://github.com/FRosner/cluster-broccoli" "Source Code"
         , lia "https://github.com/FRosner/cluster-broccoli/wiki" "Documentation"
@@ -79,26 +73,7 @@ navbarBrandDropdown maybeAboutInfo =
 
 
 lia aHref content =
-    li []
-        [ a
-            [ href aHref ]
-            [ text content ]
-        ]
-
-
-navbarToggleButton =
-    button
-        [ type_ "button"
-        , class "navbar-toggle collapsed"
-        , attribute "data-toggle" "collapse"
-        , attribute "data-target" "#navbar-collapse"
-        , attribute "aria-expanded" "false"
-        ]
-        [ span [ class "sr-only" ] [ text "Toggle menu" ]
-        , span [ class "icon-bar" ] []
-        , span [ class "icon-bar" ] []
-        , span [ class "icon-bar" ] []
-        ]
+    a [ class "dropdown-item", href aHref ] [ text content ]
 
 
 navbarCollapse : Maybe AboutInfo -> Maybe UserInfo -> Maybe Bool -> Maybe Bool -> LoginForm -> String -> String -> Html AnyMsg
@@ -108,14 +83,17 @@ navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired l
         , id "navbar-collapse"
         ]
         (List.concat
-            [ [ Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired)
-              , userInfoView maybeUserInfo
-              ]
-            , if (maybeAuthRequired == Just True || maybeAuthRequired == Nothing || (maybeAuthRequired == Just False && maybeAuthEnabled == Nothing)) then
+            [
+            if (maybeAuthRequired == Just True || maybeAuthRequired == Nothing || (maybeAuthRequired == Just False && maybeAuthEnabled == Nothing)) then
                 []
-              else
+            else
                 [ templateFilter templateFilterString
                 , instanceFilter instanceFilterString
+                ]
+            ,
+                [
+                    userInfoView maybeUserInfo
+                    , Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired)
                 ]
             ]
         )
@@ -123,14 +101,16 @@ navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired l
 
 templateFilter filterString =
     ul
-        [ class "nav navbar-nav navbar-left" ]
+        [ class "nav navbar-nav " ]
         [ li []
-            [ div [ class "form-group navbar-form" ]
+            [ div [ class "form-inline" ]
                 [ div
                     [ class "input-group" ]
-                    [ span
-                        [ class "input-group-addon" ]
-                        [ icon "fa fa-filter" [ title "Template Filter" ] ]
+                    [ div
+                        [class "input-group-prepend"]
+                        [ div [class "input-group-text"]
+                            [ i [ class "fa fa-filter", title "Template Filter" ] [] ]
+                        ]
                     , input
                         [ type_ "text"
                         , id "header-template-filter"
@@ -148,14 +128,16 @@ templateFilter filterString =
 
 instanceFilter filterString =
     ul
-        [ class "nav navbar-nav navbar-left" ]
+        [ class "nav navbar-nav ml" ]
         [ li []
-            [ div [ class "form-group navbar-form" ]
+            [ div [ class "form-inline ml-3" ]
                 [ div
                     [ class "input-group" ]
-                    [ span
-                        [ class "input-group-addon" ]
-                        [ icon "fa fa-filter" [ title "Instance Filter" ] ]
+                    [ div
+                        [class "input-group-prepend"]
+                        [ div [class "input-group-text"]
+                            [ i [ class "fa fa-filter", title "Instance Filter" ] [] ]
+                        ]
                     , input
                         [ type_ "text"
                         , id "header-instance-filter"
@@ -176,33 +158,32 @@ userInfoView maybeUserInfo =
     case maybeUserInfo of
         Just userInfo ->
             ul
-                [ class "nav navbar-nav navbar-right" ]
+                [ class "nav navbar-nav ml-auto" ]
                 [ li
-                    [ class "dropdown" ]
+                    [ class "nav-item dropdown" ]
                     [ a
-                        [ class "dropdown-toggle"
+                        [ class "nav-link dropdown-toggle"
+                        , id "userDropdown"
                         , attribute "data-toggle" "dropdown"
                         , attribute "role" "button"
                         , attribute "aria-haspopup" "true"
                         , attribute "aria-expanded" "false"
+                        , href "#"
                         ]
                         [ text userInfo.name
                         , span [ class "caret" ] []
                         ]
-                    , ul
-                        [ class "dropdown-menu" ]
-                        [ li []
-                            [ a []
-                                [ text "Role: "
-                                , code [] [ text (toString userInfo.role) ]
-                                ]
+                    , div
+                        [ class "dropdown-menu dropdown-menu-right"
+                        , attribute "aria-labelledby" "userDropdown"]
+                        [ a [ class "dropdown-item", href "#" ]
+                            [ text "Role: "
+                            , code [] [ text (toString userInfo.role) ]
                             ]
-                        , li []
-                            [ a []
+                        , a [ class "dropdown-item", href "#" ]
                                 [ text "Instances: "
                                 , code [] [ text userInfo.instanceRegex ]
                                 ]
-                            ]
                         ]
                     ]
                 ]
@@ -250,57 +231,53 @@ loginFormView loginFormModel =
         [ id "header-login-form"
         , class
             (String.concat
-                [ "navbar-form navbar-right "
+                [ "form-inline ml-auto mr-3"
                 , (attentionIfLoginFailed loginFormModel.loginIncorrect)
                 ]
             )
         , onSubmit <| LoginAttempt loginFormModel.username loginFormModel.password
         ]
-        [ div [ class "form-group" ]
-            [ input
-                [ type_ "text"
-                , id "header-login-username"
-                , class "form-control"
-                , style [ ( "background-color", (redIfLoginFailed loginFormModel.loginIncorrect) ) ]
-                , onInput EnterUserName
-                , placeholder "User"
-                , value loginFormModel.username
-                ]
-                []
-            , text " "
-            , input
-                [ type_ "password"
-                , id "header-login-password"
-                , onInput EnterPassword
-                , class "form-control"
-                , style [ ( "background-color", (redIfLoginFailed loginFormModel.loginIncorrect) ) ]
-                , placeholder "Password"
-                , value loginFormModel.password
-                ]
-                []
+        [ input
+            [ type_ "text"
+            , id "header-login-username"
+            , class "form-control mr-sm-2"
+            , style [ ( "background-color", (redIfLoginFailed loginFormModel.loginIncorrect) ) ]
+            , onInput EnterUserName
+            , placeholder "User"
+            , value loginFormModel.username
             ]
+            []
+        , text " "
+        , input
+            [ type_ "password"
+            , id "header-login-password"
+            , onInput EnterPassword
+            , class "form-control mr-sm-2"
+            , style [ ( "background-color", (redIfLoginFailed loginFormModel.loginIncorrect) ) ]
+            , placeholder "Password"
+            , value loginFormModel.password
+            ]
+            []
         , text " " -- otherwise Bootstrap layout breaks, doh
         , button
             [ type_ "submit"
-            , class "btn btn-default"
+            , class "btn btn-outline-secondary"
             , title "Login"
             ]
-            [ icon "glyphicon glyphicon-arrow-right" [] ]
+            [ i [class "fa fa-sign-in"] [] ]
         ]
 
 
 logoutFormView =
     Html.form
         [ id "header-logout-form"
-        , class "navbar-form navbar-right"
+        , class "navbar-form ml-5 mr-3"
         , onSubmit LogoutAttempt
         ]
-        [ div [ class "form-group" ]
-            [ button
-                [ type_ "submit"
-                , class "btn btn-default"
-                , title "Logout"
-                ]
-                [ icon "glyphicon glyphicon-log-out" [] ]
+        [ button
+            [ type_ "submit"
+            , class "btn btn-outline-secondary"
+            , title "Logout"
             ]
+            [ i [class "fa fa-sign-out"] [] ]
         ]

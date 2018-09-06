@@ -17,7 +17,7 @@ view classes jobStatus =
                     ( "warning", "pending" )
 
                 JobStopped ->
-                    ( "default", "stopped" )
+                    ( "secondary", "stopped" )
 
                 JobDead ->
                     ( "primary", "completed" )
@@ -26,11 +26,12 @@ view classes jobStatus =
                     ( "warning", "unknown" )
     in
         span
-            [ class (String.concat [ classes, " label label-", statusLabel ])
+            [ class (String.concat [ classes, " mr-1 pt-1 badge badge-", statusLabel ])
             , style
                 [ ( "font-size", "90%" )
-                , ( "width", "80px" )
+                , ( "width", "6rem" )
                 , ( "display", "inline-block" )
+                , ( "height", "1.5rem" )
                 , ( "margin-right", "8px" )
                 ]
             ]
