@@ -38,9 +38,9 @@ type alias MemoryInfo =
 
 type alias ResourceInfo =
     { allocDirStats : AllocDirInfo
-    , cpusStats : Array CPUInfo
+    , cpusStats : List CPUInfo
     , cpuTicksConsumed : Float
-    , disksStats : Array DiskInfo
+    , disksStats : List DiskInfo
     , memoryStats : MemoryInfo
     , timestamp : Int
     , uptime : Int
@@ -64,9 +64,9 @@ decoder =
 resourceInfoDecoder =
     Decode.map7 ResourceInfo
         (field "AllocDirStats" allocDirInfoDecoder)
-        (field "CPU" (Decode.array cpuInfoDecoder))
+        (field "CPU" (Decode.list cpuInfoDecoder))
         (field "CPUTicksConsumed" Decode.float)
-        (field "DiskStats" (Decode.array diskInfoDecoder))
+        (field "DiskStats" (Decode.list diskInfoDecoder))
         (field "Memory" memoryInfoDecoder)
         (field "Timestamp" Decode.int)
         (field "Uptime" Decode.int)

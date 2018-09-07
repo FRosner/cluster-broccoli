@@ -369,18 +369,6 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                                 ]
                                 []
                           ]
-                        , (case maybeErrMsg of
-                            Nothing ->
-                                []
-
-                            Just msg ->
-                                [ span
-                                    [ class "invalid-feedback"
-                                    , id <| String.concat [ "edit-instance-form-parameter-input-error-", instance.id, "-", instance.template.id, "-", parameter ]
-                                    ]
-                                    [ text msg ]
-                                ]
-                          )
                         , (if (isSecret && enabled) then
                             [ div
                                 [ class "input-group-append" ]
@@ -418,6 +406,18 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                             ]
                            else
                             []
+                          )
+                        , (case maybeErrMsg of
+                            Nothing ->
+                                []
+
+                            Just msg ->
+                                [ span
+                                    [ class "invalid-feedback"
+                                    , id <| String.concat [ "edit-instance-form-parameter-input-error-", instance.id, "-", instance.template.id, "-", parameter ]
+                                    ]
+                                    [ text msg ]
+                                ]
                           )
                         ]
                     )
@@ -654,18 +654,6 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                                 ]
                                 []
                           ]
-                        , (case maybeErrMsg of
-                            Nothing ->
-                                []
-
-                            Just msg ->
-                                [ span
-                                    [ class "invalid-feedback"
-                                    , id <| String.concat [ "new-instance-form-parameter-input-error-", template.id, "-", parameter ]
-                                    ]
-                                    [ text msg ]
-                                ]
-                          )
                         , if (isSecret) then
                             [ div
                                 [ class "input-group-append" ]
@@ -710,6 +698,18 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                             ]
                           else
                             []
+                        , (case maybeErrMsg of
+                            Nothing ->
+                                []
+
+                            Just msg ->
+                                [ span
+                                    [ class "invalid-feedback"
+                                    , id <| String.concat [ "new-instance-form-parameter-input-error-", template.id, "-", parameter ]
+                                    ]
+                                    [ text msg ]
+                                ]
+                          )
                         ]
                     )
                 ]

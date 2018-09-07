@@ -1,4 +1,4 @@
-module Model exposing (Model, Route(..), initial)
+module Model exposing (Model, Route(..), initial, TabState(..))
 
 import Models.Resources.Template exposing (Template, TemplateId)
 import Models.Resources.Instance exposing (Instance, InstanceId)
@@ -10,11 +10,15 @@ import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
 import Models.Ui.Notifications exposing (Errors)
 import Navigation exposing (Location)
 import Dict exposing (Dict)
-import Bootstrap.Tab as Tab
 
 
 type Route
     = MainRoute
+
+
+type TabState
+    = Instances
+    | Resources
 
 
 {-| The application state model
@@ -23,7 +27,7 @@ This model holds the entire state of the whole application.
 
 -}
 type alias Model =
-    { tabState : Tab.State
+    { tabState : TabState
     , aboutInfo : Maybe AboutInfo
     , errors : Errors
     , loginForm : LoginForm
@@ -44,7 +48,7 @@ type alias Model =
 -}
 initial : Location -> Route -> Model
 initial location route =
-    { tabState = Tab.initialState
+    { tabState = Instances
     , aboutInfo = Nothing
     , errors = []
     , loginForm = LoginForm.empty

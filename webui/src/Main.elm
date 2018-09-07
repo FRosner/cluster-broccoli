@@ -13,7 +13,7 @@ import Views.Notifications
 import Commands.LoginLogout as LoginLogout
 import Utils.CmdUtils as CmdUtils
 import Routing
-import Model exposing (Model)
+import Model exposing (TabState(Instances), Model)
 import Ws
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -215,39 +215,24 @@ view model =
                 )
             then
                 div [] []
+            else if (model.tabState == Instances) then
+                Html.map
+                    UpdateBodyViewMsg
+                    (Views.Body.view
+                        (Dict.filter (\k v -> String.contains model.templateFilter k) model.templates)
+                        (Dict.filter (\k v -> String.contains model.instanceFilter k) model.instances)
+                        model.tasks
+                        model.bodyUiModel
+                        (Maybe.map (\i -> i.authInfo.userInfo.role) model.aboutInfo)
+                    )
             else
-                Tab.config TabMsg
-                    |> Tab.center
-                    |> Tab.items
-                        [ Tab.item
-                            { id = "instances_view"
-                            , link = Tab.link [] [ h5 [] [ text "Instances View" ] ]
-                            , pane =
-                                Tab.pane [ Spacing.mt3 ]
-                                    [ Html.map
-                                        UpdateBodyViewMsg
-                                        (Views.Body.view
-                                            (Dict.filter (\k v -> String.contains model.templateFilter k) model.templates)
-                                            (Dict.filter (\k v -> String.contains model.instanceFilter k) model.instances)
-                                            model.tasks
-                                            model.bodyUiModel
-                                            (Maybe.map (\i -> i.authInfo.userInfo.role) model.aboutInfo)
-                                        )
-                                    ]
-                            }
-                        , Tab.item
-                            { id = "resources_view"
-                            , link = Tab.link [] [ h5 [] [ text "Resources View" ] ]
-                            , pane =
-                                Tab.pane [ Spacing.mt3 ]
-                                    Views.Body.resourcesView
-                            }
-                        ]
-                    |> Tab.view model.tabState
+                Views.Body.resourcesView
+                    model.bodyUiModel.temporaryStates
+                    model.bodyUiModel.nodesResources
     in
         div
             []
-            [ Views.Header.view model.aboutInfo model.loginForm model.authRequired model.templateFilter model.instanceFilter
+            [ Views.Header.view model.aboutInfo model.loginForm model.authRequired model.templateFilter model.instanceFilter model.tabState
             , Views.Notifications.view model.errors
             , mainView
 

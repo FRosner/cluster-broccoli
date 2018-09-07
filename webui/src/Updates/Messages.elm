@@ -7,6 +7,7 @@ import Models.Resources.UserInfo exposing (UserInfo)
 import Models.Resources.Template exposing (TemplateId, Template, ParameterInfo)
 import Models.Resources.Instance exposing (InstanceId, Instance)
 import Models.Ui.InstanceParameterForm exposing (InstanceParameterForm)
+import Models.Ui.BodyUiModel exposing (TemporaryStates)
 
 
 type UpdateLoginStatusMsg
@@ -50,3 +51,4 @@ type UpdateBodyViewMsg
     | StartSelectedInstances (Set String)
     | StopSelectedInstances (Set String)
     | StopPeriodicJobs String (List String)
+    | UpdateTemporaryStates TemporaryStates

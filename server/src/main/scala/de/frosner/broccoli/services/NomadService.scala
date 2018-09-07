@@ -8,7 +8,7 @@ import javax.inject.{Inject, Singleton}
 import de.frosner.broccoli.models.JobStatus._
 import de.frosner.broccoli.models.{JobStatus, PeriodicRun}
 import de.frosner.broccoli.nomad.NomadConfiguration
-import de.frosner.broccoli.nomad.models.{Job, NodeResources, ResourceInfo}
+import de.frosner.broccoli.nomad.models.{CPUInfo, Job, NodeResources, ResourceInfo}
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 
@@ -205,7 +205,18 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
                         .map(
                           resourceResponse => {
                             import NodeResources._ // get the implicits for parsing
-                            NodeResources(id, name, resourceResponse.json.as[ResourceInfo])
+                            val resourceInfo = resourceResponse.json.as[ResourceInfo]
+                            val resourceInfoFiltered =
+                              resourceInfo.copy(
+                                disksStats = resourceInfo.disksStats
+                                  .map(diskInfo => (diskInfo.device, diskInfo))
+                                  .toMap
+                                  .values
+                                  .toSeq,
+                                cpusStats =
+                                  resourceInfo.cpusStats.map(cpuInfo => (cpuInfo.cpuName, cpuInfo)).toMap.values.toSeq
+                              )
+                            NodeResources(id, name, resourceInfoFiltered)
                           }
                         )
                     }

@@ -57,7 +57,7 @@ payloadDecoder t =
             Decode.map ListInstancesMessage <| Decode.array Instance.decoder
 
         "listNodeResources" ->
-            Decode.map ListResourcesMessage <| Decode.array NodeResources.decoder
+            Decode.map ListResourcesMessage <| Decode.list NodeResources.decoder
 
         "error" ->
             Decode.map ErrorMessage Decode.string
@@ -143,10 +143,16 @@ updateFromMessage model message =
                 |> Cmd.batch
             )
 
-        ListResourcesMessage nodeResource ->
-            ( model
-            , Cmd.none
-            )
+        ListResourcesMessage nodesResources ->
+            let
+                bodyUiModel =
+                    model.bodyUiModel
+            in
+                ( { model
+                    | bodyUiModel = { bodyUiModel | nodesResources = nodesResources }
+                  }
+                , Cmd.none
+                )
 
         AddInstanceSuccessMessage result ->
             ( { model | instances = Dict.insert result.instance.id result.instance model.instances }

@@ -38,3 +38,8 @@ button:disabled {
     line-height  : .5;
     border-radius : .2rem;
 }
+
+.vertical-align {
+    display: flex;
+    align-items: center;
+}

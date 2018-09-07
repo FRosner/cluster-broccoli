@@ -1,5 +1,6 @@
 module Views.Header exposing (view)
 
+import Model exposing (TabState(Instances, Resources))
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
 import Models.Ui.LoginForm exposing (LoginForm)
@@ -8,16 +9,15 @@ import Updates.Messages exposing (UpdateLoginFormMsg(..))
 import Utils.HtmlUtils exposing (icon)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onInput, onSubmit)
+import Html.Events exposing (onInput, onSubmit, onClick)
 import Regex exposing (Regex)
-import Bootstrap.Navbar as Navbar
 import Bootstrap.Form.Input as Input
 import Bootstrap.Button as Button
 import Bootstrap.Utilities.Spacing as Spacing
 
 
-view : Maybe AboutInfo -> LoginForm -> Maybe Bool -> String -> String -> Html AnyMsg
-view maybeAboutInfo loginFormModel maybeAuthRequired templateFilterString instanceFilterString =
+view : Maybe AboutInfo -> LoginForm -> Maybe Bool -> String -> String -> TabState -> Html AnyMsg
+view maybeAboutInfo loginFormModel maybeAuthRequired templateFilterString instanceFilterString tabState =
     let
         ( maybeUserInfo, maybeAuthEnabled ) =
             ( Maybe.map (\i -> i.authInfo.userInfo) maybeAboutInfo
@@ -28,7 +28,7 @@ view maybeAboutInfo loginFormModel maybeAuthRequired templateFilterString instan
             [ class "navbar navbar-expand-md navbar-fixed-top navbar-light bg-light border" ]
             [ div [ class "dropdown ml-3" ] [ navbarBrand, navbarBrandDropdown maybeAboutInfo ]
             , navbarToggleButton
-            , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString
+            , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString tabState
             ]
 
 
@@ -75,8 +75,8 @@ lia aHref content =
     a [ class "dropdown-item", href aHref ] [ text content ]
 
 
-navbarCollapse : Maybe AboutInfo -> Maybe UserInfo -> Maybe Bool -> Maybe Bool -> LoginForm -> String -> String -> Html AnyMsg
-navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString =
+navbarCollapse : Maybe AboutInfo -> Maybe UserInfo -> Maybe Bool -> Maybe Bool -> LoginForm -> String -> String -> TabState -> Html AnyMsg
+navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString tabState =
     div
         [ class "collapse navbar-collapse"
         , id "navbar-collapse"
@@ -85,7 +85,9 @@ navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired l
             [ if (maybeAuthRequired == Just True || maybeAuthRequired == Nothing || (maybeAuthRequired == Just False && maybeAuthEnabled == Nothing)) then
                 []
               else
-                [ templateFilter templateFilterString
+                [ tabGen "Instances" Instances (tabState == Instances)
+                , tabGen "Resources" Resources (tabState == Resources)
+                , templateFilter templateFilterString
                 , instanceFilter instanceFilterString
                 ]
             , [ userInfoView maybeUserInfo
@@ -95,9 +97,25 @@ navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired l
         )
 
 
+tabGen : String -> TabState -> Bool -> Html AnyMsg
+tabGen navString tabState isActive =
+    ul
+        [ class "nav navbar-nav mr-3 ml-3" ]
+        [ li
+            [ classList [ ( "nav-item", True ), ( "active", isActive ) ] ]
+            [ a
+                [ class "nav-link"
+                , href "#"
+                , onClick (TabMsg tabState)
+                ]
+                [ text navString ]
+            ]
+        ]
+
+
 templateFilter filterString =
     ul
-        [ class "nav navbar-nav " ]
+        [ class "nav navbar-nav mr-3 ml-3" ]
         [ li []
             [ div [ class "form-inline" ]
                 [ div
@@ -124,9 +142,9 @@ templateFilter filterString =
 
 instanceFilter filterString =
     ul
-        [ class "nav navbar-nav ml" ]
+        [ class "nav navbar-nav mr-3 ml-3" ]
         [ li []
-            [ div [ class "form-inline ml-3" ]
+            [ div [ class "form-inline" ]
                 [ div
                     [ class "input-group" ]
                     [ div

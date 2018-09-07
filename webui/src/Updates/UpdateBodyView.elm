@@ -324,6 +324,13 @@ updateBodyView message oldBodyUiModel =
                     |> CmdUtils.sendMsg
                 )
 
+            UpdateTemporaryStates tempStates ->
+                ( { oldBodyUiModel
+                    | temporaryStates = tempStates
+                  }
+                , Cmd.none
+                )
+
 
 expandParameterForm templateId oldExpandedNewInstanceForms maybeParameterForm =
     case maybeParameterForm of
