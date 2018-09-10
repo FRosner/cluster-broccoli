@@ -260,6 +260,9 @@ encodeOutgoingWsMessage message =
 
                 GetInstanceTasks id ->
                     ( "getInstanceTasks", Encode.string id )
+
+                GetResources ->
+                    ( "getResources", Encode.string "" )
     in
         Encode.object
             [ ( "messageType", Encode.string messageType )

@@ -66,3 +66,4 @@ type OutgoingWsMessage
     | DeleteInstanceMessage InstanceId
     | UpdateInstanceMessage InstanceUpdate
     | GetInstanceTasks InstanceId
+    | GetResources

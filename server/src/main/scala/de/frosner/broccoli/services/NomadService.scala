@@ -142,13 +142,13 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
     val queryUrl = nomadBaseUrl + "/v1/jobs"
     val request = ws.url(queryUrl)
     log.info(s"Sending job definition to ${request.uri}")
-
+    log.debug(s"JobDefinition: ${job.toString()}")
     Try {
       val result = Await.result(request.post(job), Duration(5, TimeUnit.SECONDS))
       if (result.status == 200) {
         Success(())
       } else {
-        Failure(NomadRequestFailed(request.uri.toString, result.status))
+        Failure(NomadRequestFailed(request.uri.toString, result.status, result.body))
       }
     }.flatten
   }

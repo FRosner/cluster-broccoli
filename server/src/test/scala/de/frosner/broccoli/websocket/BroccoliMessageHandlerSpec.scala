@@ -6,7 +6,7 @@ import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad
-import de.frosner.broccoli.services.InstanceService
+import de.frosner.broccoli.services.{InstanceService, NomadService}
 import org.scalacheck.Gen
 import org.specs2.ScalaCheck
 import org.specs2.concurrent.ExecutionEnv
@@ -33,7 +33,7 @@ class BroccoliMessageHandlerSpec
           val instanceTasks = InstanceTasks(id, tasks, periodicRunTasks)
           instances.getInstanceTasks(account)(id) returns EitherT.pure[Future, InstanceError](instanceTasks)
 
-          val outgoingMessage = new BroccoliMessageHandler(instances, mock[InstanceService])
+          val outgoingMessage = new BroccoliMessageHandler(instances, mock[InstanceService], mock[NomadService])
             .processMessage(account)(IncomingMessage.GetInstanceTasks(id))
 
           outgoingMessage must beEqualTo(OutgoingMessage.GetInstanceTasksSuccess(instanceTasks)).await
@@ -45,7 +45,7 @@ class BroccoliMessageHandlerSpec
         val instances = mock[NomadInstances]
         instances.getInstanceTasks(account)(id) returns EitherT.leftT[Future, InstanceTasks](error)
 
-        val outgoingMessage = new BroccoliMessageHandler(instances, mock[InstanceService])
+        val outgoingMessage = new BroccoliMessageHandler(instances, mock[InstanceService], mock[NomadService])
           .processMessage(account)(IncomingMessage.GetInstanceTasks(id))
 
         outgoingMessage must beEqualTo(OutgoingMessage.GetInstanceTasksError(id, error)).await

@@ -113,7 +113,16 @@ class NomadServiceSpec extends Specification with ServiceMocks {
         ResourceInfo(allocDirInfo, cpuInfos, 161.0736960530685, diskInfos, memoryInfo, 1535023884681657859L, 18909052)
       val nodesResources =
         Seq(
-          NodeResources("b9747124-1854-64a5-522b-1f1f32747eda", "nooe-01", resourceInfo)
+          NodeResources(
+            "b9747124-1854-64a5-522b-1f1f32747eda",
+            "nooe-01",
+            resourceInfo.copy( // Deduplicate the same disks mounted on different paths
+              disksStats = resourceInfo.disksStats
+                .map(diskInfo => (diskInfo.device, diskInfo))
+                .toMap
+                .values
+                .toSeq)
+          )
         )
 
       // test server for node running nomad

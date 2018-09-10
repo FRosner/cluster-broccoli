@@ -123,7 +123,7 @@ class WebSocketControllerSpec
         instanceService = instanceService,
         aboutService = withDummyValues(mock[AboutInfoService]),
         securityService = withAuthConf(mock[SecurityService], List(account)),
-        messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
+        messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService, mock[NomadService]),
         playEnv = playEnv,
         cacheApi = cacheApi,
         nomadService = nomadService
@@ -142,7 +142,7 @@ class WebSocketControllerSpec
         instanceService = instanceService,
         aboutService = withDummyValues(mock[AboutInfoService]),
         securityService = withAuthNone(mock[SecurityService]),
-        messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
+        messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService, mock[NomadService]),
         playEnv = playEnv,
         cacheApi = cacheApi,
         nomadService = withNodesResources(mock[NomadService], Seq.empty)
@@ -162,7 +162,7 @@ class WebSocketControllerSpec
         instanceService = instanceService,
         aboutService = withDummyValues(mock[AboutInfoService]),
         securityService = withAuthConf(mock[SecurityService], List(account)),
-        messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
+        messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService, mock[NomadService]),
         playEnv = playEnv,
         cacheApi = cacheApi,
         nomadService = withNodesResources(mock[NomadService], Seq.empty)
@@ -188,7 +188,7 @@ class WebSocketControllerSpec
         instanceService = instanceService,
         aboutService = withDummyValues(mock[AboutInfoService]),
         securityService = withAuthNone(mock[SecurityService]),
-        messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
+        messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService, mock[NomadService]),
         playEnv = playEnv,
         cacheApi = cacheApi,
         nomadService = withNodesResources(mock[NomadService], Seq.empty)
@@ -218,7 +218,7 @@ class WebSocketControllerSpec
         instanceService = instanceService,
         aboutService = withDummyValues(mock[AboutInfoService]),
         securityService = withAuthNone(mock[SecurityService]),
-        messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
+        messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService, mock[NomadService]),
         playEnv = playEnv,
         cacheApi = cacheApi,
         nomadService = withNodesResources(mock[NomadService], Seq.empty)
@@ -274,7 +274,7 @@ class WebSocketControllerSpec
             instanceService = instanceService,
             aboutService = withDummyValues(mock[AboutInfoService]),
             securityService = securityService,
-            messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
+            messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService, mock[NomadService]),
             playEnv = playEnv,
             cacheApi = cacheApi,
             nomadService = withNodesResources(mock[NomadService], Seq.empty)
@@ -314,7 +314,7 @@ class WebSocketControllerSpec
             instanceService = instanceService,
             aboutService = withDummyValues(mock[AboutInfoService]),
             securityService = securityService,
-            messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
+            messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService, mock[NomadService]),
             playEnv = playEnv,
             cacheApi = cacheApi,
             nomadService = withNodesResources(mock[NomadService], Seq.empty)
@@ -361,7 +361,7 @@ class WebSocketControllerSpec
             instanceService = instanceService,
             aboutService = withDummyValues(mock[AboutInfoService]),
             securityService = securityService,
-            messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
+            messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService, mock[NomadService]),
             playEnv = playEnv,
             cacheApi = cacheApi,
             nomadService = withNodesResources(mock[NomadService], Seq.empty)
@@ -422,7 +422,7 @@ class WebSocketControllerSpec
             instanceService = instanceService,
             aboutService = withDummyValues(mock[AboutInfoService]),
             securityService = securityService,
-            messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
+            messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService, mock[NomadService]),
             playEnv = playEnv,
             cacheApi = cacheApi,
             nomadService = withNodesResources(mock[NomadService], Seq.empty)
@@ -476,7 +476,7 @@ class WebSocketControllerSpec
             instanceService = instanceService,
             aboutService = withDummyValues(mock[AboutInfoService]),
             securityService = securityService,
-            messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
+            messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService, mock[NomadService]),
             playEnv = playEnv,
             cacheApi = cacheApi,
             nomadService = withNodesResources(mock[NomadService], Seq.empty)
@@ -538,7 +538,7 @@ class WebSocketControllerSpec
             instanceService = instanceService,
             aboutService = withDummyValues(mock[AboutInfoService]),
             securityService = securityService,
-            messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService),
+            messageHandler = new BroccoliMessageHandler(mock[NomadInstances], instanceService, mock[NomadService]),
             playEnv = playEnv,
             cacheApi = cacheApi,
             nomadService = withNodesResources(mock[NomadService], Seq.empty)

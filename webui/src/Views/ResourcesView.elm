@@ -13,11 +13,77 @@ import Round
 import Maybe.Extra exposing (isJust)
 import Updates.Messages exposing (UpdateBodyViewMsg(UpdateTemporaryStates))
 import Messages exposing (..)
+import Utils.HtmlUtils exposing (iconButtonText)
 
 
 headerView : List (Html AnyMsg)
 headerView =
     [ Grid.row
+        [ Row.attrs [ class "vertical-align" ] ]
+        [ Grid.col
+            [ Col.md2, Col.textAlign Text.alignMdCenter ]
+            [ iconButtonText
+                "btn btn-outline-secondary"
+                "fa fa-refresh"
+                "Refresh"
+                [ onClick (SendWsMsg GetResources)
+                , id "refresh-resources"
+                ]
+            ]
+        , Grid.col
+            [ Col.md8, Col.offsetMd2 ]
+            [ Grid.row
+                [ Row.attrs
+                    [ class "border border-secondary vertical-align"
+                    , style [ ( "height", "4rem" ), ( "background-color", "rgb(245,245,245)" ) ]
+                    ]
+                ]
+                [ Grid.col
+                    [ Col.md2, Col.textAlign Text.alignMdCenter ]
+                    [ span
+                        []
+                        [ text "Legend" ]
+                    ]
+                , Grid.col
+                    [ Col.md10, Col.textAlign Text.alignMdCenter ]
+                    [ div
+                        [ class "progress"
+                        , style [ ( "height", "1.5rem" ), ( "width", "100%" ) ]
+                        ]
+                        [ div
+                            [ class "progress-bar bg-warning"
+                            , attribute "role" "progressbar"
+                            , style [ ( "width", "33.33%" ) ]
+                            , attribute "aria-valuenow" "33.33"
+                            , attribute "aria-valuemin" "0"
+                            , attribute "aria-valuemax" "100"
+                            ]
+                            [ text "User" ]
+                        , div
+                            [ class "progress-bar bg-info"
+                            , attribute "role" "progressbar"
+                            , style [ ( "width", "33.33%" ) ]
+                            , attribute "aria-valuenow" "33.33"
+                            , attribute "aria-valuemin" "0"
+                            , attribute "aria-valuemax" "100"
+                            ]
+                            [ text "System (not used for memory)" ]
+                        , div
+                            [ class "progress-bar bg-success"
+                            , attribute "role" "progressbar"
+                            , style [ ( "width", "33.34%" ) ]
+                            , attribute "aria-valuenow" "33.34"
+                            , attribute "aria-valuemin" "0"
+                            , attribute "aria-valuemax" "100"
+                            ]
+                            [ text "Idle/Free" ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    , Html.map UpdateBodyViewMsg addHr
+    , Grid.row
         []
         [ Grid.col
             [ Col.md2, Col.textAlign Text.alignMdCenter ]
@@ -44,15 +110,12 @@ headerView =
                 ]
             ]
         ]
-    , Html.map UpdateBodyViewMsg
-        (Grid.row
-            []
-            [ Grid.col
-                [ Col.md12 ]
-                [ hr [] [] ]
-            ]
-        )
+    , Html.map UpdateBodyViewMsg addHr
     ]
+
+
+addHr =
+    hr [] []
 
 
 view : TemporaryStates -> NodeResources -> List (Html AnyMsg)
@@ -60,14 +123,7 @@ view temporaryStates nodeResources =
     [ Html.map
         UpdateBodyViewMsg
         (viewInternal temporaryStates nodeResources)
-    , Html.map UpdateBodyViewMsg
-        (Grid.row
-            []
-            [ Grid.col
-                [ Col.md12 ]
-                [ hr [] [] ]
-            ]
-        )
+    , Html.map UpdateBodyViewMsg addHr
     ]
 
 
@@ -91,6 +147,7 @@ viewInternal temporaryStates nodeResources =
                         |> List.map (diskView temporaryStates nodeResources.nodeName)
                     )
                 ]
+            , addHr
             , Grid.row
                 [ Row.attrs [ class "vertical-align" ] ]
                 [ Grid.col
@@ -100,6 +157,7 @@ viewInternal temporaryStates nodeResources =
                     [ Col.md10 ]
                     [ memoryView temporaryStates nodeResources.nodeName nodeResources.resources.memoryStats ]
                 ]
+            , addHr
             , Grid.row
                 [ Row.attrs [ class "vertical-align" ] ]
                 [ Grid.col
@@ -222,16 +280,16 @@ cpuView temporaryStates nodeName cpuInfo =
             cpuInfo.system
 
         free =
-            cpuInfo.idle
+            100 - (used + system)
 
         usedPercent =
-            cpuInfo.user
+            used
 
         systemPercent =
-            cpuInfo.system
+            system
 
         freePercent =
-            cpuInfo.idle
+            free
 
         usedString =
             String.concat [ (Round.round 2 usedPercent), "%" ]
