@@ -29,6 +29,10 @@ type alias TemporaryStates =
     }
 
 
+initialTemporaryStates =
+    { resourceHoverMessage = Nothing }
+
+
 type alias BodyUiModel =
     { expandedTemplates : Set TemplateId
     , selectedInstances : Set InstanceId

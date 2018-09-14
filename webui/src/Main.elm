@@ -215,20 +215,14 @@ view model =
                 )
             then
                 div [] []
-            else if (model.tabState == Instances) then
-                Html.map
-                    UpdateBodyViewMsg
-                    (Views.Body.view
-                        (Dict.filter (\k v -> String.contains model.templateFilter k) model.templates)
-                        (Dict.filter (\k v -> String.contains model.instanceFilter k) model.instances)
-                        model.tasks
-                        model.bodyUiModel
-                        (Maybe.map (\i -> i.authInfo.userInfo.role) model.aboutInfo)
-                    )
             else
-                Views.Body.resourcesView
-                    model.bodyUiModel.temporaryStates
-                    model.bodyUiModel.nodesResources
+                Views.Body.view
+                    model.tabState
+                    (Dict.filter (\k v -> String.contains model.templateFilter k) model.templates)
+                    (Dict.filter (\k v -> String.contains model.instanceFilter k) model.instances)
+                    model.tasks
+                    model.bodyUiModel
+                    (Maybe.map (\i -> i.authInfo.userInfo.role) model.aboutInfo)
     in
         div
             []

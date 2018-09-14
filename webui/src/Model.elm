@@ -1,4 +1,4 @@
-module Model exposing (Model, Route(..), initial, TabState(..))
+module Model exposing (Model, Route(..), initial, initialTabState, TabState(..))
 
 import Models.Resources.Template exposing (Template, TemplateId)
 import Models.Resources.Instance exposing (Instance, InstanceId)
@@ -19,6 +19,10 @@ type Route
 type TabState
     = Instances
     | Resources
+
+
+initialTabState =
+    Instances
 
 
 {-| The application state model
@@ -48,7 +52,7 @@ type alias Model =
 -}
 initial : Location -> Route -> Model
 initial location route =
-    { tabState = Instances
+    { tabState = initialTabState
     , aboutInfo = Nothing
     , errors = []
     , loginForm = LoginForm.empty

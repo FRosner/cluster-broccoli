@@ -447,6 +447,7 @@ progressBarView temporaryStates nodeName resourceType resourceName actual percen
         , attribute "aria-valuenow" (Round.round 2 percent)
         , attribute "aria-valuemin" "0"
         , attribute "aria-valuemax" "100"
+        , id (String.join "-" [ nodeName, resourceTypeToString resourceType, resourceName, progressBarClass ])
         , onMouseOver
             (UpdateTemporaryStates
                 { temporaryStates
@@ -474,3 +475,16 @@ progressBarView temporaryStates nodeName resourceType resourceName actual percen
                 ""
             )
         ]
+
+
+resourceTypeToString : ResourceType -> String
+resourceTypeToString resourceType =
+    case resourceType of
+        CPU ->
+            "cpu"
+
+        Disk ->
+            "disk"
+
+        Memory ->
+            "memory"
