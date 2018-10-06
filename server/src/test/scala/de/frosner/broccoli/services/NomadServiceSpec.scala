@@ -8,8 +8,6 @@ import de.frosner.broccoli.controllers.ServiceMocks
 import de.frosner.broccoli.nomad.NomadConfiguration
 import de.frosner.broccoli.nomad.models.Job.jobFormat
 import de.frosner.broccoli.nomad.models._
-import de.frosner.broccoli.nomad.models.NodeResources._
-import org.mockito.Mockito._
 import org.specs2.mutable.Specification
 import play.api.{BuiltInComponents, Mode}
 import play.api.libs.json._
@@ -88,48 +86,174 @@ class NomadServiceSpec extends Specification with ServiceMocks {
   "Getting node resources for user" should {
     "work as expected" in {
       val port = 1024 + scala.util.Random.nextInt(64511)
-      val allocDirInfo =
-        AllocDirInfo(61577662464L, "", 25.128018856048584, "", 135148244992L, 66681864192L, 49.339792903671956)
-      val cpuInfos =
-        Seq(
-          CPUInfo("cpu0", 95.04950470034078, 2.9702970276487837, 4.950495046081306, 0.9900990092162613),
-          CPUInfo("cpu1", 97.93814437344903, 1.0309278372786437, 2.0618556745572874, 1.0309278372786437)
-        )
-      val diskInfos =
-        Seq(
-          DiskInfo(61577662464L, "/dev/vda1", 25.128018856048584, "/", 135148244992L, 66681864192L, 49.339792903671956),
-          DiskInfo(
-            61577662464L,
-            "/dev/vda1",
-            25.128018856048584,
-            "/var/lib/docker/aufs",
-            135148244992L,
-            66681864192L,
-            49.339792903671956
-          )
-        )
-      val memoryInfo = MemoryInfo(15642181632L, 1030324224, 16824614912L, 1182433280)
-      val resourceInfo =
-        ResourceInfo(allocDirInfo, cpuInfos, 161.0736960530685, diskInfos, memoryInfo, 1535023884681657859L, 18909052)
       val nodesResources =
-        Seq(
-          NodeResources(
-            "b9747124-1854-64a5-522b-1f1f32747eda",
-            "nooe-01",
-            resourceInfo.copy( // Deduplicate the same disks mounted on different paths
-              disksStats = resourceInfo.disksStats
-                .map(diskInfo => (diskInfo.device, diskInfo))
-                .toMap
-                .values
-                .toSeq)
-          )
+        NodeResources(
+          "b9747124-1854-64a5-522b-1f1f32747eda",
+          "nooe-01",
+          TotalResources(4594, 16045, 51657),
+          HostResources(45, 1130258432L, 16824614912L, 67820965888L, 135148244992L),
+          Map(
+            "51f1cfce-0a77-6bc5-57d4-1ffc98c7ac29" ->
+              AllocatedResources(
+                id = "51f1cfce-0a77-6bc5-57d4-1ffc98c7ac29",
+                name = "nooe-vault.nooe-vault[0]",
+                cpu = 500,
+                memoryMB = 1024,
+                diskMB = 300
+              )
+          ),
+          Map(
+            "51f1cfce-0a77-6bc5-57d4-1ffc98c7ac29" ->
+              AllocatedResourcesUtilization(
+                id = "51f1cfce-0a77-6bc5-57d4-1ffc98c7ac29",
+                name = "nooe-vault.nooe-vault[0]",
+                cpu = 15,
+                memory = 9945088
+              )
+          ),
+          TotalResources(500, 1024, 300),
+          TotalUtilization(15, 9945088)
         )
 
-      // test server for node running nomad
+      // test server for client node running nomad
       val server =
         new NettyServerComponents with BuiltInComponents {
-          lazy val router = Router.from {
-            case GET(p"/v1/client/stats") => Action { Results.Ok(Json.toJson(resourceInfo)) }
+          lazy val router: Router = Router.from {
+            case GET(p"/v1/client/stats") => Action {
+              Results.Ok(
+                Json.parse(
+                  """{
+                    |  "AllocDirStats": {
+                    |    "Available": 60438560768,
+                    |    "Device": "",
+                    |    "InodesUsedPercent": 25.660133361816406,
+                    |    "Mountpoint": "",
+                    |    "Size": 135148244992,
+                    |    "Used": 67820965888,
+                    |    "UsedPercent": 50.18264639101648
+                    |  },
+                    |  "CPU": [
+                    |    {
+                    |      "CPU": "cpu0",
+                    |      "Idle": 98.0000000372529,
+                    |      "System": 1.0000000046566129,
+                    |      "Total": 2.0000000093132257,
+                    |      "User": 1.0000000046566129
+                    |    },
+                    |    {
+                    |      "CPU": "cpu1",
+                    |      "Idle": 100,
+                    |      "System": 0,
+                    |      "Total": 0,
+                    |      "User": 0
+                    |    }
+                    |  ],
+                    |  "CPUTicksConsumed": 45.94000021392479,
+                    |  "DiskStats": [
+                    |    {
+                    |      "Available": 60438560768,
+                    |      "Device": "/dev/vda1",
+                    |      "InodesUsedPercent": 25.660133361816406,
+                    |      "Mountpoint": "/",
+                    |      "Size": 135148244992,
+                    |      "Used": 67820965888,
+                    |      "UsedPercent": 50.18264639101648
+                    |    },
+                    |    {
+                    |      "Available": 60438560768,
+                    |      "Device": "/dev/vda1",
+                    |      "InodesUsedPercent": 25.660133361816406,
+                    |      "Mountpoint": "/var/lib/docker/aufs",
+                    |      "Size": 135148244992,
+                    |      "Used": 67820965888,
+                    |      "UsedPercent": 50.18264639101648
+                    |    }
+                    |  ],
+                    |  "Memory": {
+                    |    "Available": 15694356480,
+                    |    "Free": 809086976,
+                    |    "Total": 16824614912,
+                    |    "Used": 1130258432
+                    |  },
+                    |  "Timestamp": 1537952757466164700,
+                    |  "Uptime": 21837925
+                    |}""".stripMargin
+                )
+              )
+            }
+            case GET(p"/v1/client/allocation/51f1cfce-0a77-6bc5-57d4-1ffc98c7ac29/stats") => Action {
+              Results.Ok(
+                Json.parse(
+                  """{
+                    |  "ResourceUsage": {
+                    |    "CpuStats": {
+                    |      "Measured": [
+                    |        "Throttled Periods",
+                    |        "Throttled Time",
+                    |        "Percent"
+                    |      ],
+                    |      "Percent": 0.6793430769230769,
+                    |      "SystemMode": 0,
+                    |      "ThrottledPeriods": 0,
+                    |      "ThrottledTime": 0,
+                    |      "TotalTicks": 15.604510476923076,
+                    |      "UserMode": 301.95082881728126
+                    |    },
+                    |    "MemoryStats": {
+                    |      "Cache": 8134656,
+                    |      "KernelMaxUsage": 0,
+                    |      "KernelUsage": 0,
+                    |      "MaxUsage": 18333696,
+                    |      "Measured": [
+                    |        "RSS",
+                    |        "Cache",
+                    |        "Swap",
+                    |        "Max Usage"
+                    |      ],
+                    |      "RSS": 9945088,
+                    |      "Swap": 0
+                    |    }
+                    |  },
+                    |  "Tasks": {
+                    |    "nooe-vault": {
+                    |      "Pids": null,
+                    |      "ResourceUsage": {
+                    |        "CpuStats": {
+                    |          "Measured": [
+                    |            "Throttled Periods",
+                    |            "Throttled Time",
+                    |            "Percent"
+                    |          ],
+                    |          "Percent": 0.6793430769230769,
+                    |          "SystemMode": 0,
+                    |          "ThrottledPeriods": 0,
+                    |          "ThrottledTime": 0,
+                    |          "TotalTicks": 15.604510476923076,
+                    |          "UserMode": 301.95082881728126
+                    |        },
+                    |        "MemoryStats": {
+                    |          "Cache": 8134656,
+                    |          "KernelMaxUsage": 0,
+                    |          "KernelUsage": 0,
+                    |          "MaxUsage": 18333696,
+                    |          "Measured": [
+                    |            "RSS",
+                    |            "Cache",
+                    |            "Swap",
+                    |            "Max Usage"
+                    |          ],
+                    |          "RSS": 9945088,
+                    |          "Swap": 0
+                    |        }
+                    |      },
+                    |      "Timestamp": 1537958516820011500
+                    |    }
+                    |  },
+                    |  "Timestamp": 1537958516820011500
+                    |}""".stripMargin
+                )
+              )
+            }
           }
           override lazy val serverConfig = ServerConfig(
             port = Some(port),
@@ -249,6 +373,147 @@ class NomadServiceSpec extends Specification with ServiceMocks {
                 |}
               """.stripMargin))
           }
+        case GET(p"/v1/node/b9747124-1854-64a5-522b-1f1f32747eda/allocations") =>
+          Action {
+            Results.Ok(
+              Json.parse(
+                // some unused fields have been shortened to {} because they are not parsed.
+                s"""[
+                   |  {
+                   |    "ID": "51f1cfce-0a77-6bc5-57d4-1ffc98c7ac29",
+                   |    "EvalID": "ed054cc6-5fd6-1683-8d80-3446dd3380c9",
+                   |    "Name": "nooe-vault.nooe-vault[0]",
+                   |    "NodeID": "b9747124-1854-64a5-522b-1f1f32747eda",
+                   |    "JobID": "nooe-vault",
+                   |    "Job": {},
+                   |    "TaskGroup": "nooe-vault",
+                   |    "Resources": {
+                   |      "CPU": 500,
+                   |      "MemoryMB": 1024,
+                   |      "DiskMB": 300,
+                   |      "IOPS": 0,
+                   |      "Networks": [
+                   |        {
+                   |          "Device": "eth0",
+                   |          "CIDR": "",
+                   |          "IP": "10.250.24.142",
+                   |          "MBits": 100,
+                   |          "ReservedPorts": [
+                   |            {
+                   |              "Label": "vault",
+                   |              "Value": 8200
+                   |            }
+                   |          ],
+                   |          "DynamicPorts": null
+                   |        }
+                   |      ]
+                   |    },
+                   |    "SharedResources": {
+                   |      "CPU": 0,
+                   |      "MemoryMB": 0,
+                   |      "DiskMB": 300,
+                   |      "IOPS": 0,
+                   |      "Networks": null
+                   |    },
+                   |    "TaskResources": {
+                   |      "nooe-vault": {
+                   |        "CPU": 500,
+                   |        "MemoryMB": 1024,
+                   |        "DiskMB": 0,
+                   |        "IOPS": 0,
+                   |        "Networks": [
+                   |          {
+                   |            "Device": "eth0",
+                   |            "CIDR": "",
+                   |            "IP": "10.250.24.142",
+                   |            "MBits": 100,
+                   |            "ReservedPorts": [
+                   |              {
+                   |                "Label": "vault",
+                   |                "Value": 8200
+                   |              }
+                   |            ],
+                   |            "DynamicPorts": null
+                   |          }
+                   |        ]
+                   |      }
+                   |    },
+                   |    "Metrics": {},
+                   |    "DesiredStatus": "run",
+                   |    "DesiredDescription": "",
+                   |    "ClientStatus": "running",
+                   |    "ClientDescription": "",
+                   |    "TaskStates": {},
+                   |    "PreviousAllocation": "776a3bb8-c6f6-965d-d88e-fe780b767b28",
+                   |    "CreateIndex": 14582058,
+                   |    "ModifyIndex": 14582061,
+                   |    "AllocModifyIndex": 14582058,
+                   |    "CreateTime": 1536848890630352000
+                   |  },
+                   |  {
+                   |    "ID": "b2134fc5-7cf9-d7f1-5d92-77d024e6ed98",
+                   |    "EvalID": "bbdfa740-993b-6ace-616a-664d13ed0888",
+                   |    "Name": "nooe-luigi-flow-example/periodic-1518701400.nooe-luigi-flow-example[0]",
+                   |    "NodeID": "b9747124-1854-64a5-522b-1f1f32747eda",
+                   |    "JobID": "nooe-luigi-flow-example/periodic-1518701400",
+                   |    "Job": {},
+                   |    "TaskGroup": "nooe-luigi-flow-example",
+                   |    "Resources": {
+                   |      "CPU": 500,
+                   |      "MemoryMB": 512,
+                   |      "DiskMB": 300,
+                   |      "IOPS": 0,
+                   |      "Networks": [
+                   |        {
+                   |          "Device": "eth0",
+                   |          "CIDR": "",
+                   |          "IP": "10.250.24.142",
+                   |          "MBits": 100,
+                   |          "ReservedPorts": null,
+                   |          "DynamicPorts": null
+                   |        }
+                   |      ]
+                   |    },
+                   |    "SharedResources": {
+                   |      "CPU": 0,
+                   |      "MemoryMB": 0,
+                   |      "DiskMB": 300,
+                   |      "IOPS": 0,
+                   |      "Networks": null
+                   |    },
+                   |    "TaskResources": {
+                   |      "nooe-luigi-flow-example": {
+                   |        "CPU": 500,
+                   |        "MemoryMB": 512,
+                   |        "DiskMB": 0,
+                   |        "IOPS": 0,
+                   |        "Networks": [
+                   |          {
+                   |            "Device": "eth0",
+                   |            "CIDR": "",
+                   |            "IP": "10.250.24.142",
+                   |            "MBits": 100,
+                   |            "ReservedPorts": null,
+                   |            "DynamicPorts": null
+                   |          }
+                   |        ]
+                   |      }
+                   |    },
+                   |    "Metrics": {},
+                   |    "DesiredStatus": "run",
+                   |    "DesiredDescription": "",
+                   |    "ClientStatus": "complete",
+                   |    "ClientDescription": "",
+                   |    "TaskStates": {},
+                   |    "PreviousAllocation": "",
+                   |    "CreateIndex": 5467450,
+                   |    "ModifyIndex": 5508801,
+                   |    "AllocModifyIndex": 5467450,
+                   |    "CreateTime": 1518701400124658700
+                   |  }
+                   |]""".stripMargin)
+            )
+          }
       } { implicit port =>
         WsTestClient.withClient { client =>
           val configuration = NomadConfiguration(url = s"http://localhost:$port")
@@ -257,7 +522,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
             Await.result(nomadService.getNodeResources(new Account("nooe-admin", "nooe-*", Role.Administrator)),
                          Duration(5, TimeUnit.SECONDS))
           server.stop() // stop test server
-          result === nodesResources
+          result === List(nodesResources)
         }
       }
     }

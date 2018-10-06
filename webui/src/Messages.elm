@@ -38,6 +38,7 @@ type AnyMsg
     | OnLocationChange Location
     | TemplateFilter String
     | InstanceFilter String
+    | NodeFilter String
     | NoOp
 
 

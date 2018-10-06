@@ -186,7 +186,6 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
             name = (jsValue \ "Name").as[String]
             if name.split("-")(0).equals(oePrefix)
           } yield (id, name)
-
         Future
           .sequence(
             filteredIds.map {
@@ -221,17 +220,15 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
                           .map(
                             resourceResponse => {
                               val cpu = Math.round(Math.floor((resourceResponse.json \ "CPUTicksConsumed").as[Double]))
-                              val memoryUsed =
-                                Math.round(Math.floor((resourceResponse.json \ "Memory" \ "Used").as[Long]))
-                              val memoryTotal =
-                                Math.round(Math.floor((resourceResponse.json \ "Memory" \ "Total").as[Long]))
+                              val memoryUsed = (resourceResponse.json \ "Memory" \ "Used").as[Long]
+                              val memoryTotal = (resourceResponse.json \ "Memory" \ "Total").as[Long]
                               val (diskUsed, diskSize) =
                                 (resourceResponse.json \ "DiskStats")
                                   .as[List[JsValue]]
                                   .filter(diskJson => (diskJson \ "Device").as[String].equals(storageDevice))
                                   .map(diskJson => ((diskJson \ "Used").as[Long], (diskJson \ "Size").as[Long])) match {
-                                  case List((dUsed, dSize)) => (dUsed, dSize)
-                                  case _                    => (0, 0) // This should never happen normally
+                                  case (dUsed, dSize)::_ => (dUsed, dSize)
+                                  case _                    => (0L, 0L) // This should never happen normally
                                 }
                               HostResources(cpu, memoryUsed, memoryTotal, diskUsed, diskSize)
                             }
@@ -271,7 +268,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
                                     .get()
                                     .map(
                                       allocationStatsResponse => {
-                                        AllocatedResourcesUtlization(
+                                        AllocatedResourcesUtilization(
                                           allocatedResources.id,
                                           allocatedResources.name,
                                           Math.round(
@@ -291,22 +288,33 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
                           })
                           .flatMap(identity)
                       // Combine all results into a Future[NodeResources]
-                      hostResult.flatMap(hostResources =>
-                        allocationResults.flatMap(allocations =>
-                          // TODO: Add total for allocations and allocationsUtilization
-                          allocationUtilizationResult.map(
-                            allocationsUtilization => {
-                              NodeResources(
-                                id,
-                                name,
-                                totalResources,
-                                hostResources,
-                                Map(allocations.map(allocation => (allocation.id, allocation)): _*),
-                                Map(allocationsUtilization
-                                  .map(allocationUtilization => (allocationUtilization.id, allocationUtilization)): _*)
-                              )
-                            }
-                        )))
+                      for {
+                        hostResources <- hostResult
+                        allocations <- allocationResults
+                        allocationsUtilization <- allocationUtilizationResult
+                      } yield {
+                        val (allocCPU, allocMem, allocDisk) =
+                          allocations.foldLeft((0L, 0L, 0L)) {
+                            case ((cpu, memMB, diskMB), allocation) =>
+                              (cpu + allocation.cpu, memMB + allocation.memoryMB, diskMB + allocation.diskMB)
+                          }
+                        val (allocUtilCPU, allocUtilMem) =
+                          allocationsUtilization.foldLeft((0L, 0L)) {
+                            case ((cpu, mem), allocationUtlization) =>
+                              (cpu + allocationUtlization.cpu, mem + allocationUtlization.memory)
+                          }
+                        NodeResources(
+                          id,
+                          name,
+                          totalResources,
+                          hostResources,
+                          Map(allocations.map(allocation => (allocation.id, allocation)): _*),
+                          Map(allocationsUtilization
+                            .map(allocationUtilization => (allocationUtilization.id, allocationUtilization)): _*),
+                          TotalResources(allocCPU, allocMem, allocDisk),
+                          TotalUtilization(allocUtilCPU, allocUtilMem)
+                        )
+                      }
                     }
                   }
                   .flatMap(identity)

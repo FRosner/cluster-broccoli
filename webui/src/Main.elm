@@ -181,6 +181,11 @@ update msg model =
             , Cmd.none
             )
 
+        NodeFilter filterString ->
+            ( { model | nodeFilter = filterString }
+            , Cmd.none
+            )
+
         NoOp ->
             ( model, Cmd.none )
 
@@ -221,12 +226,13 @@ view model =
                     (Dict.filter (\k v -> String.contains model.templateFilter k) model.templates)
                     (Dict.filter (\k v -> String.contains model.instanceFilter k) model.instances)
                     model.tasks
+                    (List.filter (\nodeResource -> String.contains model.nodeFilter nodeResource.nodeName) model.nodesResources)
                     model.bodyUiModel
                     (Maybe.map (\i -> i.authInfo.userInfo.role) model.aboutInfo)
     in
         div
             []
-            [ Views.Header.view model.aboutInfo model.loginForm model.authRequired model.templateFilter model.instanceFilter model.tabState
+            [ Views.Header.view model.aboutInfo model.loginForm model.authRequired model.templateFilter model.instanceFilter model.nodeFilter model.tabState
             , Views.Notifications.view model.errors
             , mainView
 

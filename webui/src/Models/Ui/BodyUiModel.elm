@@ -12,25 +12,34 @@ import Array exposing (Array)
 type alias ResourceHoverMessage =
     { nodeName : String
     , resourceType : ResourceType
-    , resourceName : String
+    , resourceSubType : ResourceSubType
+    , resourceId : String -- resourceId can be "total" or the allocationId if it refers to an allocation
     , message : String
     , position : Float
     }
 
-
-type ResourceType
+type ResourceSubType
     = CPU
     | Disk
     | Memory
 
 
+type ResourceType
+    = Host
+    | Allocated
+    | AllocatedUtilization
+
+
 type alias TemporaryStates =
     { resourceHoverMessage : Maybe ResourceHoverMessage
+    , expandedResourceAllocs : Set String
     }
 
 
 initialTemporaryStates =
-    { resourceHoverMessage = Nothing }
+    { resourceHoverMessage = Nothing
+    , expandedResourceAllocs = Set.empty
+    }
 
 
 type alias BodyUiModel =
@@ -42,7 +51,6 @@ type alias BodyUiModel =
     , visibleNewInstanceSecrets : Set ( TemplateId, String )
     , expandedNewInstanceForms : Dict TemplateId InstanceParameterForm
     , attemptedDeleteInstances : Maybe ( TemplateId, Set InstanceId )
-    , nodesResources : List NodeResources
     , temporaryStates : TemporaryStates
     }
 
@@ -56,6 +64,5 @@ initialModel =
     , visibleNewInstanceSecrets = Set.empty
     , expandedNewInstanceForms = Dict.empty
     , attemptedDeleteInstances = Nothing
-    , nodesResources = []
-    , temporaryStates = { resourceHoverMessage = Nothing }
+    , temporaryStates = initialTemporaryStates
     }

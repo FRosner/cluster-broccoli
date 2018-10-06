@@ -1,5 +1,6 @@
 module Model exposing (Model, Route(..), initial, initialTabState, TabState(..))
 
+import Models.Resources.NodeResources exposing (NodeResources)
 import Models.Resources.Template exposing (Template, TemplateId)
 import Models.Resources.Instance exposing (Instance, InstanceId)
 import Models.Resources.AboutInfo exposing (AboutInfo)
@@ -39,12 +40,14 @@ type alias Model =
     , instances : Dict InstanceId Instance
     , tasks : Dict InstanceId InstanceTasks
     , templates : Dict TemplateId Template
+    , nodesResources : List NodeResources
     , bodyUiModel : BodyUiModel
     , wsConnected : Bool
     , route : Route
     , location : Location
     , templateFilter : String
     , instanceFilter : String
+    , nodeFilter : String
     }
 
 
@@ -59,6 +62,7 @@ initial location route =
     , authRequired = Nothing
     , bodyUiModel = BodyUiModel.initialModel
     , templates = Dict.empty
+    , nodesResources = []
     , tasks = Dict.empty
     , instances = Dict.empty
     , wsConnected = False
@@ -66,4 +70,5 @@ initial location route =
     , location = location
     , templateFilter = ""
     , instanceFilter = ""
+    , nodeFilter = ""
     }

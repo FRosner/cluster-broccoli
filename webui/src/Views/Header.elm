@@ -16,8 +16,8 @@ import Bootstrap.Button as Button
 import Bootstrap.Utilities.Spacing as Spacing
 
 
-view : Maybe AboutInfo -> LoginForm -> Maybe Bool -> String -> String -> TabState -> Html AnyMsg
-view maybeAboutInfo loginFormModel maybeAuthRequired templateFilterString instanceFilterString tabState =
+view : Maybe AboutInfo -> LoginForm -> Maybe Bool -> String -> String -> String -> TabState -> Html AnyMsg
+view maybeAboutInfo loginFormModel maybeAuthRequired templateFilterString instanceFilterString nodeFilterString tabState =
     let
         ( maybeUserInfo, maybeAuthEnabled ) =
             ( Maybe.map (\i -> i.authInfo.userInfo) maybeAboutInfo
@@ -28,7 +28,7 @@ view maybeAboutInfo loginFormModel maybeAuthRequired templateFilterString instan
             [ class "navbar navbar-expand-md navbar-fixed-top navbar-light bg-light border" ]
             [ div [ class "dropdown ml-3" ] [ navbarBrand, navbarBrandDropdown maybeAboutInfo ]
             , navbarToggleButton
-            , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString tabState
+            , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString nodeFilterString tabState
             ]
 
 
@@ -75,8 +75,8 @@ lia aHref content =
     a [ class "dropdown-item", href aHref ] [ text content ]
 
 
-navbarCollapse : Maybe AboutInfo -> Maybe UserInfo -> Maybe Bool -> Maybe Bool -> LoginForm -> String -> String -> TabState -> Html AnyMsg
-navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString tabState =
+navbarCollapse : Maybe AboutInfo -> Maybe UserInfo -> Maybe Bool -> Maybe Bool -> LoginForm -> String -> String -> String -> TabState -> Html AnyMsg
+navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString nodeFilterString tabState =
     div
         [ class "collapse navbar-collapse"
         , id "navbar-collapse"
@@ -85,11 +85,18 @@ navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired l
             [ if (maybeAuthRequired == Just True || maybeAuthRequired == Nothing || (maybeAuthRequired == Just False && maybeAuthEnabled == Nothing)) then
                 []
               else
+                List.append
                 [ tabGen "Instances" Instances (tabState == Instances)
                 , tabGen "Resources" Resources (tabState == Resources)
-                , templateFilter templateFilterString
-                , instanceFilter instanceFilterString
                 ]
+                (case tabState of
+                    Instances ->
+                        [ templateFilter templateFilterString
+                        , instanceFilter instanceFilterString
+                        ]
+                    Resources ->
+                        [ nodeFilter nodeFilterString ]
+                )
             , [ userInfoView maybeUserInfo
               , Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired)
               ]
@@ -113,7 +120,16 @@ tabGen navString tabState isActive =
         ]
 
 
-templateFilter filterString =
+templateFilter filterString = filterView "header-template-filter" "Template Filter" TemplateFilter filterString
+
+
+instanceFilter filterString = filterView "header-instance-filter" "Instance Filter" InstanceFilter filterString
+
+
+nodeFilter filterString = filterView "header-node-filter" "Node Filter" NodeFilter filterString
+
+
+filterView inputId titleString onInputMessage filterString =
     ul
         [ class "nav navbar-nav mr-3 ml-3" ]
         [ li []
@@ -123,41 +139,14 @@ templateFilter filterString =
                     [ div
                         [ class "input-group-prepend" ]
                         [ div [ class "input-group-text" ]
-                            [ i [ class "fa fa-filter", title "Template Filter" ] [] ]
+                            [ i [ class "fa fa-filter", title titleString ] [] ]
                         ]
                     , input
                         [ type_ "text"
-                        , id "header-template-filter"
+                        , id inputId
                         , class "form-control"
-                        , onInput TemplateFilter
-                        , placeholder "Template Filter"
-                        , value filterString
-                        ]
-                        []
-                    ]
-                ]
-            ]
-        ]
-
-
-instanceFilter filterString =
-    ul
-        [ class "nav navbar-nav mr-3 ml-3" ]
-        [ li []
-            [ div [ class "form-inline" ]
-                [ div
-                    [ class "input-group" ]
-                    [ div
-                        [ class "input-group-prepend" ]
-                        [ div [ class "input-group-text" ]
-                            [ i [ class "fa fa-filter", title "Instance Filter" ] [] ]
-                        ]
-                    , input
-                        [ type_ "text"
-                        , id "header-instance-filter"
-                        , class "form-control"
-                        , onInput InstanceFilter
-                        , placeholder "Instance Filter"
+                        , onInput onInputMessage
+                        , placeholder titleString
                         , value filterString
                         ]
                         []

@@ -1,19 +1,33 @@
 module Views.ResourcesView exposing (view, headerView)
 
-import Bootstrap.Grid as Grid
+import Array exposing (Array)
+import Bootstrap.Grid as Grid exposing (Column)
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
+import Bootstrap.Card as Card
+import Bootstrap.Card.Block as Block
+import Bootstrap.Table as Table
 import Bootstrap.Text as Text
+import Dict
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Models.Resources.NodeResources exposing (..)
-import Models.Ui.BodyUiModel exposing (ResourceType(..), TemporaryStates)
+import Models.Ui.BodyUiModel exposing (ResourceHoverMessage, ResourceSubType(CPU, Disk, Memory), ResourceType(..), TemporaryStates)
 import Round
 import Maybe.Extra exposing (isJust)
-import Updates.Messages exposing (UpdateBodyViewMsg(UpdateTemporaryStates))
+import Set
+import Updates.Messages exposing (UpdateBodyViewMsg(ToggleNodeAllocation, UpdateTemporaryStates))
 import Messages exposing (..)
-import Utils.HtmlUtils exposing (iconButtonText)
+import Utils.HtmlUtils exposing (icon, iconButtonText)
+
+
+type alias ResourceValues =
+    { used : Float
+    , free : Float
+    , usedString: String
+    , freeString : String
+    }
 
 
 headerView : List (Html AnyMsg)
@@ -21,7 +35,7 @@ headerView =
     [ Grid.row
         [ Row.attrs [ class "vertical-align" ] ]
         [ Grid.col
-            [ Col.md2, Col.textAlign Text.alignMdCenter ]
+            [ Col.md2 ]
             [ iconButtonText
                 "btn btn-outline-secondary"
                 "fa fa-refresh"
@@ -30,87 +44,7 @@ headerView =
                 , id "refresh-resources"
                 ]
             ]
-        , Grid.col
-            [ Col.md8, Col.offsetMd2 ]
-            [ Grid.row
-                [ Row.attrs
-                    [ class "border border-secondary vertical-align"
-                    , style [ ( "height", "4rem" ), ( "background-color", "rgb(245,245,245)" ) ]
-                    ]
-                ]
-                [ Grid.col
-                    [ Col.md2, Col.textAlign Text.alignMdCenter ]
-                    [ span
-                        []
-                        [ text "Legend" ]
-                    ]
-                , Grid.col
-                    [ Col.md10, Col.textAlign Text.alignMdCenter ]
-                    [ div
-                        [ class "progress"
-                        , style [ ( "height", "1.5rem" ), ( "width", "100%" ) ]
-                        ]
-                        [ div
-                            [ class "progress-bar bg-warning"
-                            , attribute "role" "progressbar"
-                            , style [ ( "width", "33.33%" ) ]
-                            , attribute "aria-valuenow" "33.33"
-                            , attribute "aria-valuemin" "0"
-                            , attribute "aria-valuemax" "100"
-                            ]
-                            [ text "User" ]
-                        , div
-                            [ class "progress-bar bg-info"
-                            , attribute "role" "progressbar"
-                            , style [ ( "width", "33.33%" ) ]
-                            , attribute "aria-valuenow" "33.33"
-                            , attribute "aria-valuemin" "0"
-                            , attribute "aria-valuemax" "100"
-                            ]
-                            [ text "System (not used for memory)" ]
-                        , div
-                            [ class "progress-bar bg-success"
-                            , attribute "role" "progressbar"
-                            , style [ ( "width", "33.34%" ) ]
-                            , attribute "aria-valuenow" "33.34"
-                            , attribute "aria-valuemin" "0"
-                            , attribute "aria-valuemax" "100"
-                            ]
-                            [ text "Idle/Free" ]
-                        ]
-                    ]
-                ]
-            ]
         ]
-    , Html.map UpdateBodyViewMsg addHr
-    , Grid.row
-        []
-        [ Grid.col
-            [ Col.md2, Col.textAlign Text.alignMdCenter ]
-            [ h6 [] [ text "Node Name" ] ]
-        , Grid.col
-            [ Col.md10, Col.textAlign Text.alignMdCenter ]
-            [ Grid.row
-                []
-                [ Grid.col
-                    [ Col.md2 ]
-                    [ h6 [] [ text "Resource Type" ] ]
-                , Grid.col
-                    [ Col.md10 ]
-                    [ Grid.row
-                        []
-                        [ Grid.col
-                            [ Col.md2 ]
-                            [ h6 [] [ text "Resource Name" ] ]
-                        , Grid.col
-                            [ Col.md10 ]
-                            [ h6 [] [ text "Resource Value" ] ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
-    , Html.map UpdateBodyViewMsg addHr
     ]
 
 
@@ -123,237 +57,292 @@ view temporaryStates nodeResources =
     [ Html.map
         UpdateBodyViewMsg
         (viewInternal temporaryStates nodeResources)
-    , Html.map UpdateBodyViewMsg addHr
     ]
 
 
 viewInternal : TemporaryStates -> NodeResources -> Html UpdateBodyViewMsg
 viewInternal temporaryStates nodeResources =
-    Grid.row
-        [ Row.attrs [ class "vertical-align" ] ]
-        [ Grid.col
-            [ Col.md2, Col.textAlign Text.alignMdCenter ]
-            [ text nodeResources.nodeName ]
-        , Grid.col
-            [ Col.md10, Col.textAlign Text.alignMdCenter ]
-            [ Grid.row
-                [ Row.attrs [ class "vertical-align" ] ]
-                [ Grid.col
-                    [ Col.md2 ]
-                    [ text "Disk" ]
-                , Grid.col
-                    [ Col.md10 ]
-                    (nodeResources.resources.disksStats
-                        |> List.map (diskView temporaryStates nodeResources.nodeName)
-                    )
+    let
+        total = nodeResources.totalResources
+        totalAllocated = nodeResources.totalAllocated
+        totalUtilized = nodeResources.totalUtilized
+        hostResources = nodeResources.hostResources
+
+        hostResourcesValues =
+            { cpuValues =
+                { used = hostResources.cpu |> toFloat
+                , free = total.cpu - hostResources.cpu |> toFloat
+                , usedString = makeCPUString hostResources.cpu
+                , freeString = makeCPUString (total.cpu - hostResources.cpu)
+                }
+            , memoryValues =
+                { used = hostResources.memoryUsed |> toFloat
+                , free = hostResources.memoryTotal - hostResources.memoryUsed |> toFloat
+                , usedString = iBytes hostResources.memoryUsed
+                , freeString = iBytes (hostResources.memoryTotal - hostResources.memoryUsed)
+                }
+            , diskValues =
+                { used = hostResources.diskUsed |> toFloat
+                , free = hostResources.diskSize - hostResources.diskUsed |> toFloat
+                , usedString = iBytes hostResources.diskUsed
+                , freeString = iBytes (hostResources.diskSize - hostResources.diskUsed)
+                }
+            }
+
+        allocatedResourcesValues =
+            { cpuValues =
+                { used = totalAllocated.cpu |> toFloat
+                , free = total.cpu - totalAllocated.cpu |> toFloat
+                , usedString = makeCPUString totalAllocated.cpu
+                , freeString = makeCPUString (total.cpu - totalAllocated.cpu)
+                }
+            , memoryValues =
+                { used = totalAllocated.memoryMB |> toFloat
+                , free = total.memoryMB - totalAllocated.memoryMB |> toFloat
+                , usedString = totalAllocated.memoryMB * bytesPerMegabyte |> iBytes
+                , freeString = (total.memoryMB - totalAllocated.memoryMB) * bytesPerMegabyte |> iBytes
+                }
+            , diskValues =
+                { used = totalAllocated.diskMB |> toFloat
+                , free = total.diskMB - totalAllocated.diskMB |> toFloat
+                , usedString = totalAllocated.diskMB * bytesPerMegabyte |> iBytes
+                , freeString = (total.diskMB - totalAllocated.diskMB) * bytesPerMegabyte |> iBytes
+                }
+            }
+
+        allocatedResourcesUtilizationValues =
+            { cpuValues =
+                { used = totalUtilized.cpu |> toFloat
+                , free = totalAllocated.cpu - totalUtilized.cpu |> toFloat
+                , usedString = makeCPUString totalUtilized.cpu
+                , freeString = makeCPUString (totalAllocated.cpu - totalUtilized.cpu)
+                }
+            , memoryValues =
+                { used = totalUtilized.memory |> toFloat
+                , free = (totalAllocated.memoryMB * bytesPerMegabyte) - totalUtilized.memory |> toFloat
+                , usedString = iBytes totalUtilized.memory
+                , freeString = (totalAllocated.memoryMB * bytesPerMegabyte) - totalUtilized.memory |> iBytes
+                }
+            }
+
+        allocationsResourceConsumption =
+            Dict.merge
+                -- Do nothing if it exists only in the allocatedResource Dict (Shouldn't happen normally)
+                (\allocId allocatedResource allocationResourceConsumption -> allocationResourceConsumption)
+                -- Combine results if present in both
+                (\allocId allocatedResource allocatedResourceUtilization allocationResourceConsumption ->
+                    { id = allocId
+                    , name = allocatedResource.name
+                    , cpuValues =
+                        { used = allocatedResourceUtilization.cpu |> toFloat
+                        , free = allocatedResource.cpu - allocatedResourceUtilization.cpu |> toFloat
+                        , usedString = makeCPUString allocatedResourceUtilization.cpu
+                        , freeString = makeCPUString (allocatedResource.cpu - allocatedResourceUtilization.cpu)
+                        }
+                    , memoryValues =
+                        { used = allocatedResourceUtilization.memory |> toFloat
+                        , free = (allocatedResource.memoryMB * bytesPerMegabyte) - allocatedResourceUtilization.memory |> toFloat
+                        , usedString = iBytes allocatedResourceUtilization.memory
+                        , freeString =
+                            (allocatedResource.memoryMB * bytesPerMegabyte) - allocatedResourceUtilization.memory
+                                |> iBytes
+                        }
+                    } :: allocationResourceConsumption
+                )
+                -- Do nothing if it exists only in the allocatedResourceUtilization Dict (Shouldn't happen normally)
+                (\allocId allocatedResourceUtilization allocationResourceConsumption -> allocationResourceConsumption)
+                -- The first dictionary to merge
+                nodeResources.allocatedResources
+                -- The second dictionary to merge
+                nodeResources.allocatedResourcesUtilization
+                -- Initial empty list for results
+                []
+
+        isExpanded = Set.member nodeResources.nodeId temporaryStates.expandedResourceAllocs
+    in
+        Card.config [ Card.attrs [ class "mt-3" ] ]
+            |> Card.header
+                [ id nodeResources.nodeId ]
+                [ span
+                    [ style [ ( "font-size", "125%" ), ( "margin-right", "10px" ) ] ]
+                    [ text nodeResources.nodeName ]
                 ]
-            , addHr
-            , Grid.row
-                [ Row.attrs [ class "vertical-align" ] ]
-                [ Grid.col
-                    [ Col.md2 ]
-                    [ text "Memory" ]
-                , Grid.col
-                    [ Col.md10 ]
-                    [ memoryView temporaryStates nodeResources.nodeName nodeResources.resources.memoryStats ]
+            |> Card.block []
+                [ Block.custom <|
+                    Grid.container
+                        []
+                        ( List.append
+                            [ Grid.row
+                                [ Row.attrs [ class "mt-3 mb-3" ] ]
+                                [ Grid.col
+                                    [ Col.md6 ]
+                                    (nodeResourceView
+                                        temporaryStates nodeResources.nodeName Allocated
+                                        allocatedResourcesValues.cpuValues
+                                        allocatedResourcesValues.memoryValues
+                                        (Just allocatedResourcesValues.diskValues)
+                                    )
+                                , Grid.col
+                                    [ Col.md6 ]
+                                    (nodeResourceView
+                                        temporaryStates nodeResources.nodeName Host
+                                        hostResourcesValues.cpuValues
+                                        hostResourcesValues.memoryValues
+                                        (Just hostResourcesValues.diskValues)
+                                    )
+                                ]
+                            , Grid.row
+                                [ Row.attrs [ class "mt-3 mb-3" ] ]
+                                [ Grid.col
+                                    [ Col.md6 ]
+                                    (nodeResourceView
+                                        temporaryStates nodeResources.nodeName AllocatedUtilization
+                                        allocatedResourcesUtilizationValues.cpuValues
+                                        allocatedResourcesUtilizationValues.memoryValues
+                                        Nothing
+                                    )
+                                ]
+                            , Grid.row [ Row.attrs [ class "mt-4" ] ]
+                                [ Grid.col []
+                                    [ a
+                                        [ id (String.concat [ "expand-allocations-", nodeResources.nodeId ])
+                                        , class "btn btn-no-pad"
+                                        , attribute "role" "button"
+                                        , onClick (ToggleNodeAllocation nodeResources.nodeId)
+                                        ]
+                                        [ icon
+                                            (String.concat
+                                                [ "fa fa-chevron-"
+                                                , if isExpanded then
+                                                    "down"
+                                                  else
+                                                    "right"
+                                                ]
+                                            )
+                                            [ style [ ( "margin-right", "4px" ) ] ]
+                                        , h6 [ style [ ("display", "inline") ] ] [ text "Allocations" ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                            ( if isExpanded then
+                                [ Grid.row
+                                    [ Row.attrs [ class "mt-2" ] ]
+                                    [ Grid.col
+                                        []
+                                        [ Table.table
+                                            { options = [ Table.striped, Table.hover ]
+                                            , thead =
+                                                Table.thead
+                                                    [ Table.headAttr (class ".th-no-bold") ]
+                                                    [Table.tr
+                                                        []
+                                                        [ Table.th [ Table.cellAttr (attribute "width"  "20%") ] [ text "Allocation Name" ]
+                                                        , Table.th [ Table.cellAttr (attribute "width"  "30%") ] [ text "CPU" ]
+                                                        , Table.th [ Table.cellAttr (attribute "width"  "30%") ] [ text "Memory" ]
+                                                        ]
+                                                    ]
+                                            , tbody =
+                                                Table.tbody []
+                                                    (List.map
+                                                        (\allocConsumption ->
+                                                            Table.tr []
+                                                                [ Table.td [] [ text allocConsumption.name ]
+                                                                , Table.td []
+                                                                    [ progressViewInternal
+                                                                        temporaryStates nodeResources.nodeName
+                                                                        AllocatedUtilization CPU allocConsumption.name
+                                                                        allocConsumption.cpuValues
+                                                                    ]
+                                                                , Table.td []
+                                                                    [ progressViewInternal
+                                                                        temporaryStates nodeResources.nodeName
+                                                                        AllocatedUtilization Memory allocConsumption.name
+                                                                        allocConsumption.memoryValues
+                                                                    ]
+                                                                ]
+                                                        )
+                                                        allocationsResourceConsumption
+                                                    )
+                                            }
+                                        ]
+                                    ]
+                                ]
+                              else []
+                            )
+                        )
                 ]
-            , addHr
-            , Grid.row
-                [ Row.attrs [ class "vertical-align" ] ]
-                [ Grid.col
-                    [ Col.md2 ]
-                    [ text "CPU" ]
-                , Grid.col
-                    [ Col.md10 ]
-                    (nodeResources.resources.cpusStats
-                        |> List.map (cpuView temporaryStates nodeResources.nodeName)
-                    )
-                ]
+            |> Card.view
+
+
+nodeResourceView : TemporaryStates -> String -> ResourceType -> ResourceValues -> ResourceValues -> Maybe ResourceValues ->
+    List (Html UpdateBodyViewMsg)
+nodeResourceView temporaryStates nodeName resourceType cpuValues memoryValues maybeDiskValues =
+    [ Grid.simpleRow
+        [ Grid.col [] [ span [ class "mt-2" ] [ h6 [] [ text (resourceTypeToString resourceType) ] ] ] ]
+    , Grid.row [ Row.attrs [ class "vertical-align" ] ]
+        (progressView temporaryStates nodeName resourceType CPU "total" cpuValues)
+    , Grid.row [ Row.attrs [ class "vertical-align" ] ]
+        (progressView temporaryStates nodeName resourceType Memory "total" memoryValues)
+    , Grid.row [ Row.attrs [ class "vertical-align" ] ]
+        (maybeDiskValues
+            |> Maybe.map (\diskValues -> progressView temporaryStates nodeName resourceType Disk "total" diskValues)
+            |> Maybe.withDefault [ Grid.col [] [] ]
+        )
+    ]
+
+
+allocationResourceView : TemporaryStates -> String -> String -> ResourceValues -> ResourceValues -> List (Html UpdateBodyViewMsg)
+allocationResourceView temporaryStates nodeName allocName cpuValues memoryValues =
+    [ Grid.simpleRow
+        [ Grid.col [] [ span [ class "mt-2" ] [ h6 [] [ text "Allocations" ] ] ] ]
+    , Grid.row [ Row.attrs [ class "vertical-align" ] ]
+        [ Grid.col [ Col.md6 ]
+            [ Grid.simpleRow
+                (progressView temporaryStates nodeName AllocatedUtilization CPU allocName cpuValues)
+            ]
+        , Grid.col [ Col.md6 ]
+            [ Grid.simpleRow
+                (progressView temporaryStates nodeName AllocatedUtilization Memory allocName memoryValues)
             ]
         ]
+    ]
 
 
-diskView : TemporaryStates -> String -> DiskInfo -> Html UpdateBodyViewMsg
-diskView temporaryStates nodeName diskInfo =
+progressView : TemporaryStates -> String -> ResourceType -> ResourceSubType -> String -> ResourceValues ->
+    List (Column UpdateBodyViewMsg)
+progressView temporaryStates nodeName resourceType resourceSubType resourceId resourceValues =
+    [ Grid.col [ Col.md2 ] [ span [ class "m2" ] [ text (resourceSubTypeToString resourceSubType) ] ]
+    , Grid.col [ Col.offsetMd1, Col.md9 ]
+        [ progressViewInternal temporaryStates nodeName resourceType resourceSubType resourceId resourceValues ]
+    ]
+
+
+progressViewInternal : TemporaryStates -> String -> ResourceType -> ResourceSubType -> String -> ResourceValues ->
+    Html UpdateBodyViewMsg
+progressViewInternal temporaryStates nodeName resourceType resourceSubType resourceId resourceValues =
     let
-        used =
-            (toFloat diskInfo.used)
+        (usedPercent, freePercent) = getPercents resourceValues.used (resourceValues.used + resourceValues.free)
 
-        system =
-            (toFloat (diskInfo.size - (diskInfo.available + diskInfo.used)))
-
-        free =
-            (toFloat diskInfo.available)
-
-        usedPercent =
-            diskInfo.usedPercent
-
-        systemPercent =
-            (system / (toFloat diskInfo.size)) * 100
-
-        freePercent =
-            100 - (systemPercent + usedPercent)
-
-        -- 1073741824 = 1024 x 1024 x 1024
-        usedString =
-            String.concat [ Round.round 2 (used / 1073741824), "GB" ]
-
-        systemString =
-            String.concat [ Round.round 2 (system / 1073741824), "GB" ]
-
-        freeString =
-            String.concat [ Round.round 2 (free / 1073741824), "GB" ]
-    in
-        progressView
-            temporaryStates
-            nodeName
-            Disk
-            diskInfo.device
-            used
-            system
-            free
-            usedPercent
-            systemPercent
-            freePercent
-            usedString
-            systemString
-            freeString
-
-
-memoryView : TemporaryStates -> String -> MemoryInfo -> Html UpdateBodyViewMsg
-memoryView temporaryStates nodeName memoryInfo =
-    let
-        used =
-            (toFloat memoryInfo.used)
-
-        system =
-            0.0
-
-        free =
-            (toFloat memoryInfo.available)
-
-        total =
-            (toFloat memoryInfo.total)
-
-        usedPercent =
-            (used / total) * 100
-
-        systemPercent =
-            0.0
-
-        freePercent =
-            100 - usedPercent
-
-        -- 1073741824 = 1024 x 1024 x 1024
-        usedString =
-            String.concat [ Round.round 2 (used / 1073741824), "GB" ]
-
-        systemString =
-            "0.00GB"
-
-        freeString =
-            String.concat [ Round.round 2 (free / 1073741824), "GB" ]
-    in
-        progressView
-            temporaryStates
-            nodeName
-            Memory
-            "Main Memory"
-            used
-            system
-            free
-            usedPercent
-            systemPercent
-            freePercent
-            usedString
-            systemString
-            freeString
-
-
-cpuView : TemporaryStates -> String -> CPUInfo -> Html UpdateBodyViewMsg
-cpuView temporaryStates nodeName cpuInfo =
-    let
-        used =
-            cpuInfo.user
-
-        system =
-            cpuInfo.system
-
-        free =
-            100 - (used + system)
-
-        usedPercent =
-            used
-
-        systemPercent =
-            system
-
-        freePercent =
-            free
-
-        usedString =
-            String.concat [ (Round.round 2 usedPercent), "%" ]
-
-        systemString =
-            String.concat [ (Round.round 2 systemPercent), "%" ]
-
-        freeString =
-            String.concat [ (Round.round 2 freePercent), "%" ]
-    in
-        progressView
-            temporaryStates
-            nodeName
-            CPU
-            cpuInfo.cpuName
-            used
-            system
-            free
-            usedPercent
-            systemPercent
-            freePercent
-            usedString
-            systemString
-            freeString
-
-
-progressView :
-    TemporaryStates
-    -> String
-    -> ResourceType
-    -> String
-    -> Float
-    -> Float
-    -> Float
-    -> Float
-    -> Float
-    -> Float
-    -> String
-    -> String
-    -> String
-    -> Html UpdateBodyViewMsg
-progressView temporaryStates nodeName resourceType resourceName used system free usedPercent systemPercent freePercent usedString systemString freeString =
-    let
         usedPosition =
-            ((usedPercent / 2) - 2.5) * 0.9
-
-        systemPosition =
-            ((usedPercent + (systemPercent / 2)) - 2.5) * 0.9
-
+            ((usedPercent / 2) - 5) * 0.9
         freePosition =
-            ((usedPercent + systemPercent + (freePercent / 2)) - 2.5) * 0.9
+            ((usedPercent + (freePercent / 2)) - 5) * 0.9
 
         -- resolve tooltip
         ( hasHoverMessage, hoverMessage, hoverPosition ) =
             Maybe.withDefault
                 ( False, "", 0 )
-                (Maybe.map
+                ( Maybe.map
                     (\rHMsg ->
                         ( rHMsg.nodeName
                             == nodeName
                             && rHMsg.resourceType
                             == resourceType
-                            && rHMsg.resourceName
-                            == resourceName
+                            && rHMsg.resourceSubType
+                            == resourceSubType
+                            && rHMsg.resourceId
+                            == resourceId
                         , rHMsg.message
                         , rHMsg.position
                         )
@@ -361,85 +350,69 @@ progressView temporaryStates nodeName resourceType resourceName used system free
                     temporaryStates.resourceHoverMessage
                 )
     in
-        Grid.row
-            [ Row.attrs [ class "vertical-align" ] ]
-            [ Grid.col
-                [ Col.md2 ]
-                [ text resourceName ]
-            , Grid.col
-                [ Col.md10 ]
-                [ div
-                    [ class "progress m-3", style [ ( "height", "1.5rem" ) ] ]
-                    (List.concat
-                        [ [ progressBarView
-                                temporaryStates
-                                nodeName
-                                resourceType
-                                resourceName
-                                used
-                                usedPercent
-                                usedString
-                                usedPosition
-                                "bg-warning"
-                          , progressBarView
-                                temporaryStates
-                                nodeName
-                                resourceType
-                                resourceName
-                                system
-                                systemPercent
-                                systemString
-                                systemPosition
-                                "bg-info"
-                          , progressBarView
-                                temporaryStates
-                                nodeName
-                                resourceType
-                                resourceName
-                                free
-                                freePercent
-                                freeString
-                                freePosition
-                                "bg-success"
-                          ]
-                        , if (hasHoverMessage) then
-                            [ div
-                                [ class "popover fade show bs-popover-top"
-                                , style
-                                    [ ( "left", String.concat [ toString hoverPosition, "%" ] )
-                                    , ( "top", "-2rem" )
-                                    , ( "display", "inline-block" )
-                                    , ( "width", "6rem" )
-                                    ]
-                                ]
-                                [ div
-                                    [ class "arrow", style [ ( "left", "2rem" ) ] ]
-                                    []
-                                , div
-                                    [ class "popover-body" ]
-                                    [ text hoverMessage ]
-                                ]
+        div
+            [ class "progress m-2", style [ ( "height", "1.2rem" ) ] ]
+            (List.concat
+                [ [ progressBarView
+                        temporaryStates
+                        { nodeName = nodeName
+                        , resourceType = resourceType
+                        , resourceSubType = resourceSubType
+                        , resourceId = resourceId
+                        , message = resourceValues.usedString
+                        , position = usedPosition
+                        }
+                        resourceValues.used
+                        usedPercent
+                        resourceValues.usedString
+                        "bg-warning"
+                  , progressBarView
+                        temporaryStates
+                        { nodeName = nodeName
+                        , resourceType = resourceType
+                        , resourceSubType = resourceSubType
+                        , resourceId = resourceId
+                        , message = resourceValues.freeString
+                        , position = freePosition
+                        }
+                        resourceValues.free
+                        freePercent
+                        resourceValues.freeString
+                        "bg-success"
+                  ]
+                , if (hasHoverMessage) then
+                    [ div
+                        [ class "popover fade show bs-popover-top"
+                        , style
+                            [ ( "left", String.concat [ toString hoverPosition, "%" ] )
+                            , ( "top", "-2.5rem" )
+                            , ( "display", "inline-block" )
+                            , ( "width", "6rem" )
                             ]
-                          else
-                            []
                         ]
-                    )
+                        [ div
+                            [ class "arrow", style [ ( "left", "2rem" ) ] ]
+                            []
+                        , div
+                            [ class "popover-body" ]
+                            [ text hoverMessage ]
+                        ]
+                    ]
+                  else
+                    []
                 ]
-            ]
+            )
 
 
 progressBarView :
     TemporaryStates
-    -> String
-    -> ResourceType
-    -> String
+    -> ResourceHoverMessage
     -> Float
     -> Float
     -> String
-    -> Float
     -> String
     -> Html UpdateBodyViewMsg
-progressBarView temporaryStates nodeName resourceType resourceName actual percent stringRep position progressBarClass =
+progressBarView temporaryStates resourceHoverMessage actual percent stringRep progressBarClass =
     div
         [ class (String.concat [ "progress-bar ", progressBarClass ])
         , attribute "role" "progressbar"
@@ -447,20 +420,18 @@ progressBarView temporaryStates nodeName resourceType resourceName actual percen
         , attribute "aria-valuenow" (Round.round 2 percent)
         , attribute "aria-valuemin" "0"
         , attribute "aria-valuemax" "100"
-        , id (String.join "-" [ nodeName, resourceTypeToString resourceType, resourceName, progressBarClass ])
-        , onMouseOver
-            (UpdateTemporaryStates
-                { temporaryStates
-                    | resourceHoverMessage =
-                        Just
-                            { nodeName = nodeName
-                            , resourceType = resourceType
-                            , resourceName = resourceName
-                            , message = stringRep
-                            , position = position
-                            }
-                }
+        , id
+            (String.join
+                "-"
+                [ resourceHoverMessage.nodeName
+                , resourceTypeToString resourceHoverMessage.resourceType
+                , resourceSubTypeToString resourceHoverMessage.resourceSubType
+                , resourceHoverMessage.resourceId
+                , progressBarClass
+                ]
             )
+        , onMouseOver
+            (UpdateTemporaryStates { temporaryStates | resourceHoverMessage = Just resourceHoverMessage } )
         , onMouseOut
             (UpdateTemporaryStates
                 { temporaryStates
@@ -477,14 +448,64 @@ progressBarView temporaryStates nodeName resourceType resourceName actual percen
         ]
 
 
+getPercents : Float -> Float -> (Float, Float)
+getPercents used total =
+    let
+        usedPercent = (used / total) * 100.0
+        freePercent = 100.0 - usedPercent
+    in
+        (usedPercent, freePercent)
+
+
+resourceSubTypeToString : ResourceSubType -> String
+resourceSubTypeToString resourceSubType =
+    case resourceSubType of
+        CPU ->
+            "CPU"
+
+        Disk ->
+            "Disk"
+
+        Memory ->
+            "Memory"
+
+
 resourceTypeToString : ResourceType -> String
 resourceTypeToString resourceType =
     case resourceType of
-        CPU ->
-            "cpu"
+        Host ->
+            "Host Resource Utilization"
 
-        Disk ->
-            "disk"
+        Allocated ->
+            "Allocated Resources"
 
-        Memory ->
-            "memory"
+        AllocatedUtilization ->
+            "Allocation Resource Utilization"
+
+
+-- Logic copied from Nomad source
+-- https://github.com/hashicorp/nomad/blob/v0.5.4/vendor/github.com/dustin/go-humanize/bytes.go#L68
+humanateBytes : Int -> Int -> Array String -> String
+humanateBytes s base sizes =
+    if s < 10 then
+        (toString s) ++ " B"
+    else
+        let
+            e = logBase (toFloat base) (toFloat s) |> floor
+            suffix = Array.get e sizes |> Maybe.withDefault ""
+            val = toFloat ((toFloat s) / ( toFloat (base^e)) * 10 + 0.5 |> floor) / 10
+        in
+            (Round.round 2 val) ++ " " ++ suffix
+
+
+iBytes : Int -> String
+iBytes s =
+    let
+        sizes = Array.fromList ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"]
+    in
+        humanateBytes s 1024 sizes
+
+bytesPerMegabyte : Int
+bytesPerMegabyte = 1024 * 1024
+
+makeCPUString a = (toString a) ++ " MHz"

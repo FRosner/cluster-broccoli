@@ -1,104 +1,106 @@
 module Models.Resources.NodeResources exposing (..)
 
 import Array exposing (Array)
+import Dict exposing (Dict)
 import Json.Decode as Decode exposing (field)
 
 
-type alias AllocDirInfo =
-    { available : Int
-    , device : String
-    , inodesUsedPercent : Float
-    , mountPoint : String
-    , size : Int
-    , used : Int
-    , usedPercent : Float
+type alias TotalResources =
+    { cpu : Int
+    , memoryMB : Int
+    , diskMB : Int
     }
 
 
-type alias CPUInfo =
-    { cpuName : String
-    , idle : Float
-    , system : Float
-    , total : Float
-    , user : Float
+type alias TotalUtilization =
+    { cpu : Int
+    , memory : Int
     }
 
 
-type alias DiskInfo =
-    AllocDirInfo
-
-
-type alias MemoryInfo =
-    { available : Int
-    , free : Int
-    , total : Int
-    , used : Int
+type alias HostResources =
+    { cpu : Int
+    , memoryUsed : Int
+    , memoryTotal : Int
+    , diskUsed : Int
+    , diskSize : Int
     }
 
 
-type alias ResourceInfo =
-    { allocDirStats : AllocDirInfo
-    , cpusStats : List CPUInfo
-    , cpuTicksConsumed : Float
-    , disksStats : List DiskInfo
-    , memoryStats : MemoryInfo
-    , timestamp : Int
-    , uptime : Int
+type alias AllocatedResources =
+    { id : String
+    , name : String
+    , cpu : Int
+    , memoryMB : Int
+    , diskMB : Int
     }
 
+
+type alias AllocatedResourcesUtilization =
+    { id : String
+    , name : String
+    , cpu : Int
+    , memory : Int
+    }
 
 type alias NodeResources =
     { nodeId : String
     , nodeName : String
-    , resources : ResourceInfo
+    , totalResources : TotalResources
+    , hostResources : HostResources
+    , allocatedResources : Dict String AllocatedResources
+    , allocatedResourcesUtilization : Dict String AllocatedResourcesUtilization
+    , totalAllocated : TotalResources
+    , totalUtilized : TotalUtilization
     }
 
 
 decoder =
-    Decode.map3 NodeResources
+    Decode.map8 NodeResources
         (field "nodeId" Decode.string)
         (field "nodeName" Decode.string)
-        (field "resources" resourceInfoDecoder)
+        (field "totalResources" totalResourcesDecoder)
+        (field "hostResources" hostResourcesDecoder)
+        (field "allocatedResources" (Decode.dict allocatedResourcesDecoder))
+        (field "allocatedResourcesUtilization" (Decode.dict allocatedResourcesUtilizationDecoder))
+        (field "totalAllocated" totalResourcesDecoder)
+        (field "totalUtilized" totalUtilizationDecoder)
 
 
-resourceInfoDecoder =
-    Decode.map7 ResourceInfo
-        (field "AllocDirStats" allocDirInfoDecoder)
-        (field "CPU" (Decode.list cpuInfoDecoder))
-        (field "CPUTicksConsumed" Decode.float)
-        (field "DiskStats" (Decode.list diskInfoDecoder))
-        (field "Memory" memoryInfoDecoder)
-        (field "Timestamp" Decode.int)
-        (field "Uptime" Decode.int)
+totalResourcesDecoder =
+    Decode.map3 TotalResources
+        (field "cpu" Decode.int)
+        (field "memoryMB" Decode.int)
+        (field "diskMB" Decode.int)
 
 
-allocDirInfoDecoder =
-    Decode.map7 AllocDirInfo
-        (field "Available" Decode.int)
-        (field "Device" Decode.string)
-        (field "InodesUsedPercent" Decode.float)
-        (field "Mountpoint" Decode.string)
-        (field "Size" Decode.int)
-        (field "Used" Decode.int)
-        (field "UsedPercent" Decode.float)
+totalUtilizationDecoder =
+    Decode.map2 TotalUtilization
+        (field "cpu" Decode.int)
+        (field "memory" Decode.int)
 
 
-cpuInfoDecoder =
-    Decode.map5 CPUInfo
-        (field "CPU" Decode.string)
-        (field "Idle" Decode.float)
-        (field "System" Decode.float)
-        (field "Total" Decode.float)
-        (field "User" Decode.float)
+hostResourcesDecoder =
+    Decode.map5 HostResources
+        (field "cpu" Decode.int)
+        (field "memoryUsed" Decode.int)
+        (field "memoryTotal" Decode.int)
+        (field "diskUsed" Decode.int)
+        (field "diskSize" Decode.int)
 
 
-diskInfoDecoder =
-    allocDirInfoDecoder
+allocatedResourcesDecoder =
+    Decode.map5 AllocatedResources
+        (field "id" Decode.string)
+        (field "name" Decode.string)
+        (field "cpu" Decode.int)
+        (field "memoryMB" Decode.int)
+        (field "diskMB" Decode.int)
 
 
-memoryInfoDecoder =
-    Decode.map4 MemoryInfo
-        (field "Available" Decode.int)
-        (field "Free" Decode.int)
-        (field "Total" Decode.int)
-        (field "Used" Decode.int)
+allocatedResourcesUtilizationDecoder =
+    Decode.map4 AllocatedResourcesUtilization
+        (field "id" Decode.string)
+        (field "name" Decode.string)
+        (field "cpu" Decode.int)
+        (field "memory" Decode.int)

@@ -26,16 +26,17 @@ view :
     -> Dict TemplateId Template
     -> Dict InstanceId Instance
     -> Dict InstanceId InstanceTasks
+    -> List NodeResources
     -> BodyUiModel
     -> Maybe Role
     -> Html AnyMsg
-view tabState templates instances tasks bodyUiModel maybeRole =
+view tabState templates instances tasks nodeResources bodyUiModel maybeRole =
     case tabState of
         Instances ->
             Html.map UpdateBodyViewMsg (instancesView templates instances tasks bodyUiModel maybeRole)
 
         Resources ->
-            resourcesView bodyUiModel.temporaryStates bodyUiModel.nodesResources
+            resourcesView bodyUiModel.temporaryStates nodeResources
 
 
 instancesView : Dict TemplateId Template -> Dict InstanceId Instance -> Dict InstanceId InstanceTasks -> BodyUiModel -> Maybe Role -> Html UpdateBodyViewMsg

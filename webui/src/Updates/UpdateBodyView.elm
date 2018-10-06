@@ -40,6 +40,19 @@ updateBodyView message oldBodyUiModel =
                     , Cmd.none
                     )
 
+            ToggleNodeAllocation nodeId ->
+                let
+                    oldTemporaryStates = oldBodyUiModel.temporaryStates
+                    oldExpandedResourceAllocs = oldTemporaryStates.expandedResourceAllocs
+                    newExpandedResourceAllocs =
+                        insertOrRemove (not (Set.member nodeId oldExpandedResourceAllocs)) nodeId oldExpandedResourceAllocs
+                in
+                    ( { oldBodyUiModel
+                        | temporaryStates = { oldTemporaryStates | expandedResourceAllocs = newExpandedResourceAllocs }
+                      }
+                    , Cmd.none
+                    )
+
             InstanceSelected instanceId selected ->
                 let
                     newSelectedInstances =

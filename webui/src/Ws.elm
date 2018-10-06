@@ -144,15 +144,9 @@ updateFromMessage model message =
             )
 
         ListResourcesMessage nodesResources ->
-            let
-                bodyUiModel =
-                    model.bodyUiModel
-            in
-                ( { model
-                    | bodyUiModel = { bodyUiModel | nodesResources = nodesResources }
-                  }
-                , Cmd.none
-                )
+            ( { model | nodesResources = nodesResources }
+            , Cmd.none
+            )
 
         AddInstanceSuccessMessage result ->
             ( { model | instances = Dict.insert result.instance.id result.instance model.instances }

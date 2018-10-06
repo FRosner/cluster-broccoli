@@ -43,3 +43,11 @@ button:disabled {
     display: flex;
     align-items: center;
 }
+
+.btn-no-pad {
+    padding: 0;
+}
+
+.th-no-bold {
+    font-weight: lighter;
+}

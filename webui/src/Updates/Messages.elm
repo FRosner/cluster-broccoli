@@ -52,3 +52,4 @@ type UpdateBodyViewMsg
     | StopSelectedInstances (Set String)
     | StopPeriodicJobs String (List String)
     | UpdateTemporaryStates TemporaryStates
+    | ToggleNodeAllocation String
