@@ -51,3 +51,26 @@ button:disabled {
 .th-no-bold {
     font-weight: lighter;
 }
+
+.my-table {
+    border-spacing: 2px;
+    border-top: 1px solid #dee2e6;
+}
+
+.my-table-head {
+    font-weight: lighter;
+    font-size: 110%;
+}
+
+.my-odd-row {
+
+}
+
+.my-even-row {
+    background-color: rgba(0, 0, 0, 0.05)
+}
+
+.sub-heading {
+    font-weight: lighter;
+    font-size: 90%;
+}

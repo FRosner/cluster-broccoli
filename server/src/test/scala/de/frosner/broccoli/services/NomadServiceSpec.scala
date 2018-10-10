@@ -119,10 +119,11 @@ class NomadServiceSpec extends Specification with ServiceMocks {
       val server =
         new NettyServerComponents with BuiltInComponents {
           lazy val router: Router = Router.from {
-            case GET(p"/v1/client/stats") => Action {
-              Results.Ok(
-                Json.parse(
-                  """{
+            case GET(p"/v1/client/stats") =>
+              Action {
+                Results.Ok(
+                  Json.parse(
+                    """{
                     |  "AllocDirStats": {
                     |    "Available": 60438560768,
                     |    "Device": "",
@@ -178,13 +179,14 @@ class NomadServiceSpec extends Specification with ServiceMocks {
                     |  "Timestamp": 1537952757466164700,
                     |  "Uptime": 21837925
                     |}""".stripMargin
+                  )
                 )
-              )
-            }
-            case GET(p"/v1/client/allocation/51f1cfce-0a77-6bc5-57d4-1ffc98c7ac29/stats") => Action {
-              Results.Ok(
-                Json.parse(
-                  """{
+              }
+            case GET(p"/v1/client/allocation/51f1cfce-0a77-6bc5-57d4-1ffc98c7ac29/stats") =>
+              Action {
+                Results.Ok(
+                  Json.parse(
+                    """{
                     |  "ResourceUsage": {
                     |    "CpuStats": {
                     |      "Measured": [
@@ -251,9 +253,9 @@ class NomadServiceSpec extends Specification with ServiceMocks {
                     |  },
                     |  "Timestamp": 1537958516820011500
                     |}""".stripMargin
+                  )
                 )
-              )
-            }
+              }
           }
           override lazy val serverConfig = ServerConfig(
             port = Some(port),

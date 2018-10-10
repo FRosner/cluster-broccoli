@@ -19,8 +19,7 @@ case class NodeResources(nodeId: String,
                          allocatedResources: Map[String, AllocatedResources],
                          allocatedResourcesUtilization: Map[String, AllocatedResourcesUtilization],
                          totalAllocated: TotalResources,
-                         totalUtilized: TotalUtilization
-                        )
+                         totalUtilized: TotalUtilization)
 
 /**
   * @param id allocation id

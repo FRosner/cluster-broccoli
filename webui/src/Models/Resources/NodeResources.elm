@@ -43,6 +43,7 @@ type alias AllocatedResourcesUtilization =
     , memory : Int
     }
 
+
 type alias NodeResources =
     { nodeId : String
     , nodeName : String

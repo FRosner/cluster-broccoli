@@ -81,18 +81,10 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
       val instanceEnumerator = Enumerator[Msg](
         Json.toJson(OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService))))
 
-      val resourceInfoEnumerator = Enumerator[Msg](
-        Json.toJson(
-          OutgoingMessage.ListResources(
-            Await.result(nomadService.getNodeResources(user), Duration(5, TimeUnit.SECONDS))
-          ))
-      )
-
       (in,
        aboutEnumerator
          .andThen(templateEnumerator)
          .andThen(instanceEnumerator)
-         .andThen(resourceInfoEnumerator)
          .andThen(connectionEnumerator))
     }
 

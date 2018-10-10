@@ -227,8 +227,8 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
                                   .as[List[JsValue]]
                                   .filter(diskJson => (diskJson \ "Device").as[String].equals(storageDevice))
                                   .map(diskJson => ((diskJson \ "Used").as[Long], (diskJson \ "Size").as[Long])) match {
-                                  case (dUsed, dSize)::_ => (dUsed, dSize)
-                                  case _                    => (0L, 0L) // This should never happen normally
+                                  case (dUsed, dSize) :: _ => (dUsed, dSize)
+                                  case _                   => (0L, 0L) // This should never happen normally
                                 }
                               HostResources(cpu, memoryUsed, memoryTotal, diskUsed, diskSize)
                             }

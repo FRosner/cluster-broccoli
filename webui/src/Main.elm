@@ -68,7 +68,10 @@ update msg model =
                     Debug.log "Connect" url
             in
                 ( { model | wsConnected = True }
-                , Cmd.none
+                , if (List.isEmpty model.nodesResources) then
+                    CmdUtils.sendMsg (SendWsMsg GetResources)
+                  else
+                    Cmd.none
                 )
 
         WsListenError ( url, error ) ->

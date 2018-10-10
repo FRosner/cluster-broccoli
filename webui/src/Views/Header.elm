@@ -86,17 +86,18 @@ navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired l
                 []
               else
                 List.append
-                [ tabGen "Instances" Instances (tabState == Instances)
-                , tabGen "Resources" Resources (tabState == Resources)
-                ]
-                (case tabState of
-                    Instances ->
-                        [ templateFilter templateFilterString
-                        , instanceFilter instanceFilterString
-                        ]
-                    Resources ->
-                        [ nodeFilter nodeFilterString ]
-                )
+                    [ tabGen "Instances" Instances (tabState == Instances)
+                    , tabGen "Resources" Resources (tabState == Resources)
+                    ]
+                    (case tabState of
+                        Instances ->
+                            [ templateFilter templateFilterString
+                            , instanceFilter instanceFilterString
+                            ]
+
+                        Resources ->
+                            [ nodeFilter nodeFilterString ]
+                    )
             , [ userInfoView maybeUserInfo
               , Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired)
               ]
@@ -120,13 +121,16 @@ tabGen navString tabState isActive =
         ]
 
 
-templateFilter filterString = filterView "header-template-filter" "Template Filter" TemplateFilter filterString
+templateFilter filterString =
+    filterView "header-template-filter" "Template Filter" TemplateFilter filterString
 
 
-instanceFilter filterString = filterView "header-instance-filter" "Instance Filter" InstanceFilter filterString
+instanceFilter filterString =
+    filterView "header-instance-filter" "Instance Filter" InstanceFilter filterString
 
 
-nodeFilter filterString = filterView "header-node-filter" "Node Filter" NodeFilter filterString
+nodeFilter filterString =
+    filterView "header-node-filter" "Node Filter" NodeFilter filterString
 
 
 filterView inputId titleString onInputMessage filterString =

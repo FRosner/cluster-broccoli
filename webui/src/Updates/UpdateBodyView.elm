@@ -42,8 +42,12 @@ updateBodyView message oldBodyUiModel =
 
             ToggleNodeAllocation nodeId ->
                 let
-                    oldTemporaryStates = oldBodyUiModel.temporaryStates
-                    oldExpandedResourceAllocs = oldTemporaryStates.expandedResourceAllocs
+                    oldTemporaryStates =
+                        oldBodyUiModel.temporaryStates
+
+                    oldExpandedResourceAllocs =
+                        oldTemporaryStates.expandedResourceAllocs
+
                     newExpandedResourceAllocs =
                         insertOrRemove (not (Set.member nodeId oldExpandedResourceAllocs)) nodeId oldExpandedResourceAllocs
                 in

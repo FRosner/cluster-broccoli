@@ -18,13 +18,14 @@ type alias ResourceHoverMessage =
     , position : Float
     }
 
-type ResourceSubType
+
+type ResourceType
     = CPU
     | Disk
     | Memory
 
 
-type ResourceType
+type ResourceSubType
     = Host
     | Allocated
     | AllocatedUtilization
