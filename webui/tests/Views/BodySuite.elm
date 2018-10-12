@@ -22,7 +22,7 @@ import Expect as Expect
 import Dict exposing (Dict)
 import Set exposing (Set)
 import Maybe
-import Models.Resources.NodeResources exposing (NodeResources, ResourceInfo)
+import Models.Resources.NodeResources exposing (..)
 
 
 tests : Test
@@ -30,31 +30,31 @@ tests =
     describe "Body View"
         [ test "Should render each template" <|
             \() ->
-                Body.view defaultTabState defaultTemplates Dict.empty Dict.empty defaultBodyUiModel (Just Administrator)
+                Body.view defaultTabState defaultTemplates Dict.empty Dict.empty [] defaultBodyUiModel (Just Administrator)
                     |> Query.fromHtml
                     |> Query.findAll [ Selector.class "template" ]
                     |> Query.count (Expect.equal 2)
         , test "Should render each instance" <|
             \() ->
-                Body.view defaultTabState defaultTemplates defaultInstances defaultTasks defaultBodyUiModel (Just Administrator)
+                Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] defaultBodyUiModel (Just Administrator)
                     |> Query.fromHtml
                     |> Query.findAll [ Selector.class "instance-row" ]
                     |> Query.count (Expect.equal 3)
         , test "Should assign the instance to the corresponding template" <|
             \() ->
-                Body.view defaultTabState defaultTemplates defaultInstances defaultTasks defaultBodyUiModel (Just Administrator)
+                Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] defaultBodyUiModel (Just Administrator)
                     |> Query.fromHtml
                     |> Query.find [ Selector.id "template-t2" ]
                     |> Query.findAll [ Selector.class "instance-row" ]
                     |> Query.count (Expect.equal 2)
         , test "should render the resources view if that tab is selected" <|
             \() ->
-                Body.view Model.Resources defaultTemplates defaultInstances defaultTasks defaultBodyUiModel (Just Administrator)
+                Body.view Model.Resources defaultTemplates defaultInstances defaultTasks [] defaultBodyUiModel (Just Administrator)
                     |> Query.fromHtml
                     |> Query.has [ Selector.id "resources-view" ]
         , test "should render the instances view if that tab is selected" <|
             \() ->
-                Body.view defaultTabState defaultTemplates defaultInstances defaultTasks defaultBodyUiModel (Just Administrator)
+                Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] defaultBodyUiModel (Just Administrator)
                     |> Query.fromHtml
                     |> Query.has [ Selector.id "instances-view" ]
         , describe "Template Expanding"
@@ -73,13 +73,13 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just Administrator)
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "expand-template-t2" ]
                             |> Query.has [ Selector.class "fa-chevron-down" ]
             , test "Render the template expansion chevron for non-expanded templates" <|
                 \() ->
-                    Body.view defaultTabState defaultTemplates defaultInstances defaultTasks defaultBodyUiModel (Just Administrator)
+                    Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] defaultBodyUiModel (Just Administrator)
                         |> Query.fromHtml
                         |> Query.find [ Selector.id "expand-template-t2" ]
                         |> Query.has [ Selector.class "fa-chevron-right" ]
@@ -106,7 +106,7 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Operator)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just Operator)
                             |> Query.fromHtml
                             |> Query.hasNot [ Selector.id "expand-new-instance-t2" ]
             , test "Should show the creation button not to users" <|
@@ -117,7 +117,7 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just User)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just User)
                             |> Query.fromHtml
                             |> Query.hasNot [ Selector.id "expand-new-instance-t2" ]
             ]
@@ -159,7 +159,7 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just Administrator)
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "delete-selected-instances-t2" ]
                             |> Query.has [ Selector.attribute "disabled" "disabled" ]
@@ -171,7 +171,7 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Operator)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just Operator)
                             |> Query.fromHtml
                             |> Query.hasNot [ Selector.id "delete-selected-instances-t2" ]
             , test "Should show the deletion button not to users" <|
@@ -182,7 +182,7 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just User)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just User)
                             |> Query.fromHtml
                             |> Query.hasNot [ Selector.id "delete-selected-instances-t2" ]
             ]
@@ -209,7 +209,7 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just Administrator)
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "start-selected-instances-t2" ]
                             |> Query.has [ Selector.attribute "disabled" "disabled" ]
@@ -221,7 +221,7 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Operator)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just Operator)
                             |> Query.fromHtml
                             |> Query.has [ Selector.id "start-selected-instances-t2" ]
             , test "Should show the start button not to users" <|
@@ -232,7 +232,7 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just User)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just User)
                             |> Query.fromHtml
                             |> Query.hasNot [ Selector.id "start-selected-instances-t2" ]
             ]
@@ -259,7 +259,7 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just Administrator)
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "stop-selected-instances-t2" ]
                             |> Query.has [ Selector.attribute "disabled" "disabled" ]
@@ -271,7 +271,7 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Operator)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just Operator)
                             |> Query.fromHtml
                             |> Query.has [ Selector.id "stop-selected-instances-t2" ]
             , test "Should show the stop button not to users" <|
@@ -282,7 +282,7 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just User)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just User)
                             |> Query.fromHtml
                             |> Query.hasNot [ Selector.id "stop-selected-instances-t2" ]
             ]
@@ -302,7 +302,7 @@ tests =
                                     | expandedTemplates = Set.fromList <| [ "t2" ]
                                 }
                         in
-                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just Administrator)
                                 |> Query.fromHtml
                                 |> Query.find [ Selector.id "new-instance-form-container-t2" ]
                                 |> Query.has [ Selector.class "d-none" ]
@@ -323,7 +323,7 @@ tests =
                                             ]
                                 }
                         in
-                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just Administrator)
                                 |> Query.fromHtml
                                 |> Query.find [ Selector.id "new-instance-form-container-t2" ]
                                 |> Query.has [ Selector.class "show" ]
@@ -375,7 +375,7 @@ tests =
                                             ]
                                 }
                         in
-                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just Administrator)
                                 |> Query.fromHtml
                                 |> Query.find [ Selector.id "new-instance-form-t2" ]
                                 |> Query.findAll [ Selector.class "input-group" ]
@@ -429,7 +429,7 @@ tests =
                             parameterForm =
                                 changedParameterForm defaultParameterForm "t1-p1" "somerawvalue"
                         in
-                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks (changeBodyUiModel parameterForm) (Just User)
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (changeBodyUiModel parameterForm) (Just User)
                                 |> Query.fromHtml
                                 -- i1 is the instanceId, t1 the templateId and t1-p1 the parameterName
                                 |> Query.find [ Selector.id "new-instance-form-parameter-input-t1-t1-p1" ]
@@ -443,7 +443,7 @@ tests =
                             parameterForm =
                                 changedParameterForm defaultParameterForm "t1-p2" "somestringvalue"
                         in
-                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks (changeBodyUiModel parameterForm) (Just User)
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (changeBodyUiModel parameterForm) (Just User)
                                 |> Query.fromHtml
                                 |> Query.find [ Selector.id "new-instance-form-parameter-input-t1-t1-p2" ]
                                 |> Query.has [ Selector.attribute "value" (valueToString paramVal) ]
@@ -456,7 +456,7 @@ tests =
                             parameterForm =
                                 changedParameterForm defaultParameterForm "t1-p3" "4567"
                         in
-                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks (changeBodyUiModel parameterForm) (Just User)
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (changeBodyUiModel parameterForm) (Just User)
                                 |> Query.fromHtml
                                 |> Query.find [ Selector.id "new-instance-form-parameter-input-t1-t1-p3" ]
                                 |> Query.has [ Selector.attribute "value" (valueToString paramVal) ]
@@ -469,7 +469,7 @@ tests =
                             parameterForm =
                                 changedParameterForm defaultParameterForm "t1-p4" "678.93"
                         in
-                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks (changeBodyUiModel parameterForm) (Just User)
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (changeBodyUiModel parameterForm) (Just User)
                                 |> Query.fromHtml
                                 |> Query.find [ Selector.id "new-instance-form-parameter-input-t1-t1-p4" ]
                                 |> Query.has [ Selector.attribute "value" (valueToString paramVal) ]
@@ -482,7 +482,7 @@ tests =
                             parameterForm =
                                 changedParameterForm defaultParameterForm "t1-p3" "678a"
                         in
-                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks (changeBodyUiModel parameterForm) (Just User)
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (changeBodyUiModel parameterForm) (Just User)
                                 |> Query.fromHtml
                                 |> Query.has [ Selector.id "new-instance-form-parameter-input-error-t1-t1-p3" ]
                 , test "should show an error for wrong input from user for a decimal field in new view" <|
@@ -494,7 +494,7 @@ tests =
                             parameterForm =
                                 changedParameterForm defaultParameterForm "t1-p4" "678.93a"
                         in
-                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks (changeBodyUiModel parameterForm) (Just User)
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (changeBodyUiModel parameterForm) (Just User)
                                 |> Query.fromHtml
                                 |> Query.has [ Selector.id "new-instance-form-parameter-input-error-t1-t1-p4" ]
                 ]
@@ -517,7 +517,7 @@ tests =
                             parameterForm =
                                 changedParameterForm defaultParameterForm "t1-p1" "somerawvalue"
                         in
-                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks (bodyUiModel parameterForm) (Just User)
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (bodyUiModel parameterForm) (Just User)
                                 |> Query.fromHtml
                                 -- i1 is the instanceId, t1 the templateId and t1-p1 the parameterName
                                 |> Query.find [ Selector.id "edit-instance-form-parameter-input-i1-t1-t1-p1" ]
@@ -531,7 +531,7 @@ tests =
                             parameterForm =
                                 changedParameterForm defaultParameterForm "t1-p2" "somestringvalue"
                         in
-                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks (bodyUiModel parameterForm) (Just User)
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (bodyUiModel parameterForm) (Just User)
                                 |> Query.fromHtml
                                 |> Query.find [ Selector.id "edit-instance-form-parameter-input-i1-t1-t1-p2" ]
                                 |> Query.has [ Selector.attribute "value" (valueToString paramVal) ]
@@ -544,7 +544,7 @@ tests =
                             parameterForm =
                                 changedParameterForm defaultParameterForm "t1-p3" "4567"
                         in
-                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks (bodyUiModel parameterForm) (Just User)
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (bodyUiModel parameterForm) (Just User)
                                 |> Query.fromHtml
                                 |> Query.find [ Selector.id "edit-instance-form-parameter-input-i1-t1-t1-p3" ]
                                 |> Query.has [ Selector.attribute "value" (valueToString paramVal) ]
@@ -557,7 +557,7 @@ tests =
                             parameterForm =
                                 changedParameterForm defaultParameterForm "t1-p4" "678.93"
                         in
-                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks (bodyUiModel parameterForm) (Just User)
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (bodyUiModel parameterForm) (Just User)
                                 |> Query.fromHtml
                                 |> Query.find [ Selector.id "edit-instance-form-parameter-input-i1-t1-t1-p4" ]
                                 |> Query.has [ Selector.attribute "value" (valueToString paramVal) ]
@@ -570,7 +570,7 @@ tests =
                             parameterForm =
                                 changedParameterForm defaultParameterForm "t1-p3" "678a"
                         in
-                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks (bodyUiModel parameterForm) (Just User)
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (bodyUiModel parameterForm) (Just User)
                                 |> Query.fromHtml
                                 |> Query.has [ Selector.id "edit-instance-form-parameter-input-error-i1-t1-t1-p3" ]
                 , test "should show an error for wrong input from user for a decimal field in edit view" <|
@@ -582,7 +582,7 @@ tests =
                             parameterForm =
                                 changedParameterForm defaultParameterForm "t1-p4" "678.93a"
                         in
-                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks (bodyUiModel parameterForm) (Just User)
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (bodyUiModel parameterForm) (Just User)
                                 |> Query.fromHtml
                                 |> Query.has [ Selector.id "edit-instance-form-parameter-input-error-i1-t1-t1-p4" ]
                 ]
@@ -661,7 +661,7 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Operator)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just Operator)
                             |> Query.fromHtml
                             |> Query.has [ Selector.id "start-instance-i2" ]
             , test "Should render stop button for operators" <|
@@ -672,7 +672,7 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Operator)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just Operator)
                             |> Query.fromHtml
                             |> Query.has [ Selector.id "stop-instance-i2" ]
             , test "Should not render start button for users" <|
@@ -683,7 +683,7 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just User)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just User)
                             |> Query.fromHtml
                             |> Query.hasNot [ Selector.id "start-instance-i2" ]
             , test "Should not render start button for users" <|
@@ -694,7 +694,7 @@ tests =
                                 | expandedTemplates = Set.fromList <| [ "t2" ]
                             }
                     in
-                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks bodyUiModel (Just User)
+                        Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] bodyUiModel (Just User)
                             |> Query.fromHtml
                             |> Query.hasNot [ Selector.id "stop-instance-i2" ]
             ]
@@ -703,19 +703,28 @@ tests =
                 \() ->
                     let
                         bodyUiModel =
-                            { defaultBodyUiModel
-                                | nodesResources = [ someNodeResources ]
-                            }
+                            defaultBodyUiModel
 
                         temporaryStates =
                             bodyUiModel.temporaryStates
 
                         position =
-                            ((20.0 / 2) - 2.5) * 0.9
+                            ((((466 / 4594) * 100) / 2) - 5) * 0.9
                     in
-                        Body.view Model.Resources defaultTemplates defaultInstances defaultTasks bodyUiModel (Just Administrator)
+                        Body.view Model.Resources defaultTemplates defaultInstances defaultTasks [ someNodeResources ] bodyUiModel (Just Administrator)
                             |> Query.fromHtml
-                            |> Query.find [ Selector.id (String.join "-" [ someNodeResources.nodeName, "cpu", "cpu0", "bg-warning" ]) ]
+                            |> Query.find
+                                [ Selector.id
+                                    (String.join
+                                        "-"
+                                        [ someNodeResources.nodeName
+                                        , "CPU"
+                                        , "Host"
+                                        , "total"
+                                        , "bg-warning"
+                                        ]
+                                    )
+                                ]
                             |> Events.simulate (Events.MouseOver)
                             |> Events.expectEvent
                                 (Messages.UpdateBodyViewMsg
@@ -725,8 +734,9 @@ tests =
                                                 Just
                                                     { nodeName = someNodeResources.nodeName
                                                     , resourceType = BodyUiModel.CPU
-                                                    , resourceName = "cpu0"
-                                                    , message = "20.00%"
+                                                    , resourceSubType = BodyUiModel.Host
+                                                    , resourceId = "total"
+                                                    , message = "466 MHz"
                                                     , position = position
                                                     }
                                         }
@@ -874,46 +884,99 @@ defaultTemplates =
         |> Dict.fromList
 
 
+nodeResources =
+    [ someNodeResources ]
+
+
 someNodeResources : NodeResources
 someNodeResources =
-    { nodeId = "node-01"
-    , nodeName = "node-01"
-    , resources =
-        { allocDirStats =
-            { available = 60379222016
-            , device = ""
-            , inodesUsedPercent = 26.092
-            , mountPoint = ""
-            , size = 135148244992
-            , used = 67880304640
-            , usedPercent = 50.23
-            }
-        , cpusStats =
-            [ { cpuName = "cpu0"
-              , idle = 60.0
-              , system = 20.0
-              , total = 40.0
-              , user = 20.0
-              }
+    { nodeId = "9a97926e-761e-4133-234b-74eca33eebaf"
+    , nodeName = "nooe-02"
+    , totalResources =
+        { cpu = 4594
+        , memoryMB = 16045
+        , diskMB = 37005
+        }
+    , hostResources =
+        { cpu = 466
+        , memoryUsed = 4352520192
+        , memoryTotal = 16824614912
+        , diskUsed = 109628456960
+        , diskSize = 135148244992
+        }
+    , allocatedResources =
+        Dict.fromList
+            [ ( "b9856be4-b6a9-98e8-d09b-4d607bd562be"
+              , { id = "b9856be4-b6a9-98e8-d09b-4d607bd562be"
+                , name = "nooe-az-openpage-demo.nooe-az-openpage-demo[0]"
+                , cpu = 500
+                , memoryMB = 2048
+                , diskMB = 500
+                }
+              )
+            , ( "12ff0f52-99d8-95b1-6da4-da11e83be1d8"
+              , { id = "12ff0f52-99d8-95b1-6da4-da11e83be1d8"
+                , name = "nooe-puwaf-tutorial-jupyter.nooe-puwaf-tutorial-jupyter[0]"
+                , cpu = 500
+                , memoryMB = 2048
+                , diskMB = 500
+                }
+              )
+            , ( "ac627019-ea4b-b926-572e-24930e7640fa"
+              , { id = "ac627019-ea4b-b926-572e-24930e7640fa"
+                , name = "nooe-ml-demo.nooe-ml-demo[0]"
+                , cpu = 500
+                , memoryMB = 2048
+                , diskMB = 500
+                }
+              )
+            , ( "e395a449-1929-ca71-58c6-cbcd5edf27fe"
+              , { id = "e395a449-1929-ca71-58c6-cbcd5edf27fe"
+                , name = "nooe-training-zeppelin.zeppelin[0]"
+                , cpu = 500
+                , memoryMB = 2048
+                , diskMB = 500
+                }
+              )
             ]
-        , cpuTicksConsumed = 250.168
-        , disksStats =
-            [ { available = 60379222016
-              , device = "/dev/vda1"
-              , inodesUsedPercent = 26.092
-              , mountPoint = "/"
-              , size = 135148244992
-              , used = 67880304640
-              , usedPercent = 50.23
-              }
+    , allocatedResourcesUtilization =
+        Dict.fromList
+            [ ( "b9856be4-b6a9-98e8-d09b-4d607bd562be"
+              , { id = "b9856be4-b6a9-98e8-d09b-4d607bd562be"
+                , name = "nooe-az-openpage-demo.nooe-az-openpage-demo[0]"
+                , cpu = 1
+                , memory = 139378688
+                }
+              )
+            , ( "12ff0f52-99d8-95b1-6da4-da11e83be1d8"
+              , { id = "12ff0f52-99d8-95b1-6da4-da11e83be1d8"
+                , name = "nooe-puwaf-tutorial-jupyter.nooe-puwaf-tutorial-jupyter[0]"
+                , cpu = 2
+                , memory = 178147328
+                }
+              )
+            , ( "ac627019-ea4b-b926-572e-24930e7640fa"
+              , { id = "ac627019-ea4b-b926-572e-24930e7640fa"
+                , name = "nooe-ml-demo.nooe-ml-demo[0]"
+                , cpu = 1
+                , memory = 108736512
+                }
+              )
+            , ( "e395a449-1929-ca71-58c6-cbcd5edf27fe"
+              , { id = "e395a449-1929-ca71-58c6-cbcd5edf27fe"
+                , name = "nooe-training-zeppelin.zeppelin[0]"
+                , cpu = 18
+                , memory = 1506852864
+                }
+              )
             ]
-        , memoryStats =
-            { available = 15314616320
-            , free = 299106304
-            , total = 16824614912
-            , used = 1509998592
-            }
-        , timestamp = 1536933805561520400
-        , uptime = 20818973
+    , totalAllocated =
+        { cpu = 3100
+        , memoryMB = 13824
+        , diskMB = 4824
+        }
+    , totalUtilized =
+        { cpu = 28
+        , memory = 2444763136
         }
     }
