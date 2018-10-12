@@ -180,7 +180,6 @@ class WebSocketControllerSpec
         instanceWithStatus
       )
       val templates = Seq.empty[Template]
-      val nodeResources = Seq.empty[NodeResources]
       private val instanceService = withInstances(mock[InstanceService], instances)
       val controller = WebSocketController(
         webSocketService = mock[WebSocketService],
@@ -199,11 +198,10 @@ class WebSocketControllerSpec
       maybeConnection should beRight.like {
         case (incoming, outgoing) =>
           val messages = outgoing.get
-          (messages should haveSize(4)) and
+          (messages should haveSize(3)) and
             (messages should contain(
               Json.toJson(OutgoingMessage.ListTemplates(templates)),
               Json.toJson(OutgoingMessage.ListInstances(instances)),
-              Json.toJson(OutgoingMessage.ListResources(nodeResources)),
               Json.toJson(OutgoingMessage.AboutInfoMsg(controller.aboutService.aboutInfo(null)))
             ))
       }

@@ -170,6 +170,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
   }
 
   def getNodeResources(loggedIn: Account): Future[Seq[NodeResources]] = {
+    // Step 1: Get all nodes
     val queryUrl = nomadBaseUrl + s"/v1/nodes"
     log.info("Contacting: " + nomadBaseUrl)
     val scheme = Option(new java.net.URI(nomadBaseUrl).getScheme).getOrElse("http")
@@ -184,12 +185,14 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
             jsValue <- queryResponse.json.as[List[JsValue]]
             id = (jsValue \ "ID").as[String]
             name = (jsValue \ "Name").as[String]
+            // Step 2: Filter out node ids that start with the oe-prefix
             if name.split("-")(0).equals(oePrefix)
           } yield (id, name)
         Future
           .sequence(
             filteredIds.map {
               case (id, name) => {
+                // Step 3: Query a particular node for the http address to its nomad client and the Total Resources
                 val ipUrl = nomadBaseUrl + s"/v1/node/$id"
                 ws.url(ipUrl)
                   .get()
@@ -212,7 +215,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
                   )
                   .map {
                     case (httpAddr, storageDevice, totalResources) => {
-                      // Host statistics
+                      // Step 4: Query the nomad client on a node for resource stats (Host Resources)
                       val hostStatsUrl = s"$scheme://$httpAddr/v1/client/stats"
                       val hostResult =
                         ws.url(hostStatsUrl)
@@ -234,6 +237,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
                             }
                           )
                       // Allocations
+                      // Step 5: Get all allocations for a particular node and the resources requested by it
                       val allocationUrl = nomadBaseUrl + s"/v1/node/$id/allocations"
                       val allocationResults =
                         ws.url(allocationUrl)
@@ -262,6 +266,8 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
                             Future.sequence(
                               allocations.map(
                                 allocatedResources => {
+                                  // Step 5: Get the allocation stats for each allocation id from the nomad client
+                                  //          running on a node
                                   val allocationUtilizationUrl =
                                     s"$scheme://$httpAddr/v1/client/allocation/${allocatedResources.id}/stats"
                                   ws.url(allocationUtilizationUrl)
@@ -287,7 +293,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
                             )
                           })
                           .flatMap(identity)
-                      // Combine all results into a Future[NodeResources]
+                      // Step 6: Combine all results into a Future[NodeResources]
                       for {
                         hostResources <- hostResult
                         allocations <- allocationResults
