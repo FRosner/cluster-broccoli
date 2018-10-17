@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Bootstrap.Grid exposing (container)
 import Updates.UpdateErrors exposing (updateErrors)
 import Updates.UpdateLoginForm exposing (updateLoginForm)
 import Updates.UpdateLoginStatus exposing (updateLoginStatus)
@@ -12,11 +13,18 @@ import Views.Notifications
 import Commands.LoginLogout as LoginLogout
 import Utils.CmdUtils as CmdUtils
 import Routing
-import Model exposing (Model)
+import Model exposing (TabState(Instances), Model)
 import Ws
 import Html exposing (..)
+import Html.Attributes exposing (..)
 import Navigation exposing (Location)
 import Dict exposing (Dict)
+import Bootstrap.Utilities.Spacing as Spacing
+import Bootstrap.Tab as Tab
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Row as Row
+import Bootstrap.Grid.Col as Col
+import Bootstrap.CDN as CDN
 
 
 init : Location -> ( Model, Cmd AnyMsg )
@@ -60,7 +68,10 @@ update msg model =
                     Debug.log "Connect" url
             in
                 ( { model | wsConnected = True }
-                , Cmd.none
+                , if (List.isEmpty model.nodesResources) then
+                    CmdUtils.sendMsg (SendWsMsg GetResources)
+                  else
+                    Cmd.none
                 )
 
         WsListenError ( url, error ) ->
@@ -139,6 +150,9 @@ update msg model =
                 , cmd
                 )
 
+        TabMsg state ->
+            ( { model | tabState = state }, Cmd.none )
+
         UpdateLoginFormMsg subMsg ->
             let
                 ( newLoginForm, cmd ) =
@@ -170,29 +184,64 @@ update msg model =
             , Cmd.none
             )
 
+        NodeFilter filterString ->
+            ( { model | nodeFilter = filterString }
+            , Cmd.none
+            )
+
         NoOp ->
             ( model, Cmd.none )
 
 
+gridView : List (Html msg) -> Html msg
+gridView pageContent =
+    Grid.container []
+        [ Grid.row []
+            [ Grid.col []
+                pageContent
+            ]
+        ]
+
+
 view : Model -> Html AnyMsg
 view model =
-    div
-        []
-        [ Views.Header.view model.aboutInfo model.loginForm model.authRequired model.templateFilter model.instanceFilter
-        , Views.Notifications.view model.errors
-        , Html.map
-            UpdateBodyViewMsg
-            (Views.Body.view
-                (Dict.filter (\k v -> String.contains model.templateFilter k) model.templates)
-                (Dict.filter (\k v -> String.contains model.instanceFilter k) model.instances)
-                model.tasks
-                model.bodyUiModel
-                (Maybe.map (\i -> i.authInfo.userInfo.role) model.aboutInfo)
-            )
+    let
+        maybeAuthEnabled =
+            Maybe.map (\i -> i.authInfo.enabled) model.aboutInfo
 
-        -- , text (toString model) -- enable this for a debug view of the whole model
-        , Views.Footer.view model.aboutInfo model.wsConnected
-        ]
+        mainView =
+            if
+                (model.authRequired
+                    == Just True
+                    || model.authRequired
+                    == Nothing
+                    || (model.authRequired
+                            == Just False
+                            && maybeAuthEnabled
+                            == Nothing
+                       )
+                )
+            then
+                div [] []
+            else
+                Views.Body.view
+                    model.tabState
+                    (Dict.filter (\k v -> String.contains model.templateFilter k) model.templates)
+                    (Dict.filter (\k v -> String.contains model.instanceFilter k) model.instances)
+                    model.tasks
+                    (List.filter (\nodeResource -> String.contains model.nodeFilter nodeResource.nodeName) model.nodesResources)
+                    model.bodyUiModel
+                    (Maybe.map (\i -> i.authInfo.userInfo.role) model.aboutInfo)
+    in
+        div
+            []
+            [ Views.Header.view model.aboutInfo model.loginForm model.authRequired model.templateFilter model.instanceFilter model.nodeFilter model.tabState
+            , Views.Notifications.view model.errors
+            , mainView
+
+            -- , text (toString model) -- enable this for a debug view of the whole model
+            , Views.Footer.view model.aboutInfo model.wsConnected
+            ]
 
 
 

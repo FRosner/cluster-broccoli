@@ -1,5 +1,6 @@
 module Messages exposing (..)
 
+import Model exposing (TabState)
 import Updates.Messages exposing (..)
 import Array exposing (Array)
 import Navigation exposing (Location)
@@ -14,6 +15,7 @@ import Models.Resources.InstanceCreated exposing (InstanceCreated)
 import Models.Resources.InstanceDeleted exposing (InstanceDeleted)
 import Models.Resources.InstanceUpdated exposing (InstanceUpdated)
 import Models.Resources.InstanceTasks exposing (InstanceTasks)
+import Models.Resources.NodeResources exposing (NodeResources)
 
 
 type AnyMsg
@@ -32,9 +34,11 @@ type AnyMsg
     | UpdateLoginFormMsg Updates.Messages.UpdateLoginFormMsg
     | UpdateLoginStatusMsg Updates.Messages.UpdateLoginStatusMsg
     | UpdateBodyViewMsg Updates.Messages.UpdateBodyViewMsg
+    | TabMsg TabState
     | OnLocationChange Location
     | TemplateFilter String
     | InstanceFilter String
+    | NodeFilter String
     | NoOp
 
 
@@ -44,6 +48,7 @@ type IncomingWsMessage
     = SetAboutInfoMessage AboutInfo
     | ListTemplatesMessage (Array Template)
     | ListInstancesMessage (Array Instance)
+    | ListResourcesMessage (List NodeResources)
     | AddInstanceSuccessMessage InstanceCreated
     | AddInstanceErrorMessage InstanceError
     | DeleteInstanceSuccessMessage InstanceDeleted
@@ -62,3 +67,4 @@ type OutgoingWsMessage
     | DeleteInstanceMessage InstanceId
     | UpdateInstanceMessage InstanceUpdate
     | GetInstanceTasks InstanceId
+    | GetResources

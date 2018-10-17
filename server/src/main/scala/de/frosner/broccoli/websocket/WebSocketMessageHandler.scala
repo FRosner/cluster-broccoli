@@ -1,13 +1,12 @@
 package de.frosner.broccoli.websocket
 
 import javax.inject.Inject
-
 import cats.instances.future._
 import cats.syntax.either._
 import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.controllers.InstanceController
 import de.frosner.broccoli.instances.NomadInstances
-import de.frosner.broccoli.services.InstanceService
+import de.frosner.broccoli.services.{InstanceService, NomadService}
 import de.frosner.broccoli.websocket.IncomingMessage._
 import de.frosner.broccoli.websocket.OutgoingMessage._
 import play.api.Logger
@@ -36,7 +35,8 @@ trait WebSocketMessageHandler {
   */
 class BroccoliMessageHandler @Inject()(
     instances: NomadInstances,
-    instanceService: InstanceService
+    instanceService: InstanceService,
+    nomadService: NomadService
 )(implicit ec: ExecutionContext)
     extends WebSocketMessageHandler {
 
@@ -61,6 +61,8 @@ class BroccoliMessageHandler @Inject()(
         instances
           .getInstanceTasks(user)(instanceId)
           .fold(GetInstanceTasksError(instanceId, _), GetInstanceTasksSuccess)
+      case GetResources() =>
+        nomadService.getNodeResources(user).map(OutgoingMessage.ListResources)
     }
 }
 
@@ -71,7 +73,6 @@ class BroccoliMessageHandler @Inject()(
   *
   * @param underlying The underlying message handler.
   * @param cache The cache to use for responses
-  * @param
   */
 class CachedBroccoliMessageHandler @Inject()(
     underlying: BroccoliMessageHandler,

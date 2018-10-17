@@ -110,9 +110,9 @@ view selectedInstances expandedInstances instanceParameterForms visibleSecrets t
                             []
                           else
                             [ iconButton
-                                "btn btn-default btn-xs"
+                                "btn btn-outline-secondary btn-xs"
                                 (String.append
-                                    "glyphicon glyphicon-"
+                                    "fa fa-"
                                     (if
                                         (instance.jobStatus
                                             == JobStatus.JobRunning
@@ -140,8 +140,8 @@ view selectedInstances expandedInstances instanceParameterForms visibleSecrets t
                                 )
                             , text " "
                             , iconButton
-                                "btn btn-default btn-xs"
-                                "glyphicon glyphicon-stop"
+                                "btn btn-outline-secondary btn-xs"
+                                "fa fa-stop"
                                 "Stop Instance"
                                 (List.append
                                     [ onClick (StopInstance instance.id)

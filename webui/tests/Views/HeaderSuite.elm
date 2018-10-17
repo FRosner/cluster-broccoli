@@ -1,5 +1,6 @@
 module Views.HeaderSuite exposing (tests)
 
+import Model exposing (TabState(Instances))
 import Views.Header as Header
 import Models.Resources.AboutInfo as AboutInfo exposing (AboutInfo)
 import Models.Resources.Role as Role exposing (Role(Administrator))
@@ -33,8 +34,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "header-login-username" ]
                             |> Query.has [ Selector.attribute "value" defaultLoginForm.username ]
@@ -55,8 +59,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "header-login-password" ]
                             |> Query.has [ Selector.attribute "value" defaultLoginForm.password ]
@@ -77,11 +84,14 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "header-login-form" ]
-                            |> Query.has [ Selector.classes [ "navbar-form", "navbar-right" ] ]
+                            |> Query.has [ Selector.classes [ "form-inline", "ml-auto" ] ]
             , test "Should shake if the login is correct" <|
                 \() ->
                     let
@@ -99,11 +109,14 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "header-login-form" ]
-                            |> Query.has [ Selector.classes [ "navbar-form", "navbar-right", "animated", "shake" ] ]
+                            |> Query.has [ Selector.classes [ "form-inline", "ml-auto", "animated", "shake" ] ]
             , test "Should render if auth is required" <|
                 \() ->
                     let
@@ -121,8 +134,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.has [ Selector.id "header-login-form" ]
             , test "Should not render if auth is not required" <|
@@ -142,8 +158,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.hasNot [ Selector.id "header-login-form" ]
             , test "Should not render if we don't know if auth is required" <|
@@ -163,8 +182,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.hasNot [ Selector.id "header-login-form" ]
             , test "Should update the username when the user name input field changes" <|
@@ -184,8 +206,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "header-login-username" ]
                             |> Events.simulate (Events.Input "admin")
@@ -207,8 +232,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "header-login-password" ]
                             |> Events.simulate (Events.Input "secret")
@@ -230,8 +258,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "header-login-form" ]
                             |> Events.simulate Events.Submit
@@ -255,8 +286,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.has [ Selector.id "header-logout-form" ]
             , test "Should not render if auth is disabled and not required" <|
@@ -276,8 +310,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.hasNot [ Selector.id "header-logout-form" ]
             , test "Should not render if it is unknown whether auth is required" <|
@@ -297,8 +334,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.hasNot [ Selector.id "header-logout-form" ]
             , test "Should attempt to login with the entered credentials on form sumbission" <|
@@ -318,8 +358,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "header-logout-form" ]
                             |> Events.simulate Events.Submit
@@ -344,10 +387,13 @@ tests =
                         instanceFilter =
                             ""
 
+                        nodeFilter =
+                            ""
+
                         input =
                             "zeppelin"
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "header-template-filter" ]
                             |> Events.simulate (Events.Input input)
@@ -369,8 +415,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.hasNot [ Selector.id "header-template-filter" ]
             , test "Should render if it when logged in" <|
@@ -390,8 +439,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.has [ Selector.id "header-template-filter" ]
             , test "Should render if no login is required" <|
@@ -411,8 +463,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.has [ Selector.id "header-template-filter" ]
             ]
@@ -435,10 +490,13 @@ tests =
                         instanceFilter =
                             ""
 
+                        nodeFilter =
+                            ""
+
                         input =
                             "zeppelin"
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.find [ Selector.id "header-instance-filter" ]
                             |> Events.simulate (Events.Input input)
@@ -460,8 +518,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.hasNot [ Selector.id "header-instance-filter" ]
             , test "Should render if it when logged in" <|
@@ -481,8 +542,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.has [ Selector.id "header-instance-filter" ]
             , test "Should render if no login is required" <|
@@ -502,8 +566,11 @@ tests =
 
                         instanceFilter =
                             ""
+
+                        nodeFilter =
+                            ""
                     in
-                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter
+                        Header.view maybeAboutInfo loginForm maybeAuthRequired templateFilter instanceFilter nodeFilter Instances
                             |> Query.fromHtml
                             |> Query.has [ Selector.id "header-instance-filter" ]
             ]

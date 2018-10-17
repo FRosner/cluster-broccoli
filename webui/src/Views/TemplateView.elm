@@ -41,21 +41,21 @@ view instances tasks templates bodyUiModel maybeRole template =
         in
             div
                 [ id (String.concat [ "template-", template.id ])
-                , class "panel panel-default template"
+                , class "card template mt-5"
                 ]
                 [ div
-                    [ class "panel-heading" ]
+                    [ class "card-header" ]
                     [ templatePanelHeadingView template bodyUiModel.expandedTemplates templateInstances ]
                 , div
                     [ class
                         (if (Set.member template.id bodyUiModel.expandedTemplates) then
                             "show"
                          else
-                            "hidden"
+                            "d-none"
                         )
                     ]
                     [ div
-                        [ class "panel-body"
+                        [ class "card-body"
                         , style [ ( "padding-bottom", "0px" ) ]
                         ]
                         [ p []
@@ -66,7 +66,7 @@ view instances tasks templates bodyUiModel maybeRole template =
                                     []
                                   else
                                     [ iconButtonText
-                                        "btn btn-default"
+                                        "btn btn-outline-secondary"
                                         "fa fa-plus-circle"
                                         "New"
                                         [ onClick (ExpandNewInstanceForm True template.id)
@@ -83,7 +83,7 @@ view instances tasks templates bodyUiModel maybeRole template =
                                         , attribute "aria-label" "..."
                                         ]
                                         [ iconButtonText
-                                            "btn btn-default"
+                                            "btn btn-outline-secondary"
                                             "fa fa-play-circle"
                                             "Start"
                                             (List.concat
@@ -99,7 +99,7 @@ view instances tasks templates bodyUiModel maybeRole template =
                                             )
                                         , text " "
                                         , iconButtonText
-                                            "btn btn-default"
+                                            "btn btn-outline-secondary"
                                             "fa fa-stop-circle"
                                             "Stop"
                                             (List.concat
@@ -129,7 +129,7 @@ view instances tasks templates bodyUiModel maybeRole template =
                                     case attemptedDeleteInstances of
                                         Nothing ->
                                             [ iconButtonText
-                                                "btn btn-default"
+                                                "btn btn-outline-secondary"
                                                 "fa fa-trash"
                                                 "Delete"
                                                 (List.concat
@@ -170,7 +170,7 @@ view instances tasks templates bodyUiModel maybeRole template =
                             (if (Dict.member template.id bodyUiModel.expandedNewInstanceForms) then
                                 "show"
                              else
-                                "hidden"
+                                "d-none"
                             )
                         , id <| String.concat [ "new-instance-form-container-", template.id ]
                         ]
@@ -208,30 +208,31 @@ templatePanelHeadingView template expandedTemplates instances =
 
 templatePanelHeadingInfo clazz infoTitle info =
     span
-        [ style
+        [ title infoTitle
+        , class "badge badge-pill float-right hidden-xs mr-3 mt-3 ml-3"
+        , style
             [ ( "margin-left", "10px" )
             , ( "font-weight", "100" )
-            , ( "background-color", "#555" )
-            , ( "color", "#fff" )
-            , ( "margin-top", "4px" )
+            , ( "background-color", "rgb(85, 85, 85)" )
+            , ( "color", "rgb(255, 255, 255)" )
+            , ( "margin-top", "4px;" )
             ]
-        , title infoTitle
-        , class "badge pull-right hidden-xs"
         ]
-        [ icon clazz [ style [ ( "margin-right", "4px" ) ] ]
+        [ icon clazz [ class "mr-3" ]
         , info
         ]
 
 
 templateIdView template expandedTemplates =
-    span
+    a
         [ id (String.concat [ "expand-template-", template.id ])
+        , class "btn"
         , attribute "role" "button"
         , onClick (ToggleTemplate template.id)
         ]
         [ icon
             (String.concat
-                [ "glyphicon glyphicon-chevron-"
+                [ "fa fa-chevron-"
                 , if (Set.member template.id expandedTemplates) then
                     "down"
                   else
@@ -247,5 +248,5 @@ templateIdView template expandedTemplates =
 
 templateVersion template =
     span
-        [ style [ ( "font-family", "monospace" ) ] ]
+        [ style [ ( "font-family", "Courier" ) ] ]
         [ text (String.left 8 template.version) ]

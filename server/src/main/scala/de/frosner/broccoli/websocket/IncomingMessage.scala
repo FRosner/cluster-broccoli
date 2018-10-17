@@ -28,6 +28,7 @@ object IncomingMessage {
     case object DeleteInstance extends Type
     case object UpdateInstance extends Type
     case object GetInstanceTasks extends Type
+    case object GetResources extends Type
   }
 
   /**
@@ -59,6 +60,11 @@ object IncomingMessage {
   final case class GetInstanceTasks(instance: String) extends IncomingMessage
 
   /**
+    * Get resource information for the cluster
+    */
+  final case class GetResources() extends IncomingMessage
+
+  /**
     * JSON formats for a message incoming from a websocket.
     *
     * The JSON structure is not particularly straight-forward and deviates from what a generated Reads instance would
@@ -72,6 +78,7 @@ object IncomingMessage {
       case DeleteInstance(instance)   => write(Type.DeleteInstance, instance)
       case UpdateInstance(update)     => write(Type.UpdateInstance, update)
       case GetInstanceTasks(instance) => write(Type.GetInstanceTasks, instance)
+      case GetResources()             => write(Type.GetResources, "")
     }
   )
 
@@ -82,6 +89,7 @@ object IncomingMessage {
       case Type.DeleteInstance   => payload.read[String].map(DeleteInstance)
       case Type.UpdateInstance   => payload.read[InstanceUpdate].map(UpdateInstance)
       case Type.GetInstanceTasks => payload.read[String].map(GetInstanceTasks)
+      case Type.GetResources     => payload.read[String].map(_ => GetResources())
     }
   }
 

@@ -1,5 +1,6 @@
 module Views.Header exposing (view)
 
+import Model exposing (TabState(Instances, Resources))
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
 import Models.Ui.LoginForm exposing (LoginForm)
@@ -8,51 +9,45 @@ import Updates.Messages exposing (UpdateLoginFormMsg(..))
 import Utils.HtmlUtils exposing (icon)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onInput, onSubmit)
+import Html.Events exposing (onInput, onSubmit, onClick)
 import Regex exposing (Regex)
+import Bootstrap.Form.Input as Input
+import Bootstrap.Button as Button
+import Bootstrap.Utilities.Spacing as Spacing
 
 
-view : Maybe AboutInfo -> LoginForm -> Maybe Bool -> String -> String -> Html AnyMsg
-view maybeAboutInfo loginFormModel maybeAuthRequired templateFilterString instanceFilterString =
+view : Maybe AboutInfo -> LoginForm -> Maybe Bool -> String -> String -> String -> TabState -> Html AnyMsg
+view maybeAboutInfo loginFormModel maybeAuthRequired templateFilterString instanceFilterString nodeFilterString tabState =
     let
         ( maybeUserInfo, maybeAuthEnabled ) =
             ( Maybe.map (\i -> i.authInfo.userInfo) maybeAboutInfo
             , Maybe.map (\i -> i.authInfo.enabled) maybeAboutInfo
             )
     in
-        div
-            [ class "container" ]
-            [ nav
-                [ class "navbar navbar-default navbar-fixed-top" ]
-                [ div
-                    [ class "container-fluid"
-                    , style
-                        [ ( "padding-right", "35px" )
-                        ]
-                    ]
-                    [ navbarHeader maybeAboutInfo
-                    , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString
-                    ]
-                ]
+        nav
+            [ class "navbar navbar-expand-md navbar-fixed-top navbar-light bg-light border" ]
+            [ div [ class "dropdown ml-3" ] [ navbarBrand, navbarBrandDropdown maybeAboutInfo ]
+            , navbarToggleButton
+            , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString nodeFilterString tabState
             ]
 
 
-navbarHeader maybeAboutInfo =
-    div
-        [ class "navbar-header"
-        , style
-            [ ( "margin-left", "35px" )
-            ]
+navbarToggleButton =
+    button
+        [ type_ "button"
+        , class "navbar-toggler collapsed"
+        , attribute "data-toggle" "collapse"
+        , attribute "data-target" "#navbar-collapse"
+        , attribute "aria-expanded" "false"
         ]
-        [ navbarToggleButton
-        , navbarBrand
-        , navbarBrandDropdown maybeAboutInfo
+        [ span [ class "sr-only navbar-toggler-icon" ] [ text "Toggle menu" ]
         ]
 
 
 navbarBrand =
     a
-        [ class "navbar-brand dropdown-toggle"
+        [ class "navbar-brand nav-link dropdown-toggle"
+        , id "brandDropdown"
         , attribute "data-toggle" "dropdown"
         , attribute "role" "button"
         , attribute "aria-haspopup" "true"
@@ -65,11 +60,9 @@ navbarBrand =
 
 
 navbarBrandDropdown maybeAboutInfo =
-    ul
+    div
         [ class "dropdown-menu"
-        , style
-            [ ( "margin-left", "35px" )
-            ]
+        , attribute "aria-labelledby" "brandDropdown"
         ]
         [ lia "https://github.com/FRosner/cluster-broccoli" "Source Code"
         , lia "https://github.com/FRosner/cluster-broccoli/wiki" "Documentation"
@@ -79,89 +72,85 @@ navbarBrandDropdown maybeAboutInfo =
 
 
 lia aHref content =
-    li []
-        [ a
-            [ href aHref ]
-            [ text content ]
-        ]
+    a [ class "dropdown-item", href aHref ] [ text content ]
 
 
-navbarToggleButton =
-    button
-        [ type_ "button"
-        , class "navbar-toggle collapsed"
-        , attribute "data-toggle" "collapse"
-        , attribute "data-target" "#navbar-collapse"
-        , attribute "aria-expanded" "false"
-        ]
-        [ span [ class "sr-only" ] [ text "Toggle menu" ]
-        , span [ class "icon-bar" ] []
-        , span [ class "icon-bar" ] []
-        , span [ class "icon-bar" ] []
-        ]
-
-
-navbarCollapse : Maybe AboutInfo -> Maybe UserInfo -> Maybe Bool -> Maybe Bool -> LoginForm -> String -> String -> Html AnyMsg
-navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString =
+navbarCollapse : Maybe AboutInfo -> Maybe UserInfo -> Maybe Bool -> Maybe Bool -> LoginForm -> String -> String -> String -> TabState -> Html AnyMsg
+navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString nodeFilterString tabState =
     div
         [ class "collapse navbar-collapse"
         , id "navbar-collapse"
         ]
         (List.concat
-            [ [ Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired)
-              , userInfoView maybeUserInfo
-              ]
-            , if (maybeAuthRequired == Just True || maybeAuthRequired == Nothing || (maybeAuthRequired == Just False && maybeAuthEnabled == Nothing)) then
+            [ if (maybeAuthRequired == Just True || maybeAuthRequired == Nothing || (maybeAuthRequired == Just False && maybeAuthEnabled == Nothing)) then
                 []
               else
-                [ templateFilter templateFilterString
-                , instanceFilter instanceFilterString
-                ]
+                List.append
+                    [ tabGen "Instances" Instances (tabState == Instances)
+                    , tabGen "Resources" Resources (tabState == Resources)
+                    ]
+                    (case tabState of
+                        Instances ->
+                            [ templateFilter templateFilterString
+                            , instanceFilter instanceFilterString
+                            ]
+
+                        Resources ->
+                            [ nodeFilter nodeFilterString ]
+                    )
+            , [ userInfoView maybeUserInfo
+              , Html.map UpdateLoginFormMsg (loginLogoutView loginFormModel maybeAuthEnabled maybeAuthRequired)
+              ]
             ]
         )
 
 
-templateFilter filterString =
+tabGen : String -> TabState -> Bool -> Html AnyMsg
+tabGen navString tabState isActive =
     ul
-        [ class "nav navbar-nav navbar-left" ]
-        [ li []
-            [ div [ class "form-group navbar-form" ]
-                [ div
-                    [ class "input-group" ]
-                    [ span
-                        [ class "input-group-addon" ]
-                        [ icon "fa fa-filter" [ title "Template Filter" ] ]
-                    , input
-                        [ type_ "text"
-                        , id "header-template-filter"
-                        , class "form-control"
-                        , onInput TemplateFilter
-                        , placeholder "Template Filter"
-                        , value filterString
-                        ]
-                        []
-                    ]
+        [ class "nav navbar-nav mr-3 ml-3" ]
+        [ li
+            [ classList [ ( "nav-item", True ), ( "active", isActive ) ] ]
+            [ a
+                [ class "nav-link"
+                , href "#"
+                , onClick (TabMsg tabState)
                 ]
+                [ text navString ]
             ]
         ]
 
 
+templateFilter filterString =
+    filterView "header-template-filter" "Template Filter" TemplateFilter filterString
+
+
 instanceFilter filterString =
+    filterView "header-instance-filter" "Instance Filter" InstanceFilter filterString
+
+
+nodeFilter filterString =
+    filterView "header-node-filter" "Node Filter" NodeFilter filterString
+
+
+filterView inputId titleString onInputMessage filterString =
     ul
-        [ class "nav navbar-nav navbar-left" ]
+        [ class "nav navbar-nav mr-3 ml-3" ]
         [ li []
-            [ div [ class "form-group navbar-form" ]
+            [ div [ class "form-inline" ]
                 [ div
                     [ class "input-group" ]
-                    [ span
-                        [ class "input-group-addon" ]
-                        [ icon "fa fa-filter" [ title "Instance Filter" ] ]
+                    [ div
+                        [ class "input-group-prepend" ]
+                        [ div [ class "input-group-text" ]
+                            [ i [ class "fa fa-filter", title titleString ] [] ]
+                        ]
                     , input
                         [ type_ "text"
-                        , id "header-instance-filter"
+                        , id inputId
                         , class "form-control"
-                        , onInput InstanceFilter
-                        , placeholder "Instance Filter"
+                        , onInput onInputMessage
+                        , placeholder titleString
                         , value filterString
                         ]
                         []
@@ -176,32 +165,32 @@ userInfoView maybeUserInfo =
     case maybeUserInfo of
         Just userInfo ->
             ul
-                [ class "nav navbar-nav navbar-right" ]
+                [ class "nav navbar-nav ml-auto" ]
                 [ li
-                    [ class "dropdown" ]
+                    [ class "nav-item dropdown" ]
                     [ a
-                        [ class "dropdown-toggle"
+                        [ class "nav-link dropdown-toggle"
+                        , id "userDropdown"
                         , attribute "data-toggle" "dropdown"
                         , attribute "role" "button"
                         , attribute "aria-haspopup" "true"
                         , attribute "aria-expanded" "false"
+                        , href "#"
                         ]
                         [ text userInfo.name
                         , span [ class "caret" ] []
                         ]
-                    , ul
-                        [ class "dropdown-menu" ]
-                        [ li []
-                            [ a []
-                                [ text "Role: "
-                                , code [] [ text (toString userInfo.role) ]
-                                ]
+                    , div
+                        [ class "dropdown-menu dropdown-menu-right"
+                        , attribute "aria-labelledby" "userDropdown"
+                        ]
+                        [ a [ class "dropdown-item", href "#" ]
+                            [ text "Role: "
+                            , code [] [ text (toString userInfo.role) ]
                             ]
-                        , li []
-                            [ a []
-                                [ text "Instances: "
-                                , code [] [ text userInfo.instanceRegex ]
-                                ]
+                        , a [ class "dropdown-item", href "#" ]
+                            [ text "Instances: "
+                            , code [] [ text userInfo.instanceRegex ]
                             ]
                         ]
                     ]
@@ -250,57 +239,53 @@ loginFormView loginFormModel =
         [ id "header-login-form"
         , class
             (String.concat
-                [ "navbar-form navbar-right "
+                [ "form-inline ml-auto mr-3 "
                 , (attentionIfLoginFailed loginFormModel.loginIncorrect)
                 ]
             )
         , onSubmit <| LoginAttempt loginFormModel.username loginFormModel.password
         ]
-        [ div [ class "form-group" ]
-            [ input
-                [ type_ "text"
-                , id "header-login-username"
-                , class "form-control"
-                , style [ ( "background-color", (redIfLoginFailed loginFormModel.loginIncorrect) ) ]
-                , onInput EnterUserName
-                , placeholder "User"
-                , value loginFormModel.username
-                ]
-                []
-            , text " "
-            , input
-                [ type_ "password"
-                , id "header-login-password"
-                , onInput EnterPassword
-                , class "form-control"
-                , style [ ( "background-color", (redIfLoginFailed loginFormModel.loginIncorrect) ) ]
-                , placeholder "Password"
-                , value loginFormModel.password
-                ]
-                []
+        [ input
+            [ type_ "text"
+            , id "header-login-username"
+            , class "form-control mr-sm-2"
+            , style [ ( "background-color", (redIfLoginFailed loginFormModel.loginIncorrect) ) ]
+            , onInput EnterUserName
+            , placeholder "User"
+            , value loginFormModel.username
             ]
+            []
+        , text " "
+        , input
+            [ type_ "password"
+            , id "header-login-password"
+            , onInput EnterPassword
+            , class "form-control mr-sm-2"
+            , style [ ( "background-color", (redIfLoginFailed loginFormModel.loginIncorrect) ) ]
+            , placeholder "Password"
+            , value loginFormModel.password
+            ]
+            []
         , text " " -- otherwise Bootstrap layout breaks, doh
         , button
             [ type_ "submit"
-            , class "btn btn-default"
+            , class "btn btn-outline-secondary"
             , title "Login"
             ]
-            [ icon "glyphicon glyphicon-arrow-right" [] ]
+            [ i [ class "fa fa-sign-in" ] [] ]
         ]
 
 
 logoutFormView =
     Html.form
         [ id "header-logout-form"
-        , class "navbar-form navbar-right"
+        , class "navbar-form ml-5 mr-3"
         , onSubmit LogoutAttempt
         ]
-        [ div [ class "form-group" ]
-            [ button
-                [ type_ "submit"
-                , class "btn btn-default"
-                , title "Logout"
-                ]
-                [ icon "glyphicon glyphicon-log-out" [] ]
+        [ button
+            [ type_ "submit"
+            , class "btn btn-outline-secondary"
+            , title "Logout"
             ]
+            [ i [ class "fa fa-sign-out" ] [] ]
         ]

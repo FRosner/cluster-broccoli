@@ -2,6 +2,7 @@ package de.frosner.broccoli.websocket
 
 import de.frosner.broccoli.models.Template.templateApiWrites
 import de.frosner.broccoli.models._
+import de.frosner.broccoli.nomad.models.NodeResources
 import enumeratum._
 import play.api.libs.json._
 
@@ -24,6 +25,7 @@ object OutgoingMessage {
 
     case object ListTemplates extends Type
     case object ListInstances extends Type
+    case object ListNodeResources extends Type
     case object AboutInfo extends Type
     case object Error extends Type
     case object Notification extends Type
@@ -39,6 +41,7 @@ object OutgoingMessage {
 
   final case class ListTemplates(templates: Seq[Template]) extends OutgoingMessage
   final case class ListInstances(instances: Seq[InstanceWithStatus]) extends OutgoingMessage
+  final case class ListResources(resources: Seq[NodeResources]) extends OutgoingMessage
   final case class AboutInfoMsg(info: AboutInfo) extends OutgoingMessage
   final case class Error(error: String) extends OutgoingMessage
   final case class Notification(message: String) extends OutgoingMessage
@@ -62,6 +65,7 @@ object OutgoingMessage {
     Writes {
       case ListTemplates(templates)        => write(Type.ListTemplates, templates)
       case ListInstances(instances)        => write(Type.ListInstances, instances)
+      case ListResources(resources)        => write(Type.ListNodeResources, resources)
       case AboutInfoMsg(info)              => write(Type.AboutInfo, info)
       case Error(error)                    => write(Type.Error, error)
       case Notification(message)           => write(Type.Notification, message)
