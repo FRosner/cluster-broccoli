@@ -42,7 +42,7 @@ view instance instanceTasks maybeInstanceParameterForm visibleSecrets templates 
                     , (if (List.isEmpty periodicRuns) then
                         []
                        else
-                        [ h5 [] [ text "Periodic Runs" ]
+                        [ h6 [] [ text "Periodic Runs" ]
                         , PeriodicRunsView.view instance.id instanceTasks periodicRuns
                         ]
                       )
