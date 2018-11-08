@@ -3,6 +3,7 @@ package de.frosner.broccoli.templates
 import java.nio.file.{FileSystems, Files}
 
 import com.typesafe.config.{ConfigFactory, ConfigValue}
+import de.frosner.broccoli.auth.Account
 import pureconfig._
 import pureconfig.module.enumeratum._
 import de.frosner.broccoli.models.{ParameterInfo, Template}
@@ -26,7 +27,7 @@ class DirectoryTemplateSource(directory: String, val templateRenderer: TemplateR
   /**
     * @return The sequence of templates found in the directory
     */
-  def loadTemplates(): Seq[Template] = {
+  def loadTemplates(account: Account): Seq[Template] = {
     val rootTemplatesDirectory = FileSystems.getDefault.getPath(directory).toAbsolutePath
 
     if (!Files.isDirectory(rootTemplatesDirectory)) {

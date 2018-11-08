@@ -1,5 +1,6 @@
 package de.frosner.broccoli.templates
 
+import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.models.Template
 import javax.inject.Singleton
 
@@ -13,7 +14,7 @@ class CachedTemplateSource(source: TemplateSource) extends TemplateSource {
 
   override val templateRenderer: TemplateRenderer = source.templateRenderer
 
-  override def loadTemplates(): Seq[Template] =
+  override def loadTemplates(account: Account): Seq[Template] =
     templatesCache match {
       case Some(templates) => templates
       case None =>

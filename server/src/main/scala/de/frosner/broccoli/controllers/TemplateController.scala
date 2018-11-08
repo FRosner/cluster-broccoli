@@ -1,7 +1,7 @@
 package de.frosner.broccoli.controllers
 
+import de.frosner.broccoli.auth.Account
 import javax.inject.Inject
-
 import de.frosner.broccoli.models.Template
 import de.frosner.broccoli.models.Template.templateApiWrites
 import de.frosner.broccoli.services.{SecurityService, TemplateService}
@@ -31,7 +31,7 @@ case class TemplateController @Inject()(
 
 object TemplateController {
 
-  def list(templateService: TemplateService): Seq[Template] =
+  def list(templateService: TemplateService, account: Account): Seq[Template] =
     templateService.getTemplates
 
 }
