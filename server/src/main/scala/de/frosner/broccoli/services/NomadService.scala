@@ -23,7 +23,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
 
   private val log = play.api.Logger(getClass)
 
-  val headers = sys.env.get("NOMAD-BROCCOLI-TOKEN").map(authToken => ("X-Nomad-Token", authToken)).toList
+  val headers = sys.env.get(nomadConfiguration.tokenEnvName).map(authToken => ("X-Nomad-Token", authToken)).toList
 
   log.info(s"Starting $this")
 
