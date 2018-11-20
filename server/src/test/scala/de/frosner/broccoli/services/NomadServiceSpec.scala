@@ -46,7 +46,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val configuration = NomadConfiguration(url = s"http://localhost:$port")
+          val configuration = NomadConfiguration(url = s"http://localhost:$port", "NOMAD_BROCCOLI_TOKEN")
           val nomadService = new NomadService(configuration, client)
           val result = Await.result(nomadService.requestServices(jobId), Duration(5, TimeUnit.SECONDS))
           result === Seq(service.name)
@@ -73,7 +73,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val configuration = NomadConfiguration(url = s"http://localhost:$port")
+          val configuration = NomadConfiguration(url = s"http://localhost:$port", "NOMAD_BROCCOLI_TOKEN")
           val nomadService = new NomadService(configuration, client)
           val result = Await.result(nomadService.requestServices(jobId), Duration(5, TimeUnit.SECONDS))
           result === Seq(service1.name)
@@ -518,7 +518,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val configuration = NomadConfiguration(url = s"http://localhost:$port")
+          val configuration = NomadConfiguration(url = s"http://localhost:$port", "NOMAD_BROCCOLI_TOKEN")
           val nomadService = new NomadService(configuration, client)
           val result =
             Await.result(nomadService.getNodeResources(new Account("nooe-admin", "nooe-*", Role.Administrator)),
