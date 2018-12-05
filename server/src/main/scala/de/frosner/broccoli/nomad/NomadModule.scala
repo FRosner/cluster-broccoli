@@ -39,5 +39,5 @@ class NomadModule extends AbstractModule with ScalaModule {
   @Provides
   @Singleton
   def provideNomadClient(config: NomadConfiguration, wsClient: WSClient, context: ExecutionContext): NomadClient =
-    new NomadHttpClient(Uri.parse(config.url), wsClient)(context)
+    new NomadHttpClient(Uri.parse(config.url), config.tokenEnvName, wsClient)(context)
 }

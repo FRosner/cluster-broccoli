@@ -11,7 +11,7 @@ import de.frosner.broccoli.nomad.models._
 import play.api.http.HeaderNames._
 import play.api.http.MimeTypes.{JSON, TEXT}
 import play.api.http.Status._
-import play.api.libs.ws.{WSClient, WSResponse}
+import play.api.libs.ws.{WSClient, WSRequest, WSResponse}
 import shapeless.tag
 import shapeless.tag.@@
 import squants.Quantity
@@ -19,13 +19,14 @@ import squants.information.{Bytes, Information}
 
 import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 /**
   * A client for the HTTP API of Nomad.
   */
 class NomadHttpClient(
     baseUri: Uri,
+    tokenEnvName: String,
     client: WSClient
 )(implicit override val executionContext: ExecutionContext)
     extends NomadClient {
@@ -44,7 +45,7 @@ class NomadHttpClient(
       * @return The resource statistics of the allocation with the given ID.
       */
     override def getAllocationStats(allocationId: @@[String, Allocation.Id]): NomadT[AllocationStats] =
-      lift(client.url(v1Client / "allocation" / allocationId / "stats").withHeaders(ACCEPT -> JSON).get())
+      lift(requestWithHeaders(v1Client / "allocation" / allocationId / "stats").withHeaders(ACCEPT -> JSON).get())
         .subflatMap { response =>
           val maybeAllocationStats = for {
             responseJson <- Try(response.json).toOption
@@ -68,8 +69,7 @@ class NomadHttpClient(
         offset: Option[@@[Quantity[Information], TaskLog.Offset]]
     ): NomadT[TaskLog] =
       lift(
-        client
-          .url(v1Client / "fs" / "logs" / allocationId)
+        requestWithHeaders(v1Client / "fs" / "logs" / allocationId)
           .withQueryString(
             Seq("task" -> taskName,
                 "type" -> stream.entryName,
@@ -117,6 +117,20 @@ class NomadHttpClient(
   private val v1: Uri = baseUri / "v1"
 
   /**
+    * The AUTH headers required for nomad ACL
+    */
+  val headers: List[(String, String)] =
+    sys.env.get(tokenEnvName).map(authToken => ("X-Nomad-Token", authToken)).toList
+
+  /**
+    * Helper method that adds AUTH headers to request
+    * @param url The url to request
+    * @return
+    */
+  def requestWithHeaders(url: String): WSRequest =
+    client.url(url).withHeaders(headers: _*)
+
+  /**
     * Get a job.
     *
     * @param jobId The ID of the job
@@ -124,7 +138,7 @@ class NomadHttpClient(
     */
   override def getJob(jobId: @@[String, Job.Id]): NomadT[Job] =
     for {
-      response <- lift(client.url(v1 / "job" / jobId).withHeaders(ACCEPT -> JSON).get())
+      response <- lift(requestWithHeaders(v1 / "job" / jobId).withHeaders(ACCEPT -> JSON).get())
         .ensureOr(fromHTTPError)(_.status == OK)
     } yield response.json.as[Job]
 
@@ -136,7 +150,7 @@ class NomadHttpClient(
     */
   override def getAllocationsForJob(jobId: String @@ Job.Id): NomadT[WithId[immutable.Seq[Allocation]]] =
     for {
-      response <- lift(client.url(v1 / "job" / jobId / "allocations").withHeaders(ACCEPT -> JSON).get())
+      response <- lift(requestWithHeaders(v1 / "job" / jobId / "allocations").withHeaders(ACCEPT -> JSON).get())
         .ensureOr(fromHTTPError)(_.status == OK)
     } yield WithId(jobId, response.json.as[immutable.Seq[Allocation]])
 
@@ -147,12 +161,12 @@ class NomadHttpClient(
     * @return The allocation or an error
     */
   override def getAllocation(id: String @@ Allocation.Id): NomadT[Allocation] =
-    lift(client.url(v1 / "allocation" / id).withHeaders(ACCEPT -> JSON).get())
+    lift(requestWithHeaders(v1 / "allocation" / id).withHeaders(ACCEPT -> JSON).get())
       .ensureOr(fromHTTPError)(_.status == OK)
       .map(_.json.as[Allocation])
 
   override def getNode(id: @@[String, Node.Id]): NomadT[Node] =
-    lift(client.url(v1 / "node" / id).withHeaders(ACCEPT -> JSON).get())
+    lift(requestWithHeaders(v1 / "node" / id).withHeaders(ACCEPT -> JSON).get())
       .ensureOr(fromHTTPError)(_.status == OK)
       .map(_.json.as[Node])
 

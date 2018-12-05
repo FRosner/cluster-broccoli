@@ -37,7 +37,7 @@ class NomadHttpClientIntegrationSpec
       "get allocations for a running nomad job" >> { wsClient: WSClient =>
         // Generate a random identifier for the instance
         val identifier = Gen.resize(10, Gen.identifier).sample.get
-        val client = new NomadHttpClient(Uri.parse("http://localhost:4646"), wsClient)
+        val client = new NomadHttpClient(Uri.parse("http://localhost:4646"), "NOMAD_BROCCOLI_TOKEN", wsClient)
         (for {
           // Create and start a simple instance to look at it's allocations
           _ <- wsClient
