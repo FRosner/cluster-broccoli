@@ -1,5 +1,6 @@
 package de.frosner.broccoli.websocket
 
+import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.models.Template.templateApiWrites
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.models.NodeResources
@@ -39,7 +40,7 @@ object OutgoingMessage {
     case object GetInstanceTasksError extends Type
   }
 
-  final case class ListTemplates(templates: Seq[Template]) extends OutgoingMessage
+  final case class ListTemplates(templates: Seq[Template], account: Account) extends OutgoingMessage
   final case class ListInstances(instances: Seq[InstanceWithStatus]) extends OutgoingMessage
   final case class ListResources(resources: Seq[NodeResources]) extends OutgoingMessage
   final case class AboutInfoMsg(info: AboutInfo) extends OutgoingMessage
@@ -63,7 +64,9 @@ object OutgoingMessage {
     */
   implicit val outgoingMessageWrites: Writes[OutgoingMessage] =
     Writes {
-      case ListTemplates(templates)        => write(Type.ListTemplates, templates)
+      case ListTemplates(templates, account) =>
+        implicit val acc: Account = account
+        write(Type.ListTemplates, templates)
       case ListInstances(instances)        => write(Type.ListInstances, instances)
       case ListResources(resources)        => write(Type.ListNodeResources, resources)
       case AboutInfoMsg(info)              => write(Type.AboutInfo, info)

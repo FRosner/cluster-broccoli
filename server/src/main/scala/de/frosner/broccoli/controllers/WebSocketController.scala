@@ -75,7 +75,7 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
 
       val templateEnumerator = Enumerator[Msg](
         Json.toJson(
-          OutgoingMessage.ListTemplates(TemplateController.list(templateService))
+          OutgoingMessage.ListTemplates(TemplateController.list(templateService), user)
         ))
 
       val instanceEnumerator = Enumerator[Msg](

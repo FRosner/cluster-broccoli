@@ -1,67 +1,235 @@
 package de.frosner.broccoli.models
 
+import com.typesafe.config.{ConfigList, ConfigObject, ConfigValue, ConfigValueType}
 import de.frosner.broccoli.auth.Account
-import de.frosner.broccoli.models.StaticSetProvider._
+import de.frosner.broccoli.models.SetProvider.{
+  StaticDoubleSetProvider,
+  StaticIntSetProvider,
+  StaticStringSetProvider,
+  UserOESetProvider
+}
 import enumeratum.{Enum, EnumEntry, PlayJsonEnum}
-import play.api.libs.json.{JsObject, JsValue, Json, Writes}
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 import scala.collection.immutable
-import scala.language.higherKinds
+import scala.language.implicitConversions
 
 sealed trait ParameterType extends EnumEntry with EnumEntry.Lowercase
 
 object ParameterType extends Enum[ParameterType] with PlayJsonEnum[ParameterType] {
+  private val log = play.api.Logger(getClass)
+
   val values: immutable.IndexedSeq[ParameterType] = findValues
   case object Raw extends ParameterType
   case object String extends ParameterType
   case object Integer extends ParameterType
   case object Decimal extends ParameterType
-  case class Set[T](setProvider: SetProvider[T]) extends ParameterType
+  case class Set(setProvider: SetProvider) extends ParameterType {
 
-  implicit val parameterTypeWrites= new Writes[ParameterType] {
+    def getValues(account: Account): JsValue =
+      setProvider match {
+        case StaticIntSetProvider(set)    => Json.toJson(getValuesInternal(set))
+        case StaticDoubleSetProvider(set) => Json.toJson(getValuesInternal(set))
+        case StaticStringSetProvider(set) => Json.toJson(getValuesInternal(set))
+        case UserOESetProvider            => Json.toJson(getValuesInternal(account))
+      }
+
+    private def getValuesInternal(magnet: SetProviderMagnet): magnet.Result = magnet()
+  }
+
+  def paramTypeFromString(paramName: String): Option[ParameterType] =
+    paramName match {
+      case "raw"     => Some(ParameterType.Raw)
+      case "string"  => Some(ParameterType.String)
+      case "integer" => Some(ParameterType.Integer)
+      case "decimal" => Some(ParameterType.Decimal)
+      case _         => None
+    }
+
+  def fromConfigObject(configValue: ConfigValue): Option[ParameterType] =
+    try {
+      configValue.valueType() match {
+        case ConfigValueType.STRING =>
+          paramTypeFromString(configValue.unwrapped().asInstanceOf[String])
+        case ConfigValueType.OBJECT =>
+          val config = configValue.asInstanceOf[ConfigObject].toConfig
+          config.getString("name") match {
+            case "raw"     => Some(ParameterType.Raw)
+            case "string"  => Some(ParameterType.String)
+            case "integer" => Some(ParameterType.Integer)
+            case "decimal" => Some(ParameterType.Decimal)
+            case "set" =>
+              val metadata = config.getObject("metadata")
+              metadata.toConfig.getString("provider") match {
+                case "StaticIntSetProvider" =>
+                  Some(
+                    Set(
+                      StaticIntSetProvider(
+                        metadata.get("values").asInstanceOf[ConfigList].unwrapped().asInstanceOf[List[Int]].toSet
+                      )
+                    )
+                  )
+                case "StaticDoubleSetProvider" =>
+                  Some(
+                    Set(
+                      StaticDoubleSetProvider(
+                        metadata.get("values").asInstanceOf[ConfigList].unwrapped().asInstanceOf[List[Double]].toSet
+                      )
+                    )
+                  )
+                case "StaticStringSetProvider" =>
+                  Some(
+                    Set(
+                      StaticStringSetProvider(
+                        metadata.get("values").asInstanceOf[ConfigList].unwrapped().asInstanceOf[List[String]].toSet
+                      )
+                    )
+                  )
+                case "UserOESetProvider" =>
+                  Some(Set(UserOESetProvider))
+                case _ =>
+                  None
+              }
+          }
+        case _ => None
+      }
+    } catch {
+      case e: Throwable =>
+        log.error("Error while getting parameter type from config object: ", e)
+        None
+    }
+
+  implicit val parameterTypeWrites: Writes[ParameterType] = new Writes[ParameterType] {
+
+    private val writesFormat = (
+      (JsPath \ "name").write[String] ~
+        (JsPath \ "metadata").writeNullable[JsObject]
+      ).tupled
+
     override def writes(parameterType: ParameterType): JsValue = {
+      val metadata = parameterType match {
+        case Set(setProvider) =>
+          setProvider match {
+            case StaticIntSetProvider(v) =>
+              Some(
+                Json.obj(
+                  "provider" -> "StaticIntSetProvider",
+                  "values" -> v
+                )
+              )
+            case StaticDoubleSetProvider(v) =>
+              Some(
+                Json.obj(
+                  "provider" -> "StaticDoubleSetProvider",
+                  "values" -> v
+                )
+              )
+            case StaticStringSetProvider(v) =>
+              Some(
+                Json.obj(
+                  "provider" -> "StaticStringSetProvider",
+                  "values" -> v
+                )
+              )
+            case UserOESetProvider =>
+              Some(
+                Json.obj(
+                  "provider" -> "UserOESetProvider"
+                )
+              )
+            case _ => None
+          }
+        case _ => None
+      }
+      val name =
+        parameterType match {
+          case Raw     => "raw"
+          case String  => "string"
+          case Integer => "integer"
+          case Decimal => "decimal"
+          case Set(_)  => "set"
+        }
+      writesFormat.writes(name, metadata)
+    }
+  }
 
-      Json.obj(
-        "name" ->
-          (
-            parameterType match {
-              case Raw => "raw"
-              case String => "string"
-              case Integer => "integer"
-              case Decimal => "decimal"
-              case Set(_) => "set"
-              case _ => "unknown"
+  implicit def parameterTypeApiWrites(implicit account: Account): Writes[ParameterType] = new Writes[ParameterType] {
+
+    private val writesFormat = (
+      (JsPath \ "name").write[String] ~
+        (JsPath \ "values").writeNullable[JsValue]
+      ).tupled
+
+    override def writes(parameterType: ParameterType): JsValue = {
+      val values =
+        parameterType match {
+          case s: Set =>
+            Some(s.getValues(account))
+          case _ => None
+        }
+      val name =
+        parameterType match {
+          case Raw     => "raw"
+          case String  => "string"
+          case Integer => "integer"
+          case Decimal => "decimal"
+          case Set(provider) =>
+            provider match {
+              case StaticDoubleSetProvider(_)                     => "DoubleSet"
+              case StaticIntSetProvider(_)                        => "IntSet"
+              case StaticStringSetProvider(_) | UserOESetProvider => "StringSet"
             }
-          ),
-        "metadata" ->
-          (
-            parameterType match {
-              case Set(provider) => Some("")
-              case _ => None
-            }
-          )
-      )
+        }
+      writesFormat.writes(name, values)
     }
   }
 }
 
-trait SetProvider[T] {
-  def getValues: Set[T]
+sealed trait SetProvider extends EnumEntry with EnumEntry.Lowercase
+object SetProvider extends Enum[SetProvider] with PlayJsonEnum[SetProvider] {
+  val values: immutable.IndexedSeq[SetProvider] = findValues
+  case class StaticIntSetProvider(values: Set[Int]) extends SetProvider
+  case class StaticDoubleSetProvider(values: Set[Double]) extends SetProvider
+  case class StaticStringSetProvider(values: Set[String]) extends SetProvider
+  case object UserOESetProvider extends SetProvider
 }
 
-object StaticSetProvider {
-  def fromJson[T](json: JsValue): StaticSetProvider[T] = {
-    StaticSetProvider((json \ "values").as[List[T]].toSet)
-  }
-
-  implicit case class StaticIntSetProvider(override val values: Set[Int]) extends StaticSetProvider[Int](values)
-  implicit case class StaticDoubleSetProvider(override val values: Set[Double]) extends StaticSetProvider[Double](values)
-  implicit case class StaticStringSetProvider(override val values: Set[String]) extends StaticSetProvider[String](values)
-}
-case class StaticSetProvider[T](values: Set[T]) extends SetProvider[T] {
-  override def getValues: Set[T] = values
+sealed trait SetProviderMagnet {
+  type Result
+  def apply(): Result
 }
 
-case class UserOESetProvider(account: Account) extends SetProvider[String] {
-  override def getValues: Set[String] = Seq(account.getOEPrefix).toSet
+object SetProviderMagnet {
+  implicit def fromStaticInt(values: Set[Int]): SetProviderMagnet {
+    type Result = Set[Int]
+  } =
+    new SetProviderMagnet {
+      override type Result = Set[Int]
+      override def apply(): Result = values
+    }
+
+  implicit def fromStaticDouble(values: Set[Double]): SetProviderMagnet {
+    type Result = Set[Double]
+  } =
+    new SetProviderMagnet {
+      override type Result = Set[Double]
+      override def apply(): Result = values
+    }
+
+  implicit def fromStaticString(values: Set[String]): SetProviderMagnet {
+    type Result = Set[String]
+  } =
+    new SetProviderMagnet {
+      override type Result = Set[String]
+      override def apply(): Result = values
+    }
+
+  implicit def fromUserOEProvider(account: Account): SetProviderMagnet {
+    type Result = Set[String]
+  } =
+    new SetProviderMagnet {
+      override type Result = Set[String]
+      override def apply(): Result = Seq(account.getOEPrefix).toSet
+    }
 }

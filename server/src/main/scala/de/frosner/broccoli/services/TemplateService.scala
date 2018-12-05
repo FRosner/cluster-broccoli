@@ -7,8 +7,8 @@ import de.frosner.broccoli.templates._
 
 @Singleton
 class TemplateService @Inject()(templateSource: TemplateSource) {
-  def getTemplates(account: Account): Seq[Template] = templateSource.loadTemplates(account)
+  def getTemplates: Seq[Template] = templateSource.loadTemplates
 
-  def template(account: Account, id: String): Option[Template] = getTemplates(account).find(_.id == id)
+  def template(id: String): Option[Template] = getTemplates.find(_.id == id)
 
 }

@@ -20,7 +20,7 @@ case class TemplateController @Inject()(
     with BroccoliSimpleAuthorization {
 
   def list = StackAction(parse.empty) { implicit request =>
-    Ok(Json.toJson(TemplateController.list(templateService)))
+      Ok(Json.toJson(TemplateController.list(templateService)))
   }
 
   def show(id: String) = StackAction(parse.empty) { implicit request =>
@@ -31,7 +31,7 @@ case class TemplateController @Inject()(
 
 object TemplateController {
 
-  def list(templateService: TemplateService, account: Account): Seq[Template] =
+  def list(templateService: TemplateService): Seq[Template] =
     templateService.getTemplates
 
 }

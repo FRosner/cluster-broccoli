@@ -1,6 +1,5 @@
 package de.frosner.broccoli.templates
 
-import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.models.Template
 import de.frosner.broccoli.signal.SignalManager
 import sun.misc.{Signal, SignalHandler}
@@ -20,5 +19,5 @@ class SignalRefreshedTemplateSource(source: CachedTemplateSource, signalManager:
     }
   })
 
-  override def loadTemplates(account: Account): Seq[Template] = source.loadTemplates(account)
+  override def loadTemplates: Seq[Template] = source.loadTemplates
 }

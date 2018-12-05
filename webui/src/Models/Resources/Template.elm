@@ -3,6 +3,7 @@ module Models.Resources.Template exposing (..)
 import Json.Decode as Decode exposing (field)
 import Json.Encode as Encode
 import Dict exposing (Dict)
+import List
 import Utils.DictUtils exposing (flatten)
 import Maybe.Extra exposing (isJust)
 import Utils.StringUtils exposing (surround)
@@ -27,6 +28,9 @@ type ParameterType
     | StringParam
     | IntParam
     | DecimalParam
+    | DoubleSetParam (List Float)
+    | IntSetParam (List Int)
+    | StringSetParam (List String)
 
 
 type ParameterValue
@@ -70,6 +74,37 @@ parameterInfoDecoder =
                     (Decode.maybe (field "secret" Decode.bool))
                     (Decode.maybe (field "orderIndex" Decode.float))
                     (Decode.succeed (paramType))
+            )
+
+decodeDataTypeNew : Decode.Decoder ParameterType
+decodeDataTypeNew =
+    (field "name" Decode.string)
+        |> Decode.andThen
+            (\typeName ->
+                case typeName of
+                    "integer" ->
+                        Decode.succeed IntParam
+
+                    "decimal" ->
+                        Decode.succeed DecimalParam
+
+                    "string" ->
+                        Decode.succeed StringParam
+
+                    "raw" ->
+                        Decode.succeed RawParam
+
+                    "DoubleSet" ->
+                        (field "values" (Decode.list Decode.float))
+
+                    "IntSet" ->
+                        (field "values" (Decode.list Decode.int))
+
+                    "StringSet" ->
+                        (field "values" (Decode.list Decode.string))
+
+                    _ ->
+                        Decode.fail <| "Unknown dataType: " ++ typeName
             )
 
 
