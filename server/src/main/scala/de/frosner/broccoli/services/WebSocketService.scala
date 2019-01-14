@@ -41,7 +41,7 @@ class WebSocketService @Inject()(templateService: TemplateService,
           Json.toJson(OutgoingMessage.ListTemplates(TemplateController.list(templateService), user))
         }
         broadcast { user =>
-          Json.toJson(OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService)))
+          Json.toJson(OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService), user))
         }
       }(log.info(_))
     }

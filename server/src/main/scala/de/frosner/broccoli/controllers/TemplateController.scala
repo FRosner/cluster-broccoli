@@ -1,6 +1,5 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.auth.Account
 import javax.inject.Inject
 import de.frosner.broccoli.models.Template
 import de.frosner.broccoli.models.Template.templateApiWrites
@@ -9,7 +8,7 @@ import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
 import play.api.Environment
 import play.api.cache.CacheApi
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, Controller}
+import play.api.mvc.Controller
 
 case class TemplateController @Inject()(
     templateService: TemplateService,
@@ -20,7 +19,7 @@ case class TemplateController @Inject()(
     with BroccoliSimpleAuthorization {
 
   def list = StackAction(parse.empty) { implicit request =>
-      Ok(Json.toJson(TemplateController.list(templateService)))
+    Ok(Json.toJson(TemplateController.list(templateService)))
   }
 
   def show(id: String) = StackAction(parse.empty) { implicit request =>

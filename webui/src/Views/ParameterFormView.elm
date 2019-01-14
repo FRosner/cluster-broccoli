@@ -17,6 +17,8 @@ import Maybe
 import Maybe.Extra exposing (isJust, join)
 import Json.Decode
 import Tuple exposing (first, second)
+import Bootstrap.Form as Form
+import Bootstrap.Form.Select as Select
 
 
 editingParamColor =
@@ -352,22 +354,10 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                                     , sup [] [ text (dataTypeToTitle dataType) ]
                                     ]
                                 ]
-                          , input
-                                [ type_
-                                    (if (isSecret && (not secretVisible)) then
-                                        "password"
-                                     else
-                                        "text"
-                                    )
-                                , class (String.concat [ "form-control ", inputErrorClass ])
-                                , attribute "aria-label" parameter
-                                , placeholder placeholderValue
-                                , value parameterValue
-                                , disabled (not enabled)
-                                , id <| String.concat [ "edit-instance-form-parameter-input-", instance.id, "-", instance.template.id, "-", parameter ]
-                                , onInput (EnterEditInstanceParameterValue instance parameter)
-                                ]
-                                []
+                          , inputParameterValueView isSecret secretVisible inputErrorClass parameter placeholderValue
+                                parameterValue enabled maybeParameterInfo
+                                (String.concat [ "edit-instance-form-parameter-input-", instance.id, "-", instance.template.id, "-", parameter ])
+                                (EnterEditInstanceParameterValue instance parameter)
                           ]
                         , (if (isSecret && enabled) then
                             [ div
@@ -612,6 +602,8 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                     "is-invalid"
                 else
                     ""
+
+            inputId = String.concat [ "new-instance-form-parameter-input-", template.id, "-", parameter ]
         in
             ( p
                 []
@@ -637,22 +629,11 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                                     , sup [] [ text (dataTypeToTitle dataType) ]
                                     ]
                                 ]
-                          , input
-                                [ type_
-                                    (if (isSecret && (not secretVisible)) then
-                                        "password"
-                                     else
-                                        "text"
-                                    )
-                                , class (String.concat [ "form-control ", inputErrorClass ])
-                                , attribute "aria-label" parameter
-                                , placeholder placeholderValue
-                                , value parameterValue
-                                , disabled (not enabled)
-                                , id <| String.concat [ "new-instance-form-parameter-input-", template.id, "-", parameter ]
-                                , onInput (EnterNewInstanceParameterValue template.id parameter)
-                                ]
-                                []
+                          , inputParameterValueView
+                                isSecret secretVisible inputErrorClass parameter placeholderValue parameterValue enabled
+                                maybeParameterInfo
+                                (String.concat [ "new-instance-form-parameter-input-", template.id, "-", parameter ])
+                                (EnterNewInstanceParameterValue template.id parameter)
                           ]
                         , if (isSecret) then
                             [ div
@@ -717,6 +698,73 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
             )
 
 
+inputParameterValueView : Bool -> Bool -> String -> String -> String -> String -> Bool -> Maybe ParameterInfo
+    -> String -> (String -> UpdateBodyViewMsg) -> Html UpdateBodyViewMsg
+inputParameterValueView isSecret secretVisible inputErrorClass parameter placeholderValue parameterValue enabled
+    maybeParameterInfo inputId updateMessageFunc =
+    if (isSimpleDataType
+            (maybeParameterInfo |> Maybe.andThen (\i -> Just i.dataType) |> Maybe.withDefault StringParam)) then
+        input
+            [ type_
+                (if (isSecret && (not secretVisible)) then
+                    "password"
+                 else
+                    "text"
+                )
+            , class (String.concat [ "form-control ", inputErrorClass ])
+            , attribute "aria-label" parameter
+            , placeholder placeholderValue
+            , value parameterValue
+            , disabled (not enabled)
+            , id inputId
+            , onInput updateMessageFunc
+            ]
+            []
+    else
+        Select.select
+            [ Select.id inputId, Select.onChange updateMessageFunc ]
+            ( maybeParameterInfo
+                |> Maybe.andThen
+                    (\i ->
+                        case i.dataType of
+                            DecimalSetParam decimalSet -> Just (selectOptionView decimalSet parameterValue toString)
+                            IntSetParam intSet -> Just (selectOptionView intSet parameterValue toString)
+                            StringSetParam stringSet -> Just (selectOptionView stringSet parameterValue identity)
+                            _ -> Nothing
+                    )
+                |> Maybe.withDefault []
+            )
+
+
+selectOptionView options parameterValue toStringFunc =
+    (List.map
+        (\itm -> Select.item
+            [ selected ((toString itm) == parameterValue)]
+            [ text (toStringFunc itm)]
+        )
+        options
+    )
+
+
+isSimpleDataType : ParameterType -> Bool
+isSimpleDataType dataType =
+    case dataType of
+        RawParam ->
+            True
+        StringParam ->
+            True
+        IntParam ->
+            True
+        DecimalParam ->
+            True
+        DecimalSetParam _ ->
+            False
+        IntSetParam _ ->
+            False
+        StringSetParam _ ->
+            False
+
+
 getErrorMessage : Maybe String -> String -> ParameterType -> Maybe String
 getErrorMessage maybeValue paramName dataType =
     maybeValue
@@ -753,5 +801,14 @@ dataTypeToTitle dataType =
 
             DecimalParam ->
                 "Decimal"
+
+            StringSetParam _ ->
+                "String"
+
+            DecimalSetParam _ ->
+                "Decimal"
+
+            IntSetParam _ ->
+                "Int"
         , ")"
         ]

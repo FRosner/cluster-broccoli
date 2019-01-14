@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import cats.data.EitherT
 import cats.instances.future._
+import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.websocket.{IncomingMessage, OutgoingMessage, WebSocketMessageHandler}
@@ -79,7 +80,7 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
         ))
 
       val instanceEnumerator = Enumerator[Msg](
-        Json.toJson(OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService))))
+        Json.toJson(OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService), user)))
 
       (in,
        aboutEnumerator

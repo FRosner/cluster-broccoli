@@ -28,7 +28,7 @@ type ParameterType
     | StringParam
     | IntParam
     | DecimalParam
-    | DoubleSetParam (List Float)
+    | DecimalSetParam (List Float)
     | IntSetParam (List Int)
     | StringSetParam (List String)
 
@@ -64,16 +64,20 @@ decoder =
 
 
 parameterInfoDecoder =
-    (field "type" decodeDataType)
+    (field "type" Decode.value)
         |> Decode.andThen
-            (\paramType ->
-                Decode.map6 ParameterInfo
-                    (field "id" Decode.string)
-                    (Decode.maybe (field "name" Decode.string))
-                    (Decode.maybe (field "default" (decodeParamValue paramType)))
-                    (Decode.maybe (field "secret" Decode.bool))
-                    (Decode.maybe (field "orderIndex" Decode.float))
-                    (Decode.succeed (paramType))
+            (\rawValue ->
+                case Decode.decodeValue decodeDataTypeNew rawValue of
+                    Ok paramType ->
+                        Decode.map6 ParameterInfo
+                            (field "id" Decode.string)
+                            (Decode.maybe (field "name" Decode.string))
+                            (Decode.maybe (field "default" (decodeParamValue paramType)))
+                            (Decode.maybe (field "secret" Decode.bool))
+                            (Decode.maybe (field "orderIndex" Decode.float))
+                            (Decode.succeed paramType)
+                    Err error ->
+                        Decode.fail error
             )
 
 decodeDataTypeNew : Decode.Decoder ParameterType
@@ -94,14 +98,20 @@ decodeDataTypeNew =
                     "raw" ->
                         Decode.succeed RawParam
 
-                    "DoubleSet" ->
+                    "doubleList" ->
                         (field "values" (Decode.list Decode.float))
+                            |> Decode.andThen
+                                (\values -> Decode.succeed (DecimalSetParam values))
 
-                    "IntSet" ->
+                    "intList" ->
                         (field "values" (Decode.list Decode.int))
+                            |> Decode.andThen
+                                (\values -> Decode.succeed (IntSetParam values))
 
-                    "StringSet" ->
+                    "stringList" ->
                         (field "values" (Decode.list Decode.string))
+                            |> Decode.andThen
+                                (\values -> Decode.succeed (StringSetParam values))
 
                     _ ->
                         Decode.fail <| "Unknown dataType: " ++ typeName
@@ -194,6 +204,27 @@ decodeParamValue paramType =
                         Decode.succeed (RawVal paramValue)
                     )
 
+        DecimalSetParam _ ->
+            Decode.float
+                |> Decode.andThen
+                    (\paramValue ->
+                        Decode.succeed (DecimalVal paramValue)
+                    )
+
+        StringSetParam _ ->
+            Decode.string
+                |> Decode.andThen
+                    (\paramValue ->
+                        Decode.succeed (StringVal paramValue)
+                    )
+
+        IntSetParam _ ->
+            Decode.int
+                |> Decode.andThen
+                    (\paramValue ->
+                        Decode.succeed (IntVal paramValue)
+                    )
+
 
 encodeParamValue paramValue =
     case paramValue of
@@ -268,6 +299,15 @@ dataTypeToString dataType =
 
         DecimalParam ->
             "decimal"
+
+        DecimalSetParam _ ->
+            "decimal"
+
+        IntSetParam _ ->
+            "int"
+
+        StringSetParam _ ->
+            "string"
 
 
 wrapValue paramType paramValue =

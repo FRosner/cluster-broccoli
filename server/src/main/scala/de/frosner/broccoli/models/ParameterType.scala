@@ -2,17 +2,18 @@ package de.frosner.broccoli.models
 
 import com.typesafe.config.{ConfigList, ConfigObject, ConfigValue, ConfigValueType}
 import de.frosner.broccoli.auth.Account
-import de.frosner.broccoli.models.SetProvider.{
-  StaticDoubleSetProvider,
-  StaticIntSetProvider,
-  StaticStringSetProvider,
-  UserOESetProvider
+import de.frosner.broccoli.models.ListProvider.{
+  StaticDoubleListProvider,
+  StaticIntListProvider,
+  StaticStringListProvider,
+  UserOEListProvider
 }
+import de.frosner.broccoli.services.ParameterTypeException
 import enumeratum.{Enum, EnumEntry, PlayJsonEnum}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-import scala.collection.immutable
+import scala.collection.{immutable, JavaConverters, SortedSet}
 import scala.language.implicitConversions
 
 sealed trait ParameterType extends EnumEntry with EnumEntry.Lowercase
@@ -25,17 +26,17 @@ object ParameterType extends Enum[ParameterType] with PlayJsonEnum[ParameterType
   case object String extends ParameterType
   case object Integer extends ParameterType
   case object Decimal extends ParameterType
-  case class Set(setProvider: SetProvider) extends ParameterType {
+  case class List(provider: ListProvider) extends ParameterType {
 
     def getValues(account: Account): JsValue =
-      setProvider match {
-        case StaticIntSetProvider(set)    => Json.toJson(getValuesInternal(set))
-        case StaticDoubleSetProvider(set) => Json.toJson(getValuesInternal(set))
-        case StaticStringSetProvider(set) => Json.toJson(getValuesInternal(set))
-        case UserOESetProvider            => Json.toJson(getValuesInternal(account))
+      provider match {
+        case StaticIntListProvider(list)    => Json.toJson(getValuesInternal(list))
+        case StaticDoubleListProvider(list) => Json.toJson(getValuesInternal(list))
+        case StaticStringListProvider(list) => Json.toJson(getValuesInternal(list))
+        case UserOEListProvider             => Json.toJson(getValuesInternal(account))
       }
 
-    private def getValuesInternal(magnet: SetProviderMagnet): magnet.Result = magnet()
+    private def getValuesInternal(magnet: ListProviderMagnet): magnet.Result = magnet()
   }
 
   def paramTypeFromString(paramName: String): Option[ParameterType] =
@@ -59,35 +60,62 @@ object ParameterType extends Enum[ParameterType] with PlayJsonEnum[ParameterType
             case "string"  => Some(ParameterType.String)
             case "integer" => Some(ParameterType.Integer)
             case "decimal" => Some(ParameterType.Decimal)
-            case "set" =>
+            case "list" =>
               val metadata = config.getObject("metadata")
               metadata.toConfig.getString("provider") match {
-                case "StaticIntSetProvider" =>
+                case StaticIntListProvider.name =>
                   Some(
-                    Set(
-                      StaticIntSetProvider(
-                        metadata.get("values").asInstanceOf[ConfigList].unwrapped().asInstanceOf[List[Int]].toSet
+                    List(
+                      StaticIntListProvider(
+                        JavaConverters
+                          .iterableAsScalaIterableConverter(
+                            metadata
+                              .get("values")
+                              .asInstanceOf[ConfigList]
+                              .unwrapped()
+                              .asInstanceOf[java.util.ArrayList[Int]]
+                          )
+                          .asScala
+                          .toList
                       )
                     )
                   )
-                case "StaticDoubleSetProvider" =>
+                case StaticDoubleListProvider.name =>
                   Some(
-                    Set(
-                      StaticDoubleSetProvider(
-                        metadata.get("values").asInstanceOf[ConfigList].unwrapped().asInstanceOf[List[Double]].toSet
+                    List(
+                      StaticDoubleListProvider(
+                        JavaConverters
+                          .iterableAsScalaIterableConverter(
+                            metadata
+                              .get("values")
+                              .asInstanceOf[ConfigList]
+                              .unwrapped()
+                              .asInstanceOf[java.util.ArrayList[Double]]
+                          )
+                          .asScala
+                          .toList
                       )
                     )
                   )
-                case "StaticStringSetProvider" =>
+                case StaticStringListProvider.name =>
                   Some(
-                    Set(
-                      StaticStringSetProvider(
-                        metadata.get("values").asInstanceOf[ConfigList].unwrapped().asInstanceOf[List[String]].toSet
+                    List(
+                      StaticStringListProvider(
+                        JavaConverters
+                          .iterableAsScalaIterableConverter(
+                            metadata
+                              .get("values")
+                              .asInstanceOf[ConfigList]
+                              .unwrapped()
+                              .asInstanceOf[java.util.ArrayList[String]]
+                          )
+                          .asScala
+                          .toList
                       )
                     )
                   )
-                case "UserOESetProvider" =>
-                  Some(Set(UserOESetProvider))
+                case UserOEListProvider.name =>
+                  Some(List(UserOEListProvider))
                 case _ =>
                   None
               }
@@ -100,42 +128,82 @@ object ParameterType extends Enum[ParameterType] with PlayJsonEnum[ParameterType
         None
     }
 
+  def fromJson(id: String, json: JsValue): ParameterType =
+    json match {
+      case JsString(value) =>
+        // TODO: This section is for older compatibility. Remove it in the future
+        paramTypeFromString(value).getOrElse(throw ParameterTypeException(s"Unsupported data type for parameter $id"))
+      case JsObject(underlying) =>
+        underlying.getOrElse("name", JsNull) match {
+          case JsString(name) =>
+            name match {
+              case "raw"     => ParameterType.Raw
+              case "string"  => ParameterType.String
+              case "integer" => ParameterType.Integer
+              case "decimal" => ParameterType.String
+              case "list" =>
+                val metadata =
+                  underlying.getOrElse(
+                    "metadata",
+                    throw ParameterTypeException(s"set type must have metadata in param $id")
+                  )
+                // TODO: We could use reflection here so user provided implementations also work
+                (metadata \ "provider").as[String] match {
+                  case "StaticIntSetProvider" =>
+                    ParameterType.List(StaticIntListProvider((metadata \ "values").as[collection.immutable.List[Int]]))
+                  case "StaticDoubleSetProvider" =>
+                    ParameterType.List(
+                      StaticDoubleListProvider((metadata \ "values").as[collection.immutable.List[Double]]))
+                  case "StaticStringSetProvider" =>
+                    ParameterType.List(
+                      StaticStringListProvider((metadata \ "values").as[collection.immutable.List[String]]))
+                  case "UserOESetProvider" =>
+                    ParameterType.List(UserOEListProvider)
+                  case _ =>
+                    throw ParameterTypeException(s"Unsupported provider class in metadata for parameter `$id`")
+                }
+            }
+          case _ => throw ParameterTypeException(s"Invalid json for key `name` in metadata for parameter `$id`")
+        }
+      case _ => throw ParameterTypeException(s"Could not parse `type` for parameter `$id`")
+    }
+
   implicit val parameterTypeWrites: Writes[ParameterType] = new Writes[ParameterType] {
 
     private val writesFormat = (
       (JsPath \ "name").write[String] ~
         (JsPath \ "metadata").writeNullable[JsObject]
-      ).tupled
+    ).tupled
 
     override def writes(parameterType: ParameterType): JsValue = {
       val metadata = parameterType match {
-        case Set(setProvider) =>
-          setProvider match {
-            case StaticIntSetProvider(v) =>
+        case List(listProvider) =>
+          listProvider match {
+            case StaticIntListProvider(v) =>
               Some(
                 Json.obj(
-                  "provider" -> "StaticIntSetProvider",
+                  "provider" -> StaticIntListProvider.name,
                   "values" -> v
                 )
               )
-            case StaticDoubleSetProvider(v) =>
+            case StaticDoubleListProvider(v) =>
               Some(
                 Json.obj(
-                  "provider" -> "StaticDoubleSetProvider",
+                  "provider" -> StaticDoubleListProvider.name,
                   "values" -> v
                 )
               )
-            case StaticStringSetProvider(v) =>
+            case StaticStringListProvider(v) =>
               Some(
                 Json.obj(
-                  "provider" -> "StaticStringSetProvider",
+                  "provider" -> StaticStringListProvider.name,
                   "values" -> v
                 )
               )
-            case UserOESetProvider =>
+            case UserOEListProvider =>
               Some(
                 Json.obj(
-                  "provider" -> "UserOESetProvider"
+                  "provider" -> UserOEListProvider.name
                 )
               )
             case _ => None
@@ -148,9 +216,9 @@ object ParameterType extends Enum[ParameterType] with PlayJsonEnum[ParameterType
           case String  => "string"
           case Integer => "integer"
           case Decimal => "decimal"
-          case Set(_)  => "set"
+          case List(_) => "list"
         }
-      writesFormat.writes(name, metadata)
+      writesFormat.writes((name, metadata))
     }
   }
 
@@ -159,12 +227,12 @@ object ParameterType extends Enum[ParameterType] with PlayJsonEnum[ParameterType
     private val writesFormat = (
       (JsPath \ "name").write[String] ~
         (JsPath \ "values").writeNullable[JsValue]
-      ).tupled
+    ).tupled
 
     override def writes(parameterType: ParameterType): JsValue = {
       val values =
         parameterType match {
-          case s: Set =>
+          case s: List =>
             Some(s.getValues(account))
           case _ => None
         }
@@ -174,62 +242,85 @@ object ParameterType extends Enum[ParameterType] with PlayJsonEnum[ParameterType
           case String  => "string"
           case Integer => "integer"
           case Decimal => "decimal"
-          case Set(provider) =>
+          case List(provider) =>
             provider match {
-              case StaticDoubleSetProvider(_)                     => "DoubleSet"
-              case StaticIntSetProvider(_)                        => "IntSet"
-              case StaticStringSetProvider(_) | UserOESetProvider => "StringSet"
+              case StaticDoubleListProvider(_)                      => "decimalList"
+              case StaticIntListProvider(_)                         => "intList"
+              case StaticStringListProvider(_) | UserOEListProvider => "stringList"
             }
         }
-      writesFormat.writes(name, values)
+      writesFormat.writes((name, values))
     }
   }
 }
 
-sealed trait SetProvider extends EnumEntry with EnumEntry.Lowercase
-object SetProvider extends Enum[SetProvider] with PlayJsonEnum[SetProvider] {
-  val values: immutable.IndexedSeq[SetProvider] = findValues
-  case class StaticIntSetProvider(values: Set[Int]) extends SetProvider
-  case class StaticDoubleSetProvider(values: Set[Double]) extends SetProvider
-  case class StaticStringSetProvider(values: Set[String]) extends SetProvider
-  case object UserOESetProvider extends SetProvider
+sealed trait ListProvider extends EnumEntry with EnumEntry.Lowercase {
+  val name: String
+}
+class StaticListProvider[T](values: List[T]) {
+  require(values.nonEmpty, "Value set must be non empty")
 }
 
-sealed trait SetProviderMagnet {
+object ListProvider extends Enum[ListProvider] with PlayJsonEnum[ListProvider] {
+  val values: immutable.IndexedSeq[ListProvider] = findValues
+  object StaticIntListProvider {
+    val name = "StaticIntListProvider"
+  }
+  case class StaticIntListProvider(values: List[Int]) extends StaticListProvider(values) with ListProvider {
+    override val name: String = StaticIntListProvider.name
+  }
+  object StaticDoubleListProvider {
+    val name = "StaticDoubleListProvider"
+  }
+  case class StaticDoubleListProvider(values: List[Double]) extends StaticListProvider(values) with ListProvider {
+    override val name: String = StaticDoubleListProvider.name
+  }
+  object StaticStringListProvider {
+    val name = "StaticStringListProvider"
+  }
+  case class StaticStringListProvider(values: List[String]) extends StaticListProvider(values) with ListProvider {
+    override val name: String = StaticStringListProvider.name
+  }
+  case object UserOEListProvider extends ListProvider {
+    override val name = "UserOEListProvider"
+  }
+}
+
+sealed trait ListProviderMagnet {
   type Result
   def apply(): Result
 }
 
-object SetProviderMagnet {
-  implicit def fromStaticInt(values: Set[Int]): SetProviderMagnet {
-    type Result = Set[Int]
+object ListProviderMagnet {
+  implicit def fromStaticInt(values: List[Int]): ListProviderMagnet {
+    type Result = List[Int]
   } =
-    new SetProviderMagnet {
-      override type Result = Set[Int]
+    new ListProviderMagnet {
+      override type Result = List[Int]
       override def apply(): Result = values
     }
 
-  implicit def fromStaticDouble(values: Set[Double]): SetProviderMagnet {
-    type Result = Set[Double]
+  implicit def fromStaticDouble(values: List[Double]): ListProviderMagnet {
+    type Result = List[Double]
   } =
-    new SetProviderMagnet {
-      override type Result = Set[Double]
+    new ListProviderMagnet {
+      override type Result = List[Double]
       override def apply(): Result = values
     }
 
-  implicit def fromStaticString(values: Set[String]): SetProviderMagnet {
-    type Result = Set[String]
+  implicit def fromStaticString(values: List[String]): ListProviderMagnet {
+    type Result = List[String]
   } =
-    new SetProviderMagnet {
-      override type Result = Set[String]
+    new ListProviderMagnet {
+      override type Result = List[String]
       override def apply(): Result = values
     }
 
-  implicit def fromUserOEProvider(account: Account): SetProviderMagnet {
-    type Result = Set[String]
+  implicit def fromUserOEProvider(account: Account): ListProviderMagnet {
+    type Result = List[String]
   } =
-    new SetProviderMagnet {
-      override type Result = Set[String]
-      override def apply(): Result = Seq(account.getOEPrefix).toSet
+    new ListProviderMagnet {
+      override type Result = List[String]
+      override def apply(): Result = Seq(account.getOEPrefix).toList
     }
 }

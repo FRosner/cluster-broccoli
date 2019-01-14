@@ -11,7 +11,7 @@ import play.api.libs.json.{Json, OFormat}
   * @param role The role of the user
   */
 final case class Account(name: String, instanceRegex: String, role: Role) extends Identity {
-  def getOEPrefix : String = name.split("-")(0)
+  def getOEPrefix: String = name.split("-")(0)
 }
 
 object Account {

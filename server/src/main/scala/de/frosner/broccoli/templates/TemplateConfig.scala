@@ -25,12 +25,9 @@ object TemplateConfig {
               val maybeName = Try(paramValueObj.getString("name")).toOption
               val maybeSecret = Try(paramValueObj.getBoolean("secret")).toOption
               // Don't wrap the call as we want it to fail in case the wrong type or no type is supplied
-              //val paramType = ParameterType.withName(paramValueObj.getString("type"))
-              val maybeParamType = ParameterType.fromConfigObject(paramValueObj.getValue("type"))
-              println(paramName)
-              println(maybeParamType)
-              val paramType = ParameterType.fromConfigObject(paramValueObj.getValue("type"))
-                  .getOrElse(throw ParameterTypeException(s"Invalid type for parameter $paramName"))
+              val paramType = ParameterType
+                .fromConfigObject(paramValueObj.getValue("type"))
+                .getOrElse(throw ParameterTypeException(s"Invalid type for parameter $paramName"))
               val maybeOrderIndex = Try(paramValueObj.getInt("order-index")).toOption
               val maybeDefault = Try(paramValueObj.getValue("default")).toOption.map { paramValueConf =>
                 ParameterValue.fromConfigValue(
