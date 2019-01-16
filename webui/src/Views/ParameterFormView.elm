@@ -39,7 +39,7 @@ editView instance templates maybeInstanceParameterForm visibleSecrets maybeRole 
 
         ( params, paramsHasError ) =
             parametersView
-                "Parameters"
+                "Parameterss"
                 instance
                 instance.template
                 maybeInstanceParameterForm
@@ -354,8 +354,14 @@ editParameterValueView instance parameterValues parameterInfos maybeInstancePara
                                     , sup [] [ text (dataTypeToTitle dataType) ]
                                     ]
                                 ]
-                          , inputParameterValueView isSecret secretVisible inputErrorClass parameter placeholderValue
-                                parameterValue enabled maybeParameterInfo
+                          , inputParameterValueView isSecret
+                                secretVisible
+                                inputErrorClass
+                                parameter
+                                placeholderValue
+                                parameterValue
+                                enabled
+                                maybeParameterInfo
                                 (String.concat [ "edit-instance-form-parameter-input-", instance.id, "-", instance.template.id, "-", parameter ])
                                 (EnterEditInstanceParameterValue instance parameter)
                           ]
@@ -603,7 +609,8 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                 else
                     ""
 
-            inputId = String.concat [ "new-instance-form-parameter-input-", template.id, "-", parameter ]
+            inputId =
+                String.concat [ "new-instance-form-parameter-input-", template.id, "-", parameter ]
         in
             ( p
                 []
@@ -630,7 +637,13 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
                                     ]
                                 ]
                           , inputParameterValueView
-                                isSecret secretVisible inputErrorClass parameter placeholderValue parameterValue enabled
+                                isSecret
+                                secretVisible
+                                inputErrorClass
+                                parameter
+                                placeholderValue
+                                parameterValue
+                                enabled
                                 maybeParameterInfo
                                 (String.concat [ "new-instance-form-parameter-input-", template.id, "-", parameter ])
                                 (EnterNewInstanceParameterValue template.id parameter)
@@ -698,12 +711,24 @@ newParameterValueView template parameterInfos maybeInstanceParameterForm enabled
             )
 
 
-inputParameterValueView : Bool -> Bool -> String -> String -> String -> String -> Bool -> Maybe ParameterInfo
-    -> String -> (String -> UpdateBodyViewMsg) -> Html UpdateBodyViewMsg
-inputParameterValueView isSecret secretVisible inputErrorClass parameter placeholderValue parameterValue enabled
-    maybeParameterInfo inputId updateMessageFunc =
-    if (isSimpleDataType
-            (maybeParameterInfo |> Maybe.andThen (\i -> Just i.dataType) |> Maybe.withDefault StringParam)) then
+inputParameterValueView :
+    Bool
+    -> Bool
+    -> String
+    -> String
+    -> String
+    -> String
+    -> Bool
+    -> Maybe ParameterInfo
+    -> String
+    -> (String -> UpdateBodyViewMsg)
+    -> Html UpdateBodyViewMsg
+inputParameterValueView isSecret secretVisible inputErrorClass parameter placeholderValue parameterValue enabled maybeParameterInfo inputId updateMessageFunc =
+    if
+        (isSimpleDataType
+            (maybeParameterInfo |> Maybe.andThen (\i -> Just i.dataType) |> Maybe.withDefault StringParam)
+        )
+    then
         input
             [ type_
                 (if (isSecret && (not secretVisible)) then
@@ -723,14 +748,21 @@ inputParameterValueView isSecret secretVisible inputErrorClass parameter placeho
     else
         Select.select
             [ Select.id inputId, Select.onChange updateMessageFunc ]
-            ( maybeParameterInfo
+            (maybeParameterInfo
                 |> Maybe.andThen
                     (\i ->
                         case i.dataType of
-                            DecimalSetParam decimalSet -> Just (selectOptionView decimalSet parameterValue toString)
-                            IntSetParam intSet -> Just (selectOptionView intSet parameterValue toString)
-                            StringSetParam stringSet -> Just (selectOptionView stringSet parameterValue identity)
-                            _ -> Nothing
+                            DecimalSetParam decimalSet ->
+                                Just (selectOptionView decimalSet parameterValue toString)
+
+                            IntSetParam intSet ->
+                                Just (selectOptionView intSet parameterValue toString)
+
+                            StringSetParam stringSet ->
+                                Just (selectOptionView stringSet parameterValue identity)
+
+                            _ ->
+                                Nothing
                     )
                 |> Maybe.withDefault []
             )
@@ -738,9 +770,10 @@ inputParameterValueView isSecret secretVisible inputErrorClass parameter placeho
 
 selectOptionView options parameterValue toStringFunc =
     (List.map
-        (\itm -> Select.item
-            [ selected ((toString itm) == parameterValue)]
-            [ text (toStringFunc itm)]
+        (\itm ->
+            Select.item
+                [ selected ((toString itm) == parameterValue) ]
+                [ text (toStringFunc itm) ]
         )
         options
     )
@@ -751,16 +784,22 @@ isSimpleDataType dataType =
     case dataType of
         RawParam ->
             True
+
         StringParam ->
             True
+
         IntParam ->
             True
+
         DecimalParam ->
             True
+
         DecimalSetParam _ ->
             False
+
         IntSetParam _ ->
             False
+
         StringSetParam _ ->
             False
 

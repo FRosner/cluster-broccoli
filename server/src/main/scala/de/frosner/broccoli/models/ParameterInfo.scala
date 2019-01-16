@@ -54,20 +54,6 @@ object ParameterInfo {
         val default = (`type`, (json \ "default").toOption) match {
           case (paramType, Some(jsValue)) =>
             ParameterValue.fromJsValue(paramType, jsValue).toOption
-          case (paramType, None) =>
-            paramType match {
-              case ParameterType.List(provider) =>
-                provider match {
-                  case StaticIntListProvider(values) =>
-                    Some(IntParameterValue(values.head))
-                  case StaticDoubleListProvider(values) =>
-                    Some(DecimalParameterValue(values.head))
-                  case StaticStringListProvider(values) =>
-                    Some(StringParameterValue(values.head))
-                  case _ => None
-                }
-              case _ => None
-            }
           case _ => None
         }
         ParameterInfo(id, name, default, secret, `type`, orderIndex)

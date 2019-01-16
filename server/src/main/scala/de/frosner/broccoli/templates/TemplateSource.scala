@@ -1,10 +1,8 @@
 package de.frosner.broccoli.templates
 
-import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.models.{ParameterInfo, Template}
 
 import scala.util.Try
-import scala.collection.JavaConversions._
 
 trait TemplateSource {
   private val log = play.api.Logger(getClass)
@@ -16,7 +14,7 @@ trait TemplateSource {
     *
     * Does not guarantee to return the same templates on repeated invocations. Can potentially perform I/O
     */
-  def loadTemplates: Seq[Template]
+  def loadTemplates(): Seq[Template]
 
   def loadTemplate(templateId: String,
                    templateString: String,

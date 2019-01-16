@@ -13,7 +13,7 @@ import enumeratum.{Enum, EnumEntry, PlayJsonEnum}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-import scala.collection.{immutable, JavaConverters, SortedSet}
+import scala.collection.{immutable, JavaConverters}
 import scala.language.implicitConversions
 
 sealed trait ParameterType extends EnumEntry with EnumEntry.Lowercase
@@ -149,15 +149,15 @@ object ParameterType extends Enum[ParameterType] with PlayJsonEnum[ParameterType
                   )
                 // TODO: We could use reflection here so user provided implementations also work
                 (metadata \ "provider").as[String] match {
-                  case "StaticIntSetProvider" =>
+                  case StaticIntListProvider.name =>
                     ParameterType.List(StaticIntListProvider((metadata \ "values").as[collection.immutable.List[Int]]))
-                  case "StaticDoubleSetProvider" =>
+                  case StaticDoubleListProvider.name =>
                     ParameterType.List(
                       StaticDoubleListProvider((metadata \ "values").as[collection.immutable.List[Double]]))
-                  case "StaticStringSetProvider" =>
+                  case StaticStringListProvider.name =>
                     ParameterType.List(
                       StaticStringListProvider((metadata \ "values").as[collection.immutable.List[String]]))
-                  case "UserOESetProvider" =>
+                  case UserOEListProvider.name =>
                     ParameterType.List(UserOEListProvider)
                   case _ =>
                     throw ParameterTypeException(s"Unsupported provider class in metadata for parameter `$id`")

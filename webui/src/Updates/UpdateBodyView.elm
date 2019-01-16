@@ -257,24 +257,40 @@ updateBodyView message oldBodyUiModel =
                         Dict.filter
                             (\paramName paramInfo ->
                                 case paramInfo.dataType of
-                                    DecimalSetParam _ -> True
-                                    IntSetParam _ -> True
-                                    StringSetParam _ -> True
-                                    _ -> False
+                                    DecimalSetParam _ ->
+                                        True
+
+                                    IntSetParam _ ->
+                                        True
+
+                                    StringSetParam _ ->
+                                        True
+
+                                    _ ->
+                                        False
                             )
                             parameterInfos
-                        |> Dict.map
-                            (\paramName paramInfo ->
-                                case paramInfo.dataType of
-                                    DecimalSetParam values -> List.head values |> Maybe.andThen (\val -> Just (DecimalVal val))
-                                    IntSetParam values -> List.head values |> Maybe.andThen (\val -> Just (IntVal val))
-                                    StringSetParam values -> List.head values |> Maybe.andThen (\val -> Just (StringVal val))
-                                    _ -> Nothing
-                            )
-                        |> flatMap (\c b -> b)
+                            |> Dict.map
+                                (\paramName paramInfo ->
+                                    case paramInfo.dataType of
+                                        DecimalSetParam values ->
+                                            List.head values |> Maybe.andThen (\val -> Just (DecimalVal val))
+
+                                        IntSetParam values ->
+                                            List.head values |> Maybe.andThen (\val -> Just (IntVal val))
+
+                                        StringSetParam values ->
+                                            List.head values |> Maybe.andThen (\val -> Just (StringVal val))
+
+                                        _ ->
+                                            Nothing
+                                )
+                            |> flatMap (\c b -> b)
+
                     parameterValuesTransformed =
                         parameterValues
                             |> flatMap (mapStringToParamVal parameterInfos)
+
                     message =
                         setDefaults
                             |> Dict.union parameterValuesTransformed

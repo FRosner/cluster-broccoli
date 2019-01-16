@@ -76,9 +76,11 @@ parameterInfoDecoder =
                             (Decode.maybe (field "secret" Decode.bool))
                             (Decode.maybe (field "orderIndex" Decode.float))
                             (Decode.succeed paramType)
+
                     Err error ->
                         Decode.fail error
             )
+
 
 decodeDataTypeNew : Decode.Decoder ParameterType
 decodeDataTypeNew =
@@ -98,7 +100,7 @@ decodeDataTypeNew =
                     "raw" ->
                         Decode.succeed RawParam
 
-                    "doubleList" ->
+                    "decimalList" ->
                         (field "values" (Decode.list Decode.float))
                             |> Decode.andThen
                                 (\values -> Decode.succeed (DecimalSetParam values))
@@ -316,6 +318,9 @@ wrapValue paramType paramValue =
             surround "\"" paramValue
 
         RawParam ->
+            surround "\"" paramValue
+
+        StringSetParam _ ->
             surround "\"" paramValue
 
         _ ->
