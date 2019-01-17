@@ -5,7 +5,8 @@
     "parameters": [
       "URL",
       "enabled",
-      "id"
+      "id",
+      "retries"
     ],
     "parameterInfos": {
       "id": {
