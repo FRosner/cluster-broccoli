@@ -772,7 +772,7 @@ selectOptionView options parameterValue toStringFunc =
     (List.map
         (\itm ->
             Select.item
-                [ selected ((toString itm) == parameterValue) ]
+                [ selected ((toStringFunc itm) == parameterValue) ]
                 [ text (toStringFunc itm) ]
         )
         options

@@ -379,7 +379,7 @@ tests =
                                 |> Query.fromHtml
                                 |> Query.find [ Selector.id "new-instance-form-t2" ]
                                 |> Query.findAll [ Selector.class "input-group" ]
-                                |> Query.count (Expect.equal 5)
+                                |> Query.count (Expect.equal 8)
                 , test "Should discard the entered parameters if clicked" <|
                     \() ->
                         let
@@ -497,6 +497,93 @@ tests =
                             Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (changeBodyUiModel parameterForm) (Just User)
                                 |> Query.fromHtml
                                 |> Query.has [ Selector.id "new-instance-form-parameter-input-error-t1-t1-p4" ]
+                , test "should render new view correctly for string set datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.StringVal "a"
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p5" "a"
+                        in
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (changeBodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "new-instance-form-parameter-input-t1-t1-p5" ]
+                                |> Query.children [ Selector.tag "option" ]
+                                |> Query.count (Expect.equal 4)
+                , test "should render selected value for new view correctly for string set datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.StringVal "c"
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p5" "c"
+                        in
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (changeBodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "new-instance-form-parameter-input-t1-t1-p5" ]
+                                |> Query.children [ Selector.tag "option", Selector.boolAttribute "selected" True ]
+                                |> Query.first
+                                |> Query.has [ Selector.text <| valueToString paramVal ]
+                , test "should render new view correctly for decimal set datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.DecimalVal 1.1
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p6" "1.1"
+                        in
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (changeBodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "new-instance-form-parameter-input-t1-t1-p6" ]
+                                |> Query.children [ Selector.tag "option" ]
+                                |> Query.count (Expect.equal 4)
+                , test "should render selected value for new view correctly for decimal set datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.DecimalVal 2.2
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p6" "2.2"
+                        in
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (changeBodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "new-instance-form-parameter-input-t1-t1-p6" ]
+                                |> Query.children [ Selector.tag "option", Selector.boolAttribute "selected" True ]
+                                |> Query.first
+                                |> Query.has [ Selector.text <| valueToString paramVal ]
+                , test "should render new view correctly for int set datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.IntVal 1
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p7" "1"
+                        in
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (changeBodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "new-instance-form-parameter-input-t1-t1-p7" ]
+                                |> Query.children [ Selector.tag "option" ]
+                                |> Query.count (Expect.equal 4)
+                , test "should render selected value for new view correctly for int set datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.IntVal 3
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p7" "3"
+                        in
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (changeBodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "new-instance-form-parameter-input-t1-t1-p7" ]
+                                |> Query.children [ Selector.tag "option", Selector.boolAttribute "selected" True ]
+                                |> Query.first
+                                |> Query.has [ Selector.text <| valueToString paramVal ]
                 ]
             )
         , describe "Edit Instance Form"
@@ -585,6 +672,93 @@ tests =
                             Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (bodyUiModel parameterForm) (Just User)
                                 |> Query.fromHtml
                                 |> Query.has [ Selector.id "edit-instance-form-parameter-input-error-i1-t1-t1-p4" ]
+                , test "should render edit view correctly for string set datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.StringVal "a"
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p5" "a"
+                        in
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (bodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "edit-instance-form-parameter-input-i1-t1-t1-p5" ]
+                                |> Query.children [ Selector.tag "option" ]
+                                |> Query.count (Expect.equal 4)
+                , test "should render selected value for edit view correctly for string set datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.StringVal "c"
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p5" "c"
+                        in
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (bodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "edit-instance-form-parameter-input-i1-t1-t1-p5" ]
+                                |> Query.children [ Selector.tag "option", Selector.boolAttribute "selected" True ]
+                                |> Query.first
+                                |> Query.has [ Selector.text <| valueToString paramVal ]
+                , test "should render edit view correctly for decimal set datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.DecimalVal 1.1
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p6" "1.1"
+                        in
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (bodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "edit-instance-form-parameter-input-i1-t1-t1-p6" ]
+                                |> Query.children [ Selector.tag "option" ]
+                                |> Query.count (Expect.equal 4)
+                , test "should render selected value for edit view correctly for decimal set datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.DecimalVal 2.2
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p6" "2.2"
+                        in
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (bodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "edit-instance-form-parameter-input-i1-t1-t1-p6" ]
+                                |> Query.children [ Selector.tag "option", Selector.boolAttribute "selected" True ]
+                                |> Query.first
+                                |> Query.has [ Selector.text <| valueToString paramVal ]
+                , test "should render edit view correctly for int set datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.IntVal 1
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p7" "1"
+                        in
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (bodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "edit-instance-form-parameter-input-i1-t1-t1-p7" ]
+                                |> Query.children [ Selector.tag "option" ]
+                                |> Query.count (Expect.equal 4)
+                , test "should render selected value for edit view correctly for int set datatype" <|
+                    \() ->
+                        let
+                            paramVal =
+                                Template.IntVal 3
+
+                            parameterForm =
+                                changedParameterForm defaultParameterForm "t1-p7" "3"
+                        in
+                            Body.view defaultTabState defaultTemplates defaultInstances defaultTasks [] (bodyUiModel parameterForm) (Just User)
+                                |> Query.fromHtml
+                                |> Query.find [ Selector.id "edit-instance-form-parameter-input-i1-t1-t1-p7" ]
+                                |> Query.children [ Selector.tag "option", Selector.boolAttribute "selected" True ]
+                                |> Query.first
+                                |> Query.has [ Selector.text <| valueToString paramVal ]
                 ]
             )
         , describe "Instance View"
@@ -833,6 +1007,9 @@ defaultTemplate templateId =
         , (String.concat [ templateId, "-p2" ])
         , (String.concat [ templateId, "-p3" ])
         , (String.concat [ templateId, "-p4" ])
+        , (String.concat [ templateId, "-p5" ])
+        , (String.concat [ templateId, "-p6" ])
+        , (String.concat [ templateId, "-p7" ])
         ]
     , parameterInfos =
         [ ( (String.concat [ templateId, "-p1" ])
@@ -869,6 +1046,33 @@ defaultTemplate templateId =
             , name = Nothing
             , orderIndex = Nothing
             , dataType = Template.DecimalParam
+            }
+          )
+        , ( (String.concat [ templateId, "-p5" ])
+          , { id = (String.concat [ templateId, "-p5" ])
+            , default = Nothing
+            , secret = Just False
+            , name = Nothing
+            , orderIndex = Nothing
+            , dataType = Template.StringSetParam [ "a", "b", "c", "d" ]
+            }
+          )
+        , ( (String.concat [ templateId, "-p6" ])
+          , { id = (String.concat [ templateId, "-p6" ])
+            , default = Nothing
+            , secret = Just False
+            , name = Nothing
+            , orderIndex = Nothing
+            , dataType = Template.DecimalSetParam [ 1.1, 2.2, 3.3, 4.4 ]
+            }
+          )
+        , ( (String.concat [ templateId, "-p7" ])
+          , { id = (String.concat [ templateId, "-p7" ])
+            , default = Nothing
+            , secret = Just False
+            , name = Nothing
+            , orderIndex = Nothing
+            , dataType = Template.IntSetParam [ 1, 2, 3, 4 ]
             }
           )
         ]
