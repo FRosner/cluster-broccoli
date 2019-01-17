@@ -10,18 +10,24 @@
     "parameterInfos": {
       "id": {
         "id": "id",
-        "type": "string"
+        "type": {
+          "name": "string"
+        }
       },
       "enabled": {
         "id": "enabled",
         "default": "true",
-        "type": "raw",
+        "type": {
+          "name": "raw"
+        },
         "orderIndex": 2
       },
       "URL": {
         "id": "URL",
         "default": "localhost:8000",
-        "type": "raw",
+        "type": {
+          "name": "raw"
+        },
         "orderIndex": 1
       }
     },
@@ -40,18 +46,24 @@
         "id": "cpu",
         "name": "CPU Shares",
         "default": 100,
-        "type": "integer"
+        "type": {
+          "name": "integer"
+        }
       },
       "secret": {
         "id": "secret",
         "name": "A Secret Parameter",
         "default": 123.456,
         "secret": true,
-        "type": "decimal"
+        "type": {
+          "name": "decimal"
+        }
       },
       "id": {
         "id": "id",
-        "type": "string"
+        "type": {
+          "name": "string"
+        }
       }
     },
     "version": "9215ebc3b508fcc0295bffdbfe5695b2"
@@ -65,7 +77,9 @@
     "parameterInfos": {
       "id": {
         "id": "id",
-        "type": "string"
+        "type": {
+          "name": "string"
+        }
       }
     },
     "version": "beb88e5f9ca22d3b2d9fa0e91c2bb255"
