@@ -29,9 +29,18 @@
           "name": "raw"
         },
         "orderIndex": 1
+      },
+      "retries": {
+        "type": {
+          "name": "list",
+          "metadata": {
+            "provider": "StaticIntListProvider",
+            "values": [1, 2, 3, 4, 5]
+          }
+        }
       }
     },
-    "version": "149d17a53dba4820b3dff125b35094bf"
+    "version": "68d3dd229390c3171e6a77b836ad2406"
   },
   {
     "id": "http-server",

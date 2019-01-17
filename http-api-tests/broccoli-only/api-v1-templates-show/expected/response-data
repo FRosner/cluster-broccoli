@@ -9,7 +9,7 @@
       "id": "id",
       "type": {
         "name": "string"
-      },
+      }
     }
   },
   "version": "beb88e5f9ca22d3b2d9fa0e91c2bb255"
