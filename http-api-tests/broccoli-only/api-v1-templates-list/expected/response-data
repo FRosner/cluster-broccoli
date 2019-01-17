@@ -32,12 +32,10 @@
         "orderIndex": 1
       },
       "retries": {
+        "id": "retries",
         "type": {
-          "name": "list",
-          "metadata": {
-            "provider": "StaticIntListProvider",
-            "values": [1, 2, 3, 4, 5]
-          }
+          "name": "intList",
+          "values": [1, 2, 3, 4, 5]
         }
       }
     },
