@@ -140,7 +140,7 @@ object ParameterType extends Enum[ParameterType] with PlayJsonEnum[ParameterType
               case "raw"     => ParameterType.Raw
               case "string"  => ParameterType.String
               case "integer" => ParameterType.Integer
-              case "decimal" => ParameterType.String
+              case "decimal" => ParameterType.Decimal
               case "list" =>
                 val metadata =
                   underlying.getOrElse(
