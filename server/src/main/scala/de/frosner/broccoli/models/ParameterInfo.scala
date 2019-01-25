@@ -1,7 +1,14 @@
 package de.frosner.broccoli.models
 
+import de.frosner.broccoli.auth.Account
+import de.frosner.broccoli.models.ListProvider.{
+  StaticDoubleListProvider,
+  StaticIntListProvider,
+  StaticStringListProvider
+}
 import de.frosner.broccoli.templates.TemplateConfig
 import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 import scala.util.{Failure, Success, Try}
 
@@ -15,15 +22,34 @@ case class ParameterInfo(id: String,
 
 object ParameterInfo {
 
-  implicit val parameterInfoWrites = Json.writes[ParameterInfo]
+  // implicit val parameterInfoWrites: Writes[ParameterInfo] = Json.writes[ParameterInfo]
 
-  implicit val parameterInfoReads = new Reads[ParameterInfo] {
+  implicit val parameterInfoWrites: Writes[ParameterInfo] = (
+    (JsPath \ "id").write[String] and
+      (JsPath \ "name").writeNullable[String] and
+      (JsPath \ "default").writeNullable[ParameterValue] and
+      (JsPath \ "secret").writeNullable[Boolean] and
+      (JsPath \ "type").write[ParameterType](ParameterType.parameterTypeWrites) and
+      (JsPath \ "orderIndex").writeNullable[Int]
+  )(unlift(ParameterInfo.unapply))
+
+  implicit def parameterInfoApiWrites(implicit account: Account): Writes[ParameterInfo] =
+    (
+      (JsPath \ "id").write[String] and
+        (JsPath \ "name").writeNullable[String] and
+        (JsPath \ "default").writeNullable[ParameterValue] and
+        (JsPath \ "secret").writeNullable[Boolean] and
+        (JsPath \ "type").write[ParameterType](ParameterType.parameterTypeApiWrites) and
+        (JsPath \ "orderIndex").writeNullable[Int]
+    )(unlift(ParameterInfo.unapply))
+
+  implicit val parameterInfoReads: Reads[ParameterInfo] = new Reads[ParameterInfo] {
     override def reads(json: JsValue): JsResult[ParameterInfo] =
       Try {
         val id = (json \ "id").as[String]
         val name = (json \ "name").asOpt[String]
         val secret = (json \ "secret").asOpt[Boolean]
-        val `type` = ParameterType.withName((json \ "type").as[String])
+        val `type` = ParameterType.fromJson(id, (json \ "type").as[JsValue])
         val orderIndex = (json \ "orderIndex").asOpt[Int]
         val default = (`type`, (json \ "default").toOption) match {
           case (paramType, Some(jsValue)) =>
@@ -35,7 +61,6 @@ object ParameterInfo {
         case Success(parameterInfo) => JsSuccess(parameterInfo)
         case Failure(ex)            => JsError(ex.getMessage)
       }
-
   }
 
   def fromTemplateInfoParameter(id: String, parameter: TemplateConfig.Parameter): ParameterInfo =

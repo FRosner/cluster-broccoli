@@ -19,5 +19,5 @@ class SignalRefreshedTemplateSource(source: CachedTemplateSource, signalManager:
     }
   })
 
-  override def loadTemplates(): Seq[Template] = source.loadTemplates()
+  override def loadTemplates: Seq[Template] = source.loadTemplates
 }

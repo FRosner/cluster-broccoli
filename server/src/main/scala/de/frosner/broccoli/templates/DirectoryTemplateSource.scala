@@ -2,11 +2,9 @@ package de.frosner.broccoli.templates
 
 import java.nio.file.{FileSystems, Files}
 
-import com.typesafe.config.{ConfigFactory, ConfigValue}
+import com.typesafe.config.{ConfigFactory}
 import pureconfig._
-import pureconfig.module.enumeratum._
-import de.frosner.broccoli.models.{ParameterInfo, Template}
-import play.api.libs.json.Json
+import de.frosner.broccoli.models.Template
 
 import scala.collection.JavaConverters._
 import scala.io.Source
@@ -26,7 +24,7 @@ class DirectoryTemplateSource(directory: String, val templateRenderer: TemplateR
   /**
     * @return The sequence of templates found in the directory
     */
-  def loadTemplates(): Seq[Template] = {
+  override def loadTemplates: Seq[Template] = {
     val rootTemplatesDirectory = FileSystems.getDefault.getPath(directory).toAbsolutePath
 
     if (!Files.isDirectory(rootTemplatesDirectory)) {
@@ -43,6 +41,7 @@ class DirectoryTemplateSource(directory: String, val templateRenderer: TemplateR
       val tryTemplate = Try {
         val templateFileContent = Source.fromFile(templateDirectory.resolve("template.json").toString).mkString
         val templateId = templateDirectory.getFileName.toString
+        val config = ConfigFactory.parseFile(templateDirectory.resolve("template.conf").toFile)
         val templateInfo =
           loadConfigOrThrow[TemplateConfig.TemplateInfo](
             ConfigFactory.parseFile(templateDirectory.resolve("template.conf").toFile))

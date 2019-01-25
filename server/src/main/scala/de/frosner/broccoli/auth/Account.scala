@@ -10,7 +10,9 @@ import play.api.libs.json.{Json, OFormat}
   * @param instanceRegex A regex matching instance names this account is allowed to access
   * @param role The role of the user
   */
-final case class Account(name: String, instanceRegex: String, role: Role) extends Identity
+final case class Account(name: String, instanceRegex: String, role: Role) extends Identity {
+  def getOEPrefix: String = name.split("-")(0)
+}
 
 object Account {
   implicit val accountFormat: OFormat[Account] = Json.format[Account]

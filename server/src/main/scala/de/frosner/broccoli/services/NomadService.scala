@@ -176,7 +176,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
     val scheme = Option(new java.net.URI(nomadBaseUrl).getScheme).getOrElse("http")
     val request = ws.url(queryUrl)
     log.info(s"Sending get nodes request to ${request.uri}")
-    val oePrefix = loggedIn.name.split("-")(0)
+    val oePrefix = loggedIn.getOEPrefix
     request
       .get()
       .flatMap(queryResponse => {

@@ -13,18 +13,24 @@
         "id": "cpu",
         "name": "CPU Shares",
         "default": 100,
-        "type": "integer"
+        "type": {
+          "name": "integer"
+        }
       },
       "secret": {
         "id": "secret",
         "name": "A Secret Parameter",
         "default": 123.456,
         "secret": true,
-        "type": "decimal"
+        "type": {
+          "name": "decimal"
+        }
       },
       "id": {
         "id": "id",
-        "type": "string"
+        "type": {
+          "name": "string"
+        }
        }
     },
     "version": "9215ebc3b508fcc0295bffdbfe5695b2"

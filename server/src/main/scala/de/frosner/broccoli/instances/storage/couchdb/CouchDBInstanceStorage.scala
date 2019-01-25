@@ -85,7 +85,6 @@ class CouchDBInstanceStorage(couchBaseUrl: String, dbName: String, ws: WSClient)
         val instanceFields = instanceResult.json.as[JsObject].value
         val docId = instanceFields("_id")
         val instanceId = instanceFields("id")
-        println(instanceFields)
         requireDocIdEqualToInstanceId(docId, instanceId) {
           val publicFields = instanceFields.filter {
             case (key, value) => !key.startsWith("_")
