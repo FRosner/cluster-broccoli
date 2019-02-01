@@ -4,8 +4,6 @@ import de.frosner.broccoli.models.{ParameterInfo, Template}
 
 import scala.util.Try
 
-import scala.collection.JavaConversions._
-
 trait TemplateSource {
   private val log = play.api.Logger(getClass)
 

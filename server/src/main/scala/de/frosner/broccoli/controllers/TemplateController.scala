@@ -1,7 +1,6 @@
 package de.frosner.broccoli.controllers
 
 import javax.inject.Inject
-
 import de.frosner.broccoli.models.Template
 import de.frosner.broccoli.models.Template.templateApiWrites
 import de.frosner.broccoli.services.{SecurityService, TemplateService}
@@ -9,7 +8,7 @@ import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
 import play.api.Environment
 import play.api.cache.CacheApi
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, Controller}
+import play.api.mvc.Controller
 
 case class TemplateController @Inject()(
     templateService: TemplateService,

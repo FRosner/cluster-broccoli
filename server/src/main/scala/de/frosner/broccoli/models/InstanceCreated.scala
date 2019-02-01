@@ -1,5 +1,6 @@
 package de.frosner.broccoli.models
 
+import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.http.ToHTTPResult
 import play.api.libs.json.{Json, Writes}
 import play.api.mvc.Results
@@ -14,7 +15,7 @@ import play.mvc.Http.HeaderNames
 final case class InstanceCreated(instanceCreation: InstanceCreation, instanceWithStatus: InstanceWithStatus)
 
 object InstanceCreated {
-  implicit val instanceCreatedWrites: Writes[InstanceCreated] = Json.writes[InstanceCreated]
+  implicit def instanceCreatedWrites(implicit account: Account): Writes[InstanceCreated] = Json.writes[InstanceCreated]
 
   /**
     * Convert an instance deleted result to an HTTP result.
@@ -22,9 +23,10 @@ object InstanceCreated {
     * The HTTP result is 201 Created with the new resource value, ie, the status of the new instance, in the JSON body,
     * and a Location header with the HTTP resource URL of the new instance.
     */
-  implicit val instanceCreatedToHTTPResult: ToHTTPResult[InstanceCreated] = ToHTTPResult.instance { value =>
-    Results
-      .Created(Json.toJson(value.instanceWithStatus))
-      .withHeaders(HeaderNames.LOCATION -> s"/api/v1/instances/${value.instanceWithStatus.instance.id}")
-  }
+  implicit def instanceCreatedToHTTPResult(implicit account: Account): ToHTTPResult[InstanceCreated] =
+    ToHTTPResult.instance { value =>
+      Results
+        .Created(Json.toJson(value.instanceWithStatus))
+        .withHeaders(HeaderNames.LOCATION -> s"/api/v1/instances/${value.instanceWithStatus.instance.id}")
+    }
 }

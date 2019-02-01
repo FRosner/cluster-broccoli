@@ -1,5 +1,6 @@
 package de.frosner.broccoli.websocket
 
+import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.models.Template.templateApiWrites
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.models.NodeResources
@@ -39,17 +40,17 @@ object OutgoingMessage {
     case object GetInstanceTasksError extends Type
   }
 
-  final case class ListTemplates(templates: Seq[Template]) extends OutgoingMessage
-  final case class ListInstances(instances: Seq[InstanceWithStatus]) extends OutgoingMessage
+  final case class ListTemplates(templates: Seq[Template], account: Account) extends OutgoingMessage
+  final case class ListInstances(instances: Seq[InstanceWithStatus], account: Account) extends OutgoingMessage
   final case class ListResources(resources: Seq[NodeResources]) extends OutgoingMessage
   final case class AboutInfoMsg(info: AboutInfo) extends OutgoingMessage
   final case class Error(error: String) extends OutgoingMessage
   final case class Notification(message: String) extends OutgoingMessage
-  final case class AddInstanceSuccess(result: InstanceCreated) extends OutgoingMessage
+  final case class AddInstanceSuccess(result: InstanceCreated, account: Account) extends OutgoingMessage
   final case class AddInstanceError(error: InstanceError) extends OutgoingMessage
-  final case class DeleteInstanceSuccess(result: InstanceDeleted) extends OutgoingMessage
+  final case class DeleteInstanceSuccess(result: InstanceDeleted, account: Account) extends OutgoingMessage
   final case class DeleteInstanceError(error: InstanceError) extends OutgoingMessage
-  final case class UpdateInstanceSuccess(result: InstanceUpdated) extends OutgoingMessage
+  final case class UpdateInstanceSuccess(result: InstanceUpdated, account: Account) extends OutgoingMessage
   final case class UpdateInstanceError(error: InstanceError) extends OutgoingMessage
   final case class GetInstanceTasksSuccess(tasks: InstanceTasks) extends OutgoingMessage
   final case class GetInstanceTasksError(instanceId: String, error: InstanceError) extends OutgoingMessage
@@ -63,17 +64,27 @@ object OutgoingMessage {
     */
   implicit val outgoingMessageWrites: Writes[OutgoingMessage] =
     Writes {
-      case ListTemplates(templates)        => write(Type.ListTemplates, templates)
-      case ListInstances(instances)        => write(Type.ListInstances, instances)
-      case ListResources(resources)        => write(Type.ListNodeResources, resources)
-      case AboutInfoMsg(info)              => write(Type.AboutInfo, info)
-      case Error(error)                    => write(Type.Error, error)
-      case Notification(message)           => write(Type.Notification, message)
-      case AddInstanceSuccess(result)      => write(Type.AddInstanceSuccess, result)
-      case AddInstanceError(error)         => write(Type.AddInstanceError, error)
-      case DeleteInstanceSuccess(result)   => write(Type.DeleteInstanceSuccess, result)
-      case DeleteInstanceError(error)      => write(Type.DeleteInstanceError, error)
-      case UpdateInstanceSuccess(result)   => write(Type.UpdateInstanceSuccess, result)
+      case ListTemplates(templates, user) =>
+        implicit val account: Account = user
+        write(Type.ListTemplates, templates)
+      case ListInstances(instances, user) =>
+        implicit val account: Account = user
+        write(Type.ListInstances, instances)
+      case ListResources(resources) => write(Type.ListNodeResources, resources)
+      case AboutInfoMsg(info)       => write(Type.AboutInfo, info)
+      case Error(error)             => write(Type.Error, error)
+      case Notification(message)    => write(Type.Notification, message)
+      case AddInstanceSuccess(result, user) =>
+        implicit val account: Account = user
+        write(Type.AddInstanceSuccess, result)
+      case AddInstanceError(error) => write(Type.AddInstanceError, error)
+      case DeleteInstanceSuccess(result, user) =>
+        implicit val account: Account = user
+        write(Type.DeleteInstanceSuccess, result)
+      case DeleteInstanceError(error) => write(Type.DeleteInstanceError, error)
+      case UpdateInstanceSuccess(result, user) =>
+        implicit val account: Account = user
+        write(Type.UpdateInstanceSuccess, result)
       case UpdateInstanceError(error)      => write(Type.UpdateInstanceError, error)
       case GetInstanceTasksSuccess(result) => write(Type.GetInstanceTasksSuccess, result)
       case error: GetInstanceTasksError =>

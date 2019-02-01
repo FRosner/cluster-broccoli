@@ -7,7 +7,6 @@ import de.frosner.broccoli.RemoveSecrets.ToRemoveSecretsOps
 import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.nomad
-import de.frosner.broccoli.nomad.models.NodeResources
 import de.frosner.broccoli.websocket.{BroccoliMessageHandler, IncomingMessage, OutgoingMessage}
 import jp.t2v.lab.play2.auth.test.Helpers._
 import org.mockito.Matchers
@@ -200,8 +199,8 @@ class WebSocketControllerSpec
           val messages = outgoing.get
           (messages should haveSize(3)) and
             (messages should contain(
-              Json.toJson(OutgoingMessage.ListTemplates(templates)),
-              Json.toJson(OutgoingMessage.ListInstances(instances)),
+              Json.toJson(OutgoingMessage.ListTemplates(templates, account)),
+              Json.toJson(OutgoingMessage.ListInstances(instances, account)),
               Json.toJson(OutgoingMessage.AboutInfoMsg(controller.aboutService.aboutInfo(null)))
             ))
       }
@@ -237,7 +236,8 @@ class WebSocketControllerSpec
             InstanceCreated(
               instanceCreation,
               instanceWithStatus
-            )
+            ),
+            Account.anonymous
           )
           incoming.feed(Json.toJson(IncomingMessage.AddInstance(instanceCreation))).end
           verify(controller.webSocketService).send(id, Json.toJson(resultMsg))
@@ -257,7 +257,8 @@ class WebSocketControllerSpec
         InstanceCreated(
           instanceCreation,
           instanceWithStatus
-        )
+        ),
+        Account.anonymous
       )
       val roleFailure = OutgoingMessage.AddInstanceError(InstanceError.RolesRequired(Role.Administrator))
       val regexFailure =
@@ -298,7 +299,8 @@ class WebSocketControllerSpec
         InstanceDeleted(
           instanceDeletion,
           instanceWithStatus
-        )
+        ),
+        Account.anonymous
       )
       val roleFailure = OutgoingMessage.DeleteInstanceError(InstanceError.RolesRequired(Role.Administrator))
       val regexFailure = OutgoingMessage.DeleteInstanceError(InstanceError.UserRegexDenied(instanceDeletion, "bla"))
@@ -348,7 +350,8 @@ class WebSocketControllerSpec
         InstanceUpdated(
           instanceUpdate,
           instanceWithStatus
-        )
+        ),
+        Account.anonymous
       )
       testWs(
         controllerSetup = { securityService =>
@@ -403,13 +406,15 @@ class WebSocketControllerSpec
         InstanceUpdated(
           instanceUpdate,
           instanceWithStatus
-        )
+        ),
+        Account.anonymous
       )
       val secretSuccess = OutgoingMessage.UpdateInstanceSuccess(
         InstanceUpdated(
           instanceUpdate,
           instanceWithStatus.removeSecrets
-        )
+        ),
+        Account.anonymous
       )
       val instanceService = withInstances(mock[InstanceService], Seq.empty)
       testWs(
@@ -463,7 +468,8 @@ class WebSocketControllerSpec
         InstanceUpdated(
           instanceUpdate,
           instanceWithStatus
-        )
+        ),
+        Account.anonymous
       )
       val instanceService = withInstances(mock[InstanceService], Seq.empty)
       testWs(
@@ -519,13 +525,15 @@ class WebSocketControllerSpec
         InstanceUpdated(
           instanceUpdate,
           instanceWithStatus
-        )
+        ),
+        Account.anonymous
       )
       val secretSuccess = OutgoingMessage.UpdateInstanceSuccess(
         InstanceUpdated(
           instanceUpdate,
           instanceWithStatus.removeSecrets
-        )
+        ),
+        Account.anonymous
       )
       val instanceService = withInstances(mock[InstanceService], Seq.empty)
       testWs(

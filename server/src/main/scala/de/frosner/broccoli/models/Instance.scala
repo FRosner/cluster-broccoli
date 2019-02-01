@@ -1,6 +1,7 @@
 package de.frosner.broccoli.models
 
 import de.frosner.broccoli.RemoveSecrets
+import de.frosner.broccoli.auth.Account
 import play.api.libs.json._
 import play.api.libs.json.JsNull
 
@@ -14,7 +15,7 @@ case class Instance(id: String, template: Template, parameterValues: Map[String,
     }
     require(
       template.parameters == realParametersWithValues,
-      s"The given parameters values (${parameterValues.keySet}) " +
+      s"The given parameters values ($realParametersWithValues) " +
         s"need to match the ones in the template (${template.parameters}) (instance id $id)."
     )
   }
@@ -24,7 +25,7 @@ case class Instance(id: String, template: Template, parameterValues: Map[String,
 
 object Instance {
 
-  implicit val instanceApiWrites: Writes[Instance] = {
+  implicit def instanceApiWrites(implicit account: Account): Writes[Instance] = {
     import Template.templateApiWrites
     new Writes[Instance] {
       override def writes(instance: Instance) = {
@@ -74,7 +75,6 @@ object Instance {
               .as[JsObject]
               .value
               .map {
-
                 case (paramName, paramJsValue) =>
                   paramJsValue match {
                     // TODO: Shouldn't use nulls, Fix this after fixing instanceRemoveSecrets

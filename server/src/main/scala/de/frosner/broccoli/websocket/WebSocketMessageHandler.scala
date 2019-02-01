@@ -46,17 +46,17 @@ class BroccoliMessageHandler @Inject()(
         InstanceController
           .create(instanceCreation, user, instanceService)
           .toEitherT
-          .fold(AddInstanceError, AddInstanceSuccess)
+          .fold(AddInstanceError, AddInstanceSuccess(_, user))
       case DeleteInstance(instanceId) =>
         InstanceController
           .delete(instanceId, user, instanceService)
           .toEitherT
-          .fold(DeleteInstanceError, DeleteInstanceSuccess)
+          .fold(DeleteInstanceError, DeleteInstanceSuccess(_, user))
       case UpdateInstance(instanceUpdate) =>
         InstanceController
           .update(instanceUpdate.instanceId.get, instanceUpdate, user, instanceService)
           .toEitherT
-          .fold(UpdateInstanceError, UpdateInstanceSuccess)
+          .fold(UpdateInstanceError, UpdateInstanceSuccess(_, user))
       case GetInstanceTasks(instanceId) =>
         instances
           .getInstanceTasks(user)(instanceId)
