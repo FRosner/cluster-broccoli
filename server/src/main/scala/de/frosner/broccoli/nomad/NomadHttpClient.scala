@@ -44,8 +44,12 @@ class NomadHttpClient(
       * @param allocationId The ID of the allocation
       * @return The resource statistics of the allocation with the given ID.
       */
-    override def getAllocationStats(allocationId: @@[String, Allocation.Id]): NomadT[AllocationStats] =
-      lift(requestWithHeaders(v1Client / "allocation" / allocationId / "stats").withHeaders(ACCEPT -> JSON).get())
+    override def getAllocationStats(allocationId: @@[String, Allocation.Id],
+                                    namespace: Option[String]): NomadT[AllocationStats] =
+      lift(
+        requestWithNamespace(
+          requestWithHeaders(v1Client / "allocation" / allocationId / "stats").withHeaders(ACCEPT -> JSON),
+          namespace).get())
         .subflatMap { response =>
           val maybeAllocationStats = for {
             responseJson <- Try(response.json).toOption
@@ -66,10 +70,11 @@ class NomadHttpClient(
         allocationId: @@[String, Allocation.Id],
         taskName: @@[String, Task.Name],
         stream: LogStreamKind,
-        offset: Option[@@[Quantity[Information], TaskLog.Offset]]
+        offset: Option[@@[Quantity[Information], TaskLog.Offset]],
+        namespace: Option[String]
     ): NomadT[TaskLog] =
       lift(
-        requestWithHeaders(v1Client / "fs" / "logs" / allocationId)
+        requestWithNamespace(requestWithHeaders(v1Client / "fs" / "logs" / allocationId), namespace)
           .withQueryString(
             Seq("task" -> taskName,
                 "type" -> stream.entryName,
@@ -130,15 +135,19 @@ class NomadHttpClient(
   def requestWithHeaders(url: String): WSRequest =
     client.url(url).withHeaders(headers: _*)
 
+  private def requestWithNamespace(request: WSRequest, maybeNamespace: Option[String]): WSRequest =
+    maybeNamespace.map(namespace => request.withQueryString(("namespace", namespace))).getOrElse(request)
+
   /**
     * Get a job.
     *
     * @param jobId The ID of the job
     * @return The job
     */
-  override def getJob(jobId: @@[String, Job.Id]): NomadT[Job] =
+  override def getJob(jobId: @@[String, Job.Id], namespace: Option[String]): NomadT[Job] =
     for {
-      response <- lift(requestWithHeaders(v1 / "job" / jobId).withHeaders(ACCEPT -> JSON).get())
+      response <- lift(
+        requestWithNamespace(requestWithHeaders(v1 / "job" / jobId).withHeaders(ACCEPT -> JSON), namespace).get())
         .ensureOr(fromHTTPError)(_.status == OK)
     } yield response.json.as[Job]
 
@@ -148,9 +157,13 @@ class NomadHttpClient(
     * @param jobId The ID of the job
     * @return The list of allocations for the job
     */
-  override def getAllocationsForJob(jobId: String @@ Job.Id): NomadT[WithId[immutable.Seq[Allocation]]] =
+  override def getAllocationsForJob(jobId: String @@ Job.Id,
+                                    namespace: Option[String]): NomadT[WithId[immutable.Seq[Allocation]]] =
     for {
-      response <- lift(requestWithHeaders(v1 / "job" / jobId / "allocations").withHeaders(ACCEPT -> JSON).get())
+      response <- lift(
+        requestWithNamespace(requestWithHeaders(v1 / "job" / jobId / "allocations"), namespace)
+          .withHeaders(ACCEPT -> JSON)
+          .get())
         .ensureOr(fromHTTPError)(_.status == OK)
     } yield WithId(jobId, response.json.as[immutable.Seq[Allocation]])
 
@@ -160,8 +173,11 @@ class NomadHttpClient(
     * @param id The alloction to query
     * @return The allocation or an error
     */
-  override def getAllocation(id: String @@ Allocation.Id): NomadT[Allocation] =
-    lift(requestWithHeaders(v1 / "allocation" / id).withHeaders(ACCEPT -> JSON).get())
+  override def getAllocation(id: String @@ Allocation.Id, namespace: Option[String]): NomadT[Allocation] =
+    lift(
+      requestWithNamespace(requestWithHeaders(v1 / "allocation" / id), namespace)
+        .withHeaders(ACCEPT -> JSON)
+        .get())
       .ensureOr(fromHTTPError)(_.status == OK)
       .map(_.json.as[Allocation])
 

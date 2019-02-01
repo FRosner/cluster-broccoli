@@ -1,10 +1,8 @@
 package de.frosner.broccoli.instances
 
 import javax.inject.Inject
-
 import cats.Apply
 import cats.data.EitherT
-import de.frosner.broccoli.models.Instance
 import cats.instances.future._
 import cats.instances.list._
 import cats.syntax.traverse._
@@ -19,7 +17,7 @@ import de.frosner.broccoli.nomad.models.{
   TaskLog,
   Task => NomadTask
 }
-import de.frosner.broccoli.nomad.{NomadClient, NomadT}
+import de.frosner.broccoli.nomad.{NomadClient, NomadConfiguration, NomadT}
 import de.frosner.broccoli.services.InstanceService
 import shapeless.tag
 import shapeless.tag.@@
@@ -34,7 +32,8 @@ import scala.concurrent.{ExecutionContext, Future}
   * @param nomadClient A client to access the Nomad API.
   */
 class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: InstanceService)(
-    implicit ec: ExecutionContext) {
+    implicit ec: ExecutionContext,
+    nomadConfiguration: NomadConfiguration) {
 
   type InstanceT[R] = EitherT[Future, InstanceError, R]
 
@@ -58,14 +57,14 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
       instance <- EitherT
         .fromOption[Future](instanceService.getInstance(instanceId), InstanceError.NotFound(instanceId, None))
       instanceJobId = tag[Job.Id](instance.instance.id)
-      instanceJobTasks <- getJobTasks(instanceJobId).recover {
+      instanceJobTasks <- getJobTasks(instanceJobId, instance.instance.namespace).recover {
         // In case we don't have any job we might still have periodic jobs. So we don't want to fail here already.
         case InstanceError.NotFound(_, _) => List.empty
       }
       periodicRunJobTasks <- instance.periodicRuns
         .map { run =>
           val jobName = tag[Job.Id](run.jobName)
-          getJobTasks(jobName).map(tasks => jobName -> tasks)
+          getJobTasks(jobName, instance.instance.namespace).map(tasks => jobName -> tasks)
         }
         .toList
         .sequence
@@ -97,11 +96,13 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
       // Check whether the allocation really belongs to the instance.  If it doesn't, ie, if the user tries to access
       // an allocation from another instance hide that the allocation even exists by returning 404
       allocation <- nomadClient
-        .getAllocation(allocationId)
+        .getAllocation(allocationId, instance.instance.namespace)
         .leftMap(toInstanceError(jobId))
         .ensure(InstanceError.NotFound(jobId))(_.jobId == jobId)
       node <- nomadClient.allocationNodeClient(allocation).leftMap(toInstanceError(jobId))
-      log <- node.getTaskLog(allocationId, taskName, logKind, offset).leftMap(toInstanceError(jobId))
+      log <- node
+        .getTaskLog(allocationId, taskName, logKind, offset, instance.instance.namespace)
+        .leftMap(toInstanceError(jobId))
     } yield log.contents
 
   def getAllocationLog(user: Account)(
@@ -133,14 +134,15 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
     case NomadError.Unreachable => InstanceError.NomadUnreachable
   }
 
-  private def getJobTasks(jobId: String @@ Job.Id): EitherT[Future, InstanceError, immutable.Seq[AllocatedTask]] =
+  private def getJobTasks(jobId: String @@ Job.Id,
+                          namespace: Option[String]): EitherT[Future, InstanceError, immutable.Seq[AllocatedTask]] =
     for {
       // Request job information and allocations in parallel, to get the required resources for tasks and the actual
       // allocated tasks and their resources.  We can't extract the pair with a pattern unfortunately because as of
       // Scala 2.11 the compiler still tries to insert .withFilter calls even for irrefutable patterns, which EitherT
       // doesn't have.
       jobAndAllocations <- Apply[NomadT]
-        .tuple2(nomadClient.getJob(jobId), nomadClient.getAllocationsForJob(jobId))
+        .tuple2(nomadClient.getJob(jobId, namespace), nomadClient.getAllocationsForJob(jobId, namespace))
         .leftMap(toInstanceError(jobId))
       job = jobAndAllocations._1
       allocations = jobAndAllocations._2
@@ -148,7 +150,7 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
         .map { allocation =>
           for {
             node <- nomadClient.allocationNodeClient(allocation)
-            stats <- node.getAllocationStats(allocation.id)
+            stats <- node.getAllocationStats(allocation.id, namespace)
           } yield allocation.id -> stats
         }
         .sequence[NomadT, (String @@ Allocation.Id, AllocationStats)]

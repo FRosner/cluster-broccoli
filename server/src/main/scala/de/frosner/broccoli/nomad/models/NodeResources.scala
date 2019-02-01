@@ -28,7 +28,12 @@ case class NodeResources(nodeId: String,
   * @param memoryMB Memory in MB
   * @param diskMB Disk in MB
   */
-case class AllocatedResources(id: String, name: String, cpu: Long, memoryMB: Long, diskMB: Long)
+case class AllocatedResources(id: String,
+                              name: String,
+                              namespace: Option[String],
+                              cpu: Long,
+                              memoryMB: Long,
+                              diskMB: Long)
 
 /**
   * @param id allocation id

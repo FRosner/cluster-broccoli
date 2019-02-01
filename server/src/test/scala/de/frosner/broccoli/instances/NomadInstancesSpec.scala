@@ -7,7 +7,7 @@ import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad
 import de.frosner.broccoli.nomad.models._
-import de.frosner.broccoli.nomad.{NomadClient, NomadNodeClient}
+import de.frosner.broccoli.nomad.{NomadClient, NomadConfiguration, NomadNodeClient}
 import de.frosner.broccoli.services.InstanceService
 import org.mockito.Matchers
 import org.scalacheck.Gen
@@ -45,6 +45,9 @@ class NomadInstancesSpec
     periodicRuns = Seq.empty
   )
 
+  implicit val nomadConfiguration: NomadConfiguration =
+    NomadConfiguration(url = s"http://localhost:4646", "NOMAD_BROCCOLI_TOKEN", namespacesEnabled = false, "oe")
+
   def instanceServiceWith(id: String, instance: Option[InstanceWithStatus]): InstanceService =
     mock[InstanceService]
       .getInstance(Matchers.any[String @@ Job.Id])
@@ -59,13 +62,13 @@ class NomadInstancesSpec
           val nodeClient = mock[NomadNodeClient]
 
           nodeClient
-            .getAllocationStats(Matchers.any[String @@ Allocation.Id]())
+            .getAllocationStats(Matchers.any[String @@ Allocation.Id](), Matchers.eq(None))
             .returns(EitherT.pure(AllocationStats(resourceUsage, Map.empty)))
 
           client.allocationNodeClient(Matchers.any[Allocation]).returns(EitherT.pure(nodeClient))
-          client.getJob(shapeless.tag[Job.Id](id)).returns(EitherT.pure(Job(Seq.empty)))
+          client.getJob(shapeless.tag[Job.Id](id), None).returns(EitherT.pure(Job(Seq.empty)))
           client
-            .getAllocationsForJob(shapeless.tag[Job.Id](id))
+            .getAllocationsForJob(shapeless.tag[Job.Id](id), None)
             .returns(EitherT.pure(WithId(id, allocations)))
 
           {
@@ -93,8 +96,8 @@ class NomadInstancesSpec
         val instanceService = instanceServiceWith(id, Some(dummyInstance))
         val client = mock[NomadClient]
 
-        client.getJob(shapeless.tag[Job.Id](id)).returns(EitherT.leftT(NomadError.NotFound))
-        client.getAllocationsForJob(shapeless.tag[Job.Id](id)).returns(EitherT.pure(WithId(id, List.empty)))
+        client.getJob(shapeless.tag[Job.Id](id), None).returns(EitherT.leftT(NomadError.NotFound))
+        client.getAllocationsForJob(shapeless.tag[Job.Id](id), None).returns(EitherT.pure(WithId(id, List.empty)))
 
         {
           for {
@@ -120,7 +123,7 @@ class NomadInstancesSpec
         val instanceService = instanceServiceWith(id, Some(dummyInstance))
 
         client
-          .getAllocationsForJob(shapeless.tag[Job.Id](id))
+          .getAllocationsForJob(shapeless.tag[Job.Id](id), None)
           .returns(EitherT.leftT(error))
 
         {

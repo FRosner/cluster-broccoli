@@ -61,7 +61,7 @@ class NomadHttpClientIntegrationSpec
               blocking(Thread.sleep(1.seconds.toMillis))
               response
             })
-          allocations <- client.getAllocationsForJob(shapeless.tag[Job.Id](identifier)).value
+          allocations <- client.getAllocationsForJob(shapeless.tag[Job.Id](identifier), None).value
         } yield {
           allocations must beRight(
             (v: WithId[immutable.Seq[Allocation]]) => (v.jobId === identifier) and (v.payload must have length 1))

@@ -5,4 +5,7 @@ package de.frosner.broccoli.nomad
   *
   * @param url The URL to connect to to access nomad via HTTP.
   */
-final case class NomadConfiguration(url: String, tokenEnvName: String)
+final case class NomadConfiguration(url: String,
+                                    tokenEnvName: String,
+                                    namespacesEnabled: Boolean,
+                                    namespaceVariable: String)

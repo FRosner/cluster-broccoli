@@ -23,58 +23,89 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
 
   private val log = play.api.Logger(getClass)
 
+  private lazy val namespaces: Future[Set[String]] =
+    if (nomadConfiguration.namespacesEnabled) {
+      val queryUrl = nomadBaseUrl + "/v1/namespaces"
+      requestWithHeaders(queryUrl)
+        .get()
+        .map(_.json.as[JsArray])
+        .map(jsArray => {
+          jsArray \\ "Name" map (_.as[JsString].value)
+        })
+        .map(_.toSet)
+    } else Future.successful(Set.empty[String])
+
   val headers = sys.env.get(nomadConfiguration.tokenEnvName).map(authToken => ("X-Nomad-Token", authToken)).toList
+
+  case class JobInfoInternal(jobId: String, namespace: Option[String], status: JobStatus.JobStatus)
 
   log.info(s"Starting $this")
 
   def requestWithHeaders(url: String): WSRequest =
     ws.url(url).withHeaders(headers: _*)
 
+  private def getJobsAndStatus(queryUrl: String, namespace: Option[String]): Future[List[JobInfoInternal]] =
+    requestWithNamespace(requestWithHeaders(queryUrl), namespace)
+      .get()
+      .map(_.json.as[List[JsValue]])
+      .map(jsArray => {
+        jsArray.map(jsObject => {
+          val jobId = (jsObject \ "ID").as[String]
+          val jobStatus = (jsObject \ "Status").as[String] match {
+            case "running" => JobStatus.Running
+            case "pending" => JobStatus.Pending
+            case "dead"    => JobStatus.Dead
+            case default =>
+              log.warn(s"Unmatched status received: $default")
+              JobStatus.Unknown
+          }
+          JobInfoInternal(jobId, namespace, jobStatus)
+        })
+      })
+
+  private def requestWithNamespace(request: WSRequest, maybeNamespace: Option[String]): WSRequest =
+    maybeNamespace.map(namespace => request.withQueryString(("namespace", namespace))).getOrElse(request)
+
   def requestStatuses(instanceIds: Set[String]): Future[Map[String, (JobStatus, Seq[PeriodicRun], Seq[String])]] = {
     val queryUrl = nomadBaseUrl + "/v1/jobs"
-
-    val jobsRequest = requestWithHeaders(queryUrl)
-    val jobsResponse = jobsRequest.get().map(_.json.as[JsArray])
-    val jobsWithTemplate = jobsResponse.map(jsArray => {
-      val (ids, statuses) =
-        ((jsArray \\ "ID").map(_.as[JsString].value), (jsArray \\ "Status").map(_.as[JsString].value))
-      (ids, statuses)
-    })
-    val idsAndStatusesWithPeriodicF = jobsWithTemplate.map {
-      case (ids, statuses) => {
-        log.debug(s"${jobsRequest.uri} => ${ids.zip(statuses).mkString(", ")}")
-        val idsAndStatuses = ids.zip(statuses.map {
-          case "running" => JobStatus.Running
-          case "pending" => JobStatus.Pending
-          case "dead"    => JobStatus.Dead
-          case default =>
-            log.warn(s"Unmatched status received: $default")
-            JobStatus.Unknown
-        })
-        val idsAndStatusesNotOnNomad = (instanceIds -- ids.toSet).map((_, JobStatus.Stopped))
-        val filteredIdsAndStatuses = idsAndStatuses.filter {
-          case (id, status) => instanceIds.contains(id)
+    val jobsWithTemplate = namespaces
+      .map(namespaceSet => {
+        if (namespaceSet.nonEmpty) {
+          Future
+            .sequence(namespaceSet.map(namespace => {
+              getJobsAndStatus(queryUrl, Some(namespace))
+            }))
+            .map(_.flatten)
+        } else {
+          getJobsAndStatus(queryUrl, None)
         }
+      })
+      .flatMap(identity)
+    val idsAndStatusesWithPeriodicF = jobsWithTemplate.map { idsAndStatuses =>
+      {
+        log.debug(s"$queryUrl => ${idsAndStatuses.mkString(", ")}")
+        val ids = idsAndStatuses.map(_.jobId)
+        val idsAndStatusesNotOnNomad = (instanceIds -- ids).map(JobInfoInternal(_, None, JobStatus.Stopped))
+        val filteredIdsAndStatuses = idsAndStatuses.filter(jobInfo => instanceIds.contains(jobInfo.jobId))
         val filteredIdsAndStatusesAlsoWithoutNomad = idsAndStatusesNotOnNomad ++ idsAndStatuses
         val periodicStatuses = filteredIdsAndStatusesAlsoWithoutNomad
-          .flatMap {
-            case (id, status) =>
-              instanceIds
-                .find(instanceId => id.startsWith(s"$instanceId/periodic-"))
-                .map(instanceId => (instanceId, (id, status)))
+          .flatMap { jobInfo =>
+            instanceIds
+              .find(instanceId => jobInfo.jobId.startsWith(s"$instanceId/periodic-"))
+              .map(instanceId => (instanceId, jobInfo))
           }
-          .foldLeft(Map.empty[String, Map[String, JobStatus]]) {
-            case (mappedStatuses, (instanceId, (periodicJobId, periodicJobStatus))) =>
+          .foldLeft(Map.empty[String, Set[JobInfoInternal]]) {
+            case (mappedStatuses, (instanceId, periodicJobInfo)) =>
               val instanceStatuses = mappedStatuses.get(instanceId)
               val newInstanceStatuses = instanceStatuses
-                .map(_.updated(periodicJobId, periodicJobStatus))
-                .getOrElse(Map(periodicJobId -> periodicJobStatus))
+                .map(_.+(periodicJobInfo))
+                .getOrElse(Set(periodicJobInfo))
               mappedStatuses.updated(instanceId, newInstanceStatuses)
           }
           .map {
-            case (instanceId, periodicRunStatuses) =>
-              val periodic = periodicRunStatuses.map {
-                case (periodicJobName, periodicJobStatus) =>
+            case (instanceId, periodicJobStatuses) =>
+              val periodic = periodicJobStatuses.map {
+                case JobInfoInternal(periodicJobName, _, periodicJobStatus) =>
                   PeriodicRun(
                     createdBy = instanceId,
                     status = periodicJobStatus,
@@ -85,16 +116,16 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
               (instanceId, periodic)
           }
         val idsAndStatusesWithPeriodic = filteredIdsAndStatusesAlsoWithoutNomad.map {
-          case (instanceId, instanceStatus) =>
+          case JobInfoInternal(instanceId, _, instanceStatus) =>
             (instanceId, (instanceStatus, periodicStatuses.getOrElse(instanceId, Seq.empty)))
         }
-        (filteredIdsAndStatuses.map { case (id, _) => id }, idsAndStatusesWithPeriodic.toMap)
+        (filteredIdsAndStatuses, idsAndStatusesWithPeriodic.toMap)
       }
     }
     val serviceRequestsDone = idsAndStatusesWithPeriodicF.flatMap {
       case (jobIdsThatExistOnNomad, idsAndStatusesWithPeriodic) =>
-        val servicesF = jobIdsThatExistOnNomad.map { id =>
-          requestServices(id).map(services => (id, services))
+        val servicesF = jobIdsThatExistOnNomad.map { job =>
+          requestServices(job.jobId, job.namespace).map(services => (job.jobId, services))
         }
         Future.sequence(servicesF).map { services =>
           val servicesMap = services.toMap
@@ -107,10 +138,10 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
     serviceRequestsDone.onFailure {
       case throwable: ConnectException => {
         log.error(
-          s"Nomad did not respond when requesting services for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
+          s"Nomad did not respond when requesting services for ${instanceIds.mkString(", ")} from ${queryUrl}: $throwable")
       }
       case throwable => {
-        log.warn(s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${jobsRequest.uri}: $throwable")
+        log.warn(s"Failed to request statuses for ${instanceIds.mkString(", ")} from ${queryUrl}: $throwable")
       }
     }
     serviceRequestsDone
@@ -120,9 +151,9 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
   // TODO something is stopped (i.e. not present in Nomad). Or we use a cache that let's the stuff expire if you don't get an answer from Nomad
   // https://www.playframework.com/documentation/2.5.x/ScalaCache
 
-  def requestServices(id: String): Future[Seq[String]] = {
+  def requestServices(id: String, namespace: Option[String] = None): Future[Seq[String]] = {
     val services = for {
-      response <- requestWithHeaders(nomadBaseUrl + s"/v1/job/$id").get()
+      response <- requestWithNamespace(requestWithHeaders(nomadBaseUrl + s"/v1/job/$id"), namespace).get()
       job = if (response.status == 200) {
         response.json.as[Job]
       } else {
@@ -159,9 +190,9 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
     }.flatten
   }
 
-  def deleteJob(id: String): Try[String] = {
+  def deleteJob(id: String, namespace: Option[String]): Try[String] = {
     val queryUrl = nomadBaseUrl + s"/v1/job/$id"
-    val request = requestWithHeaders(queryUrl)
+    val request = requestWithNamespace(requestWithHeaders(queryUrl), namespace)
     log.info(s"Sending deletion request to ${request.uri}")
     Try {
       val result = Await.result(request.delete(), Duration(5, TimeUnit.SECONDS))
@@ -258,6 +289,7 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
                                     AllocatedResources(
                                       (allocationJson \ "ID").as[String],
                                       (allocationJson \ "Name").as[String],
+                                      (allocationJson \ "Namespace").asOpt[String],
                                       (allocationJson \ "Resources" \ "CPU").as[Long],
                                       (allocationJson \ "Resources" \ "MemoryMB").as[Long],
                                       (allocationJson \ "Resources" \ "DiskMB").as[Long]
@@ -276,7 +308,9 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
                                   //          running on a node
                                   val allocationUtilizationUrl =
                                     s"$scheme://$httpAddr/v1/client/allocation/${allocatedResources.id}/stats"
-                                  requestWithHeaders(allocationUtilizationUrl)
+                                  val request = requestWithHeaders(allocationUtilizationUrl)
+                                  requestWithNamespace(requestWithHeaders(allocationUtilizationUrl),
+                                                       allocatedResources.namespace)
                                     .get()
                                     .map(
                                       allocationStatsResponse => {

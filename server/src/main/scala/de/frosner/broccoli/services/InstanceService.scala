@@ -2,27 +2,23 @@ package de.frosner.broccoli.services
 
 import java.net.ConnectException
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
-import javax.inject.{Inject, Singleton}
 
-import cats.data.EitherT
-import cats.instances.future.{getClass, _}
+import javax.inject.{Inject, Singleton}
 import cats.Traverse
 import cats.instances.try_._
 import cats.instances.list._
-
-import de.frosner.broccoli.instances.{InstanceConfiguration, _}
+import de.frosner.broccoli.instances._
 import de.frosner.broccoli.templates.TemplateRenderer
 import de.frosner.broccoli.instances.storage.InstanceStorage
 import de.frosner.broccoli.logging
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.nomad.NomadClient
+import de.frosner.broccoli.nomad.{NomadClient, NomadConfiguration}
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
 import play.api.libs.json.JsValue
 
-import scala.concurrent
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
@@ -35,7 +31,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                                 applicationLifecycle: ApplicationLifecycle,
                                 templateRenderer: TemplateRenderer,
                                 instanceStorage: InstanceStorage,
-                                config: Configuration) {
+                                config: Configuration)(implicit nomadConfiguration: NomadConfiguration) {
   private val log = play.api.Logger(getClass)
 
   @volatile
@@ -337,7 +333,8 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                   nonExistingPeriodicJobs.headOption match {
                     case None =>
                       // Periodic jobs are all valid and belong to this instance
-                      val tryToDelete = Traverse[List].sequence(toStop.map(nomadService.deleteJob).toList)
+                      val tryToDelete =
+                        Traverse[List].sequence(toStop.map(i => nomadService.deleteJob(i, instance.namespace)).toList)
                       tryToDelete.map(_ => instance)
                     case Some(job) =>
                       // There is at least one periodic job that doesn't belong to this instance
@@ -354,7 +351,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                 case JobStatus.Running =>
                   nomadService.startJob(templateRenderer.renderJson(instance)).map(_ => instance)
                 case JobStatus.Stopped =>
-                  val deletedJob = nomadService.deleteJob(instance.id)
+                  val deletedJob = nomadService.deleteJob(instance.id, instance.namespace)
                   // FIXME we don't delete the service and periodic job / status info here (#352) => potential mem leak
                   deletedJob
                     .map(_ => instance)

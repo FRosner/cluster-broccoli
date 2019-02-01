@@ -1,9 +1,6 @@
 package de.frosner.broccoli.models
 
-import java.util.Date
-
 import de.frosner.broccoli.models.JobStatus.JobStatus
-import de.frosner.broccoli.models.ServiceStatus.ServiceStatus
 import play.api.libs.json.Json
 import JobStatusJson._
 
