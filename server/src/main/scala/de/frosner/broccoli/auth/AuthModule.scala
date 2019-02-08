@@ -1,7 +1,7 @@
 package de.frosner.broccoli.auth
 
 import com.google.inject.{AbstractModule, Provides, Singleton}
-import com.mohiva.play.silhouette.api.LoginInfo
+import com.mohiva.play.silhouette.api.{LoginInfo, Silhouette, SilhouetteProvider}
 import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
 import com.mohiva.play.silhouette.api.services.IdentityService
 import com.mohiva.play.silhouette.api.util.{Credentials, PasswordHasherRegistry, PasswordInfo}
@@ -18,8 +18,12 @@ import scala.concurrent.{ExecutionContext, Future}
   * Configure authentication for Broccoli.
   */
 class AuthModule extends AbstractModule with ScalaModule {
-  override def configure(): Unit =
+  override def configure(): Unit = {
     bind[PasswordHasherRegistry].toInstance(PasswordHasherRegistry(new BCryptPasswordHasher()))
+    bind[Silhouette[DefaultEnv]].to[SilhouetteProvider[DefaultEnv]]
+
+  }
+
 
   /**
     * Provides authentication configuration.

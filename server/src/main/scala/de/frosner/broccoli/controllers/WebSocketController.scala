@@ -1,11 +1,13 @@
 package de.frosner.broccoli.controllers
 
-import java.util.concurrent.TimeUnit
 
+import akka.actor.{Actor, ActorRef, Props}
 import javax.inject.Inject
 import cats.data.EitherT
 import cats.instances.future._
-import de.frosner.broccoli.auth.Account
+import com.mohiva.play.silhouette
+import com.mohiva.play.silhouette.api.{HandlerResult, Silhouette}
+import de.frosner.broccoli.auth.{Account, DefaultEnv}
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.websocket.{IncomingMessage, OutgoingMessage, WebSocketMessageHandler}
@@ -14,11 +16,11 @@ import play.api.cache.CacheApi
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.iteratee._
 import play.api.libs.json._
+import play.api.libs.streams.ActorFlow
 import play.api.mvc._
 import play.api.{Environment, Logger}
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 case class WebSocketController @Inject()(webSocketService: WebSocketService,
                                          templateService: TemplateService,
@@ -26,11 +28,11 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
                                          aboutService: AboutInfoService,
                                          nomadService: NomadService,
                                          messageHandler: WebSocketMessageHandler,
+                                         silhouette: Silhouette[DefaultEnv],
                                          override val cacheApi: CacheApi,
                                          override val playEnv: Environment,
                                          override val securityService: SecurityService)
-    extends Controller
-    with BroccoliWebsocketSecurity {
+    extends Controller  {
 
   protected val log = Logger(getClass)
 
@@ -90,5 +92,46 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
     }
 
   def socket: WebSocket = WebSocket.tryAccept[Msg](requestToSocket)
+
+  object WebSocketActor {
+    def props(account: Account)(out: ActorRef) = Props(new WebSocketActor())
+  }
+
+  class WebSocketActor(account: Account, out: ActorRef) extends Actor {
+    override def receive: Receive = {
+      case incomingMessage: JsValue => {
+        val a = EitherT
+          .fromEither(Json.fromJson[IncomingMessage](incomingMessage).asEither)
+          .leftMap[OutgoingMessage] { jsonErrors =>
+          log.warn(s"Can't parse a message from ${account.name}: $jsonErrors")
+          OutgoingMessage.Error(s"Failed to parse message message: $jsonErrors")
+        }
+          .semiflatMap { incomingMessage =>
+            // Catch all exceptions from the message handler and map them to a generic error message to send over the
+            // websocket, to prevent the Enumeratee from stopping at the failure, causing the websocket to be closed and
+            // preventing all future messages.
+            messageHandler.processMessage(account)(incomingMessage).recover {
+              case exception =>
+                log.error(s"Message handler threw exception for message $incomingMessage: ${exception.getMessage}",
+                  exception)
+                OutgoingMessage.Error("Unexpected error in message handler")
+            }
+          }
+          .merge
+        a
+      }
+    }
+  }
+
+  def newSocket: WebSocket = WebSocket.acceptOrResult[JsValue, JsValue](request => {
+    implicit val req = Request(request, AnyContentAsEmpty)
+    val w = silhouette.SecuredRequestHandler { securedRequest =>
+      Future.successful(HandlerResult(Ok, Some(securedRequest.identity)))
+    }.map {
+      case HandlerResult(r, Some(user)) => Right(ActorFlow.actorRef(WebSocketActor.props(user)))
+      case HandlerResult(r, None) => Left(r)
+    }
+    w
+  })
 
 }

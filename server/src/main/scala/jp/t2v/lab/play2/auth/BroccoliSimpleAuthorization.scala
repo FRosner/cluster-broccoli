@@ -1,7 +1,6 @@
 package jp.t2v.lab.play2.auth
 
 import de.frosner.broccoli.auth.{Account, AuthMode}
-import de.frosner.broccoli.conf
 import de.frosner.broccoli.controllers.AuthConfigImpl
 import de.frosner.broccoli.services.SecurityService
 import jp.t2v.lab.play2.stackc.{RequestAttributeKey, RequestWithAttributes, StackableController}

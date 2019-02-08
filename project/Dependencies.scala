@@ -3,12 +3,10 @@ import sbt._
 object Dependencies {
   object Versions {
     // Note: Do not update to 1.13.x; specs2-scalacheck 3.6.6 requires Scalacheck 2.12.5 and does not work with 1.13.x
-    val scalacheck = "1.12.5"
+    val scalacheck = "1.13.4"
 
     // Note: Do not update; play2-specs requires specs2 3.6.6 and throws exceptions with newer versions
-    val specs2 = "3.6.6"
-
-    val play2auth = "0.14.2"
+    val specs2 = "4.4.1"
 
     val cats = "1.0.0-MF"
 
@@ -18,7 +16,7 @@ object Dependencies {
 
     val squants = "1.3.0"
 
-    val silhouette = "4.0.0"
+    val silhouette = "5.0.7"
 
     val pureconfig = "0.7.2"
   }
@@ -46,9 +44,9 @@ object Dependencies {
     * A powerful enumeration type for Scala.
     */
   val enumeratum: Seq[ModuleID] = Seq(
-    "com.beachape" %% "enumeratum" % "1.5.12",
+    "com.beachape" %% "enumeratum" % "1.5.13",
     // Keep this version at 1.5.11 for compatibility with Play 2.5; later versions depend on Play 2.6 already
-    "com.beachape" %% "enumeratum-play-json" % "1.5.11"
+    "com.beachape" %% "enumeratum-play-json" % "1.5.13"
   )
 
   /**
@@ -98,14 +96,14 @@ object Dependencies {
     "pureconfig-enumeratum"
   ).map(module => "com.github.pureconfig" %% module % Versions.pureconfig)
 
-  /**
+  /*/**
     * Authentication framework for Play
     */
   val play2auth: Seq[ModuleID] = Seq(
     "jp.t2v" %% "play2-auth" % Versions.play2auth,
     "jp.t2v" %% "play2-auth-test" % Versions.play2auth % Test,
     "jp.t2v" %% "play2-auth-test" % Versions.play2auth % IntegrationTest
-  )
+  )*/
 
   /**
     * Apache Commons IO to provide additional functionality for IO like copying directories recursively
@@ -121,5 +119,10 @@ object Dependencies {
     * Jinja templating engine implemented in Java
     */
   val jinJava: ModuleID = "com.hubspot.jinjava" % "jinjava" % "2.2.9"
+
+  /**
+    * Mustache template rendering implemented in Scala
+    */
+  val scalate: ModuleID = "org.scalatra" %% "scalatra" % "2.6.4"
 
 }

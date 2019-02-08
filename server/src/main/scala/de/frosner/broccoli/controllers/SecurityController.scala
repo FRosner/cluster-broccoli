@@ -1,12 +1,13 @@
 package de.frosner.broccoli.controllers
 
 import javax.inject.Inject
-
 import cats.data.{EitherT, OptionT}
 import cats.instances.future._
 import cats.syntax.either._
+import com.mohiva.play.silhouette.api.Silhouette
 import com.mohiva.play.silhouette.api.util.Credentials
 import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
+import de.frosner.broccoli.auth.DefaultEnv
 import de.frosner.broccoli.services.{SecurityService, WebSocketService}
 import jp.t2v.lab.play2.auth.{BroccoliSimpleAuthorization, LoginLogout}
 import play.api.{Environment, Logger}
@@ -22,10 +23,10 @@ case class SecurityController @Inject()(
     override val securityService: SecurityService,
     override val cacheApi: CacheApi,
     override val playEnv: Environment,
-    webSocketService: WebSocketService
-) extends Controller
-    with LoginLogout
-    with BroccoliSimpleAuthorization {
+    webSocketService: WebSocketService,
+    silhouette: Silhouette[DefaultEnv],
+    credentialsProvider: CredentialsProvider
+) extends Controller with BroccoliSimpleAuthorization with LoginLogout {
 
   private val log = Logger(getClass)
 

@@ -24,8 +24,9 @@ lazy val server = project
       Dependencies.scalaguice,
       Dependencies.commonsLang,
       Dependencies.jinJava,
+      Dependencies.scalate,
       ws,
-      cache,
+      ehcache,
       specs2 % Test,
       specs2 % IntegrationTest,
       Dependencies.scalacheck % Test,
@@ -38,7 +39,7 @@ lazy val server = project
     libraryDependencies ++= Dependencies.specs2.map(_ % IntegrationTest),
     libraryDependencies ++= Dependencies.silhouette,
     libraryDependencies ++= Dependencies.pureconfig,
-    libraryDependencies ++= Dependencies.play2auth,
+    // libraryDependencies ++= Dependencies.play2auth,
     // Macro support for Scala
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
@@ -113,7 +114,7 @@ lazy val root = project
     inThisBuild(
       List(
         version := "0.9.1-SNAPSHOT",
-        scalaVersion := "2.11.11",
+        scalaVersion := "2.12.8",
         // Enable jcenter for silhouette's dependencies
         resolvers += Resolver.jcenterRepo,
         // Build settings
