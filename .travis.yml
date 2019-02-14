@@ -36,7 +36,7 @@ jobs:
       script:
         - . prepare-docker-builds
         - docker build -t frosner/cluster-broccoli-test docker/test/
-        - docker tag ynux/cluster-broccoli-test $DOCKER_USERNAME/cluster-broccoli-test-nontls
+        - docker tag frosner/cluster-broccoli-test $DOCKER_USERNAME/cluster-broccoli-test-nontls
         - docker push $DOCKER_USERNAME/cluster-broccoli-test-nontls
         - sbt it:test
         - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/instance-persistence-couchdb
