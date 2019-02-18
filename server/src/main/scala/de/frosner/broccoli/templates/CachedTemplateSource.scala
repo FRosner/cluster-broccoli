@@ -1,8 +1,6 @@
 package de.frosner.broccoli.templates
 
-import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.models.Template
-import javax.inject.Singleton
 
 /**
   * The template source that wraps another template source and caches loaded templates of that source

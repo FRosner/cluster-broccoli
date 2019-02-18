@@ -2,7 +2,6 @@ package de.frosner.broccoli.auth
 
 import com.mohiva.play.silhouette.api.LoginInfo
 import com.mohiva.play.silhouette.api.services.IdentityService
-import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 
 import scala.concurrent.Future
 

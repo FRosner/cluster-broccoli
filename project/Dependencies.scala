@@ -12,19 +12,22 @@ object Dependencies {
 
     val shapeless = "2.3.2"
 
-    val scalaUri = "0.4.17"
+    val scalaUri = "1.4.0"
 
     val squants = "1.3.0"
 
     val silhouette = "5.0.7"
 
     val pureconfig = "0.7.2"
+
+    val playIteratees = "2.6.1"
+
   }
 
   /**
     * Typeclass boilerplate for Scala
     */
-  val simulacrum: ModuleID = "com.github.mpilquist" %% "simulacrum" % "0.10.0"
+  val simulacrum: ModuleID = "com.github.mpilquist" %% "simulacrum" % "0.12.0"
 
   /**
     * Functional programming data types and type classes.
@@ -96,14 +99,15 @@ object Dependencies {
     "pureconfig-enumeratum"
   ).map(module => "com.github.pureconfig" %% module % Versions.pureconfig)
 
-  /*/**
-    * Authentication framework for Play
+
+  /**
+    * Iteratees/Enumerators were removed from the play library since play 2.6.x and moved to a separate
+    * repository at: https://github.com/playframework/play-iteratees
     */
-  val play2auth: Seq[ModuleID] = Seq(
-    "jp.t2v" %% "play2-auth" % Versions.play2auth,
-    "jp.t2v" %% "play2-auth-test" % Versions.play2auth % Test,
-    "jp.t2v" %% "play2-auth-test" % Versions.play2auth % IntegrationTest
-  )*/
+  val play2Iteratees: Seq[ModuleID] = Seq(
+    "com.typesafe.play" %% "play-iteratees" % Versions.playIteratees,
+    "com.typesafe.play" %% "play-iteratees-reactive-streams" % Versions.playIteratees
+  )
 
   /**
     * Apache Commons IO to provide additional functionality for IO like copying directories recursively
@@ -124,5 +128,11 @@ object Dependencies {
     * Mustache template rendering implemented in Scala
     */
   val scalate: ModuleID = "org.scalatra" %% "scalatra" % "2.6.4"
+
+  /**
+    * Ficus is a lightweight companion to Typesafe config that makes it more Scala-friendly.
+    * Ficus adds an as[A] method to a normal Typesafe Config so you can do things like config.as[ Option[Int] ]
+    */
+  val ficus: ModuleID = "com.iheart" %% "ficus" % "1.4.3"
 
 }

@@ -4,22 +4,21 @@ import com.mohiva.play.silhouette.api.LoginInfo
 import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.services.SecurityService
-import jp.t2v.lab.play2.auth._
-import play.api.{Environment, Mode}
-import play.api.cache.CacheApi
+import play.api.Environment
+import play.api.cache.SyncCacheApi
 import play.api.libs.json.JsString
 import play.api.mvc.{RequestHeader, Result, Results}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
 
-trait AuthConfigImpl extends AuthConfig {
+trait AuthConfig {
 
   val securityService: SecurityService
 
   val playEnv: Environment
 
-  val cacheApi: CacheApi
+  val cacheApi: SyncCacheApi
 
   type Id = String
 
@@ -33,48 +32,33 @@ trait AuthConfigImpl extends AuthConfig {
 
   val cookieSecure = securityService.cookieSecure
 
-  override lazy val idContainer: AsyncIdContainer[Id] = securityService.allowMultiLogin match {
-    case true  => AsyncIdContainer(new MultiLoginCacheIdContainer[Id](cacheApi))
-    case false => AsyncIdContainer(new CacheIdContainer[Id])
-  }
-
-  def resolveUser(id: Id)(implicit ctx: ExecutionContext): Future[Option[User]] =
+  def resolveUser(id: Id): Future[Option[User]] =
     securityService.identityService.retrieve(LoginInfo(CredentialsProvider.ID, id))
 
-  def loginSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
+  def loginSucceeded(request: RequestHeader): Future[Result] =
     Future.successful(Results.Ok(JsString("Login successful!"))) // the content is not used anyway as the controller replaces it
 
-  def logoutSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
+  def logoutSucceeded(request: RequestHeader): Future[Result] =
     Future.successful(Results.Ok(JsString("Logout successful!")))
 
-  def authenticationFailed(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
+  def authenticationFailed(request: RequestHeader): Future[Result] =
     Future.successful(Results.Forbidden("Authentication failed."))
 
-  override def authorizationFailed(request: RequestHeader, user: User, authority: Option[Authority])(
+  def authorizationFailed(request: RequestHeader, user: User, authority: Option[Authority])(
       implicit context: ExecutionContext): Future[Result] =
     Future.successful(Results.Forbidden(
       s"Authorization failed: Your privileges (${user.role}) are not matching the required (${authority.getOrElse("None")})."))
 
-  def authorize(user: User, authority: Authority)(implicit ctx: ExecutionContext): Future[Boolean] = Future.successful {
+  def authorize(user: User, authority: Authority): Future[Boolean] = Future.successful {
     user.role match {
       case Role.Administrator => true
       case Role.Operator      => authority == Role.Operator || authority == Role.User
       case Role.User          => authority == Role.User
     }
   }
-
-  override lazy val tokenAccessor = new CookieTokenAccessor(
-    cookieName = AuthConfigImpl.CookieName,
-    cookieSecureOption = playEnv.mode == Mode.Prod && cookieSecure,
-    cookieHttpOnlyOption = true,
-    cookieDomainOption = None,
-    cookiePathOption = "/",
-    cookieMaxAge = Some(sessionTimeoutInSeconds)
-  )
-
 }
 
-object AuthConfigImpl {
+object AuthConfig {
 
   val CookieName = "BROCCOLI_SESS_ID"
 

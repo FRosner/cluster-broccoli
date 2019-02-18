@@ -1,11 +1,6 @@
 package de.frosner.broccoli.models
 
 import de.frosner.broccoli.auth.Account
-import de.frosner.broccoli.models.ListProvider.{
-  StaticDoubleListProvider,
-  StaticIntListProvider,
-  StaticStringListProvider
-}
 import de.frosner.broccoli.templates.TemplateConfig
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

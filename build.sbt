@@ -17,6 +17,7 @@ lazy val server = project
     name := "Cluster Broccoli",
     routesGenerator := InjectedRoutesGenerator,
     libraryDependencies ++= List(
+      guice,
       Dependencies.simulacrum,
       Dependencies.shapeless,
       Dependencies.scalaUri,
@@ -25,6 +26,7 @@ lazy val server = project
       Dependencies.commonsLang,
       Dependencies.jinJava,
       Dependencies.scalate,
+      Dependencies.ficus,
       ws,
       ehcache,
       specs2 % Test,
@@ -39,6 +41,7 @@ lazy val server = project
     libraryDependencies ++= Dependencies.specs2.map(_ % IntegrationTest),
     libraryDependencies ++= Dependencies.silhouette,
     libraryDependencies ++= Dependencies.pureconfig,
+    libraryDependencies ++= Dependencies.play2Iteratees,
     // libraryDependencies ++= Dependencies.play2auth,
     // Macro support for Scala
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
@@ -139,7 +142,9 @@ lazy val root = project
           // Warn when non-nullary overrides a nullary (def foo() over def foo)
           "-Ywarn-nullary-override",
           // Warn when numerics are unintentionally widened
-          "-Ywarn-numeric-widen"
+          "-Ywarn-numeric-widen",
+          // Do not warn for unused implicits
+          "-Ywarn-unused:-implicits"
         )
       ))
   )

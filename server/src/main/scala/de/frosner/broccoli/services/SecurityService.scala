@@ -2,7 +2,7 @@ package de.frosner.broccoli.services
 
 import javax.inject.{Inject, Singleton}
 
-import cats.data.{EitherT, OptionT}
+import cats.data.EitherT
 import cats.instances.future._
 import cats.syntax.either._
 import com.mohiva.play.silhouette.api.LoginInfo

@@ -12,7 +12,7 @@ import play.api.{Configuration, Logger}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Try}
 
 @Singleton()
 class ConsulService @Inject()(configuration: Configuration, ws: WSClient)(implicit ec: ExecutionContext) {

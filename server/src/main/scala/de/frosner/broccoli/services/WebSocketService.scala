@@ -46,7 +46,8 @@ class WebSocketService @Inject()(templateService: TemplateService,
       }(log.info(_))
     }
   }
-  private val scheduledTask = scheduler.scheduleWithFixedDelay(task, 0, 1, TimeUnit.SECONDS)
+  // scheduledTask
+  private val _ = scheduler.scheduleWithFixedDelay(task, 0, 1, TimeUnit.SECONDS)
 
   def newConnection(user: Account): (String, Enumerator[Msg]) = {
     val id = UUID.randomUUID().toString

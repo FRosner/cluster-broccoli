@@ -41,7 +41,6 @@ class DirectoryTemplateSource(directory: String, val templateRenderer: TemplateR
       val tryTemplate = Try {
         val templateFileContent = Source.fromFile(templateDirectory.resolve("template.json").toString).mkString
         val templateId = templateDirectory.getFileName.toString
-        val config = ConfigFactory.parseFile(templateDirectory.resolve("template.conf").toFile)
         val templateInfo =
           loadConfigOrThrow[TemplateConfig.TemplateInfo](
             ConfigFactory.parseFile(templateDirectory.resolve("template.conf").toFile))

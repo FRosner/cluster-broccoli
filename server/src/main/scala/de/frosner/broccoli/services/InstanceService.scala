@@ -278,7 +278,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
                      templateSelector: Option[String],
                      periodicJobsToStop: Option[Seq[String]]): Try[InstanceWithStatus] = synchronized {
     val updateInstanceId = id
-    val maybeInstance = instances.get(id)
+    val maybeInstance = instances.get(updateInstanceId)
     val maybeUpdatedInstance = maybeInstance.map { instance =>
       Try {
         parameterValuesUpdater.map { p =>
