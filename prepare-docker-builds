@@ -8,6 +8,8 @@ sbt clean && sbt dist
 unzip server/target/universal/cluster-broccoli*.zip
 cp -R cluster-broccoli-* docker/test/cluster-broccoli-dist
 cp -R templates docker/test/
+cp -R cluster-broccoli-* docker/test-tls/cluster-broccoli-dist
+cp -R templates docker/test-tls/
 rm -rf cluster-broccoli-*
 
 if [ -z "$BROCCOLI_SLEEP_LONG" ]; then

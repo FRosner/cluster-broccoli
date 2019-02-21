@@ -35,15 +35,18 @@ jobs:
     - stage: integration
       script:
         - . prepare-docker-builds
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
         - docker build -t frosner/cluster-broccoli-test docker/test/
-        - docker tag frosner/cluster-broccoli-test $DOCKER_USERNAME/cluster-broccoli-test-nontls
-        - docker push $DOCKER_USERNAME/cluster-broccoli-test-nontls
         - sbt it:test
         - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/instance-persistence-couchdb
         - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-only
         - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad
         - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad-consul
         - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/instance-persistence-dir
+        # TLS part, with nomad 
+        - docker build -t frosner/cluster-broccoli-test-tls docker/test-tls/
+        - sbt it:test
+        - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests-tls/broccoli-nomad
     - stage: docker
       script:
         # Publish docker image
@@ -73,3 +76,4 @@ cache:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+
