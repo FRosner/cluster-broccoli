@@ -1,5 +1,5 @@
 FROM java:8
-ENV NOMAD_VERSION 0.8.7
+
 # install docker libraries
 RUN apt-get update && \
   apt-get install -y apt-transport-https ca-certificates && \
@@ -9,8 +9,8 @@ RUN curl -fsSL get.docker.com -o get-docker.sh
 RUN sh get-docker.sh
 
 # put nomad
-RUN curl https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip > nomad.zip && \
-  unzip nomad.zip
+RUN curl https://releases.hashicorp.com/nomad/0.4.0/nomad_0.4.0_linux_amd64.zip > nomad.zip
+RUN unzip nomad.zip
 RUN echo "#!/bin/bash" > /usr/bin/nomad && \
   echo "exec /nomad agent -dev" >> /usr/bin/nomad && \
   chmod 777 /usr/bin/nomad
@@ -29,3 +29,4 @@ ADD couchdb.conf /couchdb.conf
 ADD templates /cluster-broccoli-dist/templates
 RUN mkdir /cluster-broccoli-dist/instances
 RUN ln -s /cluster-broccoli-dist/bin/cluster-broccoli /usr/bin/cluster-broccoli
+
