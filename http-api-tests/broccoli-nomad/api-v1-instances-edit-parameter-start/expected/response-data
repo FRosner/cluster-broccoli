@@ -27,11 +27,11 @@
           "Driver": "raw_exec",
           "User": "",
           "Config": {
+            "command": "/usr/bin/python",
             "args": [
               "-m",
               "SimpleHTTPServer"
-            ],
-            "command": "/usr/bin/python"
+            ]
           },
           "Env": null,
           "Services": [

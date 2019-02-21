@@ -1,0 +1,3 @@
+#!/bin/bash
+
+grep '"CPU":50' $1
