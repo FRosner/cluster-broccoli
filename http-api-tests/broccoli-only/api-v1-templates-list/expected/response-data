@@ -9,6 +9,27 @@
       "retries"
     ],
     "parameterInfos": {
+      "retries": {
+        "id": "retries",
+        "type": {
+          "name": "intList",
+          "values": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      "URL": {
+        "id": "URL",
+        "default": "localhost:8000",
+        "type": {
+          "name": "raw"
+        },
+        "orderIndex": 1
+      },
       "id": {
         "id": "id",
         "type": {
@@ -22,24 +43,9 @@
           "name": "raw"
         },
         "orderIndex": 2
-      },
-      "URL": {
-        "id": "URL",
-        "default": "localhost:8000",
-        "type": {
-          "name": "raw"
-        },
-        "orderIndex": 1
-      },
-      "retries": {
-        "id": "retries",
-        "type": {
-          "name": "intList",
-          "values": [1, 2, 3, 4, 5]
-        }
       }
     },
-    "version": "68d3dd229390c3171e6a77b836ad2406"
+    "version": "9175abf76b39a0950360470d5b1c94ee"
   },
   {
     "id": "http-server",
@@ -50,14 +56,6 @@
       "secret"
     ],
     "parameterInfos": {
-      "cpu": {
-        "id": "cpu",
-        "name": "CPU Shares",
-        "default": 100,
-        "type": {
-          "name": "integer"
-        }
-      },
       "secret": {
         "id": "secret",
         "name": "A Secret Parameter",
@@ -65,6 +63,14 @@
         "secret": true,
         "type": {
           "name": "decimal"
+        }
+      },
+      "cpu": {
+        "id": "cpu",
+        "name": "CPU Shares",
+        "default": 100,
+        "type": {
+          "name": "integer"
         }
       },
       "id": {
@@ -93,3 +99,4 @@
     "version": "6540294bd9a0065990bf9daa5dd2824b"
   }
 ]
+
