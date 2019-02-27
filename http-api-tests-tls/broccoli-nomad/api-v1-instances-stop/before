@@ -11,3 +11,6 @@ curl -H 'Content-Type: application/json' \
     -X POST -d '{ "status": "stopped" }' \
     'http://localhost:9000/api/v1/instances/test-http'
 sleep $BROCCOLI_SLEEP_SHORT
+curl -k -X PUT https://localhost:4646/v1/system/gc
+sleep $BROCCOLI_SLEEP_SHORT
+

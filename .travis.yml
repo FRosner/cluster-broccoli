@@ -50,7 +50,7 @@ jobs:
         - docker tag frosner/cluster-broccoli-test-tls $DOCKER_USERNAME/cluster-broccoli-test-tls
         - docker push $DOCKER_USERNAME/cluster-broccoli-test-tls
         - sbt it:test
-        - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests-tls/broccoli-nomad
+        - bash <(curl -s https://raw.githubusercontent.com/ynux/http-api-tester/master/http-api-tester) -v -o ge -d http-api-tests-tls/broccoli-nomad 
     - stage: docker
       script:
         # Publish docker image
