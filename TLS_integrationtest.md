@@ -4,7 +4,7 @@
 
 We run cluster-broccoli like this:
 ```
-docker run --rm -d --net host sunygit/cluster-broccoli-test cluster-broccoli -Dconfig.file="/application-tls.conf" -Dbroccoli.nomad.url=https://localhost:4646 
+docker run --rm -d --net host frosner/cluster-broccoli-test-tls cluster-broccoli -Dconfig.file="/application-tls.conf" -Dbroccoli.nomad.url=https://localhost:4646 
 ```
 So it knows that is should speak https with nomad. The application-tls.conf is standard play stuff:
 ```
@@ -68,8 +68,9 @@ The integration tests shamelessly drop all verification - don't do that in produ
 ```
 cluster-broccoli uses `play.ws.ssl.loose.acceptAnyCertificate=true`, and curl uses "-k".
 
-Note for debugging: It's useful to push the combined dockercontainer to docker hub for debugging. Add this to the travis.yml after the `docker build` (and add the variables to your travis-ci):
+Note for debugging: It's useful to push the combined dockercontainer to docker hub for debugging. Add this to the travis.yml after the `docker build` (and add the variables DOCKER_USERNAME, DOCKER_PASSWORD to your travis-ci):
 ```
-        - docker tag ynux/cluster-broccoli-test $DOCKER_USERNAME/cluster-broccoli-test
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - docker tag $DOCKER_USERNAME/cluster-broccoli-test $DOCKER_USERNAME/cluster-broccoli-test
         - docker push $DOCKER_USERNAME/cluster-broccoli-test
 ```
