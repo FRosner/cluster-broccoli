@@ -6,7 +6,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
 
-case class Template(id: String, template: String, description: String, parameterInfos: Map[String, ParameterInfo])
+case class Template(id: String, template: String, documentation_url: String, description: String, parameterInfos: Map[String, ParameterInfo])
     extends Serializable {
 
   @transient
@@ -38,11 +38,12 @@ object Template {
     (
       (JsPath \ "id").write[String] and
         (JsPath \ "description").write[String] and
+        (JsPath \ "documentation_url").write[String] and
         (JsPath \ "parameters").write[Seq[String]] and
         (JsPath \ "parameterInfos").write[Map[String, ParameterInfo]](paramInfoMapWrites) and
         (JsPath \ "version").write[String]
     )((template: Template) =>
-      (template.id, template.description, template.sortedParameters, template.parameterInfos, template.version))
+      (template.id, template.description, template.documentation_url, template.sortedParameters, template.parameterInfos, template.version))
 
   implicit val templatePersistenceReads: Reads[Template] = Json.reads[Template]
 

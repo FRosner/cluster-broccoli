@@ -17,6 +17,7 @@ type alias TemplateId =
 type alias Template =
     { id : TemplateId
     , description : String
+    , documentation_url : String
     , version : String
     , parameters : List String
     , parameterInfos : Dict String ParameterInfo
@@ -55,9 +56,10 @@ addTemplateInstanceString template =
 
 
 decoder =
-    Decode.map5 Template
+    Decode.map6 Template
         (field "id" Decode.string)
         (field "description" Decode.string)
+        (field "documentation_url" Decode.string)
         (field "version" Decode.string)
         (field "parameters" (Decode.list Decode.string))
         (field "parameterInfos" (Decode.dict parameterInfoDecoder))

@@ -17,6 +17,7 @@ object TemplateConfig {
         val confObj = configOrig.asInstanceOf[ConfigObject]
         val config = confObj.toConfig
         val description = Try(config.getString("description")).toOption
+        val documentation_url = Try(config.getString("documentation_url")).toOption
         val parameters = config
           .getObject("parameters")
           .map {
@@ -42,7 +43,7 @@ object TemplateConfig {
               (paramName, Parameter(maybeName, maybeDefault, maybeSecret, paramType, maybeOrderIndex))
           }
           .toMap
-        TemplateInfo(description, parameters)
+        TemplateInfo(description, documentation_url, parameters)
       } match {
         case Success(e)  => Right(e)
         case Failure(ex) =>
@@ -51,7 +52,7 @@ object TemplateConfig {
       }
   }
 
-  final case class TemplateInfo(description: Option[String], parameters: Map[String, Parameter])
+  final case class TemplateInfo(description: Option[String], documentation_url: Option[String], parameters: Map[String, Parameter])
 
   final case class Parameter(name: Option[String],
                              default: Option[ParameterValue],
@@ -59,4 +60,4 @@ object TemplateConfig {
                              `type`: ParameterType,
                              orderIndex: Option[Int])
 
-}
+} 

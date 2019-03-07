@@ -60,6 +60,11 @@ view instances tasks templates bodyUiModel maybeRole template =
                         ]
                         [ p []
                             [ text template.description ]
+                        , (if (String.isEmpty template.documentation_url) then
+                                text "No Documentation available"
+                            else
+                                a [ href template.documentation_url ] [ text "Documentation" ]
+                          )
                         , p []
                             (List.concat
                                 [ if (maybeRole /= Just Administrator) then

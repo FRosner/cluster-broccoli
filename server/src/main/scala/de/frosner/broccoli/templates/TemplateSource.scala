@@ -37,6 +37,7 @@ trait TemplateSource {
         id = templateId,
         template = templateString,
         description = templateInfo.description.getOrElse(s"$templateId template"),
+        documentation_url = templateInfo.documentation_url.getOrElse(s""),
         parameterInfos = templateInfo.parameters
           .map { case (id, parameter) => id -> ParameterInfo.fromTemplateInfoParameter(id, parameter) }
       )
