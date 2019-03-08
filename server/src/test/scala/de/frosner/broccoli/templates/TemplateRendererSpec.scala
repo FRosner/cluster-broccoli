@@ -20,6 +20,7 @@ class TemplateRendererSpec extends Specification with Mockito {
                  Template("1",
                           "\"{{id}}\"",
                           "desc",
+                          "doc_url",
                           Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))),
                  Map("id" -> StringParameterValue("Frank")))
       templateRenderer.renderJson(instance) === JsString("Frank")
@@ -33,6 +34,7 @@ class TemplateRendererSpec extends Specification with Mockito {
             "1",
             "\"{{id}} {{age}}\"",
             "desc",
+            "doc_url",
             Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
                 "age" -> ParameterInfo("age", None, None, None, ParameterType.Integer, None))
           ),
@@ -48,6 +50,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
+          documentation_url = "doc_url",
           parameterInfos = Map(
             "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
             "age" -> ParameterInfo("age",
@@ -70,6 +73,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = """"{{id}}"""",
           description = "desc",
+          documentation_url = "doc_url",
           parameterInfos = Map(
             "id" -> ParameterInfo("id",
                                   None,
@@ -90,6 +94,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = "\"{{id}}\"",
           description = "desc",
+          documentation_url = "doc_url",
           parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))
         ),
         parameterValues = Map("id" -> RawParameterValue("^.*$"))
@@ -104,6 +109,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
+          documentation_url = "doc_url",
           parameterInfos = Map(
             "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
             "age" ->
@@ -123,6 +129,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = """{{id}}""",
           description = "desc",
+          documentation_url = "doc_url",
           parameterInfos = Map(
             "id" -> ParameterInfo("id",
                                   None,
@@ -144,6 +151,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = "\"{% for x in [1,2,3] %}{{ id }}{{ x }}{% endfor %}\"",
           description = "desc",
+          documentation_url = "doc_url",
           parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))
         ),
         parameterValues = Map("id" -> RawParameterValue("1"))
@@ -160,6 +168,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = template,
           description = "desc",
+          documentation_url = "doc_url",
           parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))
         ),
         parameterValues = Map("id" -> RawParameterValue("10"))
@@ -172,6 +181,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = template,
           description = "desc",
+          documentation_url = "doc_url",
           parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))
         ),
         parameterValues = Map("id" -> RawParameterValue("-3"))
@@ -186,6 +196,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
+          documentation_url = "doc_url",
           parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))
         ),
         parameterValues = Map("id" -> RawParameterValue("Frank"))
@@ -203,6 +214,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
+          documentation_url = "doc_url",
           parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))
         ),
         parameterValues = Map("id" -> RawParameterValue("Frank"))
@@ -219,6 +231,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           id = "1",
           template = """{{id}}""",
           description = "desc",
+          documentation_url = "doc_url",
           parameterInfos = Map(
             "id" -> ParameterInfo("id",
                                   None,

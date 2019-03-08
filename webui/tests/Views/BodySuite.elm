@@ -1000,6 +1000,7 @@ defaultTemplate : TemplateId -> Template
 defaultTemplate templateId =
     { id = templateId
     , description = (String.concat [ templateId, "-description" ])
+    , documentation_url = (String.concat [ templateId, "-documentation_url" ])
     , version = (String.concat [ templateId, "-version" ])
     , parameters =
         [ "id"

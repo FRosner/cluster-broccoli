@@ -16,6 +16,8 @@ class TemplateConfigSpec extends Specification {
         """
                   |description = "A periodic job that sends an HTTP GET request to a specified address every minute."
                   |
+                  |documentation_url = "#link-to-documentation"
+                  |
                   |parameters = {
                   |  "URL" = {
                   |    name = "connection url"
@@ -43,6 +45,7 @@ class TemplateConfigSpec extends Specification {
                 """.stripMargin
       val expectedTemplateInfo = TemplateConfig.TemplateInfo(
         description = Some("A periodic job that sends an HTTP GET request to a specified address every minute."),
+        documentation_url = Some("#link-to-documentation"),
         parameters = Map(
           "URL" -> Parameter(
             name = Some("connection url"),
@@ -94,6 +97,8 @@ class TemplateConfigSpec extends Specification {
         """
                   |description = "A periodic job that sends an HTTP GET request to a specified address every minute."
                   |
+                  |documentation_url = "#link-to-documentation"
+                  |
                   |parameters = {
                   |  "URL" = {
                   |    name = "connection url"
@@ -121,6 +126,8 @@ class TemplateConfigSpec extends Specification {
       val configString =
         """
           |description = "A periodic job that sends an HTTP GET request to a specified address every minute."
+          |
+          |documentation_url = "#link-to-documentation"
           |
           |parameters = {
           |  "URL" = {

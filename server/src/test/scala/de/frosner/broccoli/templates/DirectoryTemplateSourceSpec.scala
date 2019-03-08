@@ -33,6 +33,7 @@ class DirectoryTemplateSourceSpec extends Specification with TemporaryTemplatesC
           "curl",
           Source.fromFile(templatesDirectory.resolve("curl/template.json").toFile).mkString,
           "A periodic job that sends an HTTP GET request to a specified address every minute.",
+          "#curl-test-docs",
           Map(
             "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, Some(0)),
             "URL" -> ParameterInfo("URL",

@@ -35,6 +35,7 @@ class WebSocketControllerSpec
         id = "t",
         template = "{{id}} {{secret}}",
         description = "d",
+        documentation_url = "#documentation_url",
         parameterInfos = Map(
           "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
           "secret" -> ParameterInfo(

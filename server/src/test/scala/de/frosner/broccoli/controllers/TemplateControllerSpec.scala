@@ -18,6 +18,7 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
         id = "id",
         template = "template {{id}}",
         description = "description",
+        documentation_url = "#documentation_url",
         parameterInfos = Map(
           "id" -> ParameterInfo(id = "id",
                                 name = Some("myname"),
@@ -69,6 +70,7 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
         id = "id",
         template = "template {{id}}",
         description = "description",
+        documentation_url = "#documentation_url",
         parameterInfos = Map(
           "id" -> ParameterInfo(id = "id",
                                 name = Some("myname"),

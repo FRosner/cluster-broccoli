@@ -15,21 +15,23 @@ class TemplateSpec extends Specification {
       Template("test",
                "Hallo {{id}}. I like {{person_name}}.",
                "desc",
+               "#link-to-docs",
                Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))).parameters === Set("id")
     }
 
     "not automatically extract parameters from a template" in {
-      Template("test", "Hallo {{id}}, how is {{object}}", "desc", Map.empty).parameters === Set.empty
+      Template("test", "Hallo {{id}}, how is {{object}}", "desc", "#link-to-docs", Map.empty).parameters === Set.empty
     }
 
     "create the template version correctly in" in {
-      Template("test", "template JSON", "desc", Map.empty).version === "889df4c8118c30a28ed4f51674a0f19d"
+      Template("test", "template JSON", "desc", "#link-to-docs", Map.empty).version === "889df4c8118c30a28ed4f51674a0f19d"
     }
 
     "result in different template versions if the template JSON differs" in {
-      Template("test", "template JSON", "desc", Map.empty).version !== Template("test",
+      Template("test", "template JSON", "desc", "#link-to-docs", Map.empty).version !== Template("test",
                                                                                 "template JSONs",
                                                                                 "desc",
+                                                                                "#link-to-docs",
                                                                                 Map.empty).version
     }
 
@@ -38,11 +40,13 @@ class TemplateSpec extends Specification {
         id = "test",
         template = "template JSON {{id}}",
         description = "desc",
+        documentation_url = "#link-to-documentation",
         parameterInfos = Map.empty
       ).version !== Template(
         id = "test",
         template = "template JSON {{id}}",
         description = "desc",
+        documentation_url = "#link-to-documentation",
         parameterInfos = Map(
           "id" -> ParameterInfo("id",
                                 None,
@@ -59,7 +63,7 @@ class TemplateSpec extends Specification {
   "Template serialization" should {
 
     "work correctly" in {
-      val originalTemplate = Template("test", "Hallo {{name}}", "desc", Map.empty)
+      val originalTemplate = Template("test", "Hallo {{name}}", "desc", "#docs_url", Map.empty)
       val bos = new ByteArrayOutputStream()
       val oos = new ObjectOutputStream(bos)
       oos.writeObject(originalTemplate)
@@ -81,6 +85,7 @@ class TemplateSpec extends Specification {
         id = "t",
         template = "{{id}}",
         description = "d",
+        documentation_url = "#link-to-documentation",
         parameterInfos = Map.empty
       )
       Json

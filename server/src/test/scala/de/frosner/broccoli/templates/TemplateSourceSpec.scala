@@ -29,7 +29,7 @@ class TemplateSourceSpec extends Specification with Mockito {
     "work" in {
       val id = "templateId"
       val templateString = "Hello {{ id }}"
-      val templateInfo = TemplateInfo(None, Map("id" -> Parameter(Some("id"), None, None, ParameterType.Raw, None)))
+      val templateInfo = TemplateInfo(None, None, Map("id" -> Parameter(Some("id"), None, None, ParameterType.Raw, None)))
       val template =
         defaultTemplateSource.loadTemplate(id, templateString, templateInfo).get
 
@@ -39,7 +39,7 @@ class TemplateSourceSpec extends Specification with Mockito {
 
     "require an 'id' parameter (no parameter)" in {
       val tryTemplate =
-        defaultTemplateSource.loadTemplate("test", "Hallo", TemplateInfo(None, Map.empty))
+        defaultTemplateSource.loadTemplate("test", "Hallo", TemplateInfo(None, None, Map.empty))
       (tryTemplate.isFailure must beTrue) and (tryTemplate.failed.get.getMessage must beEqualTo(
         "requirement failed: There needs to be an 'id' field in the template for Broccoli to work. Parameters defined: Set()"))
     }
@@ -49,7 +49,7 @@ class TemplateSourceSpec extends Specification with Mockito {
         defaultTemplateSource.loadTemplate(
           "test",
           "Hallo {{bla}}",
-          TemplateInfo(None, Map("bla" -> Parameter(Some("bla"), None, None, ParameterType.Raw, None)))
+          TemplateInfo(None, None, Map("bla" -> Parameter(Some("bla"), None, None, ParameterType.Raw, None)))
         )
       (tryTemplate.isFailure must beTrue) and (tryTemplate.failed.get.getMessage must beEqualTo(
         "requirement failed: There needs to be an 'id' field in the template for Broccoli to work. Parameters defined: Set(bla)"))
@@ -61,6 +61,7 @@ class TemplateSourceSpec extends Specification with Mockito {
           "test",
           "Hallo {{bla-bla}}",
           TemplateInfo(None,
+                       None,
                        Map("id" -> Parameter(Some("id"), None, None, ParameterType.Raw, None),
                            "bla-bla" -> Parameter(Some("bla"), None, None, ParameterType.Raw, None)))
         )
@@ -74,6 +75,7 @@ class TemplateSourceSpec extends Specification with Mockito {
           "test",
           "{{id}} {{ global_var }} {% for x in [1 2 3] %}{{x}}{% endfor %}",
           TemplateInfo(None,
+                       None,
                        Map("id" -> Parameter(Some("id"), None, None, ParameterType.Raw, None),
                            "global_var" -> Parameter(Some("global_var"), None, None, ParameterType.Raw, None)))
         )

@@ -36,6 +36,7 @@ class NomadInstancesSpec
         id = "id",
         template = "{{id}}",
         description = "description",
+        documentation_url = "#documentation_url",
         parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))
       ),
       parameterValues = Map("id" -> StringParameterValue("id"))
