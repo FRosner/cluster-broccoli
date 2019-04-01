@@ -45,6 +45,7 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
               JsObject(Map(
                 "id" -> JsString(template.id),
                 "parameters" -> JsArray(Seq(JsString("id"))),
+                "documentation_url" -> JsString("#documentation_url"),
                 "parameterInfos" -> JsObject(Map(
                   "id" -> JsObject(Map(
                     "id" -> JsString("id"),
@@ -96,6 +97,7 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
             Map(
               "id" -> JsString(template.id),
               "parameters" -> JsArray(Seq(JsString("id"))),
+              "documentation_url" -> JsString("#documentation_url"),
               "parameterInfos" -> JsObject(Map(
                 "id" -> JsObject(Map(
                   "id" -> JsString("id"),
