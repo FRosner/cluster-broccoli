@@ -2,13 +2,13 @@ import sbt._
 
 object Dependencies {
   object Versions {
-    // Note: Do not update to 1.13.x; specs2-scalacheck 3.6.6 requires Scalacheck 2.12.5 and does not work with 1.13.x
-    val scalacheck = "1.13.4"
+    // Note: Do not update to 1.13.x; specs2-scalacheck 3.6.6 requires Scalacheck 1.12.5 and does not work with 1.13.x
+    val scalacheck = "1.14.0"
 
     // Note: Do not update; play2-specs requires specs2 3.6.6 and throws exceptions with newer versions
     val specs2 = "4.4.1"
 
-    val cats = "1.0.0-MF"
+    val cats = "1.6.0"
 
     val shapeless = "2.3.2"
 
@@ -72,7 +72,7 @@ object Dependencies {
   /**
     * Specs2 test framework, with support for property testing.
     */
-  val specs2: Seq[ModuleID] = Seq("core", "scalacheck")
+  val specs2: Seq[ModuleID] = Seq("core", "matcher", "common", "scalacheck", "scalaz", "junit")
     .map(module => "org.specs2" %% s"specs2-$module" % Versions.specs2)
 
   /**
@@ -98,7 +98,6 @@ object Dependencies {
     "pureconfig",
     "pureconfig-enumeratum"
   ).map(module => "com.github.pureconfig" %% module % Versions.pureconfig)
-
 
   /**
     * Iteratees/Enumerators were removed from the play library since play 2.6.x and moved to a separate

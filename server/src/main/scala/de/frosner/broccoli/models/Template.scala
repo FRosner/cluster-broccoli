@@ -17,8 +17,11 @@ case class Template(id: String, template: String, description: String, parameter
   lazy val sortedParameters: Seq[String] = parameters.toSeq.sorted
 
   // We sort the parameterInfos by the key to make the String deterministic
+  // We need to convert to ArrayBuffer because scala 2.10 used ArrayBuffer and we don't want the hash to change
+  // TODO: Change method for calculating version as the current way is version dependent
   @transient
-  lazy val version: String = DigestUtils.md5Hex(template.trim() + "_" + parameterInfos.toSeq.sortBy(_._1).toString)
+  lazy val version: String =
+    DigestUtils.md5Hex(template.trim() + "_" + parameterInfos.toSeq.sortBy(_._1).toBuffer.toString)
 
 }
 

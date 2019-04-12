@@ -1,18 +1,18 @@
 package de.frosner.broccoli.controllers
 
-import cats.data.{EitherT, OptionT}
-import cats.instances.future._
+import cats.data.EitherT
+import cats.instances.future.catsStdInstancesForFuture
+import com.mohiva.play.silhouette.api
 import com.mohiva.play.silhouette.api.LoginInfo
 import com.mohiva.play.silhouette.api.services.IdentityService
 import com.mohiva.play.silhouette.api.util.Credentials
-import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
-import de.frosner.broccoli.auth.{Account, AuthMode, Role}
+import com.mohiva.play.silhouette.test.FakeAuthenticator
+import de.frosner.broccoli.auth.{Account, AuthMode, DefaultEnv, Role}
 import de.frosner.broccoli.http.ToHTTPResult
 import de.frosner.broccoli.instances.{InstanceNotFoundException, NomadInstances, PeriodicJobNotFoundException}
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad
 import de.frosner.broccoli.services.{InstanceService, SecurityService}
-import jp.t2v.lab.play2.auth.test.{Helpers => AuthHelpers}
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalacheck.Gen
@@ -20,29 +20,36 @@ import org.specs2.ScalaCheck
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mock.Mockito
 import play.api.Environment
-import play.api.cache.CacheApi
+import play.api.cache.SyncCacheApi
 import play.api.http.HeaderNames
 import play.api.libs.json._
 import play.api.test._
+import play.api.test.Helpers._
+import com.mohiva.play.silhouette.test._
 
-import scala.concurrent.Future
 import scala.util.{Failure, Success}
+import scala.concurrent.{ExecutionContext, Future}
 
-class InstanceControllerSpec
+class InstanceControllerSpec(implicit ee: ExecutionEnv)
     extends PlaySpecification
     with Mockito
     with AuthUtils
     with ScalaCheck
     with nomad.ModelArbitraries
     with ModelArbitraries
-    with ToHTTPResult.ToToHTTPResultOps
-    with AuthHelpers {
+    with ToHTTPResult.ToToHTTPResultOps {
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
 
   val accountWithRegex = Account(
     name = "user",
     instanceRegex = "^matching-.*",
+    role = Role.Administrator
+  )
+
+  val admin = Account(
+    name = "user",
+    instanceRegex = ".*",
     role = Role.Administrator
   )
 
@@ -99,14 +106,17 @@ class InstanceControllerSpec
   "list" should {
 
     "list all instances" in new WithApplication {
-      implicit val account: Account = Account.anonymous
-      testWithAllAuths { securityService =>
+      implicit val account: Account = Account("user", ".*", Role.Administrator)
+      testWithAllAuths { (securityService: SecurityService, account: Account) =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService,
           cacheApi = cacheApi,
           playEnv = playEnv,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.list(None)
@@ -124,14 +134,17 @@ class InstanceControllerSpec
           )
         )
       )
-      implicit val account: Account = Account.anonymous
-      testWithAllAuths { securityService =>
+      implicit val account = admin
+      testWithAllAuths { (securityService, account) =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances ++ List(notMatchingInstance)),
           securityService = securityService,
           cacheApi = cacheApi,
           playEnv = playEnv,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.list(Some(instanceWithStatus.instance.template.id))
@@ -145,13 +158,16 @@ class InstanceControllerSpec
       // TODO helper function to test against multiple roles (allowed and not allowed ones)
       testWithAllAuths {
         operator
-      } { securityService =>
+      } { (securityService, account) =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService,
           cacheApi = cacheApi,
           playEnv = playEnv,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(operator),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.list(Some(instanceWithStatus.instance.template.id))
@@ -165,13 +181,16 @@ class InstanceControllerSpec
       // TODO helper function to test against multiple roles (allowed and not allowed ones)
       testWithAllAuths {
         user
-      } { securityService =>
+      } { (securityService, account) =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService,
           cacheApi = cacheApi,
           playEnv = playEnv,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.list(Some(instanceWithStatus.instance.template.id))
@@ -190,13 +209,16 @@ class InstanceControllerSpec
       implicit val account: Account = accountWithRegex
       testWithAllAuths {
         accountWithRegex
-      } { securityService =>
+      } { (securityService, account) =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances ++ List(matchingInstance)),
           securityService = securityService,
           cacheApi = cacheApi,
           playEnv = playEnv,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.list(None)
@@ -211,13 +233,16 @@ class InstanceControllerSpec
   "show" should {
     implicit val account: Account = Account.anonymous
     "return the requested instance if it exists" in new WithApplication {
-      testWithAllAuths { securityService =>
+      testWithAllAuths { (securityService, account) =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService,
           cacheApi = cacheApi,
           playEnv = playEnv,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
@@ -231,13 +256,16 @@ class InstanceControllerSpec
       val notExisting = "id"
       val instanceService = withInstances(mock[InstanceService], List.empty)
       when(instanceService.getInstance(notExisting)).thenReturn(None)
-      testWithAllAuths { securityService =>
+      testWithAllAuths { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           cacheApi = cacheApi,
           playEnv = playEnv,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.show(notExisting)
@@ -250,13 +278,16 @@ class InstanceControllerSpec
       // TODO helper function (see above)
       testWithAllAuths {
         operator
-      } { securityService =>
+      } { (securityService, account) =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
@@ -270,13 +301,16 @@ class InstanceControllerSpec
       // TODO helper function (see above)
       testWithAllAuths {
         user
-      } { securityService =>
+      } { (securityService, account) =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
@@ -289,13 +323,16 @@ class InstanceControllerSpec
     "return 403 if the instance does not match the account regex" in new WithApplication {
       testWithAllAuths {
         accountWithRegex
-      } { securityService =>
+      } { (securityService, account) =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances),
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.show(instanceWithStatus.instance.id)
@@ -307,9 +344,9 @@ class InstanceControllerSpec
   }
 
   "tasks" should {
-    "return tasks from the instance service" in { implicit ee: ExecutionEnv =>
+    "return tasks from the instance service" in {
       prop { (user: Account, instanceTasks: InstanceTasks) =>
-        val login = LoginInfo(CredentialsProvider.ID, user.name)
+        val login = LoginInfo(user.name, user.name)
         val securityService = mock[SecurityService]
         securityService.authMode returns AuthMode.Conf
         securityService.authenticate(Matchers.any[Credentials]) returns Future.successful(Some(login))
@@ -319,26 +356,30 @@ class InstanceControllerSpec
 
         val instances = mock[NomadInstances]
         instances.getInstanceTasks(user)(instanceTasks.instanceId) returns EitherT.pure[Future, InstanceError](
-          instanceTasks)
+          instanceTasks)(catsStdInstancesForFuture)
 
         val controller = InstanceController(
           instances,
           mock[InstanceService],
           securityService,
-          mock[CacheApi],
-          Environment.simple()
+          mock[SyncCacheApi],
+          Environment.simple(),
+          silhouette = withIdentities(user),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
-
-        val request = FakeRequest().withBody(()).withLoggedIn(controller)(user.name)
+        implicit val implicitReq: FakeRequest[Unit] = FakeRequest().withBody(())
+        implicit val env: api.Environment[DefaultEnv] = withEnvironment(user)
+        val request = implicitReq.withAuthenticator(login)
         val result = controller.tasks(instanceTasks.instanceId)(request)
         status(result) must beEqualTo(instanceTasks.toHTTPResult.header.status)
         contentAsJson(result) must beEqualTo(contentAsJson(Future.successful(instanceTasks.toHTTPResult)))
       }.setContext(new WithApplication() {}).set(minTestsOk = 1)
     }
 
-    "return errors from the instance service" in { implicit ee: ExecutionEnv =>
+    "return errors from the instance service" in {
       prop { (instanceId: String, user: Account, error: InstanceError) =>
-        val login = LoginInfo(CredentialsProvider.ID, user.name)
+        val login = LoginInfo(user.name, user.name)
         val securityService = mock[SecurityService]
         securityService.authMode returns AuthMode.Conf
         securityService.authenticate(Matchers.any[Credentials]) returns Future.successful(Some(login))
@@ -353,10 +394,15 @@ class InstanceControllerSpec
           instances,
           mock[InstanceService],
           securityService,
-          mock[CacheApi],
-          Environment.simple()
+          mock[SyncCacheApi],
+          Environment.simple(),
+          silhouette = withIdentities(user),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
-        val request = FakeRequest().withBody(()).withLoggedIn(controller)(user.name)
+        implicit val implicitReq: FakeRequest[Unit] = FakeRequest().withBody(())
+        implicit val env: api.Environment[DefaultEnv] = withEnvironment(user)
+        val request = implicitReq.withAuthenticator(login)
 
         val result = controller.tasks(instanceId)(request)
         status(result) must beEqualTo(error.toHTTPResult.header.status)
@@ -373,8 +419,11 @@ class InstanceControllerSpec
           mock[NomadInstances],
           mock[InstanceService],
           securityService,
-          mock[CacheApi],
-          Environment.simple()
+          mock[SyncCacheApi],
+          Environment.simple(),
+          silhouette = withIdentities(operator),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
         val result = controller.tasks(instanceId)(FakeRequest().withBody(()))
         status(result) must beEqualTo(FORBIDDEN)
@@ -394,13 +443,16 @@ class InstanceControllerSpec
       )
       implicit val account: Account = Account.anonymous
       when(instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
-      testWithAllAuths { securityService =>
+      testWithAllAuths { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.create
@@ -423,13 +475,16 @@ class InstanceControllerSpec
       )
       when(instanceService.addInstance(instanceCreation)).thenReturn(Failure(new IllegalArgumentException("")))
 
-      testWithAllAuths { securityService =>
+      testWithAllAuths { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.create
@@ -451,13 +506,16 @@ class InstanceControllerSpec
       when(instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
       testWithAllAuths {
         accountWithRegex
-      } { securityService =>
+      } { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.create
@@ -480,13 +538,16 @@ class InstanceControllerSpec
 
       testWithAllAuths {
         operator
-      } { securityService =>
+      } { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.create
@@ -509,13 +570,16 @@ class InstanceControllerSpec
 
       testWithAllAuths {
         user
-      } { securityService =>
+      } { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.create
@@ -532,7 +596,6 @@ class InstanceControllerSpec
 
     "update the instance status correctly" in new WithApplication {
       val instanceService = withInstances(mock[InstanceService], List.empty)
-      implicit val account: Account = Account.anonymous
       when(
         instanceService.updateInstance(
           id = instanceWithStatus.instance.id,
@@ -542,13 +605,17 @@ class InstanceControllerSpec
           periodicJobsToStop = None
         )).thenReturn(Success(instanceWithStatus))
 
-      testWithAllAuths { securityService =>
+      implicit val account = admin
+      testWithAllAuths { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -569,7 +636,7 @@ class InstanceControllerSpec
 
     "update the instance parameters correctly" in new WithApplication {
       val instanceService = withInstances(mock[InstanceService], List.empty)
-      implicit val account: Account = Account.anonymous
+      implicit val account = admin
       when(
         instanceService.updateInstance(
           id = instanceWithStatus.instance.id,
@@ -582,13 +649,16 @@ class InstanceControllerSpec
           periodicJobsToStop = None
         )).thenReturn(Success(instanceWithStatus))
 
-      testWithAllAuths { securityService =>
+      testWithAllAuths { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -609,7 +679,7 @@ class InstanceControllerSpec
 
     "update the instance template correctly" in new WithApplication {
       val instanceService = withInstances(mock[InstanceService], List.empty)
-      implicit val account: Account = Account.anonymous
+      implicit val account = admin
       when(
         instanceService.updateInstance(
           id = instanceWithStatus.instance.id,
@@ -619,13 +689,16 @@ class InstanceControllerSpec
           periodicJobsToStop = None
         )).thenReturn(Success(instanceWithStatus))
 
-      testWithAllAuths { securityService =>
+      testWithAllAuths { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -647,7 +720,7 @@ class InstanceControllerSpec
     "stop periodic jobs correctly" in new WithApplication {
       val instanceService = withInstances(mock[InstanceService], List.empty)
       val periodicJobName = instanceWithStatus.instance.id + "/periodic-1518101460"
-      implicit val account: Account = Account.anonymous
+      implicit val account = admin
       when(
         instanceService.updateInstance(
           id = instanceWithStatus.instance.id,
@@ -657,13 +730,16 @@ class InstanceControllerSpec
           periodicJobsToStop = Some(List(periodicJobName))
         )).thenReturn(Success(instanceWithStatus))
 
-      testWithAllAuths { securityService =>
+      testWithAllAuths { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -694,13 +770,16 @@ class InstanceControllerSpec
           periodicJobsToStop = Some(List(periodicJobName))
         )).thenReturn(Failure(PeriodicJobNotFoundException(instanceWithStatus.instance.id, periodicJobName)))
 
-      testWithAllAuths { securityService =>
+      testWithAllAuths { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -722,13 +801,16 @@ class InstanceControllerSpec
       val instanceService = withInstances(mock[InstanceService], List.empty)
       val periodicJobName = instanceWithStatus.instance.id + "/periodic-1518101460"
 
-      testWithAllAuths(user) { securityService =>
+      testWithAllAuths(user) { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -757,13 +839,16 @@ class InstanceControllerSpec
           periodicJobsToStop = None
         )).thenReturn(Failure(InstanceNotFoundException(instanceWithStatus.instance.id)))
 
-      testWithAllAuths { securityService =>
+      testWithAllAuths { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -794,13 +879,16 @@ class InstanceControllerSpec
 
       testWithAllAuths {
         accountWithRegex
-      } { securityService =>
+      } { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -821,13 +909,16 @@ class InstanceControllerSpec
     "fail if the request is an empty object" in new WithApplication {
       val instanceService = withInstances(mock[InstanceService], List.empty)
 
-      testWithAllAuths { securityService =>
+      testWithAllAuths { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -848,13 +939,16 @@ class InstanceControllerSpec
     "not allow instance status updates if not running in admin or operator mode" in new WithApplication {
       val instanceService = withInstances(mock[InstanceService], List.empty)
 
-      testWithAllAuths(user) { securityService =>
+      testWithAllAuths(user) { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -875,13 +969,16 @@ class InstanceControllerSpec
     "not allow instance parameter updates if not running in administrator mode" in new WithApplication {
       val instanceService = withInstances(mock[InstanceService], List.empty)
 
-      val operatorMatchers = testWithAllAuths(operator) { securityService =>
+      val operatorMatchers = testWithAllAuths(operator) { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -898,13 +995,16 @@ class InstanceControllerSpec
       } { (controller, result) =>
         status(result) must be equalTo 403
       }
-      val userMatchers = testWithAllAuths(user) { securityService =>
+      val userMatchers = testWithAllAuths(user) { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -927,13 +1027,16 @@ class InstanceControllerSpec
     "not allow template updates if not running in administrator mode" in new WithApplication {
       val instanceService = withInstances(mock[InstanceService], List.empty)
 
-      val operatorMatchers = testWithAllAuths(operator) { securityService =>
+      val operatorMatchers = testWithAllAuths(operator) { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           cacheApi = cacheApi,
           playEnv = playEnv,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -949,13 +1052,16 @@ class InstanceControllerSpec
       } { (controller, result) =>
         status(result) must be equalTo 403
       }
-      val userMatchers = testWithAllAuths(user) { securityService =>
+      val userMatchers = testWithAllAuths(user) { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           cacheApi = cacheApi,
           playEnv = playEnv,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.update(instanceWithStatus.instance.id)
@@ -980,16 +1086,18 @@ class InstanceControllerSpec
 
     "delete the instance correctly" in new WithApplication {
       val instanceService = withInstances(mock[InstanceService], instances)
-      implicit val account: Account = Account.anonymous
       when(instanceService.deleteInstance(instanceWithStatus.instance.id)).thenReturn(Success(instanceWithStatus))
-
-      testWithAllAuths { securityService =>
+      implicit val account = admin
+      testWithAllAuths { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           cacheApi = cacheApi,
           playEnv = playEnv,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
@@ -1004,13 +1112,16 @@ class InstanceControllerSpec
       when(instanceService.deleteInstance(instanceWithStatus.instance.id))
         .thenReturn(Failure(InstanceNotFoundException(instanceWithStatus.instance.id)))
 
-      testWithAllAuths { securityService =>
+      testWithAllAuths { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
@@ -1024,13 +1135,16 @@ class InstanceControllerSpec
       when(instanceService.deleteInstance(instanceWithStatus.instance.id))
         .thenReturn(Failure(new Exception("")))
 
-      testWithAllAuths { securityService =>
+      testWithAllAuths { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
@@ -1045,13 +1159,16 @@ class InstanceControllerSpec
 
       testWithAllAuths {
         accountWithRegex
-      } { securityService =>
+      } { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
@@ -1063,26 +1180,32 @@ class InstanceControllerSpec
     "should only be allowed in administrator mode" in new WithApplication {
       val instanceService = withInstances(mock[InstanceService], instances)
 
-      val operatorMatcher = testWithAllAuths(operator) { securityService =>
+      val operatorMatcher = testWithAllAuths(operator) { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)
       }(_.withBody(())) { (controller, result) =>
         status(result) must be equalTo 403
       }
-      val userMatcher = testWithAllAuths(user) { securityService =>
+      val userMatcher = testWithAllAuths(user) { (securityService, account) =>
         InstanceController(
           instanceService = instanceService,
           securityService = securityService,
           playEnv = playEnv,
           cacheApi = cacheApi,
-          instances = mock[NomadInstances]
+          instances = mock[NomadInstances],
+          silhouette = withIdentities(account),
+          controllerComponents = stubControllerComponents(),
+          executionContext = ExecutionContext.global
         )
       } { controller =>
         controller.delete(instanceWithStatus.instance.id)

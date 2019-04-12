@@ -1,11 +1,14 @@
 package de.frosner.broccoli.controllers
 
+import de.frosner.broccoli.auth.{Account, Role}
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.services.{TemplateService}
+import de.frosner.broccoli.services.TemplateService
 import play.api.test.{PlaySpecification, WithApplication}
 import org.mockito.Mockito._
 import play.api.libs.json._
-import org.specs2.concurrent.ExecutionEnv
+import play.api.test.Helpers.stubControllerComponents
+
+import scala.concurrent.ExecutionContext
 
 class TemplateControllerSpec extends PlaySpecification with AuthUtils {
 
@@ -28,12 +31,15 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
         )
       )
 
-      testWithAllAuths { securityService =>
+      testWithAllAuths { (securityService, account) =>
         TemplateController(
           withTemplates(mock[TemplateService], List(template)),
           securityService,
           playEnv,
-          cacheApi
+          cacheApi,
+          stubControllerComponents(),
+          ExecutionContext.global,
+          withIdentities(account)
         )
       } { controller =>
         controller.list
@@ -79,12 +85,15 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
         )
       )
 
-      testWithAllAuths { securityService =>
+      testWithAllAuths { (securityService, account) =>
         TemplateController(
           withTemplates(mock[TemplateService], List(template)),
           securityService,
           playEnv,
-          cacheApi
+          cacheApi,
+          stubControllerComponents(),
+          ExecutionContext.global,
+          withIdentities(account)
         )
       } { controller =>
         controller.show("id")
@@ -114,12 +123,15 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
       val templateService = mock[TemplateService]
       when(templateService.template("id")).thenReturn(None)
 
-      testWithAllAuths { securityService =>
+      testWithAllAuths { (securityService, account) =>
         TemplateController(
           templateService,
           securityService,
           playEnv,
-          cacheApi
+          cacheApi,
+          stubControllerComponents(),
+          ExecutionContext.global,
+          withIdentities(account)
         )
       } { controller =>
         controller.show("id")

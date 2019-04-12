@@ -44,11 +44,13 @@ case class SecurityController @Inject()(
   }
 
   def login: Action[AnyContent] = Action.async { implicit request =>
-    getSessionId(request).map(maybeId =>
+    getSessionId(request).map { maybeId =>
       maybeId.map(id => (id, webSocketService.closeConnections(id))) match {
-        case Some((id, true)) => log.info(s"Removing websocket connection of $id due to another login")
-        case _                =>
-    })
+        case Some((id, true))  => log.info(s"Removing websocket connection of $id due to another login")
+        case Some((id, false)) => log.info(s"No connection found for session $id.")
+        case _                 =>
+      }
+    }
     (for {
       credentials <- EitherT.fromEither[Future](
         loginForm.bindFromRequest().fold(Function.const(Results.BadRequest.asLeft), _.asRight))
@@ -70,18 +72,22 @@ case class SecurityController @Inject()(
 
   def logout = silhouette.SecuredAction.async(parse.empty) { implicit request =>
     env.eventBus.publish(LogoutEvent(request.identity, request))
-    env.authenticatorService
-      .discard(request.authenticator, Ok(JsString("Logout successful!")))
-      .andThen {
-        case Failure(t) =>
-          log.error("Failed to logout", t)
-        case Success(r) =>
-          getSessionId(request).map(maybeId =>
-            maybeId.map(id => (id, webSocketService.closeConnections(id))) match {
-              case Some((id, true))  => log.info(s"Removing websocket connection of $id due to logout")
-              case Some((id, false)) => log.info(s"There was no websocket connection for session $id")
-              case None              => log.info(s"No session available to logout from")
-          })
+    // Get the sessionId before removing it
+    getSessionId(request)
+      .flatMap { maybeSessionId =>
+        env.authenticatorService
+          .discard(request.authenticator, Ok(JsString("Logout successful!")))
+          .andThen {
+            case Failure(t) =>
+              log.error("Failed to logout", t)
+            case Success(r) =>
+              log.info("Successfully logged out")
+              maybeSessionId.map(id => (id, webSocketService.closeConnections(id))) match {
+                case Some((id, true))  => log.info(s"Removing websocket connection of $id due to logout")
+                case Some((id, false)) => log.info(s"There was no websocket connection for session $id")
+                case None              => log.info(s"No session available to logout from")
+              }
+          }
       }
   }
 

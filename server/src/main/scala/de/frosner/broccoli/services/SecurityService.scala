@@ -31,13 +31,10 @@ case class SecurityService @Inject()(
 
   private val log = play.api.Logger(getClass)
 
-  val sessionTimeoutInSeconds: Int = configuration.session.timeout.toSeconds.toInt
-
   val allowedFailedLogins: Int = configuration.allowedFailedLogins
 
   val authMode: AuthMode = configuration.mode
 
-  val cookieSecure: Boolean = configuration.cookie.secure
   val allowMultiLogin: Boolean = configuration.session.allowMultiLogin
 
   @volatile

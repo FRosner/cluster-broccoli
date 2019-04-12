@@ -1,8 +1,8 @@
 package de.frosner.broccoli.nomad
 
 import cats.instances.future._
-import com.netaporter.uri.Uri
-import com.netaporter.uri.dsl._
+import io.lemonlabs.uri.Url
+import io.lemonlabs.uri.dsl._
 import de.frosner.broccoli.nomad.models.{Allocation, Job, WithId}
 import de.frosner.broccoli.test.contexts.WSClientContext
 import de.frosner.broccoli.test.contexts.docker.BroccoliDockerContext
@@ -10,7 +10,6 @@ import de.frosner.broccoli.test.contexts.docker.BroccoliTestService.{Broccoli, N
 import org.scalacheck.Gen
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
-import org.specs2.specification.mutable.ExecutionEnvironment
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
 
@@ -18,11 +17,10 @@ import scala.collection.immutable
 import scala.concurrent.blocking
 import scala.concurrent.duration._
 
-class NomadHttpClientIntegrationSpec
+class NomadHttpClientIntegrationSpec(ee: ExecutionEnv)
     extends Specification
     with WSClientContext
-    with BroccoliDockerContext
-    with ExecutionEnvironment {
+    with BroccoliDockerContext {
 
   /**
     * Start Broccoli and Nomad for our tests.  We need Broccoli to spawn instances, and Nomad to test the client.
@@ -32,12 +30,12 @@ class NomadHttpClientIntegrationSpec
 
   private val broccoliApi = "http://localhost:9000/api/v1"
 
-  override def is(implicit executionEnv: ExecutionEnv): Any =
+  override def is =
     "The NomadHttpClient" should {
       "get allocations for a running nomad job" >> { wsClient: WSClient =>
         // Generate a random identifier for the instance
         val identifier = Gen.resize(10, Gen.identifier).sample.get
-        val client = new NomadHttpClient(Uri.parse("http://localhost:4646"), "NOMAD_BROCCOLI_TOKEN", wsClient)
+        val client = new NomadHttpClient(Url.parse("http://localhost:4646"), "NOMAD_BROCCOLI_TOKEN", wsClient)
         (for {
           // Create and start a simple instance to look at it's allocations
           _ <- wsClient

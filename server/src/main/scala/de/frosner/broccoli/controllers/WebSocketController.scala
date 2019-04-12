@@ -1,7 +1,6 @@
 package de.frosner.broccoli.controllers
 
-import akka.stream.javadsl.Sink
-import akka.stream.scaladsl.{Flow, Source}
+import akka.stream.scaladsl.{Flow, Sink, Source}
 import javax.inject.Inject
 import cats.data.EitherT
 import cats.implicits._
@@ -11,7 +10,6 @@ import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.websocket.{IncomingMessage, OutgoingMessage, WebSocketMessageHandler}
 import play.api.cache.SyncCacheApi
-import play.api.libs.iteratee._
 import play.api.libs.iteratee.streams.IterateeStreams
 import play.api.libs.json._
 import play.api.mvc._
@@ -47,34 +45,31 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
       log.info(s"New connection $connectionLogString")
 
       // TODO receive string and try json decoding here because I can handle the error better
-      val iteratee = Enumeratee.mapM[Msg] { incomingMessage =>
-        EitherT
-          .fromEither[Future](Json.fromJson[IncomingMessage](incomingMessage).asEither)
-          .leftMap[OutgoingMessage] { jsonErrors =>
-            log.warn(s"Can't parse a message from $connectionId: $jsonErrors")
-            OutgoingMessage.Error(s"Failed to parse message message: $jsonErrors")
-          }
-          .semiflatMap { incomingMessage =>
-            // Catch all exceptions from the message handler and map them to a generic error message to send over the
-            // websocket, to prevent the Enumeratee from stopping at the failure, causing the websocket to be closed and
-            // preventing all future messages.
-            messageHandler.processMessage(user)(incomingMessage).recover {
-              case exception =>
-                log.error(s"Message handler threw exception for message $incomingMessage: ${exception.getMessage}",
-                          exception)
-                OutgoingMessage.Error("Unexpected error in message handler")
+      val sink =
+        Sink.foreachAsync[Msg](Runtime.getRuntime.availableProcessors()) { incomingMessage =>
+          EitherT
+            .fromEither[Future](Json.fromJson[IncomingMessage](incomingMessage).asEither)
+            .leftMap[OutgoingMessage] { jsonErrors =>
+              log.warn(s"Can't parse a message from $connectionId: $jsonErrors")
+              OutgoingMessage.Error(s"Failed to parse message message: $jsonErrors")
             }
-          }
-          .merge
-      } transform Iteratee
-        .foreach[OutgoingMessage](msg => webSocketService.send(connectionId, Json.toJson(msg)))
-        .map { _ =>
-          webSocketService.closeConnections(connectionId)
-          log.info(s"Closed connection $connectionLogString")
+            .semiflatMap { incomingMessage =>
+              // Catch all exceptions from the message handler and map them to a generic error message to send over the
+              // websocket, to prevent the Enumeratee from stopping at the failure, causing the websocket to be closed and
+              // preventing all future messages.
+              messageHandler.processMessage(user)(incomingMessage).recover {
+                case exception =>
+                  log.error(s"Message handler threw exception for message $incomingMessage: ${exception.getMessage}",
+                            exception)
+                  OutgoingMessage.Error("Unexpected error in message handler")
+              }
+            }
+            .merge
+            .map { outgoingMessage =>
+              log.debug("Outgoing: " + Json.toJson(outgoingMessage))
+              webSocketService.send(connectionId, Json.toJson(outgoingMessage))
+            }
         }
-      val (subscriber, _) = IterateeStreams.iterateeToSubscriber(iteratee)
-      val in = Sink.fromSubscriber[Msg](subscriber)
-
       val aboutSource = Source.single[Msg](
         Json.toJson(
           OutgoingMessage.AboutInfoMsg(AboutController.about(aboutService, user))
@@ -88,8 +83,15 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
           OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService), user)
         ))
       val connectionSource = Source.fromPublisher(IterateeStreams.enumeratorToPublisher(connectionEnumerator))
-
-      Flow.fromSinkAndSource(in, aboutSource.concat(templateSource).concat(instanceSource).concat(connectionSource))
+      Flow
+        .fromSinkAndSource(sink, aboutSource.concat(templateSource).concat(instanceSource).concat(connectionSource))
+        .watchTermination()((_, done) =>
+          done.onComplete { _ =>
+            // TODO: The termination function executes twice. Once for source and once for sink
+            // TODO: This is not harmful but can we fix this?
+            webSocketService.closeConnections(connectionId)
+            log.info(s"Closed connection $connectionLogString")
+        })
     }
 
   def socket: WebSocket = WebSocket.acceptOrResult[Msg, Msg](requestToSocket)

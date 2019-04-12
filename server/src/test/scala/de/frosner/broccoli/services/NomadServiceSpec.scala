@@ -9,13 +9,13 @@ import de.frosner.broccoli.nomad.NomadConfiguration
 import de.frosner.broccoli.nomad.models.Job.jobFormat
 import de.frosner.broccoli.nomad.models._
 import org.specs2.mutable.Specification
-import play.api.{BuiltInComponents, Mode}
+import play.api.{BuiltInComponents, Mode, NoHttpFiltersComponents}
 import play.api.libs.json._
 import play.api.mvc._
 import play.api.routing.Router
 import play.api.routing.sird._
 import play.api.test._
-import play.core.server.{NettyServerComponents, Server, ServerConfig}
+import play.core.server.{AkkaHttpServerComponents, Server, ServerConfig}
 import squants.information.InformationConversions._
 import squants.time.FrequencyConversions._
 
@@ -118,7 +118,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
 
       // test server for client node running nomad
       val server =
-        new NettyServerComponents with BuiltInComponents {
+        new AkkaHttpServerComponents with BuiltInComponents with NoHttpFiltersComponents {
           lazy val router: Router = Router.from {
             case GET(p"/v1/client/stats") =>
               Action {

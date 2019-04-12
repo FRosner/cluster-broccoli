@@ -28,10 +28,6 @@ trait AuthConfig {
 
   val idTag: ClassTag[Id] = scala.reflect.classTag[Id]
 
-  val sessionTimeoutInSeconds = securityService.sessionTimeoutInSeconds
-
-  val cookieSecure = securityService.cookieSecure
-
   def resolveUser(id: Id): Future[Option[User]] =
     securityService.identityService.retrieve(LoginInfo(CredentialsProvider.ID, id))
 

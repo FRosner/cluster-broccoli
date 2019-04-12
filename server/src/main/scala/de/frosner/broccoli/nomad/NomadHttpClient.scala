@@ -196,7 +196,8 @@ class NomadHttpClient(
     val nodeAddress: Url = parseNodeAddress(node.httpAddress)
     nodeAddress.hostOption
       .map(host => nodeAddress.port.map(port => v1.withHost(host).withPort(port)).getOrElse(v1.withHost(host)))
-      .map(new NodeClient(_)).getOrElse(new NodeClient(v1))
+      .map(new NodeClient(_))
+      .getOrElse(new NodeClient(v1))
   }
 
   /**
