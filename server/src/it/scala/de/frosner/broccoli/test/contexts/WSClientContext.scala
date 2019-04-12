@@ -4,7 +4,6 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import org.specs2.execute.{AsResult, Result}
 import org.specs2.specification.ForEach
-import org.specs2.specification.mutable.ExecutionEnvironment
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSClient
 
@@ -14,7 +13,6 @@ import play.api.libs.ws.ahc.AhcWSClient
   * Requires the ExecutionEnvironment to be mixed in.
   */
 trait WSClientContext extends ForEach[WSClient] {
-  self: ExecutionEnvironment =>
 
   override protected def foreach[R: AsResult](f: (WSClient) => R): Result = {
     implicit val actorSystem = ActorSystem("nomad-http-client")

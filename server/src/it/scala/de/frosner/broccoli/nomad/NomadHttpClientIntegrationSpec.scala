@@ -17,7 +17,7 @@ import scala.collection.immutable
 import scala.concurrent.blocking
 import scala.concurrent.duration._
 
-class NomadHttpClientIntegrationSpec(ee: ExecutionEnv)
+class NomadHttpClientIntegrationSpec(implicit ee: ExecutionEnv)
     extends Specification
     with WSClientContext
     with BroccoliDockerContext {
