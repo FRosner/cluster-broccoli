@@ -5,7 +5,7 @@ check_service() {
     url=${2:-localhost}
     port=${3:-9000}
     echo "checking service at $scheme://$url:$port"
-    attemp_counter=0
+    attempt_counter=0
     max_attempts=${BROCCOLI_TIMEOUT_ATTEMPTS:-10}
     until $(curl --output /dev/null --silent --head --fail $scheme://$url:$port); do
     if [[ ${attempt_counter} -eq ${max_attempts} ]];then
