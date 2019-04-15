@@ -1,4 +1,6 @@
 #!/bin/bash
+source $(dirname "$0")/../../common.sh
+
 curl -H 'Content-Type: application/json' \
   -X POST -d '{ "templateId": "http-server", "parameters": { "id": "test-http" } }' \
   'http://localhost:9000/api/v1/instances'
@@ -12,4 +14,4 @@ docker run --rm -d --net host \
   cluster-broccoli \
   -Dconfig.file=/couchdb.conf > cluster-broccoli.did
 sleep $BROCCOLI_SLEEP_MEDIUM
-curl -s localhost:9000 > /dev/null && echo "Broccoli started successfully" || echo "Broccoli did not start, yet"
+check_service http localhost 9000

@@ -1,4 +1,5 @@
 #!/bin/bash
+source $(dirname "$0")/../../common.sh
 curl -H 'Content-Type: application/json' \
   -X POST -d '{ "templateId": "http-server", "parameters": { "id": "test-http" } }' \
   'http://localhost:9000/api/v1/instances'
@@ -12,3 +13,4 @@ docker run --rm -d --net host \
   frosner/cluster-broccoli-test \
   cluster-broccoli > cluster-broccoli.did
 sleep $BROCCOLI_SLEEP_MEDIUM
+check_service http localhost 9000
