@@ -26,6 +26,7 @@ lazy val server = project
       Dependencies.jinJava,
       Dependencies.ficus,
       ws,
+      guice,
       ehcache,
       specs2 % Test,
       specs2 % IntegrationTest,
