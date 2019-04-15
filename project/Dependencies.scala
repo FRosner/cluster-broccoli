@@ -2,10 +2,8 @@ import sbt._
 
 object Dependencies {
   object Versions {
-    // Note: Do not update to 1.13.x; specs2-scalacheck 3.6.6 requires Scalacheck 1.12.5 and does not work with 1.13.x
     val scalacheck = "1.14.0"
 
-    // Note: Do not update; play2-specs requires specs2 3.6.6 and throws exceptions with newer versions
     val specs2 = "4.4.1"
 
     val cats = "1.6.0"
@@ -122,11 +120,6 @@ object Dependencies {
     * Jinja templating engine implemented in Java
     */
   val jinJava: ModuleID = "com.hubspot.jinjava" % "jinjava" % "2.2.9"
-
-  /**
-    * Mustache template rendering implemented in Scala
-    */
-  val scalate: ModuleID = "org.scalatra" %% "scalatra" % "2.6.4"
 
   /**
     * Ficus is a lightweight companion to Typesafe config that makes it more Scala-friendly.
