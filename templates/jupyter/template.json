@@ -93,8 +93,8 @@
             }
         ],
         "Update": {
-            "Stagger": 0,
-            "MaxParallel": 0
+            "Stagger": 10000000,
+            "MaxParallel": 1
         },
         "Periodic": null,
         "Meta": null,
