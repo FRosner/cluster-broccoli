@@ -12,7 +12,8 @@ import play.api.{Configuration, Logger}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Try}
+import scala.collection.JavaConversions._
 
 @Singleton()
 class ConsulService @Inject()(configuration: Configuration, ws: WSClient)(implicit ec: ExecutionContext) {
@@ -26,23 +27,38 @@ class ConsulService @Inject()(configuration: Configuration, ws: WSClient)(implic
     val lookupMethod = configuration.getString(conf.CONSUL_LOOKUP_METHOD_KEY).getOrElse(conf.CONSUL_LOOKUP_METHOD_IP)
     lookupMethod match {
       case conf.CONSUL_LOOKUP_METHOD_DNS => {
-        val requestUrl = consulBaseUrl + "/v1/agent/self"
-        logExecutionTime(s"GET $requestUrl") {
-          val request = ws.url(requestUrl)
-          val response = request.get().map(_.json.as[JsObject])
-          val eventuallyConsulDomain = response.map { jsObject =>
-            (jsObject \ "Config" \ "Domain").get.as[JsString].value.stripSuffix(".")
-          }
-          val tryConsulDomain = Try(Await.result(eventuallyConsulDomain, Duration(5, TimeUnit.SECONDS))).recoverWith {
-            case throwable =>
-              log.warn(
-                s"Cannot reach Consul to read the configuration from $requestUrl, falling back to IP based lookup: $throwable")
-              Failure(throwable)
-          }
-          tryConsulDomain.foreach(domain =>
-            log.info(s"Advertising Consul entities through DNS using '$domain' as the domain."))
-          tryConsulDomain.toOption
-        }(log.info(_))
+        configuration
+          .getString(conf.CONSUL_DOMAIN_URL_KEY)
+          .flatMap(url => configuration.getStringList(conf.CONSUL_DOMAIN_PATH_KEY).map((url, _))) match {
+          case Some((domainUrl, domainPath)) =>
+            assert(domainPath.nonEmpty, "Domain path must have at least length one for fetching the key")
+            val requestUrl = consulBaseUrl + domainUrl
+            logExecutionTime(s"GET $requestUrl") {
+              val request = ws.url(requestUrl)
+              val response = request.get().map(_.json.as[JsObject])
+              val eventuallyConsulDomain = response.map { jsObject =>
+                domainPath.tail
+                  .foldLeft(jsObject \ domainPath.head)((result, path) => result \ path)
+                  .get
+                  .as[JsString]
+                  .value
+                  .stripSuffix(".")
+              }
+              val tryConsulDomain =
+                Try(Await.result(eventuallyConsulDomain, Duration(5, TimeUnit.SECONDS))).recoverWith {
+                  case throwable =>
+                    log.warn(
+                      s"Cannot reach Consul to read the configuration from $requestUrl, falling back to IP based lookup: $throwable")
+                    Failure(throwable)
+                }
+              tryConsulDomain.foreach(domain =>
+                log.info(s"Advertising Consul entities through DNS using '$domain' as the domain."))
+              tryConsulDomain.toOption
+            }(log.info(_))
+          case None =>
+            log.warn(s"Cannot read configuration domain-url or domain-path")
+            None
+        }
       }
       case conf.CONSUL_LOOKUP_METHOD_IP =>
         log.info("Advertising Consul entities through IP addresses.")

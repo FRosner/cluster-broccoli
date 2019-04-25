@@ -46,7 +46,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val configuration = NomadConfiguration(url = s"http://localhost:$port")
+          val configuration = NomadConfiguration(url = s"http://localhost:$port", "NOMAD_BROCCOLI_TOKEN", false, "oe")
           val nomadService = new NomadService(configuration, client)
           val result = Await.result(nomadService.requestServices(jobId), Duration(5, TimeUnit.SECONDS))
           result === Seq(service.name)
@@ -73,7 +73,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val configuration = NomadConfiguration(url = s"http://localhost:$port")
+          val configuration = NomadConfiguration(url = s"http://localhost:$port", "NOMAD_BROCCOLI_TOKEN", false, "oe")
           val nomadService = new NomadService(configuration, client)
           val result = Await.result(nomadService.requestServices(jobId), Duration(5, TimeUnit.SECONDS))
           result === Seq(service1.name)
@@ -97,6 +97,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
               AllocatedResources(
                 id = "51f1cfce-0a77-6bc5-57d4-1ffc98c7ac29",
                 name = "nooe-vault.nooe-vault[0]",
+                namespace = None,
                 cpu = 500,
                 memoryMB = 1024,
                 diskMB = 300
@@ -518,7 +519,7 @@ class NomadServiceSpec extends Specification with ServiceMocks {
           }
       } { implicit port =>
         WsTestClient.withClient { client =>
-          val configuration = NomadConfiguration(url = s"http://localhost:$port")
+          val configuration = NomadConfiguration(url = s"http://localhost:$port", "NOMAD_BROCCOLI_TOKEN", false, "oe")
           val nomadService = new NomadService(configuration, client)
           val result =
             Await.result(nomadService.getNodeResources(new Account("nooe-admin", "nooe-*", Role.Administrator)),

@@ -1,5 +1,11 @@
 FROM java:8
 
+# Fix for java:8 image
+RUN echo "deb http://cdn-fastly.deb.debian.org/debian jessie main" > /etc/apt/sources.list.d/jessie.list
+RUN echo 'deb http://archive.debian.org/debian jessie-backports main' > /etc/apt/sources.list.d/jessie-backports.list
+RUN sed -i '/deb http:\/\/deb.debian.org\/debian jessie-updates main/d' /etc/apt/sources.list
+RUN echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/05validnocheck
+
 # install docker libraries
 RUN apt-get update && \
   apt-get install -y apt-transport-https ca-certificates && \
@@ -29,3 +35,4 @@ ADD couchdb.conf /couchdb.conf
 ADD templates /cluster-broccoli-dist/templates
 RUN mkdir /cluster-broccoli-dist/instances
 RUN ln -s /cluster-broccoli-dist/bin/cluster-broccoli /usr/bin/cluster-broccoli
+

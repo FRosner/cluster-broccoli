@@ -27,11 +27,11 @@
           "Driver": "raw_exec",
           "User": "",
           "Config": {
+            "command": "/usr/bin/python",
             "args": [
               "-m",
               "SimpleHTTPServer"
-            ],
-            "command": "/usr/bin/python"
+            ]
           },
           "Env": null,
           "Services": [
@@ -110,8 +110,8 @@
     }
   ],
   "Update": {
-    "Stagger": 0,
-    "MaxParallel": 0
+    "Stagger": 10000000,
+    "MaxParallel": 1
   },
   "Periodic": null,
   "Meta": null,

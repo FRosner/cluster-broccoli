@@ -2,6 +2,7 @@ package de.frosner.broccoli.models
 
 import de.frosner.broccoli.RemoveSecrets
 import de.frosner.broccoli.auth.Account
+import de.frosner.broccoli.nomad.NomadConfiguration
 import play.api.libs.json._
 import play.api.libs.json.JsNull
 
@@ -19,6 +20,12 @@ case class Instance(id: String, template: Template, parameterValues: Map[String,
         s"need to match the ones in the template (${template.parameters}) (instance id $id)."
     )
   }
+
+  def namespace(implicit nomadConfiguration: NomadConfiguration): Option[String] =
+    parameterValues.get(nomadConfiguration.namespaceVariable).flatMap {
+      case StringParameterValue(value) => Some(value)
+      case _                           => None
+    }
 
   requireParameterValueConsistency(parameterValues, template)
 }

@@ -37,7 +37,7 @@ class NomadHttpClientIntegrationSpec
       "get allocations for a running nomad job" >> { wsClient: WSClient =>
         // Generate a random identifier for the instance
         val identifier = Gen.resize(10, Gen.identifier).sample.get
-        val client = new NomadHttpClient(Uri.parse("http://localhost:4646"), wsClient)
+        val client = new NomadHttpClient(Uri.parse("http://localhost:4646"), "NOMAD_BROCCOLI_TOKEN", wsClient)
         (for {
           // Create and start a simple instance to look at it's allocations
           _ <- wsClient
@@ -61,7 +61,7 @@ class NomadHttpClientIntegrationSpec
               blocking(Thread.sleep(1.seconds.toMillis))
               response
             })
-          allocations <- client.getAllocationsForJob(shapeless.tag[Job.Id](identifier)).value
+          allocations <- client.getAllocationsForJob(shapeless.tag[Job.Id](identifier), None).value
         } yield {
           allocations must beRight(
             (v: WithId[immutable.Seq[Allocation]]) => (v.jobId === identifier) and (v.payload must have length 1))

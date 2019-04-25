@@ -42,6 +42,10 @@ jobs:
         - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad
         - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-nomad-consul
         - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/instance-persistence-dir
+        # TLS part, with nomad 
+        - docker build -t frosner/cluster-broccoli-test-tls -f docker/test/Dockerfiletls docker/test/
+        - sbt it:test
+        - bash <(curl -s https://raw.githubusercontent.com/ynux/http-api-tester/master/http-api-tester) -v -o ge -d http-api-tests-tls/broccoli-nomad 
     - stage: docker
       script:
         # Publish docker image
@@ -71,3 +75,4 @@ cache:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+

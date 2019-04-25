@@ -4,7 +4,7 @@ import com.hubspot.jinjava.JinjavaConfig
 import de.frosner.broccoli.controllers.ServiceMocks
 import de.frosner.broccoli.instances.storage.InstanceStorage
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.nomad.NomadClient
+import de.frosner.broccoli.nomad.{NomadClient, NomadConfiguration}
 import de.frosner.broccoli.templates.TemplateRenderer
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -14,6 +14,9 @@ import play.api.inject.ApplicationLifecycle
 class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
   val templateRenderer =
     new TemplateRenderer(JinjavaConfig.newBuilder().withFailOnUnknownTokens(true).build())
+
+  implicit val nomadConfiguration: NomadConfiguration =
+    NomadConfiguration(url = s"http://localhost:4646", "NOMAD_BROCCOLI_TOKEN", namespacesEnabled = false, "oe")
 
   val service = new InstanceService(
     nomadClient = mock[NomadClient],

@@ -25,7 +25,7 @@ trait NomadClient {
     * @param jobId The ID of the job
     * @return The job
     */
-  def getJob(jobId: String @@ Job.Id): NomadT[Job]
+  def getJob(jobId: String @@ Job.Id, namespace: Option[String]): NomadT[Job]
 
   /**
     * Get allocations for a job.
@@ -33,7 +33,8 @@ trait NomadClient {
     * @param jobId The ID of the job
     * @return The list of allocations for the job
     */
-  def getAllocationsForJob(jobId: String @@ Job.Id): NomadT[WithId[immutable.Seq[Allocation]]]
+  def getAllocationsForJob(jobId: String @@ Job.Id,
+                           namespace: Option[String]): NomadT[WithId[immutable.Seq[Allocation]]]
 
   /**
     * Get an allocation.
@@ -41,7 +42,7 @@ trait NomadClient {
     * @param id The alloction to query
     * @return The allocation or an error
     */
-  def getAllocation(id: String @@ Allocation.Id): NomadT[Allocation]
+  def getAllocation(id: String @@ Allocation.Id, namespace: Option[String]): NomadT[Allocation]
 
   /**
     * Get a node.
@@ -84,7 +85,7 @@ trait NomadNodeClient {
     * @param allocationId The ID of the allocation
     * @return The resource statistics of the allocation with the given ID.
     */
-  def getAllocationStats(allocationId: String @@ Allocation.Id): NomadT[AllocationStats]
+  def getAllocationStats(allocationId: String @@ Allocation.Id, namespace: Option[String]): NomadT[AllocationStats]
 
   /**
     * Get the log of a task on an allocation.
@@ -99,6 +100,7 @@ trait NomadNodeClient {
       allocationId: String @@ Allocation.Id,
       taskName: String @@ Task.Name,
       stream: LogStreamKind,
-      offset: Option[Quantity[Information] @@ TaskLog.Offset]
+      offset: Option[Quantity[Information] @@ TaskLog.Offset],
+      namespace: Option[String]
   ): NomadT[TaskLog]
 }
