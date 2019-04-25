@@ -1,5 +1,11 @@
 FROM java:8
 
+# Fix for java:8 image
+RUN echo "deb http://cdn-fastly.deb.debian.org/debian jessie main" > /etc/apt/sources.list.d/jessie.list
+RUN echo 'deb http://archive.debian.org/debian jessie-backports main' > /etc/apt/sources.list.d/jessie-backports.list
+RUN sed -i '/deb http:\/\/deb.debian.org\/debian jessie-updates main/d' /etc/apt/sources.list
+RUN echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/05validnocheck
+
 ENV NOMAD_VERSION 0.8.7
 # install docker libraries
 RUN apt-get update && \
