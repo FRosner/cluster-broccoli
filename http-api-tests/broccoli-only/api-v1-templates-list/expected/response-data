@@ -9,6 +9,27 @@
       "retries"
     ],
     "parameterInfos": {
+      "retries": {
+        "id": "retries",
+        "type": {
+          "name": "intList",
+          "values": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      "URL": {
+        "id": "URL",
+        "default": "localhost:8000",
+        "type": {
+          "name": "raw"
+        },
+        "orderIndex": 1
+      },
       "id": {
         "id": "id",
         "type": {
@@ -22,24 +43,9 @@
           "name": "raw"
         },
         "orderIndex": 2
-      },
-      "URL": {
-        "id": "URL",
-        "default": "localhost:8000",
-        "type": {
-          "name": "raw"
-        },
-        "orderIndex": 1
-      },
-      "retries": {
-        "id": "retries",
-        "type": {
-          "name": "intList",
-          "values": [1, 2, 3, 4, 5]
-        }
       }
     },
-    "version": "68d3dd229390c3171e6a77b836ad2406"
+    "version": "9175abf76b39a0950360470d5b1c94ee"
   },
   {
     "id": "http-server",
@@ -50,14 +56,6 @@
       "secret"
     ],
     "parameterInfos": {
-      "cpu": {
-        "id": "cpu",
-        "name": "CPU Shares",
-        "default": 100,
-        "type": {
-          "name": "integer"
-        }
-      },
       "secret": {
         "id": "secret",
         "name": "A Secret Parameter",
@@ -67,6 +65,14 @@
           "name": "decimal"
         }
       },
+      "cpu": {
+        "id": "cpu",
+        "name": "CPU Shares",
+        "default": 100,
+        "type": {
+          "name": "integer"
+        }
+      },
       "id": {
         "id": "id",
         "type": {
@@ -74,7 +80,7 @@
         }
       }
     },
-    "version": "9215ebc3b508fcc0295bffdbfe5695b2"
+    "version": "2c4c43cb791d1f4fda934c0e210d7c6d"
   },
   {
     "id": "jupyter",
@@ -90,6 +96,7 @@
         }
       }
     },
-    "version": "beb88e5f9ca22d3b2d9fa0e91c2bb255"
+    "version": "6540294bd9a0065990bf9daa5dd2824b"
   }
 ]
+

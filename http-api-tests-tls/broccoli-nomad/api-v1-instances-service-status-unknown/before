@@ -1,0 +1,9 @@
+#!/bin/bash
+curl -H 'Content-Type: application/json' \
+  -X POST -d '{ "templateId": "http-server", "parameters": { "id": "test-http" } }' \
+  'http://localhost:9000/api/v1/instances'
+sleep $BROCCOLI_SLEEP_SHORT
+curl -H 'Content-Type: application/json' \
+    -X POST -d '{ "status": "running" }' \
+    'http://localhost:9000/api/v1/instances/test-http'
+sleep $BROCCOLI_SLEEP_MEDIUM
