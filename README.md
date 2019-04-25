@@ -1,11 +1,11 @@
-# Cluster Broccoli ![Icon](https://github.com/FRosner/cluster-broccoli/raw/52dd3447343705bc2d2a76de7e19a84873d89d0c/public/images/favicon-readme.png)
+# Cluster Broccoli ![Icon](https://github.com/Data-Science-Platform/cluster-broccoli/raw/52dd3447343705bc2d2a76de7e19a84873d89d0c/public/images/favicon-readme.png)
 
-[![Build Status](https://travis-ci.org/Data-Science-Platform/cluster-broccoli.svg?branch=master)](https://travis-ci.org/FRosner/cluster-broccoli)
+[![Build Status](https://travis-ci.org/Data-Science-Platform/cluster-broccoli.svg?branch=master)](https://travis-ci.org/Data-Science-Platform/cluster-broccoli)
 [![Docker Pulls](https://img.shields.io/docker/pulls/datascienceplatform/cluster-broccoli.svg?maxAge=2592000)](https://hub.docker.com/r/datascienceplatform/cluster-broccoli/)
 
 ## Description
 
-Cluster Broccoli is a RESTful web service + UI to manage [Nomad](https://www.nomadproject.io) jobs through a self service application. Jobs are defined based on [templates](https://github.com/FRosner/cluster-broccoli/wiki/Templates), allowing for a selectable amount of customization.
+Cluster Broccoli is a RESTful web service + UI to manage [Nomad](https://www.nomadproject.io) jobs through a self service application. Jobs are defined based on [templates](https://github.com/Data-Science-Platform/cluster-broccoli/wiki/Templates), allowing for a selectable amount of customization.
 
 If you want to give your end users the possibility to create new instances of live demos of your product, while allowing them to customize it (e.g. using an embedded database or an external one, number of cores, ...) - Cluster Broccoli is for you.
 
@@ -15,7 +15,7 @@ Cluster Broccoli is meant to be setup by your IT. Some technical knowledge is re
 
 ### Web UI
 
-Cluster Broccoli comes with a minimalistic web user interface. It allows you to create, destroy, start and stop your instances based on a set of predefined templates. Please consult the documentation for a [detailed description of the Web UI](https://github.com/FRosner/cluster-broccoli/wiki/Web-UI).
+Cluster Broccoli comes with a minimalistic web user interface. It allows you to create, destroy, start and stop your instances based on a set of predefined templates. Please consult the documentation for a [detailed description of the Web UI](https://github.com/Data-Science-Platform/cluster-broccoli/wiki/Web-UI).
 
 ![image](https://user-images.githubusercontent.com/3427394/39364037-cabf4e3a-4a2c-11e8-8267-e197c8d5c0ef.png)
 
@@ -23,7 +23,7 @@ Cluster Broccoli comes with a minimalistic web user interface. It allows you to 
 
 ### HTTP API
 
-Cluster Broccoli provides a RESTful HTTP API. You can control it using curl, writing your own command line wrapper or connect from your microservices. Please consult the documentation for a [detailed description of the HTTP API](https://github.com/FRosner/cluster-broccoli/wiki/HTTP-API-v1).
+Cluster Broccoli provides a RESTful HTTP API. You can control it using curl, writing your own command line wrapper or connect from your microservices. Please consult the documentation for a [detailed description of the HTTP API](https://github.com/Data-Science-Platform/cluster-broccoli/wiki/HTTP-API-v1).
 
 ## Installation
 
@@ -47,10 +47,10 @@ It is neither supported to run multiple Broccoli instances sharing the same inst
 
 ### Using the Production Docker Image
 
-If you only need an image to run the Broccoli distribution, go with the JRE based [production-ready image](https://hub.docker.com/r/frosner/cluster-broccoli/).
+If you only need an image to run the Broccoli distribution, go with the JRE based [production-ready image](https://hub.docker.com/r/datascienceplatform/cluster-broccoli/).
 
 ```
-docker run -p 9000:9000 frosner/cluster-broccoli \
+docker run -p 9000:9000 datascienceplatform/cluster-broccoli \
   -Dbroccoli.nomad.url=<your-nomad-url> \
   -Dbroccoli.consul.url=<your-consul-url>
 ```
@@ -67,9 +67,9 @@ To build the production Docker image in a local Docker daemon run `sbt docker:pu
 ## Configuration
 
 In order to configure Cluster Broccoli, you can add key value pairs to your [configuration](https://www.playframework.com/documentation/2.5.x/Configuration).
-The following configuration properties are supported. Please refer to the [Wiki](https://github.com/FRosner/cluster-broccoli/wiki) for more information about the individual topics.
+The following configuration properties are supported. Please refer to the [Wiki](https://github.com/Data-Science-Platform/cluster-broccoli/wiki) for more information about the individual topics.
 
-See [Play configuration](https://www.playframework.com/documentation/2.5.x/Configuration) and [Broccoli's reference.conf](https://github.com/FRosner/cluster-broccoli/blob/master/server/src/main/resources/reference.conf) for available parameters and their meanings.
+See [Play configuration](https://www.playframework.com/documentation/2.5.x/Configuration) and [Broccoli's reference.conf](https://github.com/Data-Science-Platform/cluster-broccoli/blob/master/server/src/main/resources/reference.conf) for available parameters and their meanings.
 
 ### Nomad and Consul
 
