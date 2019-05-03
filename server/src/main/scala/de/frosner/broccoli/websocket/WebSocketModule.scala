@@ -2,9 +2,8 @@ package de.frosner.broccoli.websocket
 
 import com.google.inject.{AbstractModule, Provides, Singleton}
 import de.frosner.broccoli.BroccoliConfiguration
-import de.frosner.broccoli.nomad.NomadConfiguration
 import net.codingwell.scalaguice.ScalaModule
-import play.api.cache.CacheApi
+import play.api.cache.SyncCacheApi
 
 import scala.concurrent.ExecutionContext
 
@@ -37,7 +36,7 @@ class WebSocketModule extends AbstractModule with ScalaModule {
   @Singleton
   def providesCachedWebSocketMessageHandler(
       underlying: BroccoliMessageHandler,
-      cacheApi: CacheApi,
+      cacheApi: SyncCacheApi,
       webSocketConfiguration: WebSocketConfiguration,
       executionContext: ExecutionContext
   ) = new CachedBroccoliMessageHandler(underlying, cacheApi, webSocketConfiguration.cacheTimeout)(executionContext)

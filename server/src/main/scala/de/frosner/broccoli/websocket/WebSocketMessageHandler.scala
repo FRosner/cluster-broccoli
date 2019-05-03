@@ -9,8 +9,7 @@ import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.services.{InstanceService, NomadService}
 import de.frosner.broccoli.websocket.IncomingMessage._
 import de.frosner.broccoli.websocket.OutgoingMessage._
-import play.api.Logger
-import play.api.cache.CacheApi
+import play.api.cache.SyncCacheApi
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -76,7 +75,7 @@ class BroccoliMessageHandler @Inject()(
   */
 class CachedBroccoliMessageHandler @Inject()(
     underlying: BroccoliMessageHandler,
-    cache: CacheApi,
+    cache: SyncCacheApi,
     cacheTimeout: Duration
 )(implicit ec: ExecutionContext)
     extends WebSocketMessageHandler {

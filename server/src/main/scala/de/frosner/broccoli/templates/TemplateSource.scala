@@ -5,7 +5,7 @@ import de.frosner.broccoli.models.{ParameterInfo, Template}
 import scala.util.Try
 
 trait TemplateSource {
-  private val log = play.api.Logger(getClass)
+  private val _ = play.api.Logger(getClass)
 
   val templateRenderer: TemplateRenderer
 

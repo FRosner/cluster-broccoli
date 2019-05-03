@@ -1,24 +1,21 @@
 package de.frosner.broccoli.controllers
 
-import java.util.concurrent.TimeUnit
-
+import akka.stream.scaladsl.{Flow, Sink, Source}
 import javax.inject.Inject
 import cats.data.EitherT
-import cats.instances.future._
-import de.frosner.broccoli.auth.Account
+import cats.implicits._
+import com.mohiva.play.silhouette.api.Silhouette
+import de.frosner.broccoli.auth.{BroccoliWebsocketSecurity, DefaultEnv}
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.websocket.{IncomingMessage, OutgoingMessage, WebSocketMessageHandler}
-import jp.t2v.lab.play2.auth.BroccoliWebsocketSecurity
-import play.api.cache.CacheApi
-import play.api.libs.concurrent.Execution.Implicits._
-import play.api.libs.iteratee._
+import play.api.cache.SyncCacheApi
+import play.api.libs.iteratee.streams.IterateeStreams
 import play.api.libs.json._
 import play.api.mvc._
 import play.api.{Environment, Logger}
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 case class WebSocketController @Inject()(webSocketService: WebSocketService,
                                          templateService: TemplateService,
@@ -26,15 +23,18 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
                                          aboutService: AboutInfoService,
                                          nomadService: NomadService,
                                          messageHandler: WebSocketMessageHandler,
-                                         override val cacheApi: CacheApi,
+                                         override val controllerComponents: ControllerComponents,
+                                         override val silhouette: Silhouette[DefaultEnv],
+                                         override val cacheApi: SyncCacheApi,
                                          override val playEnv: Environment,
-                                         override val securityService: SecurityService)
-    extends Controller
+                                         override val securityService: SecurityService,
+                                         override implicit val executionContext: ExecutionContext)
+    extends BaseController
     with BroccoliWebsocketSecurity {
 
   protected val log = Logger(getClass)
 
-  def requestToSocket(request: RequestHeader): Future[Either[Result, (Iteratee[Msg, _], Enumerator[Msg])]] =
+  def requestToSocket(request: RequestHeader): Future[Either[Result, Flow[Msg, Msg, _]]] =
     withSecurity(request) { (maybeToken, user, request) =>
       val (connectionId, connectionEnumerator) = maybeToken match {
         case Some(token) =>
@@ -45,50 +45,55 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
       log.info(s"New connection $connectionLogString")
 
       // TODO receive string and try json decoding here because I can handle the error better
-      val in = Enumeratee.mapM[Msg] { incomingMessage =>
-        EitherT
-          .fromEither(Json.fromJson[IncomingMessage](incomingMessage).asEither)
-          .leftMap[OutgoingMessage] { jsonErrors =>
-            log.warn(s"Can't parse a message from $connectionId: $jsonErrors")
-            OutgoingMessage.Error(s"Failed to parse message message: $jsonErrors")
-          }
-          .semiflatMap { incomingMessage =>
-            // Catch all exceptions from the message handler and map them to a generic error message to send over the
-            // websocket, to prevent the Enumeratee from stopping at the failure, causing the websocket to be closed and
-            // preventing all future messages.
-            messageHandler.processMessage(user)(incomingMessage).recover {
-              case exception =>
-                log.error(s"Message handler threw exception for message $incomingMessage: ${exception.getMessage}",
-                          exception)
-                OutgoingMessage.Error("Unexpected error in message handler")
+      val sink =
+        Sink.foreachAsync[Msg](Runtime.getRuntime.availableProcessors()) { incomingMessage =>
+          EitherT
+            .fromEither[Future](Json.fromJson[IncomingMessage](incomingMessage).asEither)
+            .leftMap[OutgoingMessage] { jsonErrors =>
+              log.warn(s"Can't parse a message from $connectionId: $jsonErrors")
+              OutgoingMessage.Error(s"Failed to parse message message: $jsonErrors")
             }
-          }
-          .merge
-      } transform Iteratee
-        .foreach[OutgoingMessage](msg => webSocketService.send(connectionId, Json.toJson(msg)))
-        .map { _ =>
-          webSocketService.closeConnections(connectionId)
-          log.info(s"Closed connection $connectionLogString")
+            .semiflatMap { incomingMessage =>
+              // Catch all exceptions from the message handler and map them to a generic error message to send over the
+              // websocket, to prevent the Enumeratee from stopping at the failure, causing the websocket to be closed and
+              // preventing all future messages.
+              messageHandler.processMessage(user)(incomingMessage).recover {
+                case exception =>
+                  log.error(s"Message handler threw exception for message $incomingMessage: ${exception.getMessage}",
+                            exception)
+                  OutgoingMessage.Error("Unexpected error in message handler")
+              }
+            }
+            .merge
+            .map { outgoingMessage =>
+              log.debug("Outgoing: " + Json.toJson(outgoingMessage))
+              webSocketService.send(connectionId, Json.toJson(outgoingMessage))
+            }
         }
-
-      val aboutEnumerator =
-        Enumerator[Msg](Json.toJson(OutgoingMessage.AboutInfoMsg(AboutController.about(aboutService, user))))
-
-      val templateEnumerator = Enumerator[Msg](
+      val aboutSource = Source.single[Msg](
+        Json.toJson(
+          OutgoingMessage.AboutInfoMsg(AboutController.about(aboutService, user))
+        ))
+      val templateSource = Source.single[Msg](
         Json.toJson(
           OutgoingMessage.ListTemplates(TemplateController.list(templateService), user)
         ))
-
-      val instanceEnumerator = Enumerator[Msg](
-        Json.toJson(OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService), user)))
-
-      (in,
-       aboutEnumerator
-         .andThen(templateEnumerator)
-         .andThen(instanceEnumerator)
-         .andThen(connectionEnumerator))
+      val instanceSource = Source.single[Msg](
+        Json.toJson(
+          OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService), user)
+        ))
+      val connectionSource = Source.fromPublisher(IterateeStreams.enumeratorToPublisher(connectionEnumerator))
+      Flow
+        .fromSinkAndSource(sink, aboutSource.concat(templateSource).concat(instanceSource).concat(connectionSource))
+        .watchTermination()((_, done) =>
+          done.onComplete { _ =>
+            // TODO: The termination function executes twice. Once for source and once for sink
+            // TODO: This is not harmful but can we fix this?
+            webSocketService.closeConnections(connectionId)
+            log.info(s"Closed connection $connectionLogString")
+        })
     }
 
-  def socket: WebSocket = WebSocket.tryAccept[Msg](requestToSocket)
+  def socket: WebSocket = WebSocket.acceptOrResult[Msg, Msg](requestToSocket)
 
 }

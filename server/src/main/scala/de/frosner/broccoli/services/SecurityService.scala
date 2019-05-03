@@ -2,7 +2,7 @@ package de.frosner.broccoli.services
 
 import javax.inject.{Inject, Singleton}
 
-import cats.data.{EitherT, OptionT}
+import cats.data.EitherT
 import cats.instances.future._
 import cats.syntax.either._
 import com.mohiva.play.silhouette.api.LoginInfo
@@ -31,13 +31,10 @@ case class SecurityService @Inject()(
 
   private val log = play.api.Logger(getClass)
 
-  val sessionTimeoutInSeconds: Int = configuration.session.timeout.toSeconds.toInt
-
   val allowedFailedLogins: Int = configuration.allowedFailedLogins
 
   val authMode: AuthMode = configuration.mode
 
-  val cookieSecure: Boolean = configuration.cookie.secure
   val allowMultiLogin: Boolean = configuration.session.allowMultiLogin
 
   @volatile

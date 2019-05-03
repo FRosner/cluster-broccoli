@@ -1,7 +1,5 @@
 package de.frosner.broccoli
 
-import de.frosner.broccoli.auth.{Account, Role}
-
 package object conf {
 
   val CONSUL_URL_KEY = "broccoli.consul.url"

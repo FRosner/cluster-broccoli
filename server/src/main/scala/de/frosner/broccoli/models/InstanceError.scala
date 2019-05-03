@@ -112,6 +112,7 @@ object InstanceError {
     */
   def toStatus(error: InstanceError): Results.Status = error match {
     case _: NotFound          => Results.NotFound
+    case IdMalformed          => Results.BadRequest
     case IdMissing            => Results.BadRequest
     case _: TemplateNotFound  => Results.BadRequest
     case _: InvalidParameters => Results.BadRequest

@@ -19,7 +19,7 @@ import scala.language.implicitConversions
     * @param value The value to convert
     * @return The result
     */
-  def toHTTPResult(value: T): Result
+  @op("toHTTPResult") def toHTTPResult(value: T): Result
 }
 
 /**

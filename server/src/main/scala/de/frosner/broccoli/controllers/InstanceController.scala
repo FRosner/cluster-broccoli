@@ -1,11 +1,12 @@
 package de.frosner.broccoli.controllers
 
 import java.io.FileNotFoundException
-import javax.inject.Inject
 
+import javax.inject.Inject
 import cats.instances.future._
 import cats.syntax.either._
-import de.frosner.broccoli.auth.{Account, Role}
+import com.mohiva.play.silhouette.api.Silhouette
+import de.frosner.broccoli.auth.{Account, BroccoliSimpleAuthorization, DefaultEnv, Role}
 import de.frosner.broccoli.http.ToHTTPResult.ops._
 import de.frosner.broccoli.instances.{InstanceNotFoundException, NomadInstances, PeriodicJobNotFoundException}
 import de.frosner.broccoli.models.InstanceCreation.instanceCreationReads
@@ -14,41 +15,49 @@ import de.frosner.broccoli.auth.Role.syntax._
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.models.{Allocation, LogStreamKind, TaskLog, Task => NomadTask}
 import de.frosner.broccoli.services._
-import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
 import play.api.Environment
-import play.api.cache.CacheApi
+import play.api.cache.SyncCacheApi
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json
-import play.api.mvc.{Action, Controller, Results}
+import play.api.mvc._
 import shapeless.tag
 import squants.information.Information
 
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.ExecutionContext
 
 case class InstanceController @Inject()(
     instances: NomadInstances,
     instanceService: InstanceService,
     override val securityService: SecurityService,
-    override val cacheApi: CacheApi,
-    override val playEnv: Environment
-) extends Controller
+    override val cacheApi: SyncCacheApi,
+    override val playEnv: Environment,
+    override val silhouette: Silhouette[DefaultEnv],
+    override val controllerComponents: ControllerComponents,
+    override val executionContext: ExecutionContext
+) extends BaseController
     with BroccoliSimpleAuthorization {
 
-  def list(maybeTemplateId: Option[String]): Action[Unit] = StackAction(parse.empty) { implicit request =>
-    Results.Ok(Json.toJson(InstanceController.list(maybeTemplateId, loggedIn, instanceService)))
+  def list(maybeTemplateId: Option[String]): Action[Unit] = Action.async(parse.empty) { implicit request =>
+    loggedIn { implicit user =>
+      Results.Ok(Json.toJson(InstanceController.list(maybeTemplateId, user, instanceService)))
+    }
   }
 
-  def show(id: String): Action[Unit] = StackAction(parse.empty) { implicit request =>
-    Either
-      .right[InstanceError, String](id)
-      // Ensure that the user is allowed to access the instance based on its ID
-      .ensureOr(InstanceError.UserRegexDenied(_, loggedIn.instanceRegex))(_.matches(loggedIn.instanceRegex))
-      .flatMap(id => instanceService.getInstance(id).toRight(InstanceError.NotFound(id)))
-      .fold(_.toHTTPResult, instance => Ok(Json.toJson(instance.removeSecretsForRole(loggedIn.role))))
+  def show(id: String): Action[Unit] = Action.async(parse.empty) { implicit request =>
+    loggedIn { implicit user =>
+      Either
+        .right[InstanceError, String](id)
+        // Ensure that the user is allowed to access the instance based on its ID
+        .ensureOr(InstanceError.UserRegexDenied(_, user.instanceRegex))(_.matches(user.instanceRegex))
+        .flatMap(id => instanceService.getInstance(id).toRight(InstanceError.NotFound(id)))
+        .fold(_.toHTTPResult, instance => Ok(Json.toJson(instance.removeSecretsForRole(user.role))))
+    }
   }
 
-  def tasks(id: String): Action[Unit] = AsyncStack(parse.empty) { implicit request =>
-    instances.getInstanceTasks(loggedIn)(id).value.map(_.toHTTPResult)
+  def tasks(id: String): Action[Unit] = Action.async(parse.empty) { implicit request =>
+    asyncLoggedIn { implicit user =>
+      instances.getInstanceTasks(user)(id).value.map(_.toHTTPResult)
+    }
   }
 
   /**
@@ -68,16 +77,18 @@ case class InstanceController @Inject()(
       kind: LogStreamKind,
       offset: Option[Information]
   ): Action[Unit] =
-    AsyncStack(parse.empty) { implicit request =>
-      instances
-        .getAllocationLog(loggedIn)(
-          instanceId,
-          tag[Allocation.Id](allocationId),
-          tag[NomadTask.Name](taskName),
-          kind,
-          offset.map(tag[TaskLog.Offset](_))
-        )
-        .fold(_.toHTTPResult, Results.Ok(_))
+    Action.async(parse.empty) { implicit request =>
+      asyncLoggedIn { user =>
+        instances
+          .getAllocationLog(user)(
+            instanceId,
+            tag[Allocation.Id](allocationId),
+            tag[NomadTask.Name](taskName),
+            kind,
+            offset.map(tag[TaskLog.Offset](_))
+          )
+          .fold(_.toHTTPResult, Results.Ok(_))
+      }
     }
 
   /**
@@ -98,29 +109,37 @@ case class InstanceController @Inject()(
       kind: LogStreamKind,
       offset: Option[Information]
   ): Action[Unit] =
-    AsyncStack(parse.empty) { implicit request =>
-      instances
-        .getPeriodicJobAllocationLog(loggedIn)(
-          instanceId,
-          periodicJobId,
-          tag[Allocation.Id](allocationId),
-          tag[NomadTask.Name](taskName),
-          kind,
-          offset.map(tag[TaskLog.Offset](_))
-        )
-        .fold(_.toHTTPResult, Results.Ok(_))
+    Action.async(parse.empty) { implicit request =>
+      asyncLoggedIn { user =>
+        instances
+          .getPeriodicJobAllocationLog(user)(
+            instanceId,
+            periodicJobId,
+            tag[Allocation.Id](allocationId),
+            tag[NomadTask.Name](taskName),
+            kind,
+            offset.map(tag[TaskLog.Offset](_))
+          )
+          .fold(a => a.toHTTPResult, Results.Ok(_))
+      }
     }
 
-  def create: Action[InstanceCreation] = StackAction(parse.json[InstanceCreation]) { implicit request =>
-    InstanceController.create(request.body, loggedIn, instanceService).toHTTPResult
+  def create: Action[InstanceCreation] = Action.async(parse.json[InstanceCreation]) { implicit request =>
+    loggedIn { implicit user =>
+      InstanceController.create(request.body, user, instanceService).toHTTPResult
+    }
   }
 
-  def update(id: String): Action[InstanceUpdate] = StackAction(parse.json[InstanceUpdate]) { implicit request =>
-    InstanceController.update(id, request.body, loggedIn, instanceService).toHTTPResult
+  def update(id: String): Action[InstanceUpdate] = Action.async(parse.json[InstanceUpdate]) { implicit request =>
+    loggedIn { implicit user =>
+      InstanceController.update(id, request.body, user, instanceService).toHTTPResult
+    }
   }
 
-  def delete(id: String): Action[Unit] = StackAction(parse.empty) { implicit request =>
-    InstanceController.delete(id, loggedIn, instanceService).toHTTPResult
+  def delete(id: String): Action[Unit] = Action.async(parse.empty) { implicit request =>
+    loggedIn { implicit user =>
+      InstanceController.delete(id, user, instanceService).toHTTPResult
+    }
   }
 }
 

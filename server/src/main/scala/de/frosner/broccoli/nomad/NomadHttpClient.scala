@@ -5,8 +5,8 @@ import java.net.ConnectException
 import cats.data.EitherT
 import cats.syntax.either._
 import cats.instances.future._
-import com.netaporter.uri.Uri
-import com.netaporter.uri.dsl._
+import io.lemonlabs.uri.Url
+import io.lemonlabs.uri.dsl._
 import de.frosner.broccoli.nomad.models._
 import play.api.http.HeaderNames._
 import play.api.http.MimeTypes.{JSON, TEXT}
@@ -25,15 +25,15 @@ import scala.util.Try
   * A client for the HTTP API of Nomad.
   */
 class NomadHttpClient(
-    baseUri: Uri,
+    baseUri: Url,
     tokenEnvName: String,
     client: WSClient
 )(implicit override val executionContext: ExecutionContext)
     extends NomadClient {
 
-  private class NodeClient(nodeV1Uri: Uri) extends NomadNodeClient {
+  private class NodeClient(nodeV1Uri: Url) extends NomadNodeClient {
 
-    private val v1Client: Uri = nodeV1Uri / "client"
+    private val v1Client: Url = nodeV1Uri / "client"
 
     /**
       * Get resource usage statistics of an allocation.
@@ -119,7 +119,7 @@ class NomadHttpClient(
   /**
     * The base URI for the Nomad V1 HTTP API
     */
-  private val v1: Uri = baseUri / "v1"
+  private val v1: Url = baseUri / "v1"
 
   /**
     * The AUTH headers required for nomad ACL
@@ -193,8 +193,11 @@ class NomadHttpClient(
     * @return A client to access the given node.
     */
   override def nodeClient(node: Node): NomadNodeClient = {
-    val nodeAddress = parseNodeAddress(node.httpAddress)
-    new NodeClient(v1.copy(host = nodeAddress.host, port = nodeAddress.port))
+    val nodeAddress: Url = parseNodeAddress(node.httpAddress)
+    nodeAddress.hostOption
+      .map(host => nodeAddress.port.map(port => v1.withHost(host).withPort(port)).getOrElse(v1.withHost(host)))
+      .map(new NodeClient(_))
+      .getOrElse(new NodeClient(v1))
   }
 
   /**
@@ -215,10 +218,10 @@ class NomadHttpClient(
     * @param httpAddress The HTTP address
     * @return The partial URI
     */
-  private def parseNodeAddress(httpAddress: String @@ Node.HttpAddress): Uri = httpAddress.split(":", 2) match {
-    case Array(host, port, _*) => Uri().withHost(host).withPort(port.toInt)
-    case Array(host)           => Uri().withHost(host)
-    case _                     => Uri()
+  private def parseNodeAddress(httpAddress: String @@ Node.HttpAddress): Url = httpAddress.split(":", 2) match {
+    case Array(host, port, _*) => Url().withHost(host).withPort(port.toInt)
+    case Array(host)           => Url().withHost(host)
+    case _                     => Url()
   }
 
   /**

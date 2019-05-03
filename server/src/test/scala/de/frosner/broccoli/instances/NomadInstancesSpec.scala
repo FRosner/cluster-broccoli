@@ -3,7 +3,6 @@ package de.frosner.broccoli.instances
 import cats.data.EitherT
 import cats.instances.future._
 import de.frosner.broccoli.auth.Account
-import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad
 import de.frosner.broccoli.nomad.models._
@@ -15,19 +14,14 @@ import org.specs2.ScalaCheck
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
-import org.specs2.specification.mutable.ExecutionEnvironment
 import shapeless.tag.@@
 
-import scala.collection.immutable
-import scala.concurrent.Future
-
-class NomadInstancesSpec
+class NomadInstancesSpec(implicit executionEnv: ExecutionEnv)
     extends Specification
     with ScalaCheck
     with Mockito
     with ModelArbitraries
-    with nomad.ModelArbitraries
-    with ExecutionEnvironment {
+    with nomad.ModelArbitraries {
 
   val dummyInstance = InstanceWithStatus(
     instance = Instance(
@@ -53,7 +47,7 @@ class NomadInstancesSpec
       .getInstance(Matchers.any[String @@ Job.Id])
       .returns(instance.map(i => i.copy(instance = i.instance.copy(id = id))))
 
-  override def is(implicit executionEnv: ExecutionEnv): Any =
+  override def is =
     "NomadInstances" should {
       "get instance tasks from nomad" in prop {
         (user: Account, id: String, allocations: List[Allocation], resourceUsage: ResourceUsage) =>

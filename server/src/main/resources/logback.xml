@@ -8,6 +8,8 @@
     </encoder>
   </appender>
 
+  <logger name="org.asynchttpclient" level="ERROR"/>
+
   <root level="info">
     <appender-ref ref="STDOUT" />
   </root>

@@ -1,8 +1,6 @@
 package de.frosner.broccoli.nomad.models
 
 import enumeratum._
-import cats.syntax.either._
-import play.api.mvc.PathBindable
 
 import scala.collection.immutable
 

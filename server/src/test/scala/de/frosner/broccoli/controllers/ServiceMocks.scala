@@ -1,22 +1,32 @@
 package de.frosner.broccoli.controllers
 
-import cats.data.OptionT
-import com.mohiva.play.silhouette.api.LoginInfo
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
+import com.mohiva.play.silhouette.api.actions._
+import com.mohiva.play.silhouette.api._
 import com.mohiva.play.silhouette.api.services.IdentityService
 import com.mohiva.play.silhouette.api.util.Credentials
 import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
-import de.frosner.broccoli.auth.{Account, AuthMode, Role}
+import com.mohiva.play.silhouette.test.FakeEnvironment
+import de.frosner.broccoli.auth.{Account, AuthMode, DefaultEnv, Role}
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.models.NodeResources
 import de.frosner.broccoli.services._
 import org.mockito.Matchers
 import org.mockito.internal.util.MockUtil
 import org.specs2.mock.Mockito
+import play.api.mvc
+import play.api.mvc.PlayBodyParsers
+import play.api.test.Helpers._
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
 
 trait ServiceMocks extends Mockito {
+
+  implicit val actorSystem = ActorSystem("ServiceMocks")
+  implicit val materializer = ActorMaterializer()
 
   private val mockUtil = new MockUtil()
   private def requireMock(obj: AnyRef): Unit = require(
@@ -107,4 +117,19 @@ trait ServiceMocks extends Mockito {
     nomadService
   }
 
+  def withIdentities(users: DefaultEnv#I*): Silhouette[DefaultEnv] = {
+    val environment = FakeEnvironment[DefaultEnv](users.map(user => LoginInfo(user.name, user.name) -> user))
+    val defaultParser = new mvc.BodyParsers.Default(PlayBodyParsers())
+    val securedAction = new DefaultSecuredAction(
+      new DefaultSecuredRequestHandler(new DefaultSecuredErrorHandler(stubMessagesApi())),
+      defaultParser)
+    val unsecuredAction = new DefaultUnsecuredAction(
+      new DefaultUnsecuredRequestHandler(new DefaultUnsecuredErrorHandler(stubMessagesApi())),
+      defaultParser)
+    val userAware = new DefaultUserAwareAction(new DefaultUserAwareRequestHandler(), defaultParser)
+    new SilhouetteProvider[DefaultEnv](environment, securedAction, unsecuredAction, userAware)
+  }
+
+  def withEnvironment(users: DefaultEnv#I*): Environment[DefaultEnv] =
+    FakeEnvironment[DefaultEnv](users.map(user => LoginInfo(user.name, user.name) -> user))
 }

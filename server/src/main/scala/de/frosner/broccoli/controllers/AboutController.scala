@@ -1,29 +1,32 @@
 package de.frosner.broccoli.controllers
 
+import com.mohiva.play.silhouette.api.Silhouette
 import javax.inject.Inject
-
-import de.frosner.broccoli.auth.Account
+import de.frosner.broccoli.auth.{Account, BroccoliSimpleAuthorization, DefaultEnv}
 import de.frosner.broccoli.services._
-import de.frosner.broccoli.conf
-import de.frosner.broccoli.models.AboutInfo.aboutInfoWrites
-import jp.t2v.lab.play2.auth.BroccoliSimpleAuthorization
 import play.api.Environment
-import play.api.cache.CacheApi
-import play.api.libs.json.{JsBoolean, JsObject, JsString, Json}
-import play.api.mvc.{Action, AnyContent, Controller}
+import play.api.cache.SyncCacheApi
+import play.api.libs.json.Json
+import play.api.mvc.{BaseController, ControllerComponents}
+
+import scala.concurrent.ExecutionContext
 
 case class AboutController @Inject()(
     aboutInfoService: AboutInfoService,
     override val securityService: SecurityService,
-    override val cacheApi: CacheApi,
-    override val playEnv: Environment
-) extends Controller
+    override val cacheApi: SyncCacheApi,
+    override val playEnv: Environment,
+    override val silhouette: Silhouette[DefaultEnv],
+    override val controllerComponents: ControllerComponents,
+    override val executionContext: ExecutionContext
+) extends BaseController
     with BroccoliSimpleAuthorization {
 
-  def about = StackAction(parse.empty) { implicit request =>
-    Ok(Json.toJson(AboutController.about(aboutInfoService, loggedIn)))
+  def about = Action.async(parse.empty) { implicit request =>
+    loggedIn { user =>
+      Ok(Json.toJson(AboutController.about(aboutInfoService, user)))
+    }
   }
-
 }
 
 object AboutController {

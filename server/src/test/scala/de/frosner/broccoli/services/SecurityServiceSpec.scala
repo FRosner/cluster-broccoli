@@ -11,12 +11,11 @@ import org.mockito.Mock
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
-import org.specs2.specification.mutable.ExecutionEnvironment
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 
-class SecurityServiceSpec extends Specification with Mockito with ExecutionEnvironment {
+class SecurityServiceSpec(implicit executionEnv: ExecutionEnv) extends Specification with Mockito {
 
   def configWithAccounts(accounts: Seq[Account]): AuthConfiguration =
     AuthConfiguration(
@@ -41,7 +40,7 @@ class SecurityServiceSpec extends Specification with Mockito with ExecutionEnvir
 
   val account = Account("frank", "^test.*", Role.Administrator)
 
-  override def is(implicit executionEnv: ExecutionEnv): Any =
+  override def is =
     "An authentication check" should {
 
       "succeed if the credentials provider authenticates" in {

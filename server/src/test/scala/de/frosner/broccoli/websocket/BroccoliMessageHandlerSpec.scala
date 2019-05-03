@@ -1,7 +1,7 @@
 package de.frosner.broccoli.websocket
 
 import cats.data.EitherT
-import cats.instances.future._
+import cats.implicits._
 import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.instances.NomadInstances
 import de.frosner.broccoli.models._
@@ -12,10 +12,11 @@ import org.specs2.ScalaCheck
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
+import org.specs2.control.origami.Fold
 
 import scala.concurrent.Future
 
-class BroccoliMessageHandlerSpec
+class BroccoliMessageHandlerSpec(implicit ee: ExecutionEnv)
     extends Specification
     with ScalaCheck
     with Mockito
@@ -23,8 +24,8 @@ class BroccoliMessageHandlerSpec
     with ModelArbitraries {
 
   "The Broccoli Message Handler" should {
-    "send back instance tasks" in { implicit ee: ExecutionEnv =>
-      prop {
+    "send back instance tasks" in {
+      val a = prop {
         (account: Account,
          id: String,
          tasks: List[AllocatedTask],
@@ -38,9 +39,10 @@ class BroccoliMessageHandlerSpec
 
           outgoingMessage must beEqualTo(OutgoingMessage.GetInstanceTasksSuccess(instanceTasks)).await
       }.setGen2(Gen.identifier)
+      a
     }
 
-    "send back an error if instance tasks failed" in { implicit ee: ExecutionEnv =>
+    "send back an error if instance tasks failed" in {
       prop { (account: Account, id: String, error: InstanceError) =>
         val instances = mock[NomadInstances]
         instances.getInstanceTasks(account)(id) returns EitherT.leftT[Future, InstanceTasks](error)

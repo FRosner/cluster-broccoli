@@ -1,5 +1,5 @@
 #!/bin/bash
-
+source $(dirname "$0")/../../common.sh
 for i in $(seq 1 500)
 do
   curl -s -H 'Content-Type: application/json' \
@@ -14,3 +14,4 @@ docker run --rm -d --net host \
   frosner/cluster-broccoli-test \
   cluster-broccoli > cluster-broccoli.did
 sleep $BROCCOLI_SLEEP_MEDIUM
+check_service http localhost 9000

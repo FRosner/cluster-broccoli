@@ -308,7 +308,6 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
                                   //          running on a node
                                   val allocationUtilizationUrl =
                                     s"$scheme://$httpAddr/v1/client/allocation/${allocatedResources.id}/stats"
-                                  val request = requestWithHeaders(allocationUtilizationUrl)
                                   requestWithNamespace(requestWithHeaders(allocationUtilizationUrl),
                                                        allocatedResources.namespace)
                                     .get()

@@ -1,4 +1,6 @@
 #!/bin/bash
+source $(dirname "$0")/../common.sh
+
 docker pull couchdb:1.7.0
 docker run --rm -d --net host couchdb:1.7.0 > couchdb.did
 
@@ -11,4 +13,4 @@ docker run --rm -d --net host \
 
 sleep $BROCCOLI_SLEEP_MEDIUM
 
-curl -s localhost:9000 > /dev/null && echo "Broccoli started successfully" || echo "Broccoli did not start, yet"
+check_service http localhost 9000
