@@ -113,12 +113,12 @@ row instanceId instanceTasks periodicRun =
                                    then
                                     iconButton
                                         "btn btn-default btn-xs"
-                                        "glyphicon glyphicon-trash"
+                                        "fa fa-trash"
                                         "Delete Instance"
                                    else
                                     iconButton
                                         "btn btn-default btn-xs"
-                                        "glyphicon glyphicon-stop"
+                                        "fa fa-stop"
                                         "Stop and Delete Instance"
                                   )
                                     (List.append

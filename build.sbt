@@ -44,12 +44,12 @@ lazy val server = project
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.frosner.broccoli.build",
     PlayKeys.playMonitoredFiles ++= (sourceDirectories in (Compile, TwirlKeys.compileTemplates)).value,
-    dockerUsername := Some("frosner"),
+    dockerUsername := Some("datascienceplatform"),
     // Build from OpenJDK
     dockerBaseImage := "openjdk:8-jre",
     // Docker build settings
     packageName in Docker := "cluster-broccoli",
-    maintainer in Docker := "Frank Rosner",
+    maintainer in Docker := "Data Science Platform",
     // On Travis CI, use the commit hash as primary version of the docker image
     dockerAlias := dockerAlias.value.copy(tag = None),
     version in Docker := Option(System
@@ -112,7 +112,7 @@ lazy val root = project
   .settings(
     inThisBuild(
       List(
-        version := "0.9.0-SNAPSHOT",
+        version := "0.9.1-SNAPSHOT",
         scalaVersion := "2.11.11",
         // Enable jcenter for silhouette's dependencies
         resolvers += Resolver.jcenterRepo,

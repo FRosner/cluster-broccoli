@@ -2,6 +2,7 @@ package de.frosner.broccoli.models
 
 import de.frosner.broccoli.RemoveSecrets
 import de.frosner.broccoli.RemoveSecrets.ops._
+import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -16,7 +17,7 @@ case class InstanceWithStatus(instance: Instance,
 object InstanceWithStatus {
   import Instance.instanceApiWrites
 
-  implicit val instanceWithStatusWrites: Writes[InstanceWithStatus] =
+  implicit def instanceWithStatusWrites(implicit account: Account): Writes[InstanceWithStatus] =
     (JsPath.write[Instance] and
       (JsPath \ "status").write[JobStatus] and
       (JsPath \ "services").write[Seq[Service]] and

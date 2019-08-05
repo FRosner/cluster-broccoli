@@ -1,8 +1,8 @@
 package de.frosner.broccoli.controllers
 
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.services.{SecurityService, TemplateService}
-import play.api.test.{FakeRequest, PlaySpecification, WithApplication}
+import de.frosner.broccoli.services.{TemplateService}
+import play.api.test.{PlaySpecification, WithApplication}
 import org.mockito.Mockito._
 import play.api.libs.json._
 import org.specs2.concurrent.ExecutionEnv
@@ -18,6 +18,7 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
         id = "id",
         template = "template {{id}}",
         description = "description",
+        documentation_url = "#documentation_url",
         parameterInfos = Map(
           "id" -> ParameterInfo(id = "id",
                                 name = Some("myname"),
@@ -44,17 +45,16 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
               JsObject(Map(
                 "id" -> JsString(template.id),
                 "parameters" -> JsArray(Seq(JsString("id"))),
-                "parameterInfos" -> JsObject(
-                  Map(
-                    "id" -> JsObject(
-                      Map(
-                        "id" -> JsString("id"),
-                        "name" -> JsString("myname"),
-                        "default" -> JsString("myid"),
-                        "secret" -> JsBoolean(false),
-                        "type" -> JsString("string")
-                      ))
-                  )),
+                "documentation_url" -> JsString("#documentation_url"),
+                "parameterInfos" -> JsObject(Map(
+                  "id" -> JsObject(Map(
+                    "id" -> JsString("id"),
+                    "name" -> JsString("myname"),
+                    "default" -> JsString("myid"),
+                    "secret" -> JsBoolean(false),
+                    "type" -> JsObject(Map("name" -> JsString("string")))
+                  ))
+                )),
                 "description" -> JsString(template.description),
                 "version" -> JsString(template.version)
               ))
@@ -71,6 +71,7 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
         id = "id",
         template = "template {{id}}",
         description = "description",
+        documentation_url = "#documentation_url",
         parameterInfos = Map(
           "id" -> ParameterInfo(id = "id",
                                 name = Some("myname"),
@@ -96,17 +97,16 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
             Map(
               "id" -> JsString(template.id),
               "parameters" -> JsArray(Seq(JsString("id"))),
-              "parameterInfos" -> JsObject(
-                Map(
-                  "id" -> JsObject(
-                    Map(
-                      "id" -> JsString("id"),
-                      "name" -> JsString("myname"),
-                      "default" -> JsString("myid"),
-                      "secret" -> JsBoolean(false),
-                      "type" -> JsString("string")
-                    ))
-                )),
+              "documentation_url" -> JsString("#documentation_url"),
+              "parameterInfos" -> JsObject(Map(
+                "id" -> JsObject(Map(
+                  "id" -> JsString("id"),
+                  "name" -> JsString("myname"),
+                  "default" -> JsString("myid"),
+                  "secret" -> JsBoolean(false),
+                  "type" -> JsObject(Map("name" -> JsString("string")))
+                ))
+              )),
               "description" -> JsString(template.description),
               "version" -> JsString(template.version)
             ))

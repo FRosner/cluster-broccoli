@@ -1,13 +1,12 @@
 package de.frosner.broccoli.models
 
-import de.frosner.broccoli.models.ParameterInfo.parameterInfoWrites
+import de.frosner.broccoli.auth.Account
 import org.apache.commons.codec.digest.DigestUtils
 import play.api.libs.functional.syntax._
+import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
 
-import scala.collection.JavaConversions._
-
-case class Template(id: String, template: String, description: String, parameterInfos: Map[String, ParameterInfo])
+case class Template(id: String, template: String, documentation_url: String, description: String, parameterInfos: Map[String, ParameterInfo])
     extends Serializable {
 
   @transient
@@ -25,14 +24,26 @@ case class Template(id: String, template: String, description: String, parameter
 
 object Template {
 
-  implicit val templateApiWrites: Writes[Template] = (
-    (JsPath \ "id").write[String] and
-      (JsPath \ "description").write[String] and
-      (JsPath \ "parameters").write[Seq[String]] and
-      (JsPath \ "parameterInfos").write[Map[String, ParameterInfo]] and
-      (JsPath \ "version").write[String]
-  )((template: Template) =>
-    (template.id, template.description, template.sortedParameters, template.parameterInfos, template.version))
+  implicit def paramInfoMapWrites(implicit account: Account): Writes[Map[String, ParameterInfo]] =
+    new Writes[Map[String, ParameterInfo]] {
+      def writes(map: Map[String, ParameterInfo]): JsValue =
+        Json.obj(map.map {
+          case (s, paramInfo) =>
+            val ret: (String, JsValueWrapper) = s -> Json.toJson(paramInfo)(ParameterInfo.parameterInfoApiWrites)
+            ret
+        }.toSeq: _*)
+    }
+
+  implicit def templateApiWrites(implicit account: Account): Writes[Template] =
+    (
+      (JsPath \ "id").write[String] and
+        (JsPath \ "description").write[String] and
+        (JsPath \ "documentation_url").write[String] and
+        (JsPath \ "parameters").write[Seq[String]] and
+        (JsPath \ "parameterInfos").write[Map[String, ParameterInfo]](paramInfoMapWrites) and
+        (JsPath \ "version").write[String]
+    )((template: Template) =>
+      (template.id, template.description, template.documentation_url, template.sortedParameters, template.parameterInfos, template.version))
 
   implicit val templatePersistenceReads: Reads[Template] = Json.reads[Template]
 

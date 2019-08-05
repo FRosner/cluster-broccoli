@@ -21,6 +21,7 @@ class CouchDBInstanceStorageSpec extends Specification {
     template = Template(id = "t",
                         template = "{{id}}",
                         description = "d",
+                        documentation_url = "#documentation_url",
                         parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))),
     parameterValues = Map(
       "id" -> RawParameterValue("prefix-id")

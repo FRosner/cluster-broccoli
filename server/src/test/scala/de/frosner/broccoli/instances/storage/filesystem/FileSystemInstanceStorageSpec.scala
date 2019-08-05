@@ -19,6 +19,7 @@ class FileSystemInstanceStorageSpec extends Specification with TemporaryDirector
     template = Template(id = "t",
                         template = "{{id}}",
                         description = "d",
+                        documentation_url = "#link-to-documentation",
                         parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))),
     parameterValues = Map(
       "id" -> RawParameterValue("prefix-id")

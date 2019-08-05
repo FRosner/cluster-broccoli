@@ -65,6 +65,7 @@ class InstanceControllerSpec
         id = "t",
         template = "{{id}} {{secret}}",
         description = "d",
+        documentation_url = "docs",
         parameterInfos = Map(
           "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
           "secret" -> ParameterInfo(
@@ -99,6 +100,7 @@ class InstanceControllerSpec
   "list" should {
 
     "list all instances" in new WithApplication {
+      implicit val account: Account = Account.anonymous
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances),
@@ -123,6 +125,7 @@ class InstanceControllerSpec
           )
         )
       )
+      implicit val account: Account = Account.anonymous
       testWithAllAuths { securityService =>
         InstanceController(
           instanceService = withInstances(mock[InstanceService], instances ++ List(notMatchingInstance)),
@@ -185,6 +188,7 @@ class InstanceControllerSpec
           id = "matching-"
         )
       )
+      implicit val account: Account = accountWithRegex
       testWithAllAuths {
         accountWithRegex
       } { securityService =>
@@ -206,7 +210,7 @@ class InstanceControllerSpec
   }
 
   "show" should {
-
+    implicit val account: Account = Account.anonymous
     "return the requested instance if it exists" in new WithApplication {
       testWithAllAuths { securityService =>
         InstanceController(
@@ -389,6 +393,7 @@ class InstanceControllerSpec
           "id" -> JsString("id")
         )
       )
+      implicit val account: Account = Account.anonymous
       when(instanceService.addInstance(instanceCreation)).thenReturn(Success(instanceWithStatus))
       testWithAllAuths { securityService =>
         InstanceController(
@@ -528,6 +533,7 @@ class InstanceControllerSpec
 
     "update the instance status correctly" in new WithApplication {
       val instanceService = withInstances(mock[InstanceService], List.empty)
+      implicit val account: Account = Account.anonymous
       when(
         instanceService.updateInstance(
           id = instanceWithStatus.instance.id,
@@ -564,6 +570,7 @@ class InstanceControllerSpec
 
     "update the instance parameters correctly" in new WithApplication {
       val instanceService = withInstances(mock[InstanceService], List.empty)
+      implicit val account: Account = Account.anonymous
       when(
         instanceService.updateInstance(
           id = instanceWithStatus.instance.id,
@@ -603,6 +610,7 @@ class InstanceControllerSpec
 
     "update the instance template correctly" in new WithApplication {
       val instanceService = withInstances(mock[InstanceService], List.empty)
+      implicit val account: Account = Account.anonymous
       when(
         instanceService.updateInstance(
           id = instanceWithStatus.instance.id,
@@ -640,6 +648,7 @@ class InstanceControllerSpec
     "stop periodic jobs correctly" in new WithApplication {
       val instanceService = withInstances(mock[InstanceService], List.empty)
       val periodicJobName = instanceWithStatus.instance.id + "/periodic-1518101460"
+      implicit val account: Account = Account.anonymous
       when(
         instanceService.updateInstance(
           id = instanceWithStatus.instance.id,
@@ -972,6 +981,7 @@ class InstanceControllerSpec
 
     "delete the instance correctly" in new WithApplication {
       val instanceService = withInstances(mock[InstanceService], instances)
+      implicit val account: Account = Account.anonymous
       when(instanceService.deleteInstance(instanceWithStatus.instance.id)).thenReturn(Success(instanceWithStatus))
 
       testWithAllAuths { securityService =>

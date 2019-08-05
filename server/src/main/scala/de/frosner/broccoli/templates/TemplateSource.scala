@@ -4,8 +4,6 @@ import de.frosner.broccoli.models.{ParameterInfo, Template}
 
 import scala.util.Try
 
-import scala.collection.JavaConversions._
-
 trait TemplateSource {
   private val log = play.api.Logger(getClass)
 
@@ -39,6 +37,7 @@ trait TemplateSource {
         id = templateId,
         template = templateString,
         description = templateInfo.description.getOrElse(s"$templateId template"),
+        documentation_url = templateInfo.documentation_url.getOrElse(s""),
         parameterInfos = templateInfo.parameters
           .map { case (id, parameter) => id -> ParameterInfo.fromTemplateInfoParameter(id, parameter) }
       )

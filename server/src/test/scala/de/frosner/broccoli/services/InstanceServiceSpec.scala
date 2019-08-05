@@ -35,6 +35,7 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
+          documentation_url = "#link-to-documentation",
           parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
                                "age" -> ParameterInfo("age", None, None, None, ParameterType.Raw, None))
         ),
@@ -52,6 +53,7 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
+          documentation_url = "#link-to-documentation",
           parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
                                "age" -> ParameterInfo("age", None, None, None, ParameterType.Raw, None))
         ),
@@ -69,6 +71,7 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
+          documentation_url = "#link-to-documentation",
           parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
                                "age" -> ParameterInfo("age", None, None, None, ParameterType.Raw, None))
         ),
@@ -86,6 +89,7 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
         id = "1",
         template = "\"{{id}} {{age}}\"",
         description = "desc",
+        documentation_url = "#link-to-documentation",
         parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
                              "age" -> ParameterInfo("age", None, None, None, ParameterType.Raw, None))
       )
@@ -93,6 +97,7 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
         id = "5",
         template = "\"{{id}} {{age}}\"",
         description = "desc",
+        documentation_url = "#link-to-documentation",
         parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
                              "age" -> ParameterInfo("age", None, None, None, ParameterType.Raw, None))
       )
@@ -112,6 +117,7 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
         id = "1",
         template = "\"{{id}} {{age}}\"",
         description = "desc",
+        documentation_url = "#link-to-documentation",
         parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
                              "age" -> ParameterInfo("age", None, None, None, ParameterType.Raw, None))
       )
@@ -119,6 +125,7 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
         id = "5",
         template = "\"{{id}} {{age}} {{height}}\"",
         description = "desc",
+        documentation_url = "#link-to-documentation",
         parameterInfos = Map(
           "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
           "age" -> ParameterInfo("age", None, None, None, ParameterType.Raw, None),
@@ -141,6 +148,7 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
         id = "1",
         template = "\"{{id}} {{age}}\"",
         description = "desc",
+        documentation_url = "#link-to-documentation",
         parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
                              "age" -> ParameterInfo("age", None, None, None, ParameterType.Raw, None))
       )
@@ -148,6 +156,7 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
         id = "5",
         template = "\"{{id}} {{age}} {{height}}\"",
         description = "desc",
+        documentation_url = "#link-to-documentation",
         parameterInfos = Map(
           "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
           "age" -> ParameterInfo("age", None, None, None, ParameterType.Raw, None),
@@ -170,6 +179,7 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
         id = "1",
         template = "\"{{id}} {{age}}\"",
         description = "desc",
+        documentation_url = "#link-to-documentation",
         parameterInfos = Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
                              "age" -> ParameterInfo("age", None, None, None, ParameterType.Raw, None))
       )
@@ -177,6 +187,7 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
         id = "5",
         template = "\"{{id}} {{age}} {{height}}\"",
         description = "desc",
+        documentation_url = "#link-to-documentation",
         parameterInfos = Map(
           "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
           "age" -> ParameterInfo("age", None, None, None, ParameterType.Raw, None),

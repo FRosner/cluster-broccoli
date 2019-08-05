@@ -66,6 +66,7 @@ trait ModelArbitraries {
     for {
       templateId <- Gen.identifier.label("id")
       templateDescription <- Gen.identifier.label("description")
+      templateDocURL <- Gen.identifier.label("documentation_url")
       templateParameters <- Gen.listOf(arbParameterInfo.arbitrary).label("parameterInfos")
     } yield {
       val idParameter = ParameterInfo(id = "id", None, None, None, ParameterType.String, None)
@@ -73,6 +74,7 @@ trait ModelArbitraries {
       Template(
         id = templateId,
         description = templateDescription,
+        documentation_url = templateDocURL,
         // Templates require an "id" parameter so add one here
         template = s"{{id}} $template",
         parameterInfos = templateParameters.map(i => i.id -> i).toMap + ("id" -> idParameter)

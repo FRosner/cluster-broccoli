@@ -1,5 +1,6 @@
-module Model exposing (Model, Route(..), initial)
+module Model exposing (Model, Route(..), initial, initialTabState, TabState(..))
 
+import Models.Resources.NodeResources exposing (NodeResources)
 import Models.Resources.Template exposing (Template, TemplateId)
 import Models.Resources.Instance exposing (Instance, InstanceId)
 import Models.Resources.AboutInfo exposing (AboutInfo)
@@ -16,25 +17,37 @@ type Route
     = MainRoute
 
 
+type TabState
+    = Instances
+    | Resources
+
+
+initialTabState =
+    Instances
+
+
 {-| The application state model
 
 This model holds the entire state of the whole application.
 
 -}
 type alias Model =
-    { aboutInfo : Maybe AboutInfo
+    { tabState : TabState
+    , aboutInfo : Maybe AboutInfo
     , errors : Errors
     , loginForm : LoginForm
     , authRequired : Maybe Bool
     , instances : Dict InstanceId Instance
     , tasks : Dict InstanceId InstanceTasks
     , templates : Dict TemplateId Template
+    , nodesResources : List NodeResources
     , bodyUiModel : BodyUiModel
     , wsConnected : Bool
     , route : Route
     , location : Location
     , templateFilter : String
     , instanceFilter : String
+    , nodeFilter : String
     }
 
 
@@ -42,12 +55,14 @@ type alias Model =
 -}
 initial : Location -> Route -> Model
 initial location route =
-    { aboutInfo = Nothing
+    { tabState = initialTabState
+    , aboutInfo = Nothing
     , errors = []
     , loginForm = LoginForm.empty
     , authRequired = Nothing
     , bodyUiModel = BodyUiModel.initialModel
     , templates = Dict.empty
+    , nodesResources = []
     , tasks = Dict.empty
     , instances = Dict.empty
     , wsConnected = False
@@ -55,4 +70,5 @@ initial location route =
     , location = location
     , templateFilter = ""
     , instanceFilter = ""
+    , nodeFilter = ""
     }

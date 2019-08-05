@@ -3,6 +3,7 @@ module Models.Resources.Template exposing (..)
 import Json.Decode as Decode exposing (field)
 import Json.Encode as Encode
 import Dict exposing (Dict)
+import List
 import Utils.DictUtils exposing (flatten)
 import Maybe.Extra exposing (isJust)
 import Utils.StringUtils exposing (surround)
@@ -16,6 +17,7 @@ type alias TemplateId =
 type alias Template =
     { id : TemplateId
     , description : String
+    , documentation_url : String
     , version : String
     , parameters : List String
     , parameterInfos : Dict String ParameterInfo
@@ -27,6 +29,9 @@ type ParameterType
     | StringParam
     | IntParam
     | DecimalParam
+    | DecimalSetParam (List Float)
+    | IntSetParam (List Int)
+    | StringSetParam (List String)
 
 
 type ParameterValue
@@ -51,25 +56,69 @@ addTemplateInstanceString template =
 
 
 decoder =
-    Decode.map5 Template
+    Decode.map6 Template
         (field "id" Decode.string)
         (field "description" Decode.string)
+        (field "documentation_url" Decode.string)
         (field "version" Decode.string)
         (field "parameters" (Decode.list Decode.string))
         (field "parameterInfos" (Decode.dict parameterInfoDecoder))
 
 
 parameterInfoDecoder =
-    (field "type" decodeDataType)
+    (field "type" Decode.value)
         |> Decode.andThen
-            (\paramType ->
-                Decode.map6 ParameterInfo
-                    (field "id" Decode.string)
-                    (Decode.maybe (field "name" Decode.string))
-                    (Decode.maybe (field "default" (decodeParamValue paramType)))
-                    (Decode.maybe (field "secret" Decode.bool))
-                    (Decode.maybe (field "orderIndex" Decode.float))
-                    (Decode.succeed (paramType))
+            (\rawValue ->
+                case Decode.decodeValue decodeDataTypeNew rawValue of
+                    Ok paramType ->
+                        Decode.map6 ParameterInfo
+                            (field "id" Decode.string)
+                            (Decode.maybe (field "name" Decode.string))
+                            (Decode.maybe (field "default" (decodeParamValue paramType)))
+                            (Decode.maybe (field "secret" Decode.bool))
+                            (Decode.maybe (field "orderIndex" Decode.float))
+                            (Decode.succeed paramType)
+
+                    Err error ->
+                        Decode.fail error
+            )
+
+
+decodeDataTypeNew : Decode.Decoder ParameterType
+decodeDataTypeNew =
+    (field "name" Decode.string)
+        |> Decode.andThen
+            (\typeName ->
+                case typeName of
+                    "integer" ->
+                        Decode.succeed IntParam
+
+                    "decimal" ->
+                        Decode.succeed DecimalParam
+
+                    "string" ->
+                        Decode.succeed StringParam
+
+                    "raw" ->
+                        Decode.succeed RawParam
+
+                    "decimalList" ->
+                        (field "values" (Decode.list Decode.float))
+                            |> Decode.andThen
+                                (\values -> Decode.succeed (DecimalSetParam values))
+
+                    "intList" ->
+                        (field "values" (Decode.list Decode.int))
+                            |> Decode.andThen
+                                (\values -> Decode.succeed (IntSetParam values))
+
+                    "stringList" ->
+                        (field "values" (Decode.list Decode.string))
+                            |> Decode.andThen
+                                (\values -> Decode.succeed (StringSetParam values))
+
+                    _ ->
+                        Decode.fail <| "Unknown dataType: " ++ typeName
             )
 
 
@@ -159,6 +208,27 @@ decodeParamValue paramType =
                         Decode.succeed (RawVal paramValue)
                     )
 
+        DecimalSetParam _ ->
+            Decode.float
+                |> Decode.andThen
+                    (\paramValue ->
+                        Decode.succeed (DecimalVal paramValue)
+                    )
+
+        StringSetParam _ ->
+            Decode.string
+                |> Decode.andThen
+                    (\paramValue ->
+                        Decode.succeed (StringVal paramValue)
+                    )
+
+        IntSetParam _ ->
+            Decode.int
+                |> Decode.andThen
+                    (\paramValue ->
+                        Decode.succeed (IntVal paramValue)
+                    )
+
 
 encodeParamValue paramValue =
     case paramValue of
@@ -234,6 +304,15 @@ dataTypeToString dataType =
         DecimalParam ->
             "decimal"
 
+        DecimalSetParam _ ->
+            "decimal"
+
+        IntSetParam _ ->
+            "int"
+
+        StringSetParam _ ->
+            "string"
+
 
 wrapValue paramType paramValue =
     case paramType of
@@ -241,6 +320,9 @@ wrapValue paramType paramValue =
             surround "\"" paramValue
 
         RawParam ->
+            surround "\"" paramValue
+
+        StringSetParam _ ->
             surround "\"" paramValue
 
         _ ->

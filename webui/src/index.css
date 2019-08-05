@@ -1,13 +1,17 @@
 html {
     position: relative;
     min-height: 100%;
+    font-size: 0.9rem;
 }
 
 body {
     /* Margin bottom by footer height */
     margin-bottom: 30px;
-    padding-top: 70px;
     padding-bottom: 29px;
+}
+
+code {
+    color: #c7254e !important;
 }
 
 .footer {
@@ -22,4 +26,51 @@ body {
 
 .container .text-muted {
     margin: 5px 0;
+}
+
+button:disabled {
+    cursor: not-allowed;
+}
+
+.btn-group-xs > .btn, .btn-xs {
+    padding  : .25rem .4rem;
+    font-size  : .875rem;
+    line-height  : .5;
+    border-radius : .2rem;
+}
+
+.vertical-align {
+    display: flex;
+    align-items: center;
+}
+
+.btn-no-pad {
+    padding: 0;
+}
+
+.th-no-bold {
+    font-weight: lighter;
+}
+
+.my-table {
+    border-spacing: 2px;
+    border-top: 1px solid #dee2e6;
+}
+
+.my-table-head {
+    font-weight: lighter;
+    font-size: 110%;
+}
+
+.my-odd-row {
+
+}
+
+.my-even-row {
+    background-color: rgba(0, 0, 0, 0.05)
+}
+
+.sub-heading {
+    font-weight: lighter;
+    font-size: 90%;
 }

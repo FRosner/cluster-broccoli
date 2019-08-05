@@ -40,6 +40,23 @@ updateBodyView message oldBodyUiModel =
                     , Cmd.none
                     )
 
+            ToggleNodeAllocation nodeId ->
+                let
+                    oldTemporaryStates =
+                        oldBodyUiModel.temporaryStates
+
+                    oldExpandedResourceAllocs =
+                        oldTemporaryStates.expandedResourceAllocs
+
+                    newExpandedResourceAllocs =
+                        insertOrRemove (not (Set.member nodeId oldExpandedResourceAllocs)) nodeId oldExpandedResourceAllocs
+                in
+                    ( { oldBodyUiModel
+                        | temporaryStates = { oldTemporaryStates | expandedResourceAllocs = newExpandedResourceAllocs }
+                      }
+                    , Cmd.none
+                    )
+
             InstanceSelected instanceId selected ->
                 let
                     newSelectedInstances =
@@ -236,9 +253,47 @@ updateBodyView message oldBodyUiModel =
 
             SubmitNewInstanceCreation templateId parameterInfos parameterValues ->
                 let
-                    message =
+                    setDefaults =
+                        Dict.filter
+                            (\paramName paramInfo ->
+                                case paramInfo.dataType of
+                                    DecimalSetParam _ ->
+                                        True
+
+                                    IntSetParam _ ->
+                                        True
+
+                                    StringSetParam _ ->
+                                        True
+
+                                    _ ->
+                                        False
+                            )
+                            parameterInfos
+                            |> Dict.map
+                                (\paramName paramInfo ->
+                                    case paramInfo.dataType of
+                                        DecimalSetParam values ->
+                                            List.head values |> Maybe.andThen (\val -> Just (DecimalVal val))
+
+                                        IntSetParam values ->
+                                            List.head values |> Maybe.andThen (\val -> Just (IntVal val))
+
+                                        StringSetParam values ->
+                                            List.head values |> Maybe.andThen (\val -> Just (StringVal val))
+
+                                        _ ->
+                                            Nothing
+                                )
+                            |> flatMap (\c b -> b)
+
+                    parameterValuesTransformed =
                         parameterValues
                             |> flatMap (mapStringToParamVal parameterInfos)
+
+                    message =
+                        setDefaults
+                            |> Dict.union parameterValuesTransformed
                             |> InstanceCreation templateId
                 in
                     ( { oldBodyUiModel
@@ -322,6 +377,13 @@ updateBodyView message oldBodyUiModel =
                     |> UpdateInstanceMessage
                     |> SendWsMsg
                     |> CmdUtils.sendMsg
+                )
+
+            UpdateTemporaryStates tempStates ->
+                ( { oldBodyUiModel
+                    | temporaryStates = tempStates
+                  }
+                , Cmd.none
                 )
 
 

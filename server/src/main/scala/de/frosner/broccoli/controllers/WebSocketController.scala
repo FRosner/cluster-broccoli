@@ -1,9 +1,11 @@
 package de.frosner.broccoli.controllers
 
-import javax.inject.Inject
+import java.util.concurrent.TimeUnit
 
+import javax.inject.Inject
 import cats.data.EitherT
 import cats.instances.future._
+import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.services.WebSocketService.Msg
 import de.frosner.broccoli.services._
 import de.frosner.broccoli.websocket.{IncomingMessage, OutgoingMessage, WebSocketMessageHandler}
@@ -15,12 +17,14 @@ import play.api.libs.json._
 import play.api.mvc._
 import play.api.{Environment, Logger}
 
-import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 case class WebSocketController @Inject()(webSocketService: WebSocketService,
                                          templateService: TemplateService,
                                          instanceService: InstanceService,
                                          aboutService: AboutInfoService,
+                                         nomadService: NomadService,
                                          messageHandler: WebSocketMessageHandler,
                                          override val cacheApi: CacheApi,
                                          override val playEnv: Environment,
@@ -72,12 +76,17 @@ case class WebSocketController @Inject()(webSocketService: WebSocketService,
 
       val templateEnumerator = Enumerator[Msg](
         Json.toJson(
-          OutgoingMessage.ListTemplates(TemplateController.list(templateService))
+          OutgoingMessage.ListTemplates(TemplateController.list(templateService), user)
         ))
 
       val instanceEnumerator = Enumerator[Msg](
-        Json.toJson(OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService))))
-      (in, aboutEnumerator.andThen(templateEnumerator).andThen(instanceEnumerator).andThen(connectionEnumerator))
+        Json.toJson(OutgoingMessage.ListInstances(InstanceController.list(None, user, instanceService), user)))
+
+      (in,
+       aboutEnumerator
+         .andThen(templateEnumerator)
+         .andThen(instanceEnumerator)
+         .andThen(connectionEnumerator))
     }
 
   def socket: WebSocket = WebSocket.tryAccept[Msg](requestToSocket)

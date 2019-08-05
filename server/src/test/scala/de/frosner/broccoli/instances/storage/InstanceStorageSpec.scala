@@ -57,6 +57,7 @@ class InstanceStorageSpec extends Specification {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
+          documentation_url = "#documentation_url",
           parameterInfos = Map(
             "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
             "age" -> ParameterInfo("age",
@@ -81,6 +82,7 @@ class InstanceStorageSpec extends Specification {
           id = "1",
           template = "\"{{id}} {{age}}\"",
           description = "desc",
+          documentation_url = "#documentation_url",
           parameterInfos = Map(
             "id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None),
             "age" -> ParameterInfo("age",

@@ -2,12 +2,13 @@ package de.frosner.broccoli.services
 
 import java.net.ConnectException
 import java.util.concurrent.TimeUnit
-import javax.inject.{Inject, Singleton}
 
+import de.frosner.broccoli.auth.Account
+import javax.inject.{Inject, Singleton}
 import de.frosner.broccoli.models.JobStatus._
 import de.frosner.broccoli.models.{JobStatus, PeriodicRun}
 import de.frosner.broccoli.nomad.NomadConfiguration
-import de.frosner.broccoli.nomad.models.Job
+import de.frosner.broccoli.nomad.models._
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 
@@ -141,12 +142,13 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
     val queryUrl = nomadBaseUrl + "/v1/jobs"
     val request = ws.url(queryUrl)
     log.info(s"Sending job definition to ${request.uri}")
+    log.debug(s"JobDefinition: ${job.toString()}")
     Try {
       val result = Await.result(request.post(job), Duration(5, TimeUnit.SECONDS))
       if (result.status == 200) {
         Success(())
       } else {
-        Failure(NomadRequestFailed(request.uri.toString, result.status))
+        Failure(NomadRequestFailed(request.uri.toString, result.status, result.body))
       }
     }.flatten
   }
@@ -165,6 +167,180 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
         Failure(NomadRequestFailed(request.uri.toString, result.status))
       }
     }.flatten
+  }
+
+  def getNodeResources(loggedIn: Account): Future[Seq[NodeResources]] = {
+    // Step 1: Get all nodes
+    val queryUrl = nomadBaseUrl + s"/v1/nodes"
+    log.info("Contacting: " + nomadBaseUrl)
+    val scheme = Option(new java.net.URI(nomadBaseUrl).getScheme).getOrElse("http")
+    val request = ws.url(queryUrl)
+    log.info(s"Sending get nodes request to ${request.uri}")
+    val oePrefix = loggedIn.getOEPrefix
+    request
+      .get()
+      .flatMap(queryResponse => {
+        val filteredIds =
+          for {
+            jsValue <- queryResponse.json.as[List[JsValue]]
+            id = (jsValue \ "ID").as[String]
+            name = (jsValue \ "Name").as[String]
+            // Step 2: Filter out node ids that start with the oe-prefix
+            if name.split("-")(0).equals(oePrefix)
+          } yield (id, name)
+        Future
+          .sequence(
+            filteredIds.map {
+              case (id, name) => {
+                // Step 3: Query a particular node for the http address to its nomad client and the Total Resources
+                val ipUrl = nomadBaseUrl + s"/v1/node/$id"
+                ws.url(ipUrl)
+                  .get()
+                  .map(
+                    ipResponse =>
+                      (
+                        (ipResponse.json \ "HTTPAddr").as[String],
+                        (ipResponse.json \ "Attributes" \ "unique.storage.volume").as[String],
+                        // this logic is copied from
+                        // github.com/hashicorp/nomad/blob/22fd62753510a4a41c1b8f1d117ea1a90b48df06/command/node_status.go#L631
+                        TotalResources(
+                          (ipResponse.json \ "Resources" \ "CPU").as[Long] -
+                            (ipResponse.json \ "Reserved" \ "CPU").as[Long],
+                          (ipResponse.json \ "Resources" \ "MemoryMB").as[Long] -
+                            (ipResponse.json \ "Reserved" \ "MemoryMB").as[Long],
+                          (ipResponse.json \ "Resources" \ "DiskMB").as[Long] -
+                            (ipResponse.json \ "Reserved" \ "DiskMB").as[Long]
+                        )
+                    )
+                  )
+                  .map {
+                    case (httpAddr, storageDevice, totalResources) => {
+                      // Step 4: Query the nomad client on a node for resource stats (Host Resources)
+                      val hostStatsUrl = s"$scheme://$httpAddr/v1/client/stats"
+                      val hostResult =
+                        ws.url(hostStatsUrl)
+                          .get()
+                          .map(
+                            resourceResponse => {
+                              val cpu = Math.round(Math.floor((resourceResponse.json \ "CPUTicksConsumed").as[Double]))
+                              val memoryUsed = (resourceResponse.json \ "Memory" \ "Used").as[Long]
+                              val memoryTotal = (resourceResponse.json \ "Memory" \ "Total").as[Long]
+                              val (diskUsed, diskSize) =
+                                (resourceResponse.json \ "DiskStats")
+                                  .as[List[JsValue]]
+                                  .filter(diskJson => (diskJson \ "Device").as[String].equals(storageDevice))
+                                  .map(diskJson => ((diskJson \ "Used").as[Long], (diskJson \ "Size").as[Long])) match {
+                                  case (dUsed, dSize) :: _ => (dUsed, dSize)
+                                  case _                   => (0L, 0L) // This should never happen normally
+                                }
+                              HostResources(cpu, memoryUsed, memoryTotal, diskUsed, diskSize)
+                            }
+                          )
+                      // Allocations
+                      // Step 5: Get all allocations for a particular node and the resources requested by it
+                      val allocationUrl = nomadBaseUrl + s"/v1/node/$id/allocations"
+                      val allocationResults =
+                        ws.url(allocationUrl)
+                          .get()
+                          .map(
+                            allocationsResponse => {
+                              val allocationsJson = allocationsResponse.json.as[List[JsValue]]
+                              allocationsJson
+                                .filter(allocationJson => (allocationJson \ "ClientStatus").as[String] == "running")
+                                .map(
+                                  allocationJson =>
+                                    AllocatedResources(
+                                      (allocationJson \ "ID").as[String],
+                                      (allocationJson \ "Name").as[String],
+                                      (allocationJson \ "Resources" \ "CPU").as[Long],
+                                      (allocationJson \ "Resources" \ "MemoryMB").as[Long],
+                                      (allocationJson \ "Resources" \ "DiskMB").as[Long]
+                                  )
+                                )
+                            }
+                          )
+                      // Allocation Utilizations
+                      val allocationUtilizationResult =
+                        allocationResults
+                          .map(allocations => {
+                            Future.sequence(
+                              allocations.map(
+                                allocatedResources => {
+                                  // Step 5: Get the allocation stats for each allocation id from the nomad client
+                                  //          running on a node
+                                  val allocationUtilizationUrl =
+                                    s"$scheme://$httpAddr/v1/client/allocation/${allocatedResources.id}/stats"
+                                  ws.url(allocationUtilizationUrl)
+                                    .get()
+                                    .map(
+                                      allocationStatsResponse => {
+                                        AllocatedResourcesUtilization(
+                                          allocatedResources.id,
+                                          allocatedResources.name,
+                                          Math.round(
+                                            Math.floor(
+                                              (allocationStatsResponse.json \ "ResourceUsage" \ "CpuStats" \ "TotalTicks")
+                                                .as[Double]
+                                            )
+                                          ),
+                                          (allocationStatsResponse.json \ "ResourceUsage" \ "MemoryStats" \ "RSS")
+                                            .as[Long]
+                                        )
+                                      }
+                                    )
+                                }
+                              )
+                            )
+                          })
+                          .flatMap(identity)
+                      // Step 6: Combine all results into a Future[NodeResources]
+                      for {
+                        hostResources <- hostResult
+                        allocations <- allocationResults
+                        allocationsUtilization <- allocationUtilizationResult
+                      } yield {
+                        val (allocCPU, allocMem, allocDisk) =
+                          allocations.foldLeft((0L, 0L, 0L)) {
+                            case ((cpu, memMB, diskMB), allocation) =>
+                              (cpu + allocation.cpu, memMB + allocation.memoryMB, diskMB + allocation.diskMB)
+                          }
+                        val (allocUtilCPU, allocUtilMem) =
+                          allocationsUtilization.foldLeft((0L, 0L)) {
+                            case ((cpu, mem), allocationUtlization) =>
+                              (cpu + allocationUtlization.cpu, mem + allocationUtlization.memory)
+                          }
+                        NodeResources(
+                          id,
+                          name,
+                          totalResources,
+                          hostResources,
+                          Map(allocations.map(allocation => (allocation.id, allocation)): _*),
+                          Map(allocationsUtilization
+                            .map(allocationUtilization => (allocationUtilization.id, allocationUtilization)): _*),
+                          TotalResources(allocCPU, allocMem, allocDisk),
+                          TotalUtilization(allocUtilCPU, allocUtilMem)
+                        )
+                      }
+                    }
+                  }
+                  .flatMap(identity)
+                  .map(Success(_))
+                  .recover({ case ex => Failure(ex) })
+              }
+            }
+          )
+          .map(
+            _.flatMap(
+              tryResult =>
+                tryResult match {
+                  case Success(resourceStats) => List(resourceStats)
+                  case Failure(ex) =>
+                    log.error("Error while getting node information: {}", ex)
+                    List()
+              }
+            )
+          )
+      })
   }
 
 }

@@ -2,6 +2,7 @@ package de.frosner.broccoli.templates
 
 import com.typesafe.config.{ConfigObject, ConfigValue}
 import de.frosner.broccoli.models.{ParameterType, ParameterValue}
+import de.frosner.broccoli.services.ParameterTypeException
 import pureconfig.ConfigReader
 import pureconfig.error.{ConfigReaderFailures, ThrowableFailure}
 
@@ -16,6 +17,7 @@ object TemplateConfig {
         val confObj = configOrig.asInstanceOf[ConfigObject]
         val config = confObj.toConfig
         val description = Try(config.getString("description")).toOption
+        val documentation_url = Try(config.getString("documentation_url")).toOption
         val parameters = config
           .getObject("parameters")
           .map {
@@ -24,7 +26,9 @@ object TemplateConfig {
               val maybeName = Try(paramValueObj.getString("name")).toOption
               val maybeSecret = Try(paramValueObj.getBoolean("secret")).toOption
               // Don't wrap the call as we want it to fail in case the wrong type or no type is supplied
-              val paramType = ParameterType.withName(paramValueObj.getString("type"))
+              val paramType = ParameterType
+                .fromConfigObject(paramValueObj.getValue("type"))
+                .getOrElse(throw ParameterTypeException(s"Invalid type for parameter $paramName"))
               val maybeOrderIndex = Try(paramValueObj.getInt("order-index")).toOption
               val maybeDefault = Try(paramValueObj.getValue("default")).toOption.map { paramValueConf =>
                 ParameterValue.fromConfigValue(
@@ -39,7 +43,7 @@ object TemplateConfig {
               (paramName, Parameter(maybeName, maybeDefault, maybeSecret, paramType, maybeOrderIndex))
           }
           .toMap
-        TemplateInfo(description, parameters)
+        TemplateInfo(description, documentation_url, parameters)
       } match {
         case Success(e)  => Right(e)
         case Failure(ex) =>
@@ -48,7 +52,7 @@ object TemplateConfig {
       }
   }
 
-  final case class TemplateInfo(description: Option[String], parameters: Map[String, Parameter])
+  final case class TemplateInfo(description: Option[String], documentation_url: Option[String], parameters: Map[String, Parameter])
 
   final case class Parameter(name: Option[String],
                              default: Option[ParameterValue],
@@ -56,4 +60,4 @@ object TemplateConfig {
                              `type`: ParameterType,
                              orderIndex: Option[Int])
 
-}
+} 
