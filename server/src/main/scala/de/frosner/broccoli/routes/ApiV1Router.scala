@@ -27,8 +27,9 @@ class ApiV1Router @Inject()(
 ) extends SimpleRouter {
   override def routes: Routes = {
     // Templates
-    case GET(p"/templates")     => templates.get.list
-    case GET(p"/templates/$id") => templates.get.show(id)
+    case GET(p"/templates")         => templates.get.list
+    case GET(p"/templates/$id")     => templates.get.show(id)
+    case POST(p"templates/refresh") => templates.get.refresh
     // Instances
     case GET(p"/instances" ? q_o"templateId=$id") => instances.get.list(id)
     case GET(p"/instances/$id")                   => instances.get.show(id)

@@ -14,7 +14,9 @@ trait TemplateSource {
     *
     * Does not guarantee to return the same templates on repeated invocations. Can potentially perform I/O
     */
-  def loadTemplates(): Seq[Template]
+  def loadTemplates(): Seq[Template] = loadTemplates(false)
+
+  def loadTemplates(refreshed: Boolean): Seq[Template]
 
   def loadTemplate(templateId: String,
                    templateString: String,

@@ -1,7 +1,6 @@
 package de.frosner.broccoli.templates
 
 import javax.inject.Singleton
-
 import com.google.inject.{AbstractModule, Provides}
 import de.frosner.broccoli.BroccoliConfiguration
 import de.frosner.broccoli.signal.UnixSignalManager
@@ -28,4 +27,13 @@ class TemplateModule extends AbstractModule with ScalaModule {
       new CachedTemplateSource(new DirectoryTemplateSource(config.templates.path, templateRenderer)),
       signalManager
     )
+
+  /**
+    * Provide Template configuration.
+    *
+    * @param config The whole broccoli configuration
+    * @return The templates part of that configuration
+    */
+  @Provides
+  def provideTemplateConfiguration(config: BroccoliConfiguration): TemplateConfiguration = config.templates
 }
