@@ -41,9 +41,7 @@ case class TemplateController @Inject()(
 
   def refresh = Action.async(parse.json[RefreshRequest]) { implicit request =>
     Future {
-      println("In here")
       if (request.body.token == templateConfiguration.reloadToken) {
-        println("In here2")
         val templates = templateService.getTemplates(true)
         if (request.body.returnTemplates) {
           Ok(Json.toJson(templates))
@@ -51,7 +49,6 @@ case class TemplateController @Inject()(
           Ok
         }
       } else {
-        println("In here3")
         Unauthorized
       }
     }
