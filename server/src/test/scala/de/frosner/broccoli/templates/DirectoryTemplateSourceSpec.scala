@@ -21,7 +21,7 @@ class DirectoryTemplateSourceSpec extends Specification with TemporaryTemplatesC
     "fail if the passed directory is not directory" in {
       val directory = FileSystems.getDefault.getPath("not-a-directory")
       Files.exists(directory) must beFalse
-      new DirectoryTemplateSource(directory.toString, mock[TemplateRenderer]).loadTemplates must throwA(
+      new DirectoryTemplateSource(directory.toString, mock[TemplateRenderer]).loadTemplates() must throwA(
         new IllegalStateException(s"Templates directory ${directory.toAbsolutePath} is not a directory"))
     }
 

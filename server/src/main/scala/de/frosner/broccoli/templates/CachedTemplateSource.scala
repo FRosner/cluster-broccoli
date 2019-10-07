@@ -12,13 +12,17 @@ class CachedTemplateSource(source: TemplateSource) extends TemplateSource {
 
   override val templateRenderer: TemplateRenderer = source.templateRenderer
 
-  override def loadTemplates: Seq[Template] =
+  override def loadTemplates(refreshed: Boolean): Seq[Template] = {
+    if (refreshed) {
+      templatesCache = None
+    }
     templatesCache match {
       case Some(templates) => templates
       case None =>
         refresh()
         templatesCache.get
     }
+  }
 
   def refresh(): Unit = templatesCache = Some(source.loadTemplates)
 }

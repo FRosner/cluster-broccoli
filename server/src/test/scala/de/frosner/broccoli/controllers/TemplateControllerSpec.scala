@@ -1,9 +1,11 @@
 package de.frosner.broccoli.controllers
 
-import de.frosner.broccoli.auth.{Account, Role}
+import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.services.TemplateService
-import play.api.test.{PlaySpecification, WithApplication}
+import de.frosner.broccoli.services.{SecurityService, TemplateService}
+import de.frosner.broccoli.templates.TemplateConfiguration
+import de.frosner.broccoli.templates.jinjava.JinjavaConfiguration
+import play.api.test.{FakeRequest, PlaySpecification, WithApplication}
 import org.mockito.Mockito._
 import play.api.libs.json._
 import play.api.test.Helpers.stubControllerComponents
@@ -13,6 +15,8 @@ import scala.concurrent.ExecutionContext
 class TemplateControllerSpec extends PlaySpecification with AuthUtils {
 
   sequential // http://stackoverflow.com/questions/31041842/error-with-play-2-4-tests-the-cachemanager-has-been-shut-down-it-can-no-longe
+
+  val templateConfig = TemplateConfiguration("/dummy/path/to/templates", JinjavaConfiguration(), "TOKEN")
 
   "list" should {
 
@@ -34,6 +38,7 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths { (securityService, account) =>
         TemplateController(
           withTemplates(mock[TemplateService], List(template)),
+          templateConfig,
           securityService,
           playEnv,
           cacheApi,
@@ -88,6 +93,7 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths { (securityService, account) =>
         TemplateController(
           withTemplates(mock[TemplateService], List(template)),
+          templateConfig,
           securityService,
           playEnv,
           cacheApi,
@@ -126,6 +132,7 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
       testWithAllAuths { (securityService, account) =>
         TemplateController(
           templateService,
+          templateConfig,
           securityService,
           playEnv,
           cacheApi,
@@ -140,6 +147,71 @@ class TemplateControllerSpec extends PlaySpecification with AuthUtils {
       }
     }
 
+  }
+
+  "refresh" should {
+    val template1 = Template(
+      id = "id1",
+      template = "template1 {{id}}",
+      description = "description",
+      parameterInfos = Map(
+        "id" -> ParameterInfo(id = "id",
+                              name = Some("myname"),
+                              default = Some(StringParameterValue("myid")),
+                              secret = Some(false),
+                              `type` = ParameterType.String,
+                              orderIndex = None)
+      )
+    )
+
+    val template2 = Template(
+      id = "id2",
+      template = "template2 {{id}}",
+      description = "description",
+      parameterInfos = Map(
+        "id" -> ParameterInfo(id = "id",
+                              name = Some("myname"),
+                              default = Some(StringParameterValue("myid")),
+                              secret = Some(false),
+                              `type` = ParameterType.String,
+                              orderIndex = None)
+      )
+    )
+    val templateService = mock[TemplateService]
+    when(templateService.getTemplates(false)).thenReturn(Seq(template1))
+    when(templateService.getTemplates(true)).thenReturn(Seq(template1, template2))
+
+    "reload the templates if auth token is correct" in new WithApplication {
+      val controller = TemplateController(
+        templateService,
+        templateConfig,
+        withAuthNone(mock[SecurityService]),
+        playEnv,
+        cacheApi,
+        stubControllerComponents(),
+        ExecutionContext.global,
+        withIdentities(Account.anonymous)
+      )
+      val result = controller.refresh(FakeRequest().withBody(RefreshRequest("TOKEN", true)))
+      status(result) must be equalTo 200 and {
+        contentAsJson(result).as[Seq[Template]].size must be equalTo 2
+      }
+    }
+
+    "401 if auth token is incorrect" in new WithApplication {
+      val controller = TemplateController(
+        templateService,
+        templateConfig,
+        withAuthNone(mock[SecurityService]),
+        playEnv,
+        cacheApi,
+        stubControllerComponents(),
+        ExecutionContext.global,
+        withIdentities(Account.anonymous)
+      )
+      val result = controller.refresh(FakeRequest().withBody(RefreshRequest("BADTOKEN", true)))
+      status(result) must be equalTo UNAUTHORIZED
+    }
   }
 
 }

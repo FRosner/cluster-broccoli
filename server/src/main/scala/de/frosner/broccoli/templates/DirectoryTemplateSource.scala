@@ -2,7 +2,7 @@ package de.frosner.broccoli.templates
 
 import java.nio.file.{FileSystems, Files}
 
-import com.typesafe.config.{ConfigFactory}
+import com.typesafe.config.ConfigFactory
 import pureconfig._
 import de.frosner.broccoli.models.Template
 
@@ -22,9 +22,12 @@ class DirectoryTemplateSource(directory: String, val templateRenderer: TemplateR
   log.info(s"Starting $this")
 
   /**
+    * Templates loaded from the directory are always up to date.
+    * We ignore the refresh capability here
+    *
     * @return The sequence of templates found in the directory
     */
-  override def loadTemplates: Seq[Template] = {
+  override def loadTemplates(refreshed: Boolean): Seq[Template] = {
     val rootTemplatesDirectory = FileSystems.getDefault.getPath(directory).toAbsolutePath
 
     if (!Files.isDirectory(rootTemplatesDirectory)) {

@@ -22,7 +22,7 @@ class TemplateSourceSpec extends Specification with Mockito {
 
     def templateSource(renderer: TemplateRenderer): TemplateSource = new TemplateSource {
       val templateRenderer: TemplateRenderer = renderer
-      override def loadTemplates(): Seq[Template] = Seq.empty
+      override def loadTemplates(refreshTemplate: Boolean): Seq[Template] = Seq.empty
     }
     def defaultTemplateSource = templateSource(defaultTemplateRenderer)
 

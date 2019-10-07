@@ -21,12 +21,12 @@ class SignalRefreshedTemplateSourceSpec extends Specification with Mockito {
       signalRefreshedTemplateSource.loadTemplates()
 
       there was no(testTemplateSource).refresh()
-      there was one(testTemplateSource).loadTemplates()
-      verify(testTemplateSource, times(1)).loadTemplates()
+      there was one(testTemplateSource).loadTemplates(false)
+      verify(testTemplateSource, times(1)).loadTemplates(false)
 
       handler.getValue.handle(new Signal("USR2"))
       there was one(testTemplateSource).refresh()
-      there was one(testTemplateSource).loadTemplates()
+      there was one(testTemplateSource).loadTemplates(false)
     }
   }
 }

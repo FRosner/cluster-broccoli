@@ -8,4 +8,4 @@ import de.frosner.broccoli.templates.jinjava.JinjavaConfiguration
   * @param path The filesystem path to read the templates from
   * @param jinjava Configuration specific to jinjava template library
   */
-final case class TemplateConfiguration(path: String, jinjava: JinjavaConfiguration)
+final case class TemplateConfiguration(path: String, jinjava: JinjavaConfiguration, reloadToken: String)
