@@ -1,10 +1,10 @@
 module Commands.LoginLogout exposing (loginRequest, logoutRequest, verifyLogin)
 
 import Commands.Fetch exposing (apiBaseUrl)
-import Json.Decode
 import Http
-import Updates.Messages exposing (UpdateLoginStatusMsg(..))
+import Json.Decode
 import Models.Resources.UserInfo exposing (userInfoDecoder)
+import Updates.Messages exposing (UpdateLoginStatusMsg(..))
 
 
 authBaseUrl =

@@ -1,19 +1,19 @@
 module Views.Header exposing (view)
 
+import Bootstrap.Button as Button
+import Bootstrap.Form.Input as Input
+import Bootstrap.Utilities.Spacing as Spacing
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (onClick, onInput, onSubmit)
+import Messages exposing (AnyMsg(..))
 import Model exposing (TabState(Instances, Resources))
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.UserInfo exposing (UserInfo)
 import Models.Ui.LoginForm exposing (LoginForm)
-import Messages exposing (AnyMsg(..))
+import Regex exposing (Regex)
 import Updates.Messages exposing (UpdateLoginFormMsg(..))
 import Utils.HtmlUtils exposing (icon)
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (onInput, onSubmit, onClick)
-import Regex exposing (Regex)
-import Bootstrap.Form.Input as Input
-import Bootstrap.Button as Button
-import Bootstrap.Utilities.Spacing as Spacing
 
 
 view : Maybe AboutInfo -> LoginForm -> Maybe Bool -> String -> String -> String -> TabState -> Html AnyMsg
@@ -24,12 +24,12 @@ view maybeAboutInfo loginFormModel maybeAuthRequired templateFilterString instan
             , Maybe.map (\i -> i.authInfo.enabled) maybeAboutInfo
             )
     in
-        nav
-            [ class "navbar navbar-expand-md navbar-fixed-top navbar-light bg-light border" ]
-            [ div [ class "dropdown ml-3" ] [ navbarBrand, navbarBrandDropdown maybeAboutInfo ]
-            , navbarToggleButton
-            , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString nodeFilterString tabState
-            ]
+    nav
+        [ class "navbar navbar-expand-md navbar-fixed-top navbar-light bg-light border" ]
+        [ div [ class "dropdown ml-3" ] [ navbarBrand, navbarBrandDropdown maybeAboutInfo ]
+        , navbarToggleButton
+        , navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired loginFormModel templateFilterString instanceFilterString nodeFilterString tabState
+        ]
 
 
 navbarToggleButton =
@@ -82,8 +82,9 @@ navbarCollapse maybeAboutInfo maybeUserInfo maybeAuthEnabled maybeAuthRequired l
         , id "navbar-collapse"
         ]
         (List.concat
-            [ if (maybeAuthRequired == Just True || maybeAuthRequired == Nothing || (maybeAuthRequired == Just False && maybeAuthEnabled == Nothing)) then
+            [ if maybeAuthRequired == Just True || maybeAuthRequired == Nothing || (maybeAuthRequired == Just False && maybeAuthEnabled == Nothing) then
                 []
+
               else
                 List.append
                     [ tabGen "Instances" Instances (tabState == Instances)
@@ -201,15 +202,17 @@ userInfoView maybeUserInfo =
 
 
 redIfLoginFailed loginFailed =
-    if (loginFailed) then
+    if loginFailed then
         "#fee"
+
     else
         "#fff"
 
 
 attentionIfLoginFailed loginFailed =
-    if (loginFailed) then
+    if loginFailed then
         "animated shake"
+
     else
         ""
 
@@ -240,7 +243,7 @@ loginFormView loginFormModel =
         , class
             (String.concat
                 [ "form-inline ml-auto mr-3 "
-                , (attentionIfLoginFailed loginFormModel.loginIncorrect)
+                , attentionIfLoginFailed loginFormModel.loginIncorrect
                 ]
             )
         , onSubmit <| LoginAttempt loginFormModel.username loginFormModel.password
@@ -249,7 +252,7 @@ loginFormView loginFormModel =
             [ type_ "text"
             , id "header-login-username"
             , class "form-control mr-sm-2"
-            , style [ ( "background-color", (redIfLoginFailed loginFormModel.loginIncorrect) ) ]
+            , style [ ( "background-color", redIfLoginFailed loginFormModel.loginIncorrect ) ]
             , onInput EnterUserName
             , placeholder "User"
             , value loginFormModel.username
@@ -261,7 +264,7 @@ loginFormView loginFormModel =
             , id "header-login-password"
             , onInput EnterPassword
             , class "form-control mr-sm-2"
-            , style [ ( "background-color", (redIfLoginFailed loginFormModel.loginIncorrect) ) ]
+            , style [ ( "background-color", redIfLoginFailed loginFormModel.loginIncorrect ) ]
             , placeholder "Password"
             , value loginFormModel.password
             ]

@@ -1,7 +1,7 @@
 module Utils.TaskUtils exposing (delay)
 
-import Task exposing (Task)
 import Process
+import Task exposing (Task)
 import Time exposing (Time)
 
 

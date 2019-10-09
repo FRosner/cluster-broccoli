@@ -1,24 +1,24 @@
 module Views.Body exposing (..)
 
-import Views.TemplateView as TemplateView
-import Views.ResourcesView as ResourcesView
-import Models.Resources.Instance exposing (Instance, InstanceId)
-import Models.Resources.InstanceTasks exposing (InstanceTasks)
-import Models.Resources.Role exposing (Role)
-import Models.Resources.NodeResources exposing (NodeResources)
-import Models.Resources.Template exposing (TemplateId, Template, addTemplateInstanceString)
-import Models.Ui.BodyUiModel exposing (BodyUiModel, TemporaryStates)
-import Model exposing (TabState(..))
-import Updates.Messages exposing (UpdateBodyViewMsg(..))
+import Array exposing (Array)
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
+import Bootstrap.Grid.Row as Row
+import Bootstrap.Utilities.Spacing as Spacing
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Bootstrap.Grid as Grid
-import Bootstrap.Grid.Row as Row
-import Bootstrap.Grid.Col as Col
-import Bootstrap.Utilities.Spacing as Spacing
-import Array exposing (Array)
 import Messages exposing (..)
+import Model exposing (TabState(..))
+import Models.Resources.Instance exposing (Instance, InstanceId)
+import Models.Resources.InstanceTasks exposing (InstanceTasks)
+import Models.Resources.NodeResources exposing (NodeResources)
+import Models.Resources.Role exposing (Role)
+import Models.Resources.Template exposing (Template, TemplateId, addTemplateInstanceString)
+import Models.Ui.BodyUiModel exposing (BodyUiModel, TemporaryStates)
+import Updates.Messages exposing (UpdateBodyViewMsg(..))
+import Views.ResourcesView as ResourcesView
+import Views.TemplateView as TemplateView
 
 
 view :

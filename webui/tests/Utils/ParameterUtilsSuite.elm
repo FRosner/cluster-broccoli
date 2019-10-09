@@ -1,10 +1,10 @@
 module Utils.ParameterUtilsSuite exposing (tests)
 
-import Utils.ParameterUtils exposing (getOtherParametersSorted, zipWithOrderIndex)
-import Test exposing (test, describe, Test)
-import Expect
 import Dict exposing (Dict)
+import Expect
 import Models.Resources.Template as Template
+import Test exposing (Test, describe, test)
+import Utils.ParameterUtils exposing (getOtherParametersSorted, zipWithOrderIndex)
 
 
 tests : Test

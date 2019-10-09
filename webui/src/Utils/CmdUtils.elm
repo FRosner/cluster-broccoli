@@ -1,4 +1,4 @@
-module Utils.CmdUtils exposing (sendMsg, delayMsg)
+module Utils.CmdUtils exposing (delayMsg, sendMsg)
 
 import Task
 import Time exposing (Time)

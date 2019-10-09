@@ -1,7 +1,7 @@
 module Models.Resources.UserInfo exposing (UserInfo, userInfoDecoder)
 
-import Models.Resources.Role as Role exposing (Role)
 import Json.Decode as Decode exposing (field)
+import Models.Resources.Role as Role exposing (Role)
 
 
 type alias UserInfo =

@@ -1,14 +1,14 @@
 module Updates.UpdateLoginStatus exposing (updateLoginStatus)
 
-import Updates.Messages exposing (UpdateLoginStatusMsg(..), UpdateLoginFormMsg(..), UpdateErrorsMsg(..))
+import Debug
+import Http exposing (Error(..))
 import Messages exposing (AnyMsg(..))
 import Model exposing (Model)
 import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
+import Routing
+import Updates.Messages exposing (UpdateErrorsMsg(..), UpdateLoginFormMsg(..), UpdateLoginStatusMsg(..))
 import Utils.CmdUtils as CmdUtils
 import Ws
-import Debug
-import Routing
-import Http exposing (Error(..))
 
 
 updateLoginStatus : UpdateLoginStatusMsg -> Model -> ( Model, Cmd AnyMsg )
@@ -27,26 +27,26 @@ updateLoginStatus message model =
                 oldLoginForm =
                     model.loginForm
             in
-                ( { model
-                    | loginForm =
-                        { oldLoginForm
-                            | password = ""
-                            , loginIncorrect = True
-                        }
-                  }
-                , Cmd.none
-                )
+            ( { model
+                | loginForm =
+                    { oldLoginForm
+                        | password = ""
+                        , loginIncorrect = True
+                    }
+              }
+            , Cmd.none
+            )
 
         FetchLogout (Ok string) ->
             let
                 initialModel =
                     Model.initial model.location (Routing.parseLocation model.location)
             in
-                ( { initialModel
-                    | authRequired = Just True
-                  }
-                , Ws.disconnect model.location
-                )
+            ( { initialModel
+                | authRequired = Just True
+              }
+            , Ws.disconnect model.location
+            )
 
         FetchLogout (Err error) ->
             ( Model.initial model.location (Routing.parseLocation model.location)
@@ -54,17 +54,18 @@ updateLoginStatus message model =
             )
 
         FetchVerify (Ok string) ->
-            if (not (model.wsConnected)) then
+            if not model.wsConnected then
                 ( { model | authRequired = Just False }
                 , Ws.connect model.location
                 )
+
             else
                 ( model
                 , Cmd.none
                 )
 
         FetchVerify (Err error) ->
-            if (not (model.wsConnected)) then
+            if not model.wsConnected then
                 case error of
                     BadStatus response ->
                         case response.status.code of
@@ -82,6 +83,7 @@ updateLoginStatus message model =
                         ( model
                         , Ws.attemptReconnect
                         )
+
             else
                 ( model
                 , Cmd.none

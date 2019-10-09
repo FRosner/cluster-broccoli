@@ -1,8 +1,8 @@
 module Updates.UpdateErrors exposing (updateErrors)
 
-import Updates.Messages exposing (UpdateErrorsMsg(..))
 import Messages exposing (AnyMsg)
 import Models.Ui.Notifications exposing (Errors)
+import Updates.Messages exposing (UpdateErrorsMsg(..))
 import Utils.ListUtils as ListUtils
 
 

@@ -4,6 +4,7 @@ import Json.Decode as Decode exposing (field)
 import Models.Resources.JobStatus as JobStatus exposing (JobStatus)
 
 
+
 -- createdBy: String, status: JobStatus, utcSeconds: Long, jobName: String
 
 

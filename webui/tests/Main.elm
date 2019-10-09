@@ -1,16 +1,16 @@
 port module Main exposing (..)
 
-import Utils.ParameterUtilsSuite as ParameterUtilsSuite
+import Json.Encode exposing (Value)
+import Test exposing (describe)
+import Test.Runner.Node exposing (TestProgram, run)
 import Utils.DictUtilsSuite as DictUtilsSuite
-import Views.HeaderSuite as HeaderSuite
-import Views.NotificationsSuite as NotificationsSuite
+import Utils.ParameterUtilsSuite as ParameterUtilsSuite
 import Views.BodySuite as BodySuite
 import Views.FooterSuite as FooterSuite
-import Views.PeriodicRunsViewSuite as PeriodicRunsViewSuite
+import Views.HeaderSuite as HeaderSuite
 import Views.LogUrlSuite as LogUrlSuite
-import Test exposing (describe)
-import Test.Runner.Node exposing (run, TestProgram)
-import Json.Encode exposing (Value)
+import Views.NotificationsSuite as NotificationsSuite
+import Views.PeriodicRunsViewSuite as PeriodicRunsViewSuite
 
 
 main : TestProgram

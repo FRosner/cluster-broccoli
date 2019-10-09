@@ -1,8 +1,8 @@
 module Utils.DictUtilsSuite exposing (tests)
 
-import Test exposing (test, describe, Test)
-import Expect
 import Dict exposing (Dict)
+import Expect
+import Test exposing (Test, describe, test)
 import Utils.DictUtils exposing (flatMap, flatten)
 
 

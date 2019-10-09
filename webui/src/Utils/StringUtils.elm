@@ -10,14 +10,14 @@ errorToString prefix error =
             String.concat
                 [ prefix
                 , ": "
-                , (toString request.status.code)
+                , toString request.status.code
                 , " ("
                 , request.status.message
                 , ")"
                 ]
 
         _ ->
-            (toString error)
+            toString error
 
 
 {-| Surround a string with another string.
@@ -38,8 +38,9 @@ unsurround wrap string =
             length =
                 String.length wrap
         in
-            string
-                |> String.dropLeft length
-                |> String.dropRight length
+        string
+            |> String.dropLeft length
+            |> String.dropRight length
+
     else
         string

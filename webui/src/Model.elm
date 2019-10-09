@@ -1,16 +1,16 @@
-module Model exposing (Model, Route(..), initial, initialTabState, TabState(..))
+module Model exposing (Model, Route(..), TabState(..), initial, initialTabState)
 
-import Models.Resources.NodeResources exposing (NodeResources)
-import Models.Resources.Template exposing (Template, TemplateId)
-import Models.Resources.Instance exposing (Instance, InstanceId)
+import Dict exposing (Dict)
 import Models.Resources.AboutInfo exposing (AboutInfo)
 import Models.Resources.AllocatedTask exposing (AllocatedTask)
+import Models.Resources.Instance exposing (Instance, InstanceId)
 import Models.Resources.InstanceTasks exposing (InstanceTasks)
+import Models.Resources.NodeResources exposing (NodeResources)
+import Models.Resources.Template exposing (Template, TemplateId)
 import Models.Ui.BodyUiModel as BodyUiModel exposing (BodyUiModel)
 import Models.Ui.LoginForm as LoginForm exposing (LoginForm)
 import Models.Ui.Notifications exposing (Errors)
 import Navigation exposing (Location)
-import Dict exposing (Dict)
 
 
 type Route

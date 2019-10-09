@@ -1,29 +1,29 @@
-module Ws exposing (update, listen, send, connect, disconnect, attemptReconnect)
+module Ws exposing (attemptReconnect, connect, disconnect, listen, send, update)
 
-import Json.Decode as Decode exposing (Decoder, field, andThen)
-import Models.Resources.AboutInfo as AboutInfo
-import Models.Resources.Template as Template
-import Models.Resources.Instance as Instance
-import Models.Resources.NodeResources as NodeResources
-import Models.Resources.InstanceError as InstanceError
-import Models.Resources.InstanceCreation as InstanceCreation
-import Models.Resources.InstanceUpdate as InstanceUpdate
-import Models.Resources.InstanceCreated as InstanceCreated
-import Models.Resources.InstanceDeleted as InstanceDeleted
-import Models.Resources.InstanceUpdated as InstanceUpdated
-import Models.Resources.InstanceTasks as InstanceTasks
-import Model exposing (Model)
-import Navigation exposing (Location)
-import Updates.Messages exposing (..)
-import Messages exposing (..)
 import Array exposing (Array)
+import Dict
+import Json.Decode as Decode exposing (Decoder, andThen, field)
+import Json.Encode as Encode
+import Maybe.Extra exposing (isJust)
+import Messages exposing (..)
+import Model exposing (Model)
+import Models.Resources.AboutInfo as AboutInfo
+import Models.Resources.Instance as Instance
+import Models.Resources.InstanceCreated as InstanceCreated
+import Models.Resources.InstanceCreation as InstanceCreation
+import Models.Resources.InstanceDeleted as InstanceDeleted
+import Models.Resources.InstanceError as InstanceError
+import Models.Resources.InstanceTasks as InstanceTasks
+import Models.Resources.InstanceUpdate as InstanceUpdate
+import Models.Resources.InstanceUpdated as InstanceUpdated
+import Models.Resources.NodeResources as NodeResources
+import Models.Resources.Template as Template
+import Navigation exposing (Location)
 import Set
 import Time
-import Dict
-import Websocket
-import Json.Encode as Encode
+import Updates.Messages exposing (..)
 import Utils.CmdUtils as CmdUtils
-import Maybe.Extra exposing (isJust)
+import Websocket
 
 
 wsRelativePath : String
@@ -166,12 +166,12 @@ updateFromMessage model message =
                 bodyUiModel =
                     model.bodyUiModel
             in
-                ( { model
-                    | bodyUiModel = { bodyUiModel | selectedInstances = (Set.remove result.instanceId model.bodyUiModel.selectedInstances) }
-                    , instances = Dict.remove result.instance.id model.instances
-                  }
-                , Cmd.none
-                )
+            ( { model
+                | bodyUiModel = { bodyUiModel | selectedInstances = Set.remove result.instanceId model.bodyUiModel.selectedInstances }
+                , instances = Dict.remove result.instance.id model.instances
+              }
+            , Cmd.none
+            )
 
         DeleteInstanceErrorMessage error ->
             ( model
@@ -183,11 +183,11 @@ updateFromMessage model message =
                 | instances = Dict.insert result.instance.id result.instance model.instances
               }
             , if
-                (isJust result.instanceUpdate.selectedTemplate
+                isJust result.instanceUpdate.selectedTemplate
                     || isJust result.instanceUpdate.parameterValues
-                )
               then
                 CmdUtils.sendMsg (UpdateBodyViewMsg (DiscardParameterValueChanges result.instance.id))
+
               else
                 Cmd.none
             )
@@ -258,10 +258,10 @@ encodeOutgoingWsMessage message =
                 GetResources ->
                     ( "getResources", Encode.string "" )
     in
-        Encode.object
-            [ ( "messageType", Encode.string messageType )
-            , ( "payload", payload )
-            ]
+    Encode.object
+        [ ( "messageType", Encode.string messageType )
+        , ( "payload", payload )
+        ]
 
 
 send : Location -> OutgoingWsMessage -> Cmd AnyMsg
@@ -277,17 +277,18 @@ locationToWsUrl : Location -> String
 locationToWsUrl location =
     let
         wsProtocol =
-            if (String.contains "https" location.protocol) then
+            if String.contains "https" location.protocol then
                 "wss"
+
             else
                 "ws"
     in
-        String.concat
-            [ wsProtocol
-            , "://"
-            , location.host
-            , wsRelativePath
-            ]
+    String.concat
+        [ wsProtocol
+        , "://"
+        , location.host
+        , wsRelativePath
+        ]
 
 
 attemptReconnect : Cmd AnyMsg

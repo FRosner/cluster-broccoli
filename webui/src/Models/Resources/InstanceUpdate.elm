@@ -1,13 +1,13 @@
-module Models.Resources.InstanceUpdate exposing (InstanceUpdate, encoder, decoder)
+module Models.Resources.InstanceUpdate exposing (InstanceUpdate, decoder, encoder)
 
-import Json.Encode as Encode
-import Json.Decode as Decode
 import Dict exposing (Dict)
-import Set exposing (Set)
+import Json.Decode as Decode
+import Json.Encode as Encode
 import Maybe exposing (Maybe)
-import Models.Resources.JobStatus as JobStatus exposing (JobStatus)
-import Models.Resources.Template exposing (TemplateId, ParameterInfo, decodeValueFromInfo, ParameterValue, encodeParamValue)
 import Models.Resources.Instance exposing (InstanceId)
+import Models.Resources.JobStatus as JobStatus exposing (JobStatus)
+import Models.Resources.Template exposing (ParameterInfo, ParameterValue, TemplateId, decodeValueFromInfo, encodeParamValue)
+import Set exposing (Set)
 
 
 type alias InstanceUpdate =
