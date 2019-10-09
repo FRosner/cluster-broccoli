@@ -38,7 +38,7 @@
     "webpack-merge": "^4.1.0"
   },
   "scripts": {
-    "format": "elm-format --elm-version 0.19 src/ tests/",
+    "format": "elm-format --elm-version 0.18 src/ tests/",
     "format:validate": "elm-format --elm-version 0.18 --validate src/ tests/",
     "test": "elm-test",
     "compile": "elm-make",
