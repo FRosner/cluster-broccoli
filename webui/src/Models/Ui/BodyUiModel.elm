@@ -1,12 +1,12 @@
 module Models.Ui.BodyUiModel exposing (..)
 
+import Array exposing (Array)
+import Dict exposing (Dict)
+import Models.Resources.Instance exposing (..)
 import Models.Resources.NodeResources exposing (NodeResources)
 import Models.Resources.Template exposing (..)
-import Models.Resources.Instance exposing (..)
 import Models.Ui.InstanceParameterForm exposing (..)
 import Set exposing (Set)
-import Dict exposing (Dict)
-import Array exposing (Array)
 
 
 type alias ResourceHoverMessage =

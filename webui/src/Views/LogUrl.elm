@@ -1,4 +1,4 @@
-module Views.LogUrl exposing (taskLog, periodicTaskLog)
+module Views.LogUrl exposing (periodicTaskLog, taskLog)
 
 import Models.Resources.AllocatedTask exposing (AllocatedTask)
 import Models.Resources.LogKind exposing (LogKind(..))

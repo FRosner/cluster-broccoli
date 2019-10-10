@@ -1,9 +1,9 @@
 module Models.Resources.InstanceTasks exposing (..)
 
-import Models.Resources.Instance exposing (InstanceId)
-import Models.Resources.AllocatedTask as AllocatedTask exposing (AllocatedTask)
-import Json.Decode as Decode exposing (Decoder)
 import Dict exposing (Dict)
+import Json.Decode as Decode exposing (Decoder)
+import Models.Resources.AllocatedTask as AllocatedTask exposing (AllocatedTask)
+import Models.Resources.Instance exposing (InstanceId)
 
 
 {-| The tasks of an instance

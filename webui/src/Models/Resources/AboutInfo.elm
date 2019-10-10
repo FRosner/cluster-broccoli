@@ -1,15 +1,14 @@
-module Models.Resources.AboutInfo
-    exposing
-        ( AboutInfo
-        , decoder
-        , asServicesInfoOf
-        , asServiceDiscoveryInfoOf
-        , asClusterManagerInfoOf
-        , asAuthInfoOf
-        )
+module Models.Resources.AboutInfo exposing
+    ( AboutInfo
+    , asAuthInfoOf
+    , asClusterManagerInfoOf
+    , asServiceDiscoveryInfoOf
+    , asServicesInfoOf
+    , decoder
+    )
 
-import Models.Resources.UserInfo exposing (UserInfo, userInfoDecoder)
 import Json.Decode as Decode exposing (field)
+import Models.Resources.UserInfo exposing (UserInfo, userInfoDecoder)
 
 
 type alias ProjectInfo =

@@ -1,16 +1,14 @@
 module Views.PeriodicRunsViewSuite exposing (tests)
 
-import Views.PeriodicRunsView as PeriodicRunsView
-import Models.Resources.TaskState exposing (TaskState(..))
+import Dict
+import Expect as Expect
 import Models.Resources.ClientStatus exposing (ClientStatus(..))
 import Models.Resources.JobStatus exposing (JobStatus(..))
 import Models.Resources.TaskState exposing (TaskState(..))
-import Models.Resources.ClientStatus exposing (ClientStatus(..))
-import Test exposing (test, describe, Test)
+import Test exposing (Test, describe, test)
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector
-import Expect as Expect
-import Dict
+import Views.PeriodicRunsView as PeriodicRunsView
 
 
 tests : Test
@@ -33,8 +31,8 @@ tests =
             }
 
         allocatedPeriodicTasks =
-            [ ( (String.concat [ instanceId, "/periodic-1" ]), [ task ] )
-            , ( (String.concat [ instanceId, "/periodic-2" ]), [ task ] )
+            [ ( String.concat [ instanceId, "/periodic-1" ], [ task ] )
+            , ( String.concat [ instanceId, "/periodic-2" ], [ task ] )
             ]
                 |> Dict.fromList
 
@@ -56,17 +54,17 @@ tests =
               }
             ]
     in
-        describe "PeriodicRunsView"
-            [ test "Should render each periodic run" <|
-                \() ->
-                    PeriodicRunsView.view instanceId instanceTasks periodicRuns
-                        |> Query.fromHtml
-                        |> Query.findAll [ Selector.class "periodic-run-time" ]
-                        |> Query.count (Expect.equal (List.length periodicRuns))
-            , test "Should render each allocated periodic task" <|
-                \() ->
-                    PeriodicRunsView.view instanceId instanceTasks periodicRuns
-                        |> Query.fromHtml
-                        |> Query.findAll [ Selector.class "periodic-run-allocation-id" ]
-                        |> Query.count (Expect.equal (Dict.size allocatedPeriodicTasks))
-            ]
+    describe "PeriodicRunsView"
+        [ test "Should render each periodic run" <|
+            \() ->
+                PeriodicRunsView.view instanceId instanceTasks periodicRuns
+                    |> Query.fromHtml
+                    |> Query.findAll [ Selector.class "periodic-run-time" ]
+                    |> Query.count (Expect.equal (List.length periodicRuns))
+        , test "Should render each allocated periodic task" <|
+            \() ->
+                PeriodicRunsView.view instanceId instanceTasks periodicRuns
+                    |> Query.fromHtml
+                    |> Query.findAll [ Selector.class "periodic-run-allocation-id" ]
+                    |> Query.count (Expect.equal (Dict.size allocatedPeriodicTasks))
+        ]

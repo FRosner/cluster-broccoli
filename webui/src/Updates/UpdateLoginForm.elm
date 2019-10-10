@@ -1,9 +1,9 @@
 module Updates.UpdateLoginForm exposing (updateLoginForm)
 
-import Updates.Messages exposing (UpdateLoginFormMsg(..))
-import Messages exposing (AnyMsg(..))
 import Commands.LoginLogout
+import Messages exposing (AnyMsg(..))
 import Models.Ui.LoginForm exposing (LoginForm)
+import Updates.Messages exposing (UpdateLoginFormMsg(..))
 
 
 updateLoginForm : UpdateLoginFormMsg -> LoginForm -> ( LoginForm, Cmd AnyMsg )

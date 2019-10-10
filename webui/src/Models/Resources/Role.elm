@@ -24,9 +24,9 @@ decoder =
                 _ ->
                     User
     in
-        Decode.andThen
-            (\statusString -> Decode.succeed (stringToRole statusString))
-            Decode.string
+    Decode.andThen
+        (\statusString -> Decode.succeed (stringToRole statusString))
+        Decode.string
 
 
 encoder : Role -> Encode.Value
@@ -43,6 +43,6 @@ encoder role =
                 User ->
                     "user"
     in
-        role
-            |> roleToString
-            |> Encode.string
+    role
+        |> roleToString
+        |> Encode.string

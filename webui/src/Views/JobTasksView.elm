@@ -1,15 +1,15 @@
 module Views.JobTasksView exposing (view)
 
-import Models.Resources.AllocatedTask exposing (AllocatedTask)
-import Models.Resources.TaskState exposing (TaskState(..))
-import Models.Resources.LogKind exposing (LogKind(..))
-import Models.Resources.ClientStatus exposing (ClientStatus(ClientComplete))
-import Models.Resources.Allocation exposing (shortAllocationId)
-import Views.Styles as Styles
-import Views.ResourceUsageBar as ResourceUsageBar
-import Views.LogUrl as LogUrl
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Models.Resources.AllocatedTask exposing (AllocatedTask)
+import Models.Resources.Allocation exposing (shortAllocationId)
+import Models.Resources.ClientStatus exposing (ClientStatus(ClientComplete))
+import Models.Resources.LogKind exposing (LogKind(..))
+import Models.Resources.TaskState exposing (TaskState(..))
+import Views.LogUrl as LogUrl
+import Views.ResourceUsageBar as ResourceUsageBar
+import Views.Styles as Styles
 
 
 view : String -> Maybe (List AllocatedTask) -> Bool -> List (Html msg)
@@ -79,35 +79,35 @@ jobAllocationRow jobId index task =
                 TaskRunning ->
                     ( "running", "label-success" )
     in
-        tr []
-            [ td [] [ code [] [ text (shortAllocationId task.allocationId) ] ]
-            , td [ class "text-center" ]
-                [ span [ class ("label " ++ labelKind) ] [ text description ]
-                ]
-            , td [] [ text task.taskName ]
-            , td []
-                [ Maybe.withDefault (text "Unknown")
-                    (Maybe.map2 ResourceUsageBar.cpuUsageBar task.resources.cpuUsedMhz task.resources.cpuRequiredMhz)
-                ]
-            , td []
-                [ Maybe.withDefault (text "Unknown")
-                    (Maybe.map2 ResourceUsageBar.memoryUsageBar task.resources.memoryUsedBytes task.resources.memoryRequiredBytes)
-                ]
-            , td
-                -- Do not wrap buttons in this cell
-                [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
-                [ a
-                    [ href (LogUrl.taskLog jobId task StdOut)
-                    , target "_blank"
-                    , class "btn btn-default btn-xs"
-                    ]
-                    [ text "stdout" ]
-                , text " "
-                , a
-                    [ href (LogUrl.taskLog jobId task StdErr)
-                    , target "_blank"
-                    , class "btn btn-default btn-xs"
-                    ]
-                    [ text "stderr" ]
-                ]
+    tr []
+        [ td [] [ code [] [ text (shortAllocationId task.allocationId) ] ]
+        , td [ class "text-center" ]
+            [ span [ class ("label " ++ labelKind) ] [ text description ]
             ]
+        , td [] [ text task.taskName ]
+        , td []
+            [ Maybe.withDefault (text "Unknown")
+                (Maybe.map2 ResourceUsageBar.cpuUsageBar task.resources.cpuUsedMhz task.resources.cpuRequiredMhz)
+            ]
+        , td []
+            [ Maybe.withDefault (text "Unknown")
+                (Maybe.map2 ResourceUsageBar.memoryUsageBar task.resources.memoryUsedBytes task.resources.memoryRequiredBytes)
+            ]
+        , td
+            -- Do not wrap buttons in this cell
+            [ class "text-center", style [ ( "white-space", "nowrap" ) ] ]
+            [ a
+                [ href (LogUrl.taskLog jobId task StdOut)
+                , target "_blank"
+                , class "btn btn-default btn-xs"
+                ]
+                [ text "stdout" ]
+            , text " "
+            , a
+                [ href (LogUrl.taskLog jobId task StdErr)
+                , target "_blank"
+                , class "btn btn-default btn-xs"
+                ]
+                [ text "stderr" ]
+            ]
+        ]

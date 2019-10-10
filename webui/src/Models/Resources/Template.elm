@@ -1,13 +1,12 @@
 module Models.Resources.Template exposing (..)
 
+import Dict exposing (Dict)
 import Json.Decode as Decode exposing (field)
 import Json.Encode as Encode
-import Dict exposing (Dict)
 import List
+import Maybe.Extra exposing (isJust, join)
 import Utils.DictUtils exposing (flatten)
-import Maybe.Extra exposing (isJust)
 import Utils.StringUtils exposing (surround)
-import Maybe.Extra exposing (join)
 
 
 type alias TemplateId =
@@ -64,7 +63,7 @@ decoder =
 
 
 parameterInfoDecoder =
-    (field "type" Decode.value)
+    field "type" Decode.value
         |> Decode.andThen
             (\rawValue ->
                 case Decode.decodeValue decodeDataTypeNew rawValue of
@@ -84,7 +83,7 @@ parameterInfoDecoder =
 
 decodeDataTypeNew : Decode.Decoder ParameterType
 decodeDataTypeNew =
-    (field "name" Decode.string)
+    field "name" Decode.string
         |> Decode.andThen
             (\typeName ->
                 case typeName of
@@ -101,17 +100,17 @@ decodeDataTypeNew =
                         Decode.succeed RawParam
 
                     "decimalList" ->
-                        (field "values" (Decode.list Decode.float))
+                        field "values" (Decode.list Decode.float)
                             |> Decode.andThen
                                 (\values -> Decode.succeed (DecimalSetParam values))
 
                     "intList" ->
-                        (field "values" (Decode.list Decode.int))
+                        field "values" (Decode.list Decode.int)
                             |> Decode.andThen
                                 (\values -> Decode.succeed (IntSetParam values))
 
                     "stringList" ->
-                        (field "values" (Decode.list Decode.string))
+                        field "values" (Decode.list Decode.string)
                             |> Decode.andThen
                                 (\values -> Decode.succeed (StringSetParam values))
 
@@ -154,7 +153,7 @@ decodeValueFromInfo parameterInfos =
 
 decodeMaybeValueFromInfo : Dict String ParameterInfo -> Decode.Decoder (Dict String (Maybe ParameterValue))
 decodeMaybeValueFromInfo parameterInfos =
-    (Decode.dict Decode.value)
+    Decode.dict Decode.value
         |> Decode.andThen
             (\paramValuesRaw ->
                 Decode.succeed
@@ -250,19 +249,19 @@ valueFromStringAndInfo parameterInfos paramName paramValue =
             Dict.get paramName parameterInfos
                 |> Maybe.map (\info -> info.dataType)
     in
-        -- This should never happen
-        Result.fromMaybe "Internal Error. Contact Admin." maybeParamType
-            |> Result.andThen (\paramType -> valueFromString paramType paramValue)
+    -- This should never happen
+    Result.fromMaybe "Internal Error. Contact Admin." maybeParamType
+        |> Result.andThen (\paramType -> valueFromString paramType paramValue)
 
 
 valueFromString : ParameterType -> String -> Result String ParameterValue
 valueFromString paramType paramValue =
-    case (Decode.decodeString (decodeParamValue paramType) (wrapValue paramType paramValue)) of
+    case Decode.decodeString (decodeParamValue paramType) (wrapValue paramType paramValue) of
         Ok res ->
             Ok res
 
         Err msg ->
-            Err ("Not a valid " ++ (dataTypeToString paramType))
+            Err ("Not a valid " ++ dataTypeToString paramType)
 
 
 maybeValueToString : Maybe ParameterValue -> Maybe String

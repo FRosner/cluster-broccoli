@@ -13,7 +13,7 @@ type alias InstanceUpdated =
 
 decoder : Decode.Decoder InstanceUpdated
 decoder =
-    (Decode.field "instanceWithStatus" Instance.decoder)
+    Decode.field "instanceWithStatus" Instance.decoder
         |> Decode.andThen
             (\instanceWithStatus ->
                 Decode.map2 InstanceUpdated

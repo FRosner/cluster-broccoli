@@ -1,13 +1,13 @@
 module Updates.Messages exposing (..)
 
-import Http
 import Dict exposing (Dict)
-import Set exposing (Set)
+import Http
+import Models.Resources.Instance exposing (Instance, InstanceId)
+import Models.Resources.Template exposing (ParameterInfo, Template, TemplateId)
 import Models.Resources.UserInfo exposing (UserInfo)
-import Models.Resources.Template exposing (TemplateId, Template, ParameterInfo)
-import Models.Resources.Instance exposing (InstanceId, Instance)
-import Models.Ui.InstanceParameterForm exposing (InstanceParameterForm)
 import Models.Ui.BodyUiModel exposing (TemporaryStates)
+import Models.Ui.InstanceParameterForm exposing (InstanceParameterForm)
+import Set exposing (Set)
 
 
 type UpdateLoginStatusMsg

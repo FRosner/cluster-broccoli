@@ -1,8 +1,9 @@
 module Models.Ui.InstanceParameterForm exposing (..)
 
-import Models.Resources.Template exposing (Template, ParameterValue)
 import Dict exposing (Dict)
 import Maybe exposing (Maybe)
+import Models.Resources.Template exposing (ParameterValue, Template)
+
 
 
 -- ParameterValues are kept in String here as they must be displayed in the input

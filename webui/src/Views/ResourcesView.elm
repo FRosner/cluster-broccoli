@@ -1,24 +1,24 @@
-module Views.ResourcesView exposing (view, headerView)
+module Views.ResourcesView exposing (headerView, view)
 
 import Array exposing (Array)
+import Bootstrap.Card as Card
+import Bootstrap.Card.Block as Block
 import Bootstrap.Grid as Grid exposing (Column)
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
-import Bootstrap.Card as Card
-import Bootstrap.Card.Block as Block
 import Bootstrap.Table as Table
 import Bootstrap.Text as Text
 import Dict
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Maybe.Extra exposing (isJust)
+import Messages exposing (..)
 import Models.Resources.NodeResources exposing (..)
 import Models.Ui.BodyUiModel exposing (ResourceHoverMessage, ResourceSubType(..), ResourceType(..), TemporaryStates)
 import Round
-import Maybe.Extra exposing (isJust)
 import Set
 import Updates.Messages exposing (UpdateBodyViewMsg(ToggleNodeAllocation, UpdateTemporaryStates))
-import Messages exposing (..)
 import Utils.HtmlUtils exposing (icon, iconButtonText)
 
 
@@ -176,127 +176,129 @@ viewInternal temporaryStates nodeResources =
         isExpanded =
             Set.member nodeResources.nodeId temporaryStates.expandedResourceAllocs
     in
-        Card.config [ Card.attrs [ class "mt-3" ] ]
-            |> Card.header
-                [ id nodeResources.nodeId ]
-                [ span
-                    [ style [ ( "font-size", "125%" ), ( "margin-right", "10px" ) ] ]
-                    [ text nodeResources.nodeName ]
-                ]
-            |> Card.block []
-                [ Block.custom <|
-                    Grid.container
-                        []
-                        (List.append
-                            [ Grid.row
-                                [ Row.attrs [ class "mt-3 mb-3" ] ]
-                                [ Grid.col
-                                    [ Col.md6 ]
-                                    (nodeResourceView
-                                        temporaryStates
-                                        nodeResources.nodeName
-                                        CPU
-                                        cpuValues.host
-                                        cpuValues.allocated
-                                        (Just cpuValues.allocationUtilization)
-                                    )
-                                , Grid.col
-                                    [ Col.md6 ]
-                                    (nodeResourceView
-                                        temporaryStates
-                                        nodeResources.nodeName
-                                        Memory
-                                        memoryValues.host
-                                        memoryValues.allocated
-                                        (Just memoryValues.allocationUtilization)
-                                    )
-                                ]
-                            , Grid.row
-                                [ Row.attrs [ class "mt-3 mb-3" ] ]
-                                [ Grid.col
-                                    [ Col.md6 ]
-                                    (nodeResourceView
-                                        temporaryStates
-                                        nodeResources.nodeName
-                                        Disk
-                                        diskValues.host
-                                        diskValues.allocated
-                                        Nothing
-                                    )
-                                ]
-                            , Grid.row [ Row.attrs [ class "mt-4" ] ]
-                                [ Grid.col []
-                                    [ a
-                                        [ id (String.concat [ "expand-allocations-", nodeResources.nodeId ])
-                                        , class "btn btn-no-pad"
-                                        , attribute "role" "button"
-                                        , onClick (ToggleNodeAllocation nodeResources.nodeId)
-                                        ]
-                                        [ icon
-                                            (String.concat
-                                                [ "fa fa-chevron-"
-                                                , if isExpanded then
-                                                    "down"
-                                                  else
-                                                    "right"
-                                                ]
-                                            )
-                                            [ style [ ( "margin-right", "4px" ) ] ]
-                                        , h6 [ style [ ( "display", "inline" ) ] ] [ text "Allocations" ]
-                                        ]
+    Card.config [ Card.attrs [ class "mt-3" ] ]
+        |> Card.header
+            [ id nodeResources.nodeId ]
+            [ span
+                [ style [ ( "font-size", "125%" ), ( "margin-right", "10px" ) ] ]
+                [ text nodeResources.nodeName ]
+            ]
+        |> Card.block []
+            [ Block.custom <|
+                Grid.container
+                    []
+                    (List.append
+                        [ Grid.row
+                            [ Row.attrs [ class "mt-3 mb-3" ] ]
+                            [ Grid.col
+                                [ Col.md6 ]
+                                (nodeResourceView
+                                    temporaryStates
+                                    nodeResources.nodeName
+                                    CPU
+                                    cpuValues.host
+                                    cpuValues.allocated
+                                    (Just cpuValues.allocationUtilization)
+                                )
+                            , Grid.col
+                                [ Col.md6 ]
+                                (nodeResourceView
+                                    temporaryStates
+                                    nodeResources.nodeName
+                                    Memory
+                                    memoryValues.host
+                                    memoryValues.allocated
+                                    (Just memoryValues.allocationUtilization)
+                                )
+                            ]
+                        , Grid.row
+                            [ Row.attrs [ class "mt-3 mb-3" ] ]
+                            [ Grid.col
+                                [ Col.md6 ]
+                                (nodeResourceView
+                                    temporaryStates
+                                    nodeResources.nodeName
+                                    Disk
+                                    diskValues.host
+                                    diskValues.allocated
+                                    Nothing
+                                )
+                            ]
+                        , Grid.row [ Row.attrs [ class "mt-4" ] ]
+                            [ Grid.col []
+                                [ a
+                                    [ id (String.concat [ "expand-allocations-", nodeResources.nodeId ])
+                                    , class "btn btn-no-pad"
+                                    , attribute "role" "button"
+                                    , onClick (ToggleNodeAllocation nodeResources.nodeId)
+                                    ]
+                                    [ icon
+                                        (String.concat
+                                            [ "fa fa-chevron-"
+                                            , if isExpanded then
+                                                "down"
+
+                                              else
+                                                "right"
+                                            ]
+                                        )
+                                        [ style [ ( "margin-right", "4px" ) ] ]
+                                    , h6 [ style [ ( "display", "inline" ) ] ] [ text "Allocations" ]
                                     ]
                                 ]
                             ]
-                            (if isExpanded then
-                                [ Grid.row
-                                    [ Row.attrs [ class "mt-2" ] ]
-                                    [ Grid.col
-                                        []
-                                        (List.concat
-                                            [ [ fillAllocationRow
-                                                    (span [] [ text "Allocation Name" ])
-                                                    (span [] [ text "CPU" ])
-                                                    (span [] [ text "Memory" ])
-                                                    Header
-                                              ]
-                                            , (List.indexedMap
-                                                (\idx allocConsumption ->
-                                                    fillAllocationRow
-                                                        (text allocConsumption.name)
-                                                        (progressViewInternal
-                                                            temporaryStates
-                                                            nodeResources.nodeName
-                                                            CPU
-                                                            AllocatedUtilization
-                                                            allocConsumption.name
-                                                            allocConsumption.cpuValues
-                                                        )
-                                                        (progressViewInternal
-                                                            temporaryStates
-                                                            nodeResources.nodeName
-                                                            Memory
-                                                            AllocatedUtilization
-                                                            allocConsumption.name
-                                                            allocConsumption.memoryValues
-                                                        )
-                                                        (if (idx % 2 == 0) then
-                                                            Even
-                                                         else
-                                                            Odd
-                                                        )
-                                                )
-                                                allocationsResourceConsumption
-                                              )
-                                            ]
-                                        )
-                                    ]
+                        ]
+                        (if isExpanded then
+                            [ Grid.row
+                                [ Row.attrs [ class "mt-2" ] ]
+                                [ Grid.col
+                                    []
+                                    (List.concat
+                                        [ [ fillAllocationRow
+                                                (span [] [ text "Allocation Name" ])
+                                                (span [] [ text "CPU" ])
+                                                (span [] [ text "Memory" ])
+                                                Header
+                                          ]
+                                        , List.indexedMap
+                                            (\idx allocConsumption ->
+                                                fillAllocationRow
+                                                    (text allocConsumption.name)
+                                                    (progressViewInternal
+                                                        temporaryStates
+                                                        nodeResources.nodeName
+                                                        CPU
+                                                        AllocatedUtilization
+                                                        allocConsumption.name
+                                                        allocConsumption.cpuValues
+                                                    )
+                                                    (progressViewInternal
+                                                        temporaryStates
+                                                        nodeResources.nodeName
+                                                        Memory
+                                                        AllocatedUtilization
+                                                        allocConsumption.name
+                                                        allocConsumption.memoryValues
+                                                    )
+                                                    (if idx % 2 == 0 then
+                                                        Even
+
+                                                     else
+                                                        Odd
+                                                    )
+                                            )
+                                            allocationsResourceConsumption
+                                        ]
+                                    )
                                 ]
-                             else
-                                []
-                            )
+                            ]
+
+                         else
+                            []
                         )
-                ]
-            |> Card.view
+                    )
+            ]
+        |> Card.view
 
 
 fillAllocationRow : Html msg -> Html msg -> Html msg -> RowType -> Html msg
@@ -395,57 +397,58 @@ progressViewInternal temporaryStates nodeName resourceType resourceSubType resou
                     temporaryStates.resourceHoverMessage
                 )
     in
-        div
-            [ class "progress m-2", style [ ( "height", "1.2rem" ) ] ]
-            (List.concat
-                [ [ progressBarView
-                        temporaryStates
-                        { nodeName = nodeName
-                        , resourceType = resourceType
-                        , resourceSubType = resourceSubType
-                        , resourceId = resourceId
-                        , message = resourceValues.usedString
-                        , position = usedPosition
-                        }
-                        resourceValues.used
-                        usedPercent
-                        resourceValues.usedString
-                        "bg-warning"
-                  , progressBarView
-                        temporaryStates
-                        { nodeName = nodeName
-                        , resourceType = resourceType
-                        , resourceSubType = resourceSubType
-                        , resourceId = resourceId
-                        , message = resourceValues.freeString
-                        , position = freePosition
-                        }
-                        resourceValues.free
-                        freePercent
-                        resourceValues.freeString
-                        "bg-success"
-                  ]
-                , if (hasHoverMessage) then
-                    [ div
-                        [ class "popover fade show bs-popover-top"
-                        , style
-                            [ ( "left", String.concat [ toString hoverPosition, "%" ] )
-                            , ( "top", "-2.5rem" )
-                            , ( "display", "inline-block" )
-                            ]
-                        ]
-                        [ div
-                            [ class "arrow", style [ ( "left", "2rem" ) ] ]
-                            []
-                        , div
-                            [ class "popover-body p-2", style [ ( "white-space", "nowrap" ) ] ]
-                            [ text hoverMessage ]
+    div
+        [ class "progress m-2", style [ ( "height", "1.2rem" ) ] ]
+        (List.concat
+            [ [ progressBarView
+                    temporaryStates
+                    { nodeName = nodeName
+                    , resourceType = resourceType
+                    , resourceSubType = resourceSubType
+                    , resourceId = resourceId
+                    , message = resourceValues.usedString
+                    , position = usedPosition
+                    }
+                    resourceValues.used
+                    usedPercent
+                    resourceValues.usedString
+                    "bg-warning"
+              , progressBarView
+                    temporaryStates
+                    { nodeName = nodeName
+                    , resourceType = resourceType
+                    , resourceSubType = resourceSubType
+                    , resourceId = resourceId
+                    , message = resourceValues.freeString
+                    , position = freePosition
+                    }
+                    resourceValues.free
+                    freePercent
+                    resourceValues.freeString
+                    "bg-success"
+              ]
+            , if hasHoverMessage then
+                [ div
+                    [ class "popover fade show bs-popover-top"
+                    , style
+                        [ ( "left", String.concat [ toString hoverPosition, "%" ] )
+                        , ( "top", "-2.5rem" )
+                        , ( "display", "inline-block" )
                         ]
                     ]
-                  else
-                    []
+                    [ div
+                        [ class "arrow", style [ ( "left", "2rem" ) ] ]
+                        []
+                    , div
+                        [ class "popover-body p-2", style [ ( "white-space", "nowrap" ) ] ]
+                        [ text hoverMessage ]
+                    ]
                 ]
-            )
+
+              else
+                []
+            ]
+        )
 
 
 progressBarView :
@@ -484,8 +487,9 @@ progressBarView temporaryStates resourceHoverMessage actual percent stringRep pr
             )
         ]
         [ text
-            (if (percent >= 12.0) then
+            (if percent >= 12.0 then
                 stringRep
+
              else
                 ""
             )
@@ -501,7 +505,7 @@ getPercents used total =
         freePercent =
             100.0 - usedPercent
     in
-        ( usedPercent, freePercent )
+    ( usedPercent, freePercent )
 
 
 resourceTypeToString : ResourceType -> String
@@ -538,7 +542,8 @@ resourceSubTypeToString resourceType =
 humanateBytes : Int -> Int -> Array String -> String
 humanateBytes s base sizes =
     if s < 10 then
-        (toString s) ++ " B"
+        toString s ++ " B"
+
     else
         let
             e =
@@ -548,9 +553,9 @@ humanateBytes s base sizes =
                 Array.get e sizes |> Maybe.withDefault ""
 
             val =
-                toFloat ((toFloat s) / (toFloat (base ^ e)) * 10 + 0.5 |> floor) / 10
+                toFloat (toFloat s / toFloat (base ^ e) * 10 + 0.5 |> floor) / 10
         in
-            (Round.round 2 val) ++ " " ++ suffix
+        Round.round 2 val ++ " " ++ suffix
 
 
 iBytes : Int -> String
@@ -559,7 +564,7 @@ iBytes s =
         sizes =
             Array.fromList [ "B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB" ]
     in
-        humanateBytes s 1024 sizes
+    humanateBytes s 1024 sizes
 
 
 bytesPerMegabyte : Int
@@ -568,4 +573,4 @@ bytesPerMegabyte =
 
 
 makeCPUString a =
-    (toString a) ++ " MHz"
+    toString a ++ " MHz"

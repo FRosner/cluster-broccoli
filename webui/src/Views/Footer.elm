@@ -2,8 +2,8 @@ module Views.Footer exposing (view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Models.Resources.AboutInfo exposing (AboutInfo)
 import Messages exposing (AnyMsg(..))
+import Models.Resources.AboutInfo exposing (AboutInfo)
 import Utils.HtmlUtils exposing (icon)
 
 
@@ -17,10 +17,9 @@ view maybeAboutInfo wsConnected =
                     [ class "col-md-12" ]
                     [ p [ class "text-muted text-center" ]
                         (List.concat
-                            [ (maybeAboutInfo
+                            [ maybeAboutInfo
                                 |> Maybe.map aboutInfoToProjectText
                                 |> Maybe.withDefault []
-                              )
                             , [ text "Websocket: "
                               , wsToIcon wsConnected
                               , text ", Cluster Manager: "
@@ -61,23 +60,24 @@ wsToIcon : Bool -> Html msg
 wsToIcon connected =
     let
         ( iconClass, textColor ) =
-            if (connected) then
+            if connected then
                 ( "fa fa-check-circle", "#070" )
+
             else
                 ( "fa fa-refresh fa-spin", "grey" )
     in
-        icon
-            iconClass
-            [ id "footer-ws-indicator"
-            , style [ ( "color", textColor ) ]
-            ]
+    icon
+        iconClass
+        [ id "footer-ws-indicator"
+        , style [ ( "color", textColor ) ]
+        ]
 
 
 statusToIcon : String -> Maybe AboutInfo -> (AboutInfo -> Bool) -> Html msg
 statusToIcon elementId maybeAboutInfo statusFunction =
     let
         ( iconClass, textColor ) =
-            case (Maybe.map statusFunction maybeAboutInfo) of
+            case Maybe.map statusFunction maybeAboutInfo of
                 Just True ->
                     ( "fa fa-check-circle", "#070" )
 
@@ -87,8 +87,8 @@ statusToIcon elementId maybeAboutInfo statusFunction =
                 Nothing ->
                     ( "fa fa-question-circle", "grey" )
     in
-        icon
-            iconClass
-            [ style [ ( "color", textColor ) ]
-            , id elementId
-            ]
+    icon
+        iconClass
+        [ style [ ( "color", textColor ) ]
+        , id elementId
+        ]

@@ -1,10 +1,10 @@
 module Utils.ParameterUtils exposing (getOtherParametersSorted, zipWithOrderIndex)
 
+import Dict exposing (Dict)
 import List
+import Models.Resources.Template exposing (ParameterInfo)
 import String
 import Tuple
-import Dict exposing (Dict)
-import Models.Resources.Template exposing (ParameterInfo)
 
 
 {-| Get other parameters, in order of the order-index and then alphabetical order.

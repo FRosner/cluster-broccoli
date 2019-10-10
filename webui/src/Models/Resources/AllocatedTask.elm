@@ -1,9 +1,9 @@
 module Models.Resources.AllocatedTask exposing (..)
 
-import Json.Decode as Decode exposing (Decoder, field, list, string, int, float, nullable)
-import Models.Resources.TaskState as TaskState exposing (TaskState)
+import Json.Decode as Decode exposing (Decoder, field, float, int, list, nullable, string)
 import Models.Resources.Allocation exposing (AllocationId)
 import Models.Resources.ClientStatus as ClientStatus exposing (ClientStatus)
+import Models.Resources.TaskState as TaskState exposing (TaskState)
 
 
 {-| A type for the name of a task.

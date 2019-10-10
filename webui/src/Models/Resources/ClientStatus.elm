@@ -1,6 +1,6 @@
 module Models.Resources.ClientStatus exposing (..)
 
-import Json.Decode exposing (Decoder, string, fail, succeed, andThen)
+import Json.Decode exposing (Decoder, andThen, fail, string, succeed)
 
 
 {-| The status of the client of an allocation.

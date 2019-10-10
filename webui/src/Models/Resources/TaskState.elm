@@ -1,6 +1,6 @@
 module Models.Resources.TaskState exposing (..)
 
-import Json.Decode exposing (Decoder, string, fail, succeed, andThen)
+import Json.Decode exposing (Decoder, andThen, fail, string, succeed)
 
 
 {-| The state of a task within an allocation.

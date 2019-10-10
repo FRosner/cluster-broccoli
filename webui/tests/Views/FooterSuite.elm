@@ -1,11 +1,11 @@
 module Views.FooterSuite exposing (tests)
 
-import Views.Footer as Footer
 import Models.Resources.AboutInfo as AboutInfo exposing (AboutInfo)
 import Models.Resources.Role as Role exposing (Role(Administrator))
-import Test exposing (test, describe, Test)
+import Test exposing (Test, describe, test)
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector
+import Views.Footer as Footer
 
 
 tests : Test
@@ -17,37 +17,37 @@ tests =
                     ( maybeAboutInfo, wsConnected ) =
                         ( Nothing, False )
                 in
-                    Footer.view maybeAboutInfo wsConnected
-                        |> expectClasses "footer-ws-indicator" [ "fa", "fa-refresh", "fa-spin" ]
+                Footer.view maybeAboutInfo wsConnected
+                    |> expectClasses "footer-ws-indicator" [ "fa", "fa-refresh", "fa-spin" ]
         , test "Websocket connected" <|
             \() ->
                 let
                     ( maybeAboutInfo, wsConnected ) =
                         ( Nothing, True )
                 in
-                    Footer.view maybeAboutInfo wsConnected
-                        |> expectClasses "footer-ws-indicator" [ "fa", "fa-check-circle" ]
+                Footer.view maybeAboutInfo wsConnected
+                    |> expectClasses "footer-ws-indicator" [ "fa", "fa-check-circle" ]
         , test "Shows correct info if available" <|
             \() ->
                 let
                     ( maybeAboutInfo, wsConnected ) =
                         ( Just defaultAboutInfo, True )
                 in
-                    Footer.view maybeAboutInfo wsConnected
-                        |> Query.fromHtml
-                        |> Query.find [ Selector.id "footer-project-info" ]
-                        |> Query.has
-                            [ Selector.text "pname: pversion (built with Scala sversion, SBT sbtversion), "
-                            ]
+                Footer.view maybeAboutInfo wsConnected
+                    |> Query.fromHtml
+                    |> Query.find [ Selector.id "footer-project-info" ]
+                    |> Query.has
+                        [ Selector.text "pname: pversion (built with Scala sversion, SBT sbtversion), "
+                        ]
         , test "Shows correct info if available" <|
             \() ->
                 let
                     ( maybeAboutInfo, wsConnected ) =
                         ( Nothing, True )
                 in
-                    Footer.view maybeAboutInfo wsConnected
-                        |> Query.fromHtml
-                        |> Query.hasNot [ Selector.id "footer-project-info" ]
+                Footer.view maybeAboutInfo wsConnected
+                    |> Query.fromHtml
+                    |> Query.hasNot [ Selector.id "footer-project-info" ]
         , test "Cluster manager disconnected" <|
             \() ->
                 let
@@ -56,8 +56,8 @@ tests =
                         , False
                         )
                 in
-                    Footer.view maybeAboutInfo wsConnected
-                        |> expectClasses "footer-cm-indicator" [ "fa", "fa-times-circle" ]
+                Footer.view maybeAboutInfo wsConnected
+                    |> expectClasses "footer-cm-indicator" [ "fa", "fa-times-circle" ]
         , test "Cluster manager connected" <|
             \() ->
                 let
@@ -66,8 +66,8 @@ tests =
                         , False
                         )
                 in
-                    Footer.view maybeAboutInfo wsConnected
-                        |> expectClasses "footer-cm-indicator" [ "fa", "fa-check-circle" ]
+                Footer.view maybeAboutInfo wsConnected
+                    |> expectClasses "footer-cm-indicator" [ "fa", "fa-check-circle" ]
         , test "Cluster manager unknown" <|
             \() ->
                 let
@@ -76,8 +76,8 @@ tests =
                         , False
                         )
                 in
-                    Footer.view maybeAboutInfo wsConnected
-                        |> expectClasses "footer-cm-indicator" [ "fa", "fa-question-circle" ]
+                Footer.view maybeAboutInfo wsConnected
+                    |> expectClasses "footer-cm-indicator" [ "fa", "fa-question-circle" ]
         , test "Service discovery disconnected" <|
             \() ->
                 let
@@ -86,8 +86,8 @@ tests =
                         , False
                         )
                 in
-                    Footer.view maybeAboutInfo wsConnected
-                        |> expectClasses "footer-sd-indicator" [ "fa", "fa-times-circle" ]
+                Footer.view maybeAboutInfo wsConnected
+                    |> expectClasses "footer-sd-indicator" [ "fa", "fa-times-circle" ]
         , test "Service discovery connected" <|
             \() ->
                 let
@@ -96,8 +96,8 @@ tests =
                         , False
                         )
                 in
-                    Footer.view maybeAboutInfo wsConnected
-                        |> expectClasses "footer-sd-indicator" [ "fa", "fa-check-circle" ]
+                Footer.view maybeAboutInfo wsConnected
+                    |> expectClasses "footer-sd-indicator" [ "fa", "fa-check-circle" ]
         , test "Service discovery unknown" <|
             \() ->
                 let
@@ -106,8 +106,8 @@ tests =
                         , False
                         )
                 in
-                    Footer.view maybeAboutInfo wsConnected
-                        |> expectClasses "footer-sd-indicator" [ "fa", "fa-question-circle" ]
+                Footer.view maybeAboutInfo wsConnected
+                    |> expectClasses "footer-sd-indicator" [ "fa", "fa-question-circle" ]
         ]
 
 
