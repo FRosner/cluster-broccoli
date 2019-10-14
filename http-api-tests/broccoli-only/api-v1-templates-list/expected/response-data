@@ -83,6 +83,41 @@
     "version": "2c4c43cb791d1f4fda934c0e210d7c6d"
   },
   {
+    "id": "http-server-hcl",
+    "description": "A simple Python HTTP request handler. This class serves files from the current directory and below, directly mapping the directory structure to HTTP requests.",
+    "parameters": [
+      "cpu",
+      "id",
+      "secret"
+    ],
+    "parameterInfos": {
+      "secret": {
+        "id": "secret",
+        "name": "A Secret Parameter",
+        "default": 123.456,
+        "secret": true,
+        "type": {
+          "name": "decimal"
+        }
+      },
+      "cpu": {
+        "id": "cpu",
+        "name": "CPU Shares",
+        "default": 100,
+        "type": {
+          "name": "integer"
+        }
+      },
+      "id": {
+        "id": "id",
+        "type": {
+          "name": "string"
+        }
+      }
+    },
+    "version": "e8208d76a86c7b2f970a4787f2453a2b"
+  },
+  {
     "id": "jupyter",
     "description": "Open source, interactive data science and scientific computing across over 40 programming languages.",
     "parameters": [

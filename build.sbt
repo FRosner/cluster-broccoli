@@ -65,7 +65,22 @@ lazy val server = project
            s"${dockerUsername.value.get}/${(packageName in Docker).value}:${(version in Docker).value}"),
       Option(System.getenv("TRAVIS_BRANCH"))
         .map(_.replaceAllLiterally("/", "_"))
-        .map(name => if (name == "master") "latest" else name)
+        .map(name =>
+          if (name == "master") "latest"
+          else {
+            val specials = Set('_', '.', '-')
+            val notAllowedBegin = Set('.', '-)
+            name.zipWithIndex
+              .map {
+                case (c, i) =>
+                  val out = if (c.isLetterOrDigit || specials.contains(c)) c else '_'
+                  i match {
+                    case 0 => if (notAllowedBegin.contains(out)) '_' else out
+                    case _ => out
+                  }
+              }
+              .mkString("")
+        })
         .map { tag =>
           List("-t", s"${dockerUsername.value.get}/${(packageName in Docker).value}:$tag")
         }

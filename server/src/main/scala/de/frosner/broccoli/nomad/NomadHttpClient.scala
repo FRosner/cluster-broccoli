@@ -1,6 +1,7 @@
 package de.frosner.broccoli.nomad
 
 import java.net.ConnectException
+import java.util.concurrent.TimeUnit
 
 import cats.data.EitherT
 import cats.syntax.either._
@@ -11,6 +12,7 @@ import de.frosner.broccoli.nomad.models._
 import play.api.http.HeaderNames._
 import play.api.http.MimeTypes.{JSON, TEXT}
 import play.api.http.Status._
+import play.api.libs.json.{JsObject, JsString}
 import play.api.libs.ws.{WSClient, WSRequest, WSResponse}
 import shapeless.tag
 import shapeless.tag.@@
@@ -18,7 +20,8 @@ import squants.Quantity
 import squants.information.{Bytes, Information}
 
 import scala.collection.immutable
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
 
 /**
@@ -30,6 +33,9 @@ class NomadHttpClient(
     client: WSClient
 )(implicit override val executionContext: ExecutionContext)
     extends NomadClient {
+  import NomadHttpClient._
+
+  private val log = play.api.Logger(getClass)
 
   private class NodeClient(nodeV1Uri: Url) extends NomadNodeClient {
 
@@ -128,6 +134,15 @@ class NomadHttpClient(
     sys.env.get(tokenEnvName).map(authToken => ("X-Nomad-Token", authToken)).toList
 
   /**
+    * Nomad Version. Initiated lazily
+    */
+  override lazy val nomadVersion: String = getNomadVersion()
+    .getOrElse {
+      log.warn(s"Error fetching nomad version defaulting to $NOMAD_V_FOR_PARSE_API");
+      NOMAD_V_FOR_PARSE_API
+    }
+
+  /**
     * Helper method that adds AUTH headers to request
     * @param url The url to request
     * @return
@@ -212,6 +227,20 @@ class NomadHttpClient(
     case _ => throw new UnexpectedNomadHttpApiError(response)
   }
 
+  private def getNomadVersion(): Option[String] = {
+    val result = Await.result(requestWithHeaders(v1 / "agent" / "self")
+                                .withHeaders(ACCEPT -> JSON)
+                                .get(),
+                              Duration(5, TimeUnit.SECONDS))
+    val lookup = result.json \ "config" \ "Version"
+    lookup.toOption match {
+      case Some(JsString(s)) => Some(s)
+      // For later versions the version information structure is nested
+      case Some(JsObject(_)) => (lookup \ "Version").asOpt[String]
+      case _                 => None
+    }
+  }
+
   /**
     * Parse the HTTP address of a node into a partial URI
     *
@@ -236,4 +265,10 @@ class NomadHttpClient(
     EitherT(response.map(_.asRight).recover {
       case _: ConnectException => NomadError.Unreachable.asLeft
     })
+}
+
+object NomadHttpClient {
+  // The minimum version of nomad needed before /v1/jobs/parse works.
+  // This is also the default version of nomad we use when the we can't fetch the version
+  val NOMAD_V_FOR_PARSE_API = "0.8.2"
 }

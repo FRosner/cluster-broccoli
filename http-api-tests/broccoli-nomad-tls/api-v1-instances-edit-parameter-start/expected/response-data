@@ -1,0 +1,203 @@
+{
+  "Stop": false,
+  "Region": "global",
+  "Namespace": "default",
+  "ID": "test-http",
+  "ParentID": "",
+  "Name": "test-http",
+  "Type": "service",
+  "Priority": 50,
+  "AllAtOnce": false,
+  "Datacenters": [
+    "dc1"
+  ],
+  "Constraints": null,
+  "Affinities": null,
+  "Spreads": null,
+  "TaskGroups": [
+    {
+      "Name": "http-group",
+      "Count": 1,
+      "Update": {
+        "Stagger": 10000000,
+        "MaxParallel": 1,
+        "HealthCheck": "checks",
+        "MinHealthyTime": 10000000000,
+        "HealthyDeadline": 300000000000,
+        "ProgressDeadline": 600000000000,
+        "AutoRevert": false,
+        "AutoPromote": false,
+        "Canary": 0
+      },
+      "Migrate": {
+        "MaxParallel": 1,
+        "HealthCheck": "checks",
+        "MinHealthyTime": 10000000000,
+        "HealthyDeadline": 300000000000
+      },
+      "Constraints": null,
+      "RestartPolicy": {
+        "Attempts": 2,
+        "Interval": 60000000000,
+        "Delay": 15000000000,
+        "Mode": "delay"
+      },
+      "Tasks": [
+        {
+          "Name": "http-task",
+          "Driver": "raw_exec",
+          "User": "",
+          "Config": {
+            "args": [
+              "-m",
+              "SimpleHTTPServer"
+            ],
+            "command": "/usr/bin/python"
+          },
+          "Env": null,
+          "Services": [
+            {
+              "Name": "test-http-web-ui-1",
+              "PortLabel": "ui",
+              "AddressMode": "auto",
+              "Tags": [
+                "protocol-http",
+                "123.456"
+              ],
+              "CanaryTags": null,
+              "Checks": [
+                {
+                  "Name": "service: \"test-http-ui-1\" check",
+                  "Type": "http",
+                  "Command": "",
+                  "Args": null,
+                  "Path": "/",
+                  "Protocol": "",
+                  "PortLabel": "",
+                  "AddressMode": "",
+                  "Interval": 10000000000,
+                  "Timeout": 2000000000,
+                  "InitialStatus": "",
+                  "TLSSkipVerify": false,
+                  "Method": "",
+                  "Header": null,
+                  "CheckRestart": null,
+                  "GRPCService": "",
+                  "GRPCUseTLS": false
+                }
+              ]
+            },
+            {
+              "Name": "test-http-web-ui-2",
+              "PortLabel": "ui",
+              "AddressMode": "auto",
+              "Tags": [
+                "protocol-http"
+              ],
+              "CanaryTags": null,
+              "Checks": [
+                {
+                  "Name": "service: \"test-http-ui-2\" check",
+                  "Type": "http",
+                  "Command": "",
+                  "Args": null,
+                  "Path": "/doesnotexist",
+                  "Protocol": "",
+                  "PortLabel": "",
+                  "AddressMode": "",
+                  "Interval": 10000000000,
+                  "Timeout": 2000000000,
+                  "InitialStatus": "",
+                  "TLSSkipVerify": false,
+                  "Method": "",
+                  "Header": null,
+                  "CheckRestart": null,
+                  "GRPCService": "",
+                  "GRPCUseTLS": false
+                }
+              ]
+            }
+          ],
+          "Vault": null,
+          "Templates": null,
+          "Constraints": null,
+          "Affinities": null,
+          "Resources": {
+            "CPU": 50,
+            "MemoryMB": 128,
+            "DiskMB": 0,
+            "IOPS": 0,
+            "Networks": [
+              {
+                "Device": "",
+                "CIDR": "",
+                "IP": "",
+                "MBits": 10,
+                "ReservedPorts": [
+                  {
+                    "Label": "ui",
+                    "Value": 8000
+                  }
+                ],
+                "DynamicPorts": null
+              }
+            ],
+            "Devices": null
+          },
+          "DispatchPayload": null,
+          "Meta": null,
+          "KillTimeout": 5000000000,
+          "LogConfig": {
+            "MaxFiles": 10,
+            "MaxFileSizeMB": 10
+          },
+          "Artifacts": null,
+          "Leader": false,
+          "ShutdownDelay": 0,
+          "KillSignal": ""
+        }
+      ],
+      "EphemeralDisk": {
+        "Sticky": false,
+        "SizeMB": 300,
+        "Migrate": false
+      },
+      "Meta": null,
+      "ReschedulePolicy": {
+        "Attempts": 0,
+        "Interval": 0,
+        "Delay": 30000000000,
+        "DelayFunction": "exponential",
+        "MaxDelay": 3600000000000,
+        "Unlimited": true
+      },
+      "Affinities": null,
+      "Spreads": null
+    }
+  ],
+  "Update": {
+    "Stagger": 10000000,
+    "MaxParallel": 1,
+    "HealthCheck": "",
+    "MinHealthyTime": 0,
+    "HealthyDeadline": 0,
+    "ProgressDeadline": 0,
+    "AutoRevert": false,
+    "AutoPromote": false,
+    "Canary": 0
+  },
+  "Periodic": null,
+  "ParameterizedJob": null,
+  "Dispatched": false,
+  "Payload": null,
+  "Meta": null,
+  "VaultToken": "",
+  "Status": "running",
+  "StatusDescription": "",
+  "Stable": false,
+  "Version": 0,
+  "SubmitTime": 1570656739742808408,
+  "CreateIndex": 9,
+  "ModifyIndex": 11,
+  "JobModifyIndex": 9
+}

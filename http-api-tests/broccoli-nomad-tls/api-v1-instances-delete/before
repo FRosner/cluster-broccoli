@@ -8,7 +8,11 @@ curl -H 'Content-Type: application/json' \
     'http://localhost:9000/api/v1/instances/test-http'
 sleep $BROCCOLI_SLEEP_SHORT
 curl -X DELETE 'http://localhost:9000/api/v1/instances/test-http'
+echo -e "\nSleeping after deleting instance"
 sleep $BROCCOLI_SLEEP_SHORT
-curl -k -X PUT https://localhost:4646/v1/system/gc
+curl -k -X PUT 'https://localhost:4646/v1/system/gc'
+sleep $BROCCOLI_SLEEP_SHORT
+# For some reason gc does not work in the first try inside nomad 0.9.5
+curl -k -X PUT 'https://localhost:4646/v1/system/gc'
 sleep $BROCCOLI_SLEEP_SHORT
 

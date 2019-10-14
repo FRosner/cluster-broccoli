@@ -30,40 +30,39 @@ class NomadHttpClientIntegrationSpec(implicit ee: ExecutionEnv)
 
   private val broccoliApi = "http://localhost:9000/api/v1"
 
-  override def is =
-    "The NomadHttpClient" should {
-      "get allocations for a running nomad job" >> { wsClient: WSClient =>
-        // Generate a random identifier for the instance
-        val identifier = Gen.resize(10, Gen.identifier).sample.get
-        val client = new NomadHttpClient(Url.parse("http://localhost:4646"), "NOMAD_BROCCOLI_TOKEN", wsClient)
-        (for {
-          // Create and start a simple instance to look at it's allocations
-          _ <- wsClient
-            .url(broccoliApi / "instances")
-            .post(
-              Json.obj("templateId" -> "http-server",
-                       "parameters" -> Json.obj(
-                         "id" -> identifier
-                       )))
-            .map(response => {
-              // Ensure that the
-              response.status must beEqualTo(201)
-              response
-            })
-          _ <- wsClient
-            .url(broccoliApi / "instances" / identifier)
-            .post(Json.obj("status" -> "running"))
-            .map(response => {
-              response.status must beEqualTo(200)
-              // Wait until the service is up
-              blocking(Thread.sleep(1.seconds.toMillis))
-              response
-            })
-          allocations <- client.getAllocationsForJob(shapeless.tag[Job.Id](identifier), None).value
-        } yield {
-          allocations must beRight(
-            (v: WithId[immutable.Seq[Allocation]]) => (v.jobId === identifier) and (v.payload must have length 1))
-        }).await(5, broccoliDockerConfig.startupPatience + 2.seconds)
-      }
+  "The NomadHttpClient" should {
+    "get allocations for a running nomad job" >> { wsClient: WSClient =>
+      // Generate a random identifier for the instance
+      val identifier = Gen.resize(10, Gen.identifier).sample.get
+      val client = new NomadHttpClient(Url.parse("http://localhost:4646"), "NOMAD_BROCCOLI_TOKEN", wsClient)
+      (for {
+        // Create and start a simple instance to look at it's allocations
+        _ <- wsClient
+          .url(broccoliApi / "instances")
+          .post(
+            Json.obj("templateId" -> "http-server",
+                     "parameters" -> Json.obj(
+                       "id" -> identifier
+                     )))
+          .map(response => {
+            // Ensure that the
+            response.status must beEqualTo(201)
+            response
+          })
+        _ <- wsClient
+          .url(broccoliApi / "instances" / identifier)
+          .post(Json.obj("status" -> "running"))
+          .map(response => {
+            response.status must beEqualTo(200)
+            // Wait until the service is up
+            blocking(Thread.sleep(1.seconds.toMillis))
+            response
+          })
+        allocations <- client.getAllocationsForJob(shapeless.tag[Job.Id](identifier), None).value
+      } yield {
+        allocations must beRight(
+          (v: WithId[immutable.Seq[Allocation]]) => (v.jobId === identifier) and (v.payload must have length 1))
+      }).await(5, broccoliDockerConfig.startupPatience + 10.seconds)
     }
+  }
 }

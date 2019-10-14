@@ -13,10 +13,10 @@ import de.frosner.broccoli.instances.storage.InstanceStorage
 import de.frosner.broccoli.logging
 import de.frosner.broccoli.models.JobStatus.JobStatus
 import de.frosner.broccoli.models._
-import de.frosner.broccoli.nomad.{NomadClient, NomadConfiguration}
+import de.frosner.broccoli.nomad.{NomadClient, NomadConfiguration, NomadHttpClient}
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Json}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -272,6 +272,18 @@ class InstanceService @Inject()(nomadClient: NomadClient,
     maybeCreatedInstance.map(addStatuses)
   }
 
+  def jobJsonFromInstance(instance: Instance): Try[JsValue] =
+    instance.template.format match {
+      case TemplateFormat.JSON =>
+        Try(Json.parse(templateRenderer.render(instance)))
+      case TemplateFormat.HCL =>
+        if (nomadClient.nomadVersion >= NomadHttpClient.NOMAD_V_FOR_PARSE_API) {
+          nomadService.parseHCLJob(templateRenderer.render(instance))
+        } else {
+          Failure(NomadRequestFailed("/v1/jobs/parse", 404, "HCL jobs are supported only after nomad 0.9.1"))
+        }
+    }
+
   def updateInstance(id: String,
                      statusUpdater: Option[JobStatus],
                      parameterValuesUpdater: Option[Map[String, JsValue]],
@@ -349,7 +361,7 @@ class InstanceService @Inject()(nomadClient: NomadClient,
               .map {
                 // Update the instance status
                 case JobStatus.Running =>
-                  nomadService.startJob(templateRenderer.renderJson(instance)).map(_ => instance)
+                  jobJsonFromInstance(instance).map(nomadService.startJob).map(_ => instance)
                 case JobStatus.Stopped =>
                   val deletedJob = nomadService.deleteJob(instance.id, instance.namespace)
                   // FIXME we don't delete the service and periodic job / status info here (#352) => potential mem leak

@@ -1,5 +1,7 @@
 #!/bin/bash
+source $(dirname "$0")/../common.sh
 docker run --rm -d --net host --privileged=true --hostname nomad-server.integrationtest frosner/cluster-broccoli-test-tls nomad > nomad.did
 sleep $BROCCOLI_SLEEP_MEDIUM
 docker run --rm -d --net host frosner/cluster-broccoli-test-tls cluster-broccoli -Dconfig.file="/application-tls.conf" -Dbroccoli.nomad.url=https://localhost:4646 > cluster-broccoli.did
 sleep $BROCCOLI_SLEEP_MEDIUM
+check_service http localhost 9000

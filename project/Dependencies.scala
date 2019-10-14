@@ -119,7 +119,7 @@ object Dependencies {
   /**
     * Jinja templating engine implemented in Java
     */
-  val jinJava: ModuleID = "com.hubspot.jinjava" % "jinjava" % "2.2.9"
+  val jinJava: ModuleID = "com.hubspot.jinjava" % "jinjava" % "2.5.2"
 
   /**
     * Ficus is a lightweight companion to Typesafe config that makes it more Scala-friendly.

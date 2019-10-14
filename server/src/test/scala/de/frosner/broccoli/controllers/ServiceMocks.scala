@@ -10,18 +10,21 @@ import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import com.mohiva.play.silhouette.test.FakeEnvironment
 import de.frosner.broccoli.auth.{Account, AuthMode, DefaultEnv, Role}
 import de.frosner.broccoli.models._
+import de.frosner.broccoli.nomad.NomadClient
 import de.frosner.broccoli.nomad.models.NodeResources
 import de.frosner.broccoli.services._
 import org.mockito.Matchers
 import org.mockito.internal.util.MockUtil
 import org.specs2.mock.Mockito
+import play.api.libs.json.{JsString, JsValue}
 import play.api.mvc
 import play.api.mvc.PlayBodyParsers
 import play.api.test.Helpers._
+import org.mockito.Mockito._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.Try
+import scala.util.{Success, Try}
 
 trait ServiceMocks extends Mockito {
 
@@ -100,6 +103,19 @@ trait ServiceMocks extends Mockito {
       templateService.template(template.id) returns Some(template)
     }
     templateService
+  }
+
+  def withParseHcl(nomadService: NomadService, hclJob: String, response: JsValue): NomadService = {
+    requireMock(nomadService)
+    when(nomadService.parseHCLJob(hclJob)).thenReturn(Success(response))
+    when(nomadService.startJob(JsString(hclJob))).thenReturn(Success(()))
+    nomadService
+  }
+
+  def withNomadVersion(nomadClient: NomadClient, version: String): NomadClient = {
+    requireMock(nomadClient)
+    when(nomadClient.nomadVersion).thenReturn(version)
+    nomadClient
   }
 
   def withInstances(instanceService: InstanceService, instances: Seq[InstanceWithStatus]): InstanceService = {

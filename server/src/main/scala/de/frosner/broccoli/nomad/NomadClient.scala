@@ -15,6 +15,12 @@ import scala.concurrent.ExecutionContext
 trait NomadClient {
 
   /**
+    * Returns the current version of nomad server which is running
+    * @return
+    */
+  def nomadVersion: String
+
+  /**
     * The execution context for actions of this client.
     */
   implicit def executionContext: ExecutionContext

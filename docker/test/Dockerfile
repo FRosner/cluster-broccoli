@@ -5,6 +5,7 @@ RUN echo "deb http://cdn-fastly.deb.debian.org/debian jessie main" > /etc/apt/so
 RUN echo 'deb http://archive.debian.org/debian jessie-backports main' > /etc/apt/sources.list.d/jessie-backports.list
 RUN sed -i '/deb http:\/\/deb.debian.org\/debian jessie-updates main/d' /etc/apt/sources.list
 RUN echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/05validnocheck
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AA8E81B4331F7F50
 
 # install docker libraries
 RUN apt-get update && \
@@ -13,13 +14,6 @@ RUN apt-get update && \
 
 RUN curl -fsSL get.docker.com -o get-docker.sh
 RUN sh get-docker.sh
-
-# put nomad
-RUN curl https://releases.hashicorp.com/nomad/0.4.0/nomad_0.4.0_linux_amd64.zip > nomad.zip
-RUN unzip nomad.zip
-RUN echo "#!/bin/bash" > /usr/bin/nomad && \
-  echo "exec /nomad agent -dev" >> /usr/bin/nomad && \
-  chmod 777 /usr/bin/nomad
 
 # put consul
 RUN curl https://releases.hashicorp.com/consul/0.6.4/consul_0.6.4_linux_amd64.zip > consul.zip
@@ -36,3 +30,11 @@ ADD templates /cluster-broccoli-dist/templates
 RUN mkdir /cluster-broccoli-dist/instances
 RUN ln -s /cluster-broccoli-dist/bin/cluster-broccoli /usr/bin/cluster-broccoli
 
+# put nomad
+ARG nomad="0.4.0"
+ENV NOMAD_VERSION=$nomad
+RUN curl https://releases.hashicorp.com/nomad/$nomad/nomad_${nomad}_linux_amd64.zip > nomad.zip
+RUN unzip nomad.zip
+RUN echo "#!/bin/bash" > /usr/bin/nomad && \
+  echo "exec /nomad agent -dev" >> /usr/bin/nomad && \
+  chmod 777 /usr/bin/nomad

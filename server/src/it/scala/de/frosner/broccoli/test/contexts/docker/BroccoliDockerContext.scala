@@ -100,6 +100,6 @@ object BroccoliDockerContext {
       * @return The corresponding configuration
       */
     def services(service: BroccoliTestService, services: BroccoliTestService*): Configuration =
-      Configuration(services.toSet + service, 3.seconds)
+      Configuration(services.toSet + service, 10.seconds)
   }
 }

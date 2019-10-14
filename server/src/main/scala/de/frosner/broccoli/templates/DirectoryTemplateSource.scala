@@ -4,11 +4,12 @@ import java.nio.file.{FileSystems, Files}
 
 import com.typesafe.config.ConfigFactory
 import pureconfig._
-import de.frosner.broccoli.models.Template
+import de.frosner.broccoli.models.{Template, TemplateFormat}
 
 import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.util.Try
+import java.nio.file.Files
 
 /**
   * The template source that loads templates from a directory
@@ -42,12 +43,20 @@ class DirectoryTemplateSource(directory: String, val templateRenderer: TemplateR
 
     val templates = templateDirectories.flatMap(templateDirectory => {
       val tryTemplate = Try {
-        val templateFileContent = Source.fromFile(templateDirectory.resolve("template.json").toString).mkString
+        val (format, templateFileContent) =
+          if (Files.isRegularFile(templateDirectory.resolve("template.json"))) {
+            (TemplateFormat.JSON, Source.fromFile(templateDirectory.resolve("template.json").toString).mkString)
+          } else if (Files.isRegularFile(templateDirectory.resolve("template.hcl"))) {
+            (TemplateFormat.HCL, Source.fromFile(templateDirectory.resolve("template.hcl").toString).mkString)
+          } else {
+            throw new IllegalArgumentException(
+              s"Neither template.json nor template.hcl found in directory $templateDirectory")
+          }
         val templateId = templateDirectory.getFileName.toString
         val templateInfo =
           loadConfigOrThrow[TemplateConfig.TemplateInfo](
             ConfigFactory.parseFile(templateDirectory.resolve("template.conf").toFile))
-        loadTemplate(templateId, templateFileContent, templateInfo).get
+        loadTemplate(templateId, templateFileContent, templateInfo, format).get
       }
       tryTemplate.failed.map(throwable => log.error(s"Parsing template '$templateDirectory' failed: $throwable"))
       tryTemplate.toOption

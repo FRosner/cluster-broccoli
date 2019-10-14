@@ -6,10 +6,12 @@ import de.frosner.broccoli.instances.storage.InstanceStorage
 import de.frosner.broccoli.models._
 import de.frosner.broccoli.nomad.{NomadClient, NomadConfiguration}
 import de.frosner.broccoli.templates.TemplateRenderer
+import org.mockito.Mockito._
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
+import play.api.libs.json.Json
 
 class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
   val templateRenderer =
@@ -28,6 +30,74 @@ class InstanceServiceSpec extends Specification with Mockito with ServiceMocks {
     instanceStorage = mock[InstanceStorage],
     config = Configuration.from(Map("broccoli.polling.frequency" -> 1))
   )
+
+  "Start a HCL Job instance" should {
+    val hclJob = "job \"example\" { type = \"service\" group \"cache\" {} }"
+    val jsonJob = Json.parse(
+      """{"Affinities":null,"AllAtOnce":false,"Constraints":null,"CreateIndex":0,"Datacenters":null,
+        |"Dispatched":false,"ID":"example","JobModifyIndex":0,"Meta":null,"Migrate":null,"ModifyIndex":0,"Name":"example",
+        |"Namespace":"default","ParameterizedJob":null,"ParentID":"","Payload":null,"Periodic":null,"Priority":50,
+        |"Region":"global","Reschedule":null,"Spreads":null,"Stable":false,"Status":"","StatusDescription":"",
+        |"Stop":false,"SubmitTime":null,"TaskGroups":[{"Affinities":null,"Constraints":null,"Count":1,
+        |"EphemeralDisk":{"Migrate":false,"SizeMB":300,"Sticky":false},"Meta":null,"Migrate":{"HealthCheck":
+        |"checks","HealthyDeadline":300000000000,"MaxParallel":1,"MinHealthyTime":10000000000},"Name":"cache",
+        |"ReschedulePolicy":{"Attempts":0,"Delay":30000000000,"DelayFunction":"exponential","Interval":0,
+        |"MaxDelay":3600000000000,"Unlimited":true},"RestartPolicy":{"Attempts":2,"Delay":15000000000,
+        |"Interval":1800000000000,"Mode":"fail"},"Spreads":null,"Tasks":null,"Update":null}],"Type":"service",
+        |"Update":null,"VaultToken":"","Version":0}""".stripMargin)
+    val mockNomad: NomadService = withParseHcl(mock[NomadService], hclJob, jsonJob)
+    "invoke parseHCLJob from nomadService" in {
+      val service = new InstanceService(
+        nomadClient = withNomadVersion(mock[NomadClient], "0.9.1"),
+        nomadService = mockNomad,
+        templateService = withTemplates(mock[TemplateService], List.empty),
+        consulService = mock[ConsulService],
+        applicationLifecycle = mock[ApplicationLifecycle],
+        templateRenderer = templateRenderer,
+        instanceStorage = mock[InstanceStorage],
+        config = Configuration.from(Map("broccoli.polling.frequency" -> 1))
+      )
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = hclJob,
+          description = "desc",
+          parameterInfos = Map(),
+          format = TemplateFormat.HCL
+        ),
+        parameterValues = Map()
+      )
+      val result = service.jobJsonFromInstance(instance)
+      verify(mockNomad, times(1)).parseHCLJob(hclJob)
+      result.isSuccess === true
+    }
+
+    "not invoke parseHCLJob from nomadservice if version is older" in {
+      val service = new InstanceService(
+        nomadClient = withNomadVersion(mock[NomadClient], "0.8.0"),
+        nomadService = mockNomad,
+        templateService = withTemplates(mock[TemplateService], List.empty),
+        consulService = mock[ConsulService],
+        applicationLifecycle = mock[ApplicationLifecycle],
+        templateRenderer = templateRenderer,
+        instanceStorage = mock[InstanceStorage],
+        config = Configuration.from(Map("broccoli.polling.frequency" -> 1))
+      )
+      val instance = Instance(
+        id = "1",
+        template = Template(
+          id = "1",
+          template = hclJob,
+          description = "desc",
+          parameterInfos = Map(),
+          format = TemplateFormat.HCL
+        ),
+        parameterValues = Map()
+      )
+      service.jobJsonFromInstance(instance).isFailure === true
+    }
+  }
 
   "Updating the parameters of an instance" should {
 

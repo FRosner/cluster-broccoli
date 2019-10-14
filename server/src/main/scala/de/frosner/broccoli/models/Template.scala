@@ -6,7 +6,11 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json._
 
-case class Template(id: String, template: String, description: String, parameterInfos: Map[String, ParameterInfo])
+case class Template(id: String,
+                    template: String,
+                    description: String,
+                    parameterInfos: Map[String, ParameterInfo],
+                    format: TemplateFormat = TemplateFormat.JSON)
     extends Serializable {
 
   @transient
@@ -26,6 +30,9 @@ case class Template(id: String, template: String, description: String, parameter
 }
 
 object Template {
+
+  // Supported from Play 2.6. Automatically populates default fields when reading json
+  implicit def jsonFormat = Json.using[Json.WithDefaultValues].format[Template]
 
   implicit def paramInfoMapWrites(implicit account: Account): Writes[Map[String, ParameterInfo]] =
     new Writes[Map[String, ParameterInfo]] {

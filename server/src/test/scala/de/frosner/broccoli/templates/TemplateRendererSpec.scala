@@ -5,13 +5,16 @@ import com.hubspot.jinjava.JinjavaConfig
 import com.hubspot.jinjava.interpret.FatalTemplateErrorsException
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
-import play.api.libs.json.{JsNumber, JsString}
+import play.api.libs.json.{JsNumber, JsString, JsValue, Json}
 
 import scala.collection.JavaConversions._
 
 class TemplateRendererSpec extends Specification with Mockito {
   val templateRenderer =
     new TemplateRenderer(JinjavaConfig.newBuilder().withFailOnUnknownTokens(true).build())
+
+  def renderJson(instance: Instance, renderer: TemplateRenderer = templateRenderer): JsValue =
+    Json.parse(renderer.render(instance))
 
   "TemplateRenderer" should {
     "render the template correctly when an instance contains a single parameter" in {
@@ -22,7 +25,7 @@ class TemplateRendererSpec extends Specification with Mockito {
                           "desc",
                           Map("id" -> ParameterInfo("id", None, None, None, ParameterType.Raw, None))),
                  Map("id" -> StringParameterValue("Frank")))
-      templateRenderer.renderJson(instance) === JsString("Frank")
+      renderJson(instance) === JsString("Frank")
     }
 
     "parse the template correctly when it contains multiple parameters" in {
@@ -38,7 +41,7 @@ class TemplateRendererSpec extends Specification with Mockito {
           ),
           Map("id" -> RawParameterValue("Frank"), "age" -> IntParameterValue(5))
         )
-      templateRenderer.renderJson(instance) === JsString("Frank 5")
+      renderJson(instance) === JsString("Frank 5")
     }
 
     "parse the template correctly when it contains a defined default parameter" in {
@@ -60,7 +63,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> RawParameterValue("Frank"))
       )
-      templateRenderer.renderJson(instance) === JsString("Frank 50")
+      renderJson(instance) === JsString("Frank 50")
     }
 
     "parse the template correctly when it has String parameters" in {
@@ -80,7 +83,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> StringParameterValue("\"Frank"))
       )
-      templateRenderer.renderJson(instance) === JsString("\"Frank")
+      renderJson(instance) === JsString("\"Frank")
     }
 
     "parse the template correctly when it contains regex stuff that breaks with replaceAll" in {
@@ -94,7 +97,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> RawParameterValue("^.*$"))
       )
-      templateRenderer.renderJson(instance) === JsString("^.*$")
+      renderJson(instance) === JsString("^.*$")
     }
 
     "parse the template correctly when it contains an undefined default parameter" in {
@@ -112,7 +115,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> StringParameterValue("Frank"), "age" -> IntParameterValue(50))
       )
-      templateRenderer.renderJson(instance) === JsString("Frank 50")
+      renderJson(instance) === JsString("Frank 50")
     }
 
     "parse the template correctly when it has Decimal parameters" in {
@@ -134,7 +137,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> DecimalParameterValue(value))
       )
-      templateRenderer.renderJson(instance) === JsNumber(value)
+      renderJson(instance) === JsNumber(value)
     }
 
     "parse correctly jinja2 local variables" in {
@@ -148,7 +151,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> RawParameterValue("1"))
       )
-      templateRenderer.renderJson(instance) === JsString("111213")
+      renderJson(instance) === JsString("111213")
     }
 
     "parse correctly jinja2 conditions" in {
@@ -164,7 +167,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> RawParameterValue("10"))
       )
-      templateRenderer.renderJson(instance1) === JsString("greater than zero")
+      renderJson(instance1) === JsString("greater than zero")
 
       val instance2 = Instance(
         id = "1",
@@ -176,7 +179,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> RawParameterValue("-3"))
       )
-      templateRenderer.renderJson(instance2) === JsString("less than or equal to zero")
+      renderJson(instance2) === JsString("less than or equal to zero")
     }
 
     "throws an exception if the template does not contain a value and default (withFailOnUnknownTokens = true)" in {
@@ -191,7 +194,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         parameterValues = Map("id" -> RawParameterValue("Frank"))
       )
 
-      templateRenderer.renderJson(instance) must throwA[FatalTemplateErrorsException]
+      renderJson(instance) must throwA[FatalTemplateErrorsException]
     }
 
     "ignore undefined variables (withFailOnUnknownTokens = false)" in {
@@ -207,8 +210,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> RawParameterValue("Frank"))
       )
-
-      templateRenderer.renderJson(instance) === JsString("Frank ")
+      renderJson(instance, templateRenderer) === JsString("Frank ")
     }
 
     "parse the template correctly when it has Integer parameters" in {
@@ -230,7 +232,7 @@ class TemplateRendererSpec extends Specification with Mockito {
         ),
         parameterValues = Map("id" -> IntParameterValue(value))
       )
-      templateRenderer.renderJson(instance) === JsNumber(value)
+      renderJson(instance) === JsNumber(value)
     }
   }
 }

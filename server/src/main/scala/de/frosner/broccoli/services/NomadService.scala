@@ -206,6 +206,26 @@ class NomadService @Inject()(nomadConfiguration: NomadConfiguration, ws: WSClien
     }.flatten
   }
 
+  /**
+    * Takes in a HCL job and converts it to JSON to be posted to the web server
+    */
+  def parseHCLJob(hclJob: String): Try[JsValue] = {
+    val endPoint = nomadBaseUrl + "/v1/jobs/parse"
+    val request = requestWithHeaders(endPoint)
+    Try {
+      val requestJson = JsObject(Seq("JobHCL" -> JsString(hclJob), "Canonicalize" -> JsBoolean(true)))
+      val result =
+        Await.result(request.post(requestJson), Duration(5, TimeUnit.SECONDS))
+      if (result.status == 200) {
+        log.info("Successfully converted HCL job to JSON")
+        Success(result.json)
+      } else {
+        log.error(s"Error parsing job HCL. Request body: ${requestJson.toString()}")
+        Failure(NomadRequestFailed(request.uri.toString, result.status, result.body))
+      }
+    }.flatten
+  }
+
   def getNodeResources(loggedIn: Account): Future[Seq[NodeResources]] = {
     // Step 1: Get all nodes
     val queryUrl = nomadBaseUrl + s"/v1/nodes"

@@ -13,4 +13,6 @@ curl -H 'Content-Type: application/json' \
 sleep $BROCCOLI_SLEEP_SHORT
 curl -k -X PUT https://localhost:4646/v1/system/gc
 sleep $BROCCOLI_SLEEP_SHORT
+curl -k -X PUT https://localhost:4646/v1/system/gc
+sleep $BROCCOLI_SLEEP_SHORT
 

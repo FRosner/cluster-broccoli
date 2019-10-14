@@ -4,12 +4,11 @@ import com.hubspot.jinjava.interpret.{FatalTemplateErrorsException, RenderResult
 import com.hubspot.jinjava.interpret.TemplateError.ErrorType
 import com.hubspot.jinjava.{Jinjava, JinjavaConfig}
 import de.frosner.broccoli.models.Instance
-import play.api.libs.json.{JsValue, Json}
 
 import scala.collection.JavaConversions._
 
 /**
-  * Renders json representation of the passed instance
+  * Renders a job file from a template
   * @param jinjavaConfig Jinjava configuration
   */
 class TemplateRenderer(jinjavaConfig: JinjavaConfig) {
@@ -31,15 +30,14 @@ class TemplateRenderer(jinjavaConfig: JinjavaConfig) {
     jinjava.renderForResult(template.template, parameterValues)
   }
 
-  def renderJson(instance: Instance): JsValue = {
+  def render(instance: Instance): String = {
     val renderResult = renderForResult(instance)
     val fatalErrors = renderResult.getErrors.filter(error => error.getSeverity == ErrorType.FATAL)
 
     if (fatalErrors.nonEmpty) {
       throw new FatalTemplateErrorsException(instance.template.template, fatalErrors)
     }
-
-    Json.parse(renderResult.getOutput)
+    renderResult.getOutput
   }
 
   /**

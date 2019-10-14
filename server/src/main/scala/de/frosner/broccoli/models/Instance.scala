@@ -72,6 +72,7 @@ object Instance {
 
   implicit val instancePersistenceReads: Reads[Instance] = {
     import Template.templatePersistenceReads
+    import Template.jsonFormat
     new Reads[Instance] {
       override def reads(json: JsValue): JsResult[Instance] =
         Try {
