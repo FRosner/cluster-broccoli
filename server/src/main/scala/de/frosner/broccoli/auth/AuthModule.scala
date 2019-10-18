@@ -19,8 +19,8 @@ import de.frosner.broccoli.BroccoliConfiguration
 import net.codingwell.scalaguice.ScalaModule
 import play.api.Configuration
 import com.google.inject.name.Named
-import com.mohiva.play.silhouette.api.crypto.{Crypter, CrypterAuthenticatorEncoder, Signer}
-import com.mohiva.play.silhouette.impl.util.{DefaultFingerprintGenerator, PlayCacheLayer, SecureRandomIDGenerator}
+import com.mohiva.play.silhouette.api.crypto.{Crypter, CrypterAuthenticatorEncoder, Hash, Signer}
+import com.mohiva.play.silhouette.impl.util.{PlayCacheLayer, SecureRandomIDGenerator}
 import net.ceedubs.ficus.Ficus._
 import net.ceedubs.ficus.readers.ArbitraryTypeReader._
 import net.ceedubs.ficus.readers.ValueReader
@@ -40,7 +40,7 @@ class AuthModule @Inject() extends AbstractModule with ScalaModule {
     bind[Silhouette[DefaultEnv]].to[SilhouetteProvider[DefaultEnv]]
     bind[CacheLayer].to[PlayCacheLayer]
     bind[IDGenerator].toInstance(new SecureRandomIDGenerator())
-    bind[FingerprintGenerator].toInstance(new DefaultFingerprintGenerator(false))
+    bind[FingerprintGenerator].toInstance(BroccoliFingerprintGenerator(true))
     bind[EventBus].toInstance(EventBus())
     bind[Clock].toInstance(Clock())
   }

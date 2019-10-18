@@ -37,6 +37,7 @@ jobs:
         - . prepare-docker-builds
         # build and test against old nomad
         - docker build --build-arg nomad=0.4.0 -t frosner/cluster-broccoli-test docker/test/
+        - docker -v
         - sbt it:test
         - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/instance-persistence-couchdb
         - bash <(curl -s https://raw.githubusercontent.com/FRosner/http-api-tester/master/http-api-tester) -v -d http-api-tests/broccoli-only

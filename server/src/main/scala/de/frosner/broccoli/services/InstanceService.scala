@@ -280,7 +280,10 @@ class InstanceService @Inject()(nomadClient: NomadClient,
         if (nomadClient.nomadVersion >= NomadHttpClient.NOMAD_V_FOR_PARSE_API) {
           nomadService.parseHCLJob(templateRenderer.render(instance))
         } else {
-          Failure(NomadRequestFailed("/v1/jobs/parse", 404, "HCL jobs are supported only after nomad 0.9.1"))
+          Failure(
+            NomadRequestFailed("/v1/jobs/parse",
+                               404,
+                               s"HCL jobs are supported only after nomad ${NomadHttpClient.NOMAD_V_FOR_PARSE_API}"))
         }
     }
 
