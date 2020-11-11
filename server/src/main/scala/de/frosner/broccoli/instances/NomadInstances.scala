@@ -6,6 +6,7 @@ import cats.data.EitherT
 import cats.instances.future._
 import cats.instances.list._
 import cats.syntax.traverse._
+import play.api.Logger
 import de.frosner.broccoli.auth.Account
 import de.frosner.broccoli.models.{AllocatedTask, InstanceError, InstanceTasks, InstanceWithStatus}
 import de.frosner.broccoli.nomad.models.{
@@ -37,6 +38,8 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
 
   type InstanceT[R] = EitherT[Future, InstanceError, R]
 
+  val nomadLogger: Logger = Logger("nomad")
+
   /**
     * Get all allocated tasks of the given instance.
     *
@@ -63,7 +66,10 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
       instanceJobTasks <- getJobTasks(instanceJobId, instance.instance.namespace).recover {
         // In case we don't have any job we might still have periodic jobs. So we don't want to fail here already.
         case InstanceError.NotFound(_, _) => List.empty
-        case _                            => List.empty // Avoid Broccoli going down
+        case ex: InstanceError => {
+          nomadLogger.info(s"Nomad erturned an error: $ex.reason")
+          List.empty // Avoid Broccoli going down
+        }
       }
 
       // TODO: EXCEPTION
@@ -106,7 +112,7 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
         .getAllocation(allocationId, instance.instance.namespace)
         .leftMap(toInstanceError(jobId))
         .ensure(InstanceError.NotFound(jobId))(_.jobId == jobId)
-        
+
       node <- nomadClient.allocationNodeClient(allocation).leftMap(toInstanceError(jobId))
 
       // Exception here TODO catch
@@ -156,7 +162,6 @@ class NomadInstances @Inject()(nomadClient: NomadClient, instanceService: Instan
       // allocated tasks and their resources.  We can't extract the pair with a pattern unfortunately because as of
       // Scala 2.11 the compiler still tries to insert .withFilter calls even for irrefutable patterns, which EitherT
       // doesn't have.
-
       jobAndAllocations <- Apply[NomadT]
         .tuple2(nomadClient.getJob(jobId, namespace), nomadClient.getAllocationsForJob(jobId, namespace))
         .leftMap(toInstanceError(jobId))
